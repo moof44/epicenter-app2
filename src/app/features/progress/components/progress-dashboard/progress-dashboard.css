@@ -1,0 +1,129 @@
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.member-title {
+    margin-bottom: 0.25rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+}
+
+.card-api-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.date-badge {
+    background: #f1f5f9;
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.title-group h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-main);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem !important;
+}
+
+.stat-card .value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.diff {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 0.25rem;
+    color: var(--text-secondary);
+}
+
+.diff.positive {
+    color: #166534;
+    /* Green */
+}
+
+.diff.negative {
+    color: #991b1b;
+    /* Red */
+}
+
+.history-card {
+    margin-top: 1rem;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.history-table {
+
+    .subtitle-group {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-top: 0.25rem;
+    }
+
+    .goal-badge {
+        background-color: #e0e7ff;
+        color: #4338ca;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+}

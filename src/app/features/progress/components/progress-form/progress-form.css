@@ -1,0 +1,38 @@
+/* Reusing similar layout logic from member form, can import or duplicate */
+.page-container {
+    display: flex;
+    justify-content: center;
+    padding-top: 2rem;
+}
+
+.form-card {
+    width: 100%;
+    max-width: 600px;
+}
+
+.progress-form {
+    padding-top: 1rem;
+}
+
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}

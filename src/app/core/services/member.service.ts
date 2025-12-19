@@ -1,0 +1,35 @@
+import { Injectable, inject } from '@angular/core';
+import { Firestore, collection, collectionData, addDoc, doc, updateDoc, query, orderBy, docData } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
+import { Member } from '../models/member.model';
+
+@Injectable({
+    providedIn: 'root'
+})
+export class MemberService {
+    private firestore: Firestore = inject(Firestore);
+    private membersCollection = collection(this.firestore, 'members');
+
+    getMembers(): Observable<Member[]> {
+        const q = query(this.membersCollection, orderBy('firstName'));
+        return collectionData(q, { idField: 'id' }) as Observable<Member[]>;
+    }
+
+    getMember(id: string): Observable<Member> {
+        const docRef = doc(this.firestore, 'members', id);
+        return docData(docRef, { idField: 'id' }) as Observable<Member>;
+    }
+
+    addMember(member: Member): Promise<any> {
+        return addDoc(this.membersCollection, member);
+    }
+
+    updateMember(id: string, data: Partial<Member>): Promise<void> {
+        const docRef = doc(this.firestore, 'members', id);
+        return updateDoc(docRef, data);
+    }
+
+    setInactive(id: string): Promise<void> {
+        return this.updateMember(id, { status: 'inactive' });
+    }
+}

@@ -1,0 +1,27 @@
+<div class="app-container">
+  <mat-toolbar color="primary" class="main-toolbar">
+    <button mat-icon-button (click)="snav.toggle()" class="menu-button">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <span>GymSys</span>
+  </mat-toolbar>
+
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'" [opened]="!mobileQuery.matches"
+      [fixedInViewport]="mobileQuery.matches" fixedTopGap="56">
+      <mat-nav-list>
+        <a mat-list-item routerLink="/members" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>group</mat-icon>
+          <span matListItemTitle>Members</span>
+        </a>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <main class="content" [@slideInOut]="getRouteAnimation(outlet)">
+        <router-outlet #outlet="outlet"></router-outlet>
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

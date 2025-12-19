@@ -1,0 +1,107 @@
+<div class="dashboard-container" *ngIf="member$ | async as member" [@fadeIn]>
+    <div class="header">
+        <div class="title-group">
+            <h1>{{ member.firstName }} {{ member.lastName }}</h1>
+            <div class="subtitle-group">
+                <span class="subtitle">Joined {{ member.dateJoined.seconds * 1000 | date:'mediumDate' }}</span>
+                <span class="goal-badge" *ngIf="member.goal">Goal: {{ member.goal }}</span>
+            </div>
+        </div>
+        <a mat-raised-button color="primary" [routerLink]="['/members', member.id, 'progress', 'new']">
+            <mat-icon>add</mat-icon> New Entry
+        </a>
+    </div>
+
+    <div class="loading-container" *ngIf="!(latest$ | async)">
+        <mat-spinner diameter="50"></mat-spinner>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid" *ngIf="latest$ | async as latest" [@staggerList]>
+        <mat-card class="stat-card">
+            <mat-card-header>
+                <mat-card-title>Weight</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="stat-content">
+                <span class="value">{{ latest.weight }} kg</span>
+                <span class="diff" *ngIf="(previous$ | async)?.weight as prev"
+                    [class.positive]="(latest.weight - prev) < 0" [class.negative]="(latest.weight - prev) > 0">
+                    {{ (latest.weight - prev) | number:'1.1-1' }}
+                </span>
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+            <mat-card-header>
+                <mat-card-title>Body Fat</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="stat-content">
+                <span class="value">{{ latest.bodyFat }}%</span>
+                <span class="diff" *ngIf="(previous$ | async)?.bodyFat as prev"
+                    [class.positive]="(latest.bodyFat - prev) < 0" [class.negative]="(latest.bodyFat - prev) > 0">
+                    {{ (latest.bodyFat - prev) | number:'1.1-1' }}
+                </span>
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+            <mat-card-header>
+                <mat-card-title>Muscle Mass</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="stat-content">
+                <span class="value">{{ latest.muscleMass }}%</span>
+                <span class="diff" *ngIf="(previous$ | async)?.muscleMass as prev"
+                    [class.positive]="(latest.muscleMass - prev) > 0" [class.negative]="(latest.muscleMass - prev) < 0">
+                    {{ (latest.muscleMass - prev) | number:'1.1-1' }}
+                </span>
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+            <mat-card-header>
+                <mat-card-title>Visceral Fat</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="stat-content">
+                <span class="value">{{ latest.visceralFat }}</span>
+            </mat-card-content>
+        </mat-card>
+    </div>
+
+    <!-- History Table -->
+    <mat-card class="history-card" *ngIf="measurements$ | async" [@fadeIn]>
+        <mat-card-header>
+            <mat-card-title>History</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="table-container">
+            <table mat-table [dataSource]="(measurements$ | async) || []" class="history-table">
+                <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef> Date </th>
+                    <td mat-cell *matCellDef="let m"> {{ m.date.seconds * 1000 | date:'shortDate' }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="weight">
+                    <th mat-header-cell *matHeaderCellDef> Weight </th>
+                    <td mat-cell *matCellDef="let m"> {{ m.weight }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="bodyFat">
+                    <th mat-header-cell *matHeaderCellDef> Body Fat </th>
+                    <td mat-cell *matCellDef="let m"> {{ m.bodyFat }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="muscleMass">
+                    <th mat-header-cell *matHeaderCellDef> Muscle </th>
+                    <td mat-cell *matCellDef="let m"> {{ m.muscleMass }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="bmi">
+                    <th mat-header-cell *matHeaderCellDef> BMI </th>
+                    <td mat-cell *matCellDef="let m"> {{ m.bmi }} </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: historyColumns;"></tr>
+            </table>
+        </mat-card-content>
+    </mat-card>
+</div>

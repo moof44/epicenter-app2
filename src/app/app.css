@@ -1,0 +1,34 @@
+.app-container {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.sidenav-container {
+    flex: 1;
+}
+
+.main-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+mat-sidenav {
+    width: 250px;
+}
+
+.content {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.active {
+    background-color: rgba(0, 0, 0, 0.05);
+    /* Subtle highlight for active link */
+    font-weight: 500;
+}

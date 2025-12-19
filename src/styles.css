@@ -1,0 +1,36 @@
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+@import 'https://fonts.googleapis.com/icon?family=Material+Icons';
+
+:root {
+  --primary-color: #3f51b5;
+  /* Indigo */
+  --primary-dark: #303f9f;
+  --bg-color: #fafafa;
+
+  --surface-color: #ffffff;
+  --text-main: #1e293b;
+  --text-secondary: #64748b;
+  --danger-color: #ef4444;
+  --success-color: #22c55e;
+  --border-radius: 12px;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 1rem 0;
+  font-weight: 700;
+}
+
+button {
+  cursor: pointer;
+}
