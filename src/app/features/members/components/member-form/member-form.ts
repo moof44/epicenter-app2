@@ -10,13 +10,16 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { fadeIn } from '../../../../core/animations/animations';
 
 @Component({
   selector: 'app-member-form',
   imports: [
     CommonModule, ReactiveFormsModule, RouterLink, MatInputModule,
-    MatSelectModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule
+    MatSelectModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule,
+    MatDatepickerModule, MatNativeDateModule
   ],
   templateUrl: './member-form.html',
   styleUrl: './member-form.css',
@@ -35,12 +38,15 @@ export class MemberForm implements OnInit {
 
   constructor() {
     this.form = this.fb.group({
-      firstName: ['', [Validators.required]],
-      lastName: ['', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required]],
-      status: ['active'],
-      goal: ['']
+      name: ['', [Validators.required]],
+      address: ['', [Validators.required]],
+      contactNumber: ['', [Validators.required]],
+      gender: ['Male', [Validators.required]],
+      birthday: [null, [Validators.required]],
+      expiration: [null, [Validators.required]],
+      goal: [''],
+      subscription: ['Monthly', [Validators.required]],
+      membershipStatus: ['Active', [Validators.required]]
     });
   }
 
@@ -55,7 +61,15 @@ export class MemberForm implements OnInit {
   async loadMember(id: string) {
     this.loading = true;
     this.memberService.getMember(id).subscribe(member => {
-      this.form.patchValue(member);
+       // Convert timestamps to Date objects if needed for form
+      const data = { ...member };
+      if (data.birthday && data.birthday.seconds) {
+        data.birthday = new Date(data.birthday.seconds * 1000);
+      }
+      if (data.expiration && data.expiration.seconds) {
+        data.expiration = new Date(data.expiration.seconds * 1000);
+      }
+      this.form.patchValue(data);
       this.loading = false;
     });
   }
@@ -70,10 +84,7 @@ export class MemberForm implements OnInit {
       if (this.isEditMode && this.memberId) {
         await this.memberService.updateMember(this.memberId, data);
       } else {
-        await this.memberService.addMember({
-          ...data,
-          dateJoined: new Date()
-        } as Member);
+        await this.memberService.addMember(data as Member);
       }
       this.router.navigate(['/members']);
     } catch (error) {

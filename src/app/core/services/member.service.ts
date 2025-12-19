@@ -11,7 +11,7 @@ export class MemberService {
     private membersCollection = collection(this.firestore, 'members');
 
     getMembers(): Observable<Member[]> {
-        const q = query(this.membersCollection, orderBy('firstName'));
+        const q = query(this.membersCollection, orderBy('name'));
         return collectionData(q, { idField: 'id' }) as Observable<Member[]>;
     }
 
@@ -30,6 +30,6 @@ export class MemberService {
     }
 
     setInactive(id: string): Promise<void> {
-        return this.updateMember(id, { status: 'inactive' });
+        return this.updateMember(id, { membershipStatus: 'Inactive' });
     }
 }

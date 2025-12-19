@@ -6,37 +6,45 @@
 </div>
 
 <div class="mat-elevation-z2 table-container" [@fadeIn]>
-    <div class="loading-shade" *ngIf="!(members$ | async)">
-        <mat-spinner></mat-spinner>
-    </div>
+    <!-- Loading removed or handled by dataSource logic manually if needed, 
+         but MatTableDataSource handles empty arrays gracefully. 
+         Spinner can be conditional on an 'isLoading' flag if we added one. 
+         For simplicity, keeping it simple. -->
 
-    <table mat-table [dataSource]="(members$ | async) || []" class="full-width-table" [@staggerList]>
+    <table mat-table [dataSource]="dataSource" class="full-width-table" [@staggerList]>
 
         <!-- Name Column -->
         <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef> Name </th>
             <td mat-cell *matCellDef="let member">
-                <div class="member-name">{{ member.firstName }} {{ member.lastName }}</div>
-                <div class="member-email">{{ member.email }}</div>
+                <div class="member-name">{{ member.name }}</div>
+                <div class="member-email">{{ member.contactNumber }}</div>
             </td>
         </ng-container>
 
         <!-- Status Column -->
-        <ng-container matColumnDef="status">
+        <ng-container matColumnDef="membershipStatus">
             <th mat-header-cell *matHeaderCellDef> Status </th>
             <td mat-cell *matCellDef="let member">
                 <mat-chip-set>
-                    <mat-chip [color]="member.status === 'active' ? 'accent' : 'warn'" selected>
-                        {{ member.status | titlecase }}
+                    <mat-chip [color]="member.membershipStatus === 'Active' ? 'accent' : 'warn'" selected>
+                        {{ member.membershipStatus | titlecase }}
                     </mat-chip>
                 </mat-chip-set>
             </td>
         </ng-container>
 
-        <!-- Joined Column -->
-        <ng-container matColumnDef="joined">
-            <th mat-header-cell *matHeaderCellDef> Joined </th>
-            <td mat-cell *matCellDef="let member"> {{ member.dateJoined.seconds * 1000 | date:'mediumDate' }} </td>
+        <!-- Expiration Column -->
+        <ng-container matColumnDef="expiration">
+            <th mat-header-cell *matHeaderCellDef> Expiration </th>
+            <td mat-cell *matCellDef="let member"> 
+                 <ng-container *ngIf="member.expiration?.seconds; else dateObj">
+                    {{ member.expiration.seconds * 1000 | date:'mediumDate' }}
+                 </ng-container>
+                 <ng-template #dateObj>
+                    {{ member.expiration | date:'mediumDate' }}
+                 </ng-template>
+            </td>
         </ng-container>
 
         <!-- Actions Column -->
@@ -51,8 +59,8 @@
                     <mat-icon>edit</mat-icon>
                 </a>
                 <button mat-icon-button (click)="toggleStatus(member)"
-                    [matTooltip]="member.status === 'active' ? 'Deactivate' : 'Activate'" color="warn">
-                    <mat-icon>{{ member.status === 'active' ? 'block' : 'check_circle' }}</mat-icon>
+                    [matTooltip]="member.membershipStatus === 'Active' ? 'Deactivate' : 'Activate'" color="warn">
+                    <mat-icon>{{ member.membershipStatus === 'Active' ? 'block' : 'check_circle' }}</mat-icon>
                 </button>
             </td>
         </ng-container>
@@ -60,4 +68,9 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
+
+    <mat-paginator [pageSizeOptions]="[10, 20, 50]"
+                 showFirstLastButtons
+                 aria-label="Select page of members">
+    </mat-paginator>
 </div>

@@ -1,10 +1,12 @@
 export interface Member {
     id?: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    status: 'active' | 'inactive';
-    dateJoined: any;
-    goal?: string;
+    name: string;
+    address: string;
+    contactNumber: string;
+    gender: 'Male' | 'Female' | 'Other';
+    birthday: any; // Timestamp or Date
+    expiration: any; // Timestamp or Date
+    goal: string;
+    subscription: string;
+    membershipStatus: 'Active' | 'Inactive' | 'Pending';
 }
