@@ -61,10 +61,15 @@ export class AttendanceChart implements OnChanges {
         }
     }
 
-    loadAttendance_() {
-        this.attendanceService.getMemberAttendance(this.memberId).subscribe(records => {
+    async loadAttendance_() {
+        if (!this.memberId) return;
+        try {
+            const records = await this.attendanceService.getMemberAttendance(this.memberId);
             this.generateCalendar(records);
-        });
+        } catch (error) {
+            console.error('Error loading attendance chart:', error);
+            // Optionally handle error UI
+        }
     }
 
     generateCalendar(records: AttendanceRecord[]) {

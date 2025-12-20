@@ -5,8 +5,21 @@
   --primary-color: #3f51b5;
   /* Indigo */
   --primary-dark: #303f9f;
-  --bg-color: #fafafa;
+  /* Responsive Variables - Mobile First Defaults */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
 
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+
+  --container-padding: 1rem; /* Standard mobile padding */
+
+  --bg-color: #fafafa;
   --surface-color: #ffffff;
   --text-main: #1e293b;
   --text-secondary: #64748b;
@@ -17,6 +30,20 @@
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
+/* Tablet and up */
+@media (min-width: 768px) {
+  :root {
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+
+    --font-size-lg: 1.5rem;
+    --font-size-xl: 2rem;
+
+    --container-padding: 2rem; /* Increased padding for desktop */
+  }
+}
+
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -24,13 +51,38 @@ body {
   color: var(--text-main);
 }
 
-h1,
-h2,
+h1 {
+  margin: 0 0 1rem 0;
+  font-weight: 700;
+  font-size: var(--font-size-xl);
+}
+
+h2 {
+  margin: 0 0 1rem 0;
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+}
+
 h3 {
   margin: 0 0 1rem 0;
   font-weight: 700;
+  font-size: var(--font-size-base);
 }
 
 button {
   cursor: pointer;
+}
+
+.loading-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit; /* Inherit border radius from parent if possible */
 }

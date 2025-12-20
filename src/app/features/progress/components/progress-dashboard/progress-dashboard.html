@@ -11,7 +11,7 @@
         </a>
     </div>
 
-    <div class="loading-container" *ngIf="!(latest$ | async)">
+    <div class="loading-shade position-relative" style="min-height: 100px; position: relative;" *ngIf="!(latest$ | async)">
         <mat-spinner diameter="50"></mat-spinner>
     </div>
 

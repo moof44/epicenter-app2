@@ -35,9 +35,11 @@ import { fadeIn } from '../../../../core/animations/animations'; // Fixed path
     </div>
   `,
   styles: [`
-    .page-container { padding: 2rem; max-width: 1200px; margin: 0 auto; }
-    .header { margin-bottom: 2rem; }
-    .tab-content { padding-top: 2rem; }
+    .page-container { 
+      /* Removing padding and max-width to match Members layout */
+    }
+    .header { margin-bottom: var(--spacing-md); }
+    .tab-content { padding-top: var(--spacing-xl); }
   `],
   animations: [fadeIn]
 })

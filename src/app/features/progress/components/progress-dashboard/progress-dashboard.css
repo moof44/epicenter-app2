@@ -2,7 +2,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: var(--spacing-xl);
 }
 
 .member-title {
@@ -17,33 +17,33 @@
 .dashboard-grid {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--spacing-xl);
 }
 
 .empty-state {
     text-align: center;
-    padding: 3rem;
+    padding: var(--spacing-xl);
     background: white;
     border-radius: var(--border-radius);
     color: var(--text-light);
 }
 
 .attendance-section {
-    margin-top: 2rem;
+    margin-top: var(--spacing-xl);
 }
 
 .card {
     background: white;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-sm);
-    padding: 1.5rem;
+    padding: var(--spacing-lg);
 }
 
 .card-api-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--spacing-lg);
 }
 
 .date-badge {
@@ -52,12 +52,6 @@
     border-radius: 99px;
     font-size: 0.875rem;
     color: var(--text-secondary);
-}
-
-.dashboard-container {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
 }
 
 .header {
@@ -80,14 +74,14 @@
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    gap: var(--spacing-md);
 }
 
 .stat-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 1rem !important;
+    padding: var(--spacing-md) !important;
 }
 
 .stat-card .value {

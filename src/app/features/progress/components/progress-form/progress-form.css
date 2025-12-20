@@ -2,7 +2,7 @@
 .page-container {
     display: flex;
     justify-content: center;
-    padding-top: 2rem;
+    padding-top: var(--spacing-xl);
 }
 
 .form-card {
@@ -11,28 +11,28 @@
 }
 
 .progress-form {
-    padding-top: 1rem;
+    padding-top: var(--spacing-md);
 }
 
 .form-grid {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
 }
 
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 1rem;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
 }
 
 .flex-center {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
 }
 
 .mr-2 {
-    margin-right: 0.5rem;
+    margin-right: var(--spacing-sm);
 }

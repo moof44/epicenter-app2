@@ -89,20 +89,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
         min-height: 200px;
         position: relative;
     }
-    .loading-shade {
-        position: absolute;
-        top: 0; left: 0; bottom: 0; right: 0;
-        background: rgba(255, 255, 255, 0.7);
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+
     .full-width-table { width: 100%; min-width: 500px; background: white; }
     .name { font-weight: 500; }
     .gender-badge { font-size: 0.8em; color: gray; }
     .locker-badge { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-    .empty-state { padding: 2rem; text-align: center; color: gray; background: white; }
+    .empty-state { padding: var(--spacing-xl); text-align: center; color: gray; background: white; }
     .expired { color: #ef4444; font-weight: bold; }
   `],
   animations: [fadeIn, staggerList]
