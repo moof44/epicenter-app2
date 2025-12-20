@@ -43,9 +43,9 @@ export class MemberForm implements OnInit {
       contactNumber: ['', [Validators.required]],
       gender: ['Male', [Validators.required]],
       birthday: [null, [Validators.required]],
-      expiration: [null, [Validators.required]],
+      expiration: [null],
       goal: [''],
-      subscription: ['Monthly', [Validators.required]],
+      subscription: ['Monthly'],
       membershipStatus: ['Active', [Validators.required]]
     });
   }

@@ -11,4 +11,9 @@ export const routes: Routes = [
     { path: 'members/edit/:id', component: MemberForm, data: { animation: 'FormPage' } },
     { path: 'members/:id/progress', component: ProgressDashboard, data: { animation: 'DashboardPage' } },
     { path: 'members/:id/progress/new', component: ProgressForm, data: { animation: 'FormPage' } },
+    { 
+        path: 'attendance', 
+        loadComponent: () => import('./features/attendance/components/attendance-layout/attendance-layout').then(m => m.AttendanceLayout),
+        data: { animation: 'ListPage' }
+    },
 ];

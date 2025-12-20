@@ -87,6 +87,11 @@
     color: var(--text-secondary);
 }
 
+.expired {
+    color: #ef4444 !important;
+    font-weight: bold;
+}
+
 .badge {
     padding: 0.25rem 0.5rem;
     border-radius: 9999px;

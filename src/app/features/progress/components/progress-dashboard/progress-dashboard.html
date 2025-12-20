@@ -103,4 +103,9 @@
             </table>
         </mat-card-content>
     </mat-card>
+
+    <!-- Attendance Chart -->
+    <div class="attendance-section" *ngIf="member.id">
+        <app-attendance-chart [memberId]="member.id"></app-attendance-chart>
+    </div>
 </div>

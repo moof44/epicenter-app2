@@ -46,7 +46,11 @@
               "outputHashing": "all"
             },
             "development": {
-              "optimization": false,
+              "optimization": {
+              "fonts": {
+                "inline": false
+              }
+            },
               "extractLicenses": false,
               "sourceMap": true
             }
