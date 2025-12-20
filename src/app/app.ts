@@ -20,7 +20,7 @@ import { slideInOut } from './core/animations/animations';
   animations: [slideInOut]
 })
 export class App implements OnDestroy {
-  title = 'GymSys';
+  title = 'Epicenter Gym Management System';
   mobileQuery: MediaQueryList;
   private _mobileQueryListener: () => void;
 

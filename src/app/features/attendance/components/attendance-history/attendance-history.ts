@@ -96,8 +96,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     </div>
   `,
   styles: [`
-    .history-container { padding-top: 1rem; }
-    .filters { margin-bottom: 1rem; }
+    .history-container { padding-top: var(--spacing-md); }
+    .filters { margin-bottom: var(--spacing-md); }
     .table-wrapper { 
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); 
         border-radius: 8px; 
@@ -106,17 +106,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
         min-height: 200px;
         position: relative;
     }
-    .loading-shade {
-        position: absolute;
-        top: 0; left: 0; bottom: 0; right: 0;
-        background: rgba(255, 255, 255, 0.7);
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+
     .full-width-table { width: 100%; min-width: 500px; background: white; }
-    .empty-state { padding: 2rem; text-align: center; color: gray; background: white; }
+    .empty-state { padding: var(--spacing-xl); text-align: center; color: gray; background: white; }
     .expired { color: #ef4444; font-weight: bold; }
   `],
   animations: [fadeIn, staggerList]

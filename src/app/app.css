@@ -23,7 +23,7 @@ mat-sidenav {
 }
 
 .content {
-    padding: 20px;
+    padding: var(--container-padding);
     overflow-y: auto;
 }
 

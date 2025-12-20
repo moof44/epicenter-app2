@@ -13,6 +13,7 @@ import { Observable, combineLatest, startWith, map } from 'rxjs';
 import { Member } from '../../../../core/models/member.model'; // Fixed path
 import { MemberService } from '../../../../core/services/member.service'; // Fixed path
 import { AttendanceService } from '../../../../core/services/attendance.service'; // Fixed path
+import { fadeIn } from '../../../../core/animations/animations';
 
 @Component({
   selector: 'app-check-in-kiosk',
@@ -37,7 +38,7 @@ import { AttendanceService } from '../../../../core/services/attendance.service'
         </mat-form-field>
       </mat-card>
 
-      <div *ngIf="selectedMember" class="locker-selection">
+      <div *ngIf="selectedMember" class="locker-selection" [@fadeIn]>
         <h3>Welcome, {{selectedMember.name}}!</h3>
         <p>Select a locker (optional) or just Check In.</p>
         
@@ -65,22 +66,25 @@ import { AttendanceService } from '../../../../core/services/attendance.service'
     </div>
   `,
   styles: [`
-    .kiosk-container { max-width: 600px; margin: 0 auto; text-align: center; padding: 1rem; }
-    .search-card { padding: 2rem; margin-bottom: 2rem; }
+    .kiosk-container { max-width: 600px; margin: 0 auto; text-align: center; padding: var(--spacing-md); }
+    .search-card { padding: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
     .full-width { width: 100%; }
-    .locker-selection { animation: fadeIn 0.3s ease; }
+    .locker-selection { 
+      /* Removed CSS animation */ 
+    }
     .locker-grid { 
         display: grid; 
         grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); 
-        gap: 1rem; 
-        margin: 2rem 0;
+        gap: var(--spacing-md); 
+        margin: var(--spacing-xl) 0;
         justify-items: center;
     }
-    .actions { display: flex; flex-direction: column; gap: 1rem; }
-    .check-in-btn { padding: 1.5rem; font-size: 1.2rem; }
+    .actions { display: flex; flex-direction: column; gap: var(--spacing-md); }
+    .check-in-btn { padding: var(--spacing-lg); font-size: 1.2rem; }
     .occupied { background-color: #e2e8f0 !important; color: #94a3b8 !important; }
     .selected { background-color: #4ade80 !important; color: #000 !important; transform: scale(1.1); }
-  `]
+  `],
+  animations: [fadeIn]
 })
 export class CheckInKiosk implements OnInit {
   private memberService = inject(MemberService);

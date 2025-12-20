@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, query, where, orderBy, addDoc, doc, updateDoc, Timestamp, getDocs } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, query, where, orderBy, addDoc, doc, updateDoc, Timestamp, getDocs, limit } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AttendanceRecord } from '../models/attendance.model';
@@ -32,31 +32,39 @@ export class AttendanceService {
      * Get attendance history for a specific date.
      * @param dateStr Format YYYY-MM-DD
      */
-    getHistoryByDate(dateStr: string): Observable<AttendanceRecord[]> {
+    /**
+     * Get attendance history for a specific date.
+     * @param dateStr Format YYYY-MM-DD
+     */
+    async getHistoryByDate(dateStr: string): Promise<AttendanceRecord[]> {
         const q = query(
             this.attendanceCollection,
             where('date', '==', dateStr)
         );
-        return collectionData(q, { idField: 'id' }).pipe(
-            map(records => (records as AttendanceRecord[]).sort((a, b) => 
-                b.checkInTime.seconds - a.checkInTime.seconds
-            ))
-        );
+        
+        const snapshot = await getDocs(q);
+        const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
+        
+        return records.sort((a, b) => b.checkInTime.seconds - a.checkInTime.seconds);
     }
 
     /**
      * Get all records for a specific member (for charts/profile).
      */
-    getMemberAttendance(memberId: string): Observable<AttendanceRecord[]> {
+    /**
+     * Get all records for a specific member (for charts/profile).
+     */
+    async getMemberAttendance(memberId: string): Promise<AttendanceRecord[]> {
         const q = query(
             this.attendanceCollection,
             where('memberId', '==', memberId)
         );
-        return collectionData(q, { idField: 'id' }).pipe(
-            map(records => (records as AttendanceRecord[]).sort((a, b) => 
-                b.checkInTime.seconds - a.checkInTime.seconds
-            ))
-        );
+        
+        const snapshot = await getDocs(q);
+        const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
+        
+        // Sort descending and take top 50
+        return records.sort((a, b) => b.checkInTime.seconds - a.checkInTime.seconds).slice(0, 50);
     }
 
     /**
