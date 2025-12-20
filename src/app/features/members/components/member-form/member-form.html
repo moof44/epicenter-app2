@@ -63,6 +63,7 @@
             <mat-form-field appearance="outline">
                 <mat-label>Subscription</mat-label>
                 <mat-select formControlName="subscription">
+                    <mat-option [value]="null">None</mat-option>
                     <mat-option value="Monthly">Monthly</mat-option>
                     <mat-option value="Quarterly">Quarterly</mat-option>
                     <mat-option value="Annually">Annually</mat-option>

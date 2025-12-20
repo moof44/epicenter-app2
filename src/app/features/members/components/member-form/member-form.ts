@@ -45,7 +45,7 @@ export class MemberForm implements OnInit {
       birthday: [null, [Validators.required]],
       expiration: [null],
       goal: [''],
-      subscription: ['Monthly'],
+      subscription: [null],
       membershipStatus: ['Active', [Validators.required]]
     });
   }
