@@ -37,7 +37,7 @@
         <!-- Expiration Column -->
         <ng-container matColumnDef="expiration">
             <th mat-header-cell *matHeaderCellDef> Expiration </th>
-            <td mat-cell *matCellDef="let member"> 
+            <td mat-cell *matCellDef="let member" [class.expired]="isExpired(member.expiration)"> 
                  <ng-container *ngIf="member.expiration?.seconds; else dateObj">
                     {{ member.expiration.seconds * 1000 | date:'mediumDate' }}
                  </ng-container>

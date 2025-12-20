@@ -1,0 +1,44 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatTabsModule } from '@angular/material/tabs';
+import { CheckInKiosk } from '../check-in-kiosk/check-in-kiosk';
+import { ActiveSessions } from '../active-sessions/active-sessions';
+import { AttendanceHistory } from '../attendance-history/attendance-history';
+import { fadeIn } from '../../../../core/animations/animations'; // Fixed path
+
+@Component({
+  selector: 'app-attendance-layout',
+  imports: [CommonModule, MatTabsModule, CheckInKiosk, ActiveSessions, AttendanceHistory],
+  template: `
+    <div class="page-container" [@fadeIn]>
+      <div class="header">
+        <h1>Attendance Management</h1>
+      </div>
+      
+      <mat-tab-group>
+        <mat-tab label="Kiosk Check-in">
+          <div class="tab-content">
+             <app-check-in-kiosk></app-check-in-kiosk>
+          </div>
+        </mat-tab>
+        <mat-tab label="Active Sessions">
+           <div class="tab-content">
+             <app-active-sessions></app-active-sessions>
+           </div>
+        </mat-tab>
+         <mat-tab label="History">
+           <div class="tab-content">
+             <app-attendance-history></app-attendance-history>
+           </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+  `,
+  styles: [`
+    .page-container { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .tab-content { padding-top: 2rem; }
+  `],
+  animations: [fadeIn]
+})
+export class AttendanceLayout {}

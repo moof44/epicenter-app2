@@ -46,4 +46,12 @@ export class MemberList implements AfterViewInit {
     const newStatus = member.membershipStatus === 'Active' ? 'Inactive' : 'Active';
     await this.memberService.updateMember(member.id, { membershipStatus: newStatus });
   }
+
+  isExpired(timestamp: any): boolean {
+    if (!timestamp) return false;
+    const exp = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return exp < today;
+  }
 }

@@ -15,6 +15,11 @@
           <mat-icon matListItemIcon>group</mat-icon>
           <span matListItemTitle>Members</span>
         </a>
+        <a mat-list-item routerLink="/attendance" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>event_available</mat-icon>
+          <span matListItemTitle>Attendance</span>
+        </a>
       </mat-nav-list>
     </mat-sidenav>
 

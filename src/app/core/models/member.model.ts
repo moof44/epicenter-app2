@@ -5,8 +5,8 @@ export interface Member {
     contactNumber: string;
     gender: 'Male' | 'Female' | 'Other';
     birthday: any; // Timestamp or Date
-    expiration: any; // Timestamp or Date
+    expiration?: any; // Timestamp or Date
     goal: string;
-    subscription: string;
+    subscription?: string;
     membershipStatus: 'Active' | 'Inactive' | 'Pending';
 }

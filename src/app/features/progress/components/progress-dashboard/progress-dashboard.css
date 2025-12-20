@@ -20,6 +20,18 @@
     gap: 2rem;
 }
 
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: var(--border-radius);
+    color: var(--text-light);
+}
+
+.attendance-section {
+    margin-top: 2rem;
+}
+
 .card {
     background: white;
     border-radius: var(--border-radius);
