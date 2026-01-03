@@ -13,6 +13,13 @@ export class AttendanceService {
     private collectionPath = 'attendance';
     private attendanceCollection = collection(this.firestore, this.collectionPath);
 
+    private getLocalDateString(date: Date = new Date()): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
     /**
      * Get all currently checked-in members.
      */
@@ -22,7 +29,7 @@ export class AttendanceService {
             where('status', '==', 'Checked In')
         );
         return collectionData(q, { idField: 'id' }).pipe(
-            map(records => (records as AttendanceRecord[]).sort((a, b) => 
+            map(records => (records as AttendanceRecord[]).sort((a, b) =>
                 b.checkInTime.seconds - a.checkInTime.seconds
             ))
         );
@@ -41,10 +48,10 @@ export class AttendanceService {
             this.attendanceCollection,
             where('date', '==', dateStr)
         );
-        
+
         const snapshot = await getDocs(q);
         const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
-        
+
         return records.sort((a, b) => b.checkInTime.seconds - a.checkInTime.seconds);
     }
 
@@ -59,10 +66,10 @@ export class AttendanceService {
             this.attendanceCollection,
             where('memberId', '==', memberId)
         );
-        
+
         const snapshot = await getDocs(q);
         const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
-        
+
         // Sort descending and take top 50
         return records.sort((a, b) => b.checkInTime.seconds - a.checkInTime.seconds).slice(0, 50);
     }
@@ -76,7 +83,7 @@ export class AttendanceService {
             where('status', '==', 'Checked In'),
             where('memberGender', '==', gender)
         );
-        
+
         const snapshot = await getDocs(q);
         const occupied: number[] = [];
         snapshot.forEach(doc => {
@@ -101,7 +108,7 @@ export class AttendanceService {
         }
 
         const now = new Date();
-        const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dateStr = this.getLocalDateString(now); // YYYY-MM-DD
 
         const record: AttendanceRecord = {
             memberId: member.id!,
@@ -111,8 +118,8 @@ export class AttendanceService {
             lockerNumber: lockerNumber || null,
             date: dateStr,
             status: 'Checked In',
-            memberSubscription: member.subscription || undefined,
-            memberExpiration: member.expiration || undefined
+            memberSubscription: member.subscription || null,
+            memberExpiration: member.expiration || null
         };
 
         await addDoc(this.attendanceCollection, record);
