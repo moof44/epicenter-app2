@@ -1,10 +1,16 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [
+        provideRouter([]),
+        provideNoopAnimations()
+      ]
     }).compileComponents();
   });
 
@@ -16,8 +22,9 @@ describe('App', () => {
 
   it('should render title', async () => {
     const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, gym-app');
+    expect(compiled.textContent).toContain('Epicenter Gym Management System');
   });
 });

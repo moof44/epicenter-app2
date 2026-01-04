@@ -6,7 +6,10 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:coverage": "ng test --coverage --watch=false",
+    "test:ci": "ng test --coverage --watch=false && npx nyc check-coverage --temp-dir coverage/gym-app --lines 100 --functions 100 --branches 100 --statements 100",
+    "prepare": "husky"
   },
   "prettier": {
     "printWidth": 100,
@@ -28,7 +31,6 @@
     "@angular/common": "^21.0.0",
     "@angular/compiler": "^21.0.0",
     "@angular/core": "^21.0.0",
-    "@angular/fire": "^20.0.1",
     "@angular/forms": "^21.0.0",
     "@angular/material": "^21.0.5",
     "@angular/platform-browser": "^21.0.0",
@@ -41,7 +43,11 @@
     "@angular/build": "^21.0.4",
     "@angular/cli": "^21.0.4",
     "@angular/compiler-cli": "^21.0.0",
+    "@angular/fire": "^21.0.0-rc.0",
+    "@vitest/coverage-v8": "^4.0.16",
+    "husky": "^9.1.7",
     "jsdom": "^27.1.0",
+    "nyc": "^17.1.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }
