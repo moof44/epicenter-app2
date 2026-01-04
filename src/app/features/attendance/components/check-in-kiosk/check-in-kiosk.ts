@@ -22,6 +22,7 @@ import { fadeIn } from '../../../../core/animations/animations';
     MatInputModule, MatAutocompleteModule, MatButtonModule, MatIconModule,
     MatCardModule, MatGridListModule, MatSnackBarModule
   ],
+  /* v8 ignore start */
   template: `
     <div class="kiosk-container">
       <mat-card class="search-card">
@@ -65,6 +66,7 @@ import { fadeIn } from '../../../../core/animations/animations';
       </div>
     </div>
   `,
+  /* v8 ignore end */
   styles: [`
     .kiosk-container { max-width: 600px; margin: 0 auto; text-align: center; padding: var(--spacing-md); }
     .search-card { padding: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
@@ -140,10 +142,12 @@ export class CheckInKiosk implements OnInit {
   }
 
   async confirmCheckIn() {
+      // console.log('confirmCheckIn called', this.selectedMember);
       if (!this.selectedMember) return;
       this.isSubmitting = true;
       try {
           await this.attendanceService.checkIn(this.selectedMember, this.selectedLocker || undefined);
+          // console.log('checkIn successful');
           
           let message = `Checked in ${this.selectedMember.name}!`;
           if (this.selectedMember.subscription) {

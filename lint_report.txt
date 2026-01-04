@@ -1,0 +1,197 @@
+
+Linting "gym-app"...
+
+E:\Programming\epicenter-app2\src\app\app.config.ts
+  4:10  error  'getFirestore' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\Programming\epicenter-app2\src\app\app.spec.ts
+    9:10  error  'MatSidenavModule' is defined but never used         @typescript-eslint/no-unused-vars
+   10:10  error  'BrowserAnimationsModule' is defined but never used  @typescript-eslint/no-unused-vars
+   18:25  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   19:26  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   89:10  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   92:42  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   93:40  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  100:15  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  108:13  error  'app' is assigned a value but never used             @typescript-eslint/no-unused-vars
+
+E:\Programming\epicenter-app2\src\app\core\models\attendance.model.ts
+   6:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   7:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\core\models\measurement.model.ts
+  3:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\core\models\member.model.ts
+  7:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  8:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\core\services\attendance.service.spec.ts
+   47:69  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:75  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   51:28  error  Unexpected empty method 'forEach'         @typescript-eslint/no-empty-function
+   52:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   63:83  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   74:69  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   79:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:69  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:71  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:81  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  129:81  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  141:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  159:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\core\services\attendance.service.ts
+  2:63   error  'orderBy' is defined but never used  @typescript-eslint/no-unused-vars
+  2:116  error  'limit' is defined but never used    @typescript-eslint/no-unused-vars
+
+E:\Programming\epicenter-app2\src\app\core\services\member.service.spec.ts
+  43:83  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:87  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:75  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:75  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\core\services\member.service.ts
+  23:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\core\services\progress.service.spec.ts
+  38:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:75  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  47:80  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\core\services\progress.service.ts
+  18:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\features\attendance\components\active-sessions\active-sessions.spec.ts
+   11:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\features\attendance\components\active-sessions\active-sessions.ts
+  108:26  error  Unexpected any. Specify a different type                                                                                                                                             @typescript-eslint/no-explicit-any
+   19:36  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   19:42  error  Async pipe results should not be negated. Use `(observable | async) === false`, `(observable | async) === null`, or `(observable | async) === undefined` to check its value instead  @angular-eslint/template/no-negated-async
+   23:23  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   47:27  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   48:27  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   56:27  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   59:27  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   77:18  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+
+E:\Programming\epicenter-app2\src\app\features\attendance\components\attendance-chart\attendance-chart.spec.ts
+  11:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  55:71  error  Unexpected empty arrow function           @typescript-eslint/no-empty-function
+
+E:\Programming\epicenter-app2\src\app\features\attendance\components\attendance-chart\attendance-chart.ts
+   5:10  error  'Observable' is defined but never used                  @typescript-eslint/no-unused-vars
+   5:22  error  'map' is defined but never used                         @typescript-eslint/no-unused-vars
+  14:32  error  Use built-in control flow instead of directive ngForOf  @angular-eslint/template/prefer-control-flow
+
+E:\Programming\epicenter-app2\src\app\features\attendance\components\attendance-history\attendance-history.spec.ts
+  12:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\features\attendance\components\attendance-history\attendance-history.ts
+  135:24  error  Unexpected any. Specify a different type                                                                                                                                             @typescript-eslint/no-explicit-any
+   35:38  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   35:44  error  Async pipe results should not be negated. Use `(observable | async) === false`, `(observable | async) === null`, or `(observable | async) === undefined` to check its value instead  @angular-eslint/template/no-negated-async
+   39:25  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   57:28  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   58:28  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   66:29  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   69:29  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   91:20  error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+
+E:\Programming\epicenter-app2\src\app\features\attendance\components\attendance-layout\attendance-layout.spec.ts
+  7:10  error  'CheckInKiosk' is defined but never used       @typescript-eslint/no-unused-vars
+  8:10  error  'ActiveSessions' is defined but never used     @typescript-eslint/no-unused-vars
+  9:10  error  'AttendanceHistory' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\Programming\epicenter-app2\src\app\features\attendance\components\check-in-kiosk\check-in-kiosk.spec.ts
+   16:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   17:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   18:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   87:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  161:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  167:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\features\attendance\components\check-in-kiosk\check-in-kiosk.ts
+  124:33  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  160:23  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   35:44  error  Use built-in control flow instead of directive ngForOf  @angular-eslint/template/prefer-control-flow
+   42:13  error  Use built-in control flow instead of directive ngIf     @angular-eslint/template/prefer-control-flow
+   47:36  error  Use built-in control flow instead of directive ngForOf  @angular-eslint/template/prefer-control-flow
+   61:24  error  Use built-in control flow instead of directive ngIf     @angular-eslint/template/prefer-control-flow
+   61:61  error  Use built-in control flow instead of directive ngIf     @angular-eslint/template/prefer-control-flow
+   62:24  error  Use built-in control flow instead of directive ngIf     @angular-eslint/template/prefer-control-flow
+
+E:\Programming\epicenter-app2\src\app\features\members\components\member-form\member-form.html
+  13:23  error  Use built-in control flow instead of directive ngIf  @angular-eslint/template/prefer-control-flow
+  20:25  error  Use built-in control flow instead of directive ngIf  @angular-eslint/template/prefer-control-flow
+  28:29  error  Use built-in control flow instead of directive ngIf  @angular-eslint/template/prefer-control-flow
+  49:29  error  Use built-in control flow instead of directive ngIf  @angular-eslint/template/prefer-control-flow
+  93:41  error  Use built-in control flow instead of directive ngIf  @angular-eslint/template/prefer-control-flow
+  94:20  error  Use built-in control flow instead of directive ngIf  @angular-eslint/template/prefer-control-flow
+
+E:\Programming\epicenter-app2\src\app\features\members\components\member-form\member-form.spec.ts
+   12:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   13:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   14:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:76  error  Unexpected empty arrow function           @typescript-eslint/no-empty-function
+
+E:\Programming\epicenter-app2\src\app\features\members\components\member-list\member-list.html
+  41:33  error  Use built-in control flow instead of directive ngIf  @angular-eslint/template/prefer-control-flow
+
+E:\Programming\epicenter-app2\src\app\features\members\components\member-list\member-list.spec.ts
+  13:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  50:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\features\members\components\member-list\member-list.ts
+  13:10  error  'Observable' is defined but never used    @typescript-eslint/no-unused-vars
+  50:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\features\progress\components\progress-dashboard\progress-dashboard.html
+    1:35   error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+    6:43   error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   14:98   error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   14:104  error  Async pipe results should not be negated. Use `(observable | async) === false`, `(observable | async) === null`, or `(observable | async) === undefined` to check its value instead  @angular-eslint/template/no-negated-async
+   19:30   error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   26:37   error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   39:37   error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   52:37   error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+   70:37   error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+  108:38   error  Use built-in control flow instead of directive ngIf                                                                                                                                  @angular-eslint/template/prefer-control-flow
+
+E:\Programming\epicenter-app2\src\app\features\progress\components\progress-dashboard\progress-dashboard.spec.ts
+  14:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  16:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  50:74  error  Unexpected empty arrow function           @typescript-eslint/no-empty-function
+  71:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\features\progress\components\progress-dashboard\progress-dashboard.ts
+  39:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Programming\epicenter-app2\src\app\features\progress\components\progress-form\progress-form.html
+  49:57  error  Use built-in control flow instead of directive ngIf  @angular-eslint/template/prefer-control-flow
+
+E:\Programming\epicenter-app2\src\app\features\progress\components\progress-form\progress-form.spec.ts
+    5:10  error  'of' is defined but never used            @typescript-eslint/no-unused-vars
+    5:14  error  'throwError' is defined but never used    @typescript-eslint/no-unused-vars
+   12:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   13:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   14:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:57  error  Unexpected empty arrow function           @typescript-eslint/no-empty-function
+
+Γ£û 130 problems (130 errors, 0 warnings)
+
+Lint errors found in the listed files.
+
