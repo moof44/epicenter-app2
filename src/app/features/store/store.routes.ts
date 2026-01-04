@@ -25,5 +25,15 @@ export const storeRoutes: Routes = [
     path: 'stats',
     loadComponent: () => import('./components/sales-analytics/sales-analytics').then(m => m.SalesAnalytics),
     data: { animation: 'StatsPage' }
+  },
+  {
+    path: 'cash',
+    loadComponent: () => import('./components/cash-management/cash-management').then(m => m.CashManagement),
+    data: { animation: 'CashPage' }
+  },
+  {
+    path: 'reports',
+    loadComponent: () => import('./components/shift-history/shift-history').then(m => m.ShiftHistory),
+    data: { animation: 'ReportsPage' }
   }
 ];

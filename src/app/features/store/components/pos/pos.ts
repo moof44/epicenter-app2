@@ -37,7 +37,11 @@ export class POS {
   selectedCategory: ProductCategory | 'All' = 'All';
   categories: (ProductCategory | 'All')[] = ['All', 'Supplement', 'Drink', 'Merch'];
   isProcessing = false;
+  cartExpanded = false;
 
+  toggleCart(): void {
+    this.cartExpanded = !this.cartExpanded;
+  }
 
   addToCart(product: Product): void {
     if (product.stock <= 0) {

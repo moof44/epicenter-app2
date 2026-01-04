@@ -13,8 +13,14 @@ import {
   writeBatch,
   increment
 } from '@angular/fire/firestore';
-import { Observable, BehaviorSubject, map, combineLatest } from 'rxjs';
+import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
 import { Product, CartItem, Transaction, ProductSalesData } from '../models/store.model';
+
+export interface SaleCompletedEvent {
+  transactionId: string;
+  amount: number;
+  timestamp: Date;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +33,10 @@ export class StoreService {
   // Cart state
   private cartItems = new BehaviorSubject<CartItem[]>([]);
   cart$ = this.cartItems.asObservable();
+
+  // Sale completed event for cash register integration
+  private saleCompleted = new Subject<SaleCompletedEvent>();
+  saleCompleted$ = this.saleCompleted.asObservable();
 
   // Products
   getProducts(): Observable<Product[]> {
@@ -139,6 +149,14 @@ export class StoreService {
 
     await batch.commit();
     this.clearCart();
+
+    // Emit sale completed event for cash register
+    this.saleCompleted.next({
+      transactionId: transactionRef.id,
+      amount: total,
+      timestamp: new Date()
+    });
+
     return transactionRef.id;
   }
 

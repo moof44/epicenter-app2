@@ -1,0 +1,16 @@
+<div class="shift-widget" *ngIf="currentShift$ | async as shift; else noShift">
+  <div class="shift-status open" (click)="openShiftModal()" (keydown.enter)="openShiftModal()" tabindex="0" role="button" matTooltip="Click to manage shift">
+    <mat-icon>point_of_sale</mat-icon>
+    <div class="shift-info">
+      <span class="status-label">Shift Open</span>
+      <span class="cash-amount">₱{{ shift.expectedClosingBalance | number:'1.2-2' }}</span>
+    </div>
+  </div>
+</div>
+
+<ng-template #noShift>
+  <button mat-stroked-button color="warn" class="open-shift-btn" (click)="openShiftModal()">
+    <mat-icon>lock_open</mat-icon>
+    Open Register
+  </button>
+</ng-template>

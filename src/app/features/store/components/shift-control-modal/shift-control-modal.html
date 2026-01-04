@@ -1,0 +1,95 @@
+<!-- Opening View -->
+<ng-container *ngIf="!isShiftOpen">
+  <h2 mat-dialog-title>
+    <mat-icon>lock_open</mat-icon>
+    Open Register
+  </h2>
+
+  <mat-dialog-content>
+    <p class="hint-text">Enter the starting cash amount in the register.</p>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Opening Balance</mat-label>
+      <span matTextPrefix>₱&nbsp;</span>
+      <input matInput type="number" [(ngModel)]="openingBalance" min="0" step="0.01">
+      <mat-hint *ngIf="suggestedBalance > 0">
+        Suggested from last shift: ₱{{ suggestedBalance | number:'1.2-2' }}
+      </mat-hint>
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="openShift()" [disabled]="isLoading">
+      <mat-icon>play_arrow</mat-icon>
+      {{ isLoading ? 'Opening...' : 'Open Shift' }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>
+
+<!-- Closing View -->
+<ng-container *ngIf="isShiftOpen && shiftSummary">
+  <h2 mat-dialog-title>
+    <mat-icon>lock</mat-icon>
+    Close Register
+  </h2>
+
+  <mat-dialog-content>
+    <div class="summary-section">
+      <h3>Shift Summary</h3>
+      
+      <div class="summary-row">
+        <span>Opening Balance</span>
+        <span>₱{{ shiftSummary.openingBalance | number:'1.2-2' }}</span>
+      </div>
+      
+      <mat-divider></mat-divider>
+      
+      <div class="summary-row positive">
+        <span>+ Total Sales</span>
+        <span>₱{{ shiftSummary.totalSales | number:'1.2-2' }}</span>
+      </div>
+      
+      <div class="summary-row positive">
+        <span>+ Cash In (Float)</span>
+        <span>₱{{ shiftSummary.totalFloatIn | number:'1.2-2' }}</span>
+      </div>
+      
+      <div class="summary-row negative">
+        <span>- Expenses</span>
+        <span>₱{{ shiftSummary.totalExpenses | number:'1.2-2' }}</span>
+      </div>
+      
+      <div class="summary-row negative">
+        <span>- Cash Out (Float)</span>
+        <span>₱{{ shiftSummary.totalFloatOut | number:'1.2-2' }}</span>
+      </div>
+      
+      <mat-divider></mat-divider>
+      
+      <div class="summary-row total">
+        <span>Expected Cash</span>
+        <span>₱{{ shiftSummary.expectedClosingBalance | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Actual Cash Count</mat-label>
+      <span matTextPrefix>₱&nbsp;</span>
+      <input matInput type="number" [(ngModel)]="actualClosingBalance" min="0" step="0.01">
+    </mat-form-field>
+
+    <div class="discrepancy" [class.over]="getDiscrepancy() > 0" [class.short]="getDiscrepancy() < 0" *ngIf="getDiscrepancy() !== 0">
+      <mat-icon>{{ getDiscrepancy() > 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+      <span>{{ getDiscrepancy() > 0 ? 'Over' : 'Short' }} by ₱{{ getDiscrepancy() | number:'1.2-2' | slice:1 }}</span>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="warn" (click)="closeShift()" [disabled]="isLoading">
+      <mat-icon>stop</mat-icon>
+      {{ isLoading ? 'Closing...' : 'Close Shift' }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>

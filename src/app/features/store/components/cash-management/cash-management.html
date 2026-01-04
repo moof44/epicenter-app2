@@ -1,0 +1,148 @@
+<div class="page-header">
+  <h1>Cash Management</h1>
+  <button mat-raised-button color="primary" (click)="openShiftModal()">
+    <mat-icon>settings</mat-icon> Shift Control
+  </button>
+</div>
+
+<ng-container *ngIf="currentShift$ | async as shift; else noShift">
+  <!-- Summary Cards -->
+  <div class="summary-cards" [@fadeIn]>
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <mat-icon>account_balance_wallet</mat-icon>
+        <div class="card-info">
+          <span class="label">Opening</span>
+          <span class="value">₱{{ shift.openingBalance | number:'1.2-2' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card sales">
+      <mat-card-content>
+        <mat-icon>point_of_sale</mat-icon>
+        <div class="card-info">
+          <span class="label">Sales</span>
+          <span class="value">₱{{ shift.totalSales | number:'1.2-2' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card expenses">
+      <mat-card-content>
+        <mat-icon>receipt</mat-icon>
+        <div class="card-info">
+          <span class="label">Expenses</span>
+          <span class="value">₱{{ shift.totalExpenses | number:'1.2-2' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card current">
+      <mat-card-content>
+        <mat-icon>savings</mat-icon>
+        <div class="card-info">
+          <span class="label">Current Cash</span>
+          <span class="value">₱{{ shift.expectedClosingBalance | number:'1.2-2' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button mat-raised-button color="warn" (click)="openForm('expense')">
+      <mat-icon>remove_circle</mat-icon> Add Expense
+    </button>
+    <button mat-raised-button color="accent" (click)="openForm('floatIn')">
+      <mat-icon>add_circle</mat-icon> Cash In
+    </button>
+    <button mat-stroked-button (click)="openForm('floatOut')">
+      <mat-icon>money_off</mat-icon> Cash Out
+    </button>
+  </div>
+
+
+  <!-- Transaction Form -->
+  <div class="form-card mat-elevation-z2" *ngIf="showForm" [@fadeIn]>
+    <h3>{{ getFormTitle() }}</h3>
+    <form (ngSubmit)="submitTransaction()" class="transaction-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Amount</mat-label>
+        <span matTextPrefix>₱&nbsp;</span>
+        <input matInput type="number" [(ngModel)]="formAmount" name="amount" required min="0.01" step="0.01">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Reason</mat-label>
+        <input matInput [(ngModel)]="formReason" name="reason" required 
+               placeholder="e.g., Bought purified water">
+      </mat-form-field>
+
+      <div class="form-actions">
+        <button mat-button type="button" (click)="closeForm()">Cancel</button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Saving...' : 'Save' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="mat-elevation-z2 table-container" [@fadeIn]>
+    <h3>Today's Cash Movements</h3>
+    <table mat-table [dataSource]="shift.transactions" class="full-width-table">
+      <ng-container matColumnDef="timestamp">
+        <th mat-header-cell *matHeaderCellDef>Time</th>
+        <td mat-cell *matCellDef="let tx">
+          {{ formatTimestamp(tx.timestamp) | date:'shortTime' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef>Type</th>
+        <td mat-cell *matCellDef="let tx">
+          <mat-chip-set>
+            <mat-chip [color]="getTypeColor(tx.type)" selected>
+              <mat-icon>{{ getTypeIcon(tx.type) }}</mat-icon>
+              {{ tx.type | titlecase }}
+            </mat-chip>
+          </mat-chip-set>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="reason">
+        <th mat-header-cell *matHeaderCellDef>Reason</th>
+        <td mat-cell *matCellDef="let tx">{{ tx.reason }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef>Amount</th>
+        <td mat-cell *matCellDef="let tx" 
+            [class.positive]="isPositive(tx.type)" 
+            [class.negative]="!isPositive(tx.type)">
+          {{ isPositive(tx.type) ? '+' : '-' }}₱{{ tx.amount | number:'1.2-2' }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <div *ngIf="shift.transactions.length === 0" class="empty-state">
+      <mat-icon>receipt_long</mat-icon>
+      <p>No transactions yet today</p>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #noShift>
+  <div class="no-shift-state" [@fadeIn]>
+    <mat-icon>lock</mat-icon>
+    <h2>Register is Closed</h2>
+    <p>Open the register to start recording cash movements.</p>
+    <button mat-raised-button color="primary" (click)="openShiftModal()">
+      <mat-icon>lock_open</mat-icon> Open Register
+    </button>
+  </div>
+</ng-template>

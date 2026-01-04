@@ -9,12 +9,14 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { slideInOut } from './core/animations/animations';
+import { ShiftStatusWidget } from './features/store/components/shift-status-widget/shift-status-widget';
 
 @Component({
   selector: 'app-root',
   imports: [
     CommonModule, RouterOutlet, RouterLink, RouterLinkActive,
-    MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule, MatDividerModule
+    MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule, MatDividerModule,
+    ShiftStatusWidget
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
