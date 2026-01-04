@@ -2,13 +2,13 @@ import { TestBed } from '@angular/core/testing';
 import { AttendanceService } from './attendance.service';
 import { Firestore } from '@angular/fire/firestore';
 import { of } from 'rxjs';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+// import { vi, describe, it, expect, beforeEach } from 'vitest';
 import * as firestorePkg from '@angular/fire/firestore';
 
-vi.mock('@angular/fire/firestore', async (importOriginal) => {
-    const actual = await importOriginal<typeof firestorePkg>();
+vi.mock('@angular/fire/firestore', async () => {
+    class Firestore {}
     return {
-        ...actual,
+        Firestore,
         collection: vi.fn(),
         collectionData: vi.fn(),
         addDoc: vi.fn(),
@@ -108,22 +108,31 @@ describe('AttendanceService', () => {
         expect(lockers.length).toBe(0);
     });
 
-    it('getHistoryByDate should query by date', async () => {
-        const mockDocs = [{ id: '1', data: () => ({ date: '2023-01-01', checkInTime: { seconds: 100 } }) }];
+    it('getHistoryByDate should query by date and sort', async () => {
+        const mockDocs = [
+            { id: '1', data: () => ({ date: '2023-01-01', checkInTime: { seconds: 100 } }) },
+            { id: '2', data: () => ({ date: '2023-01-01', checkInTime: { seconds: 200 } }) }
+        ];
         vi.mocked(firestorePkg.getDocs).mockResolvedValue({ docs: mockDocs } as any);
 
         const result = await service.getHistoryByDate('2023-01-01');
-        expect(result.length).toBe(1);
+        expect(result.length).toBe(2);
         expect(firestorePkg.where).toHaveBeenCalledWith('date', '==', '2023-01-01');
+        expect(result[0].id).toBe('2');
     });
 
-    it('getMemberAttendance should query by memberId', async () => {
-        const mockDocs = [{ id: '1', data: () => ({ memberId: '1', checkInTime: { seconds: 100 } }) }];
+    it('getMemberAttendance should query by memberId and sort', async () => {
+        const mockDocs = [
+            { id: '1', data: () => ({ memberId: '1', checkInTime: { seconds: 100 } }) },
+            { id: '2', data: () => ({ memberId: '1', checkInTime: { seconds: 200 } }) }
+        ];
         vi.mocked(firestorePkg.getDocs).mockResolvedValue({ docs: mockDocs } as any);
 
         const result = await service.getMemberAttendance('1');
-        expect(result.length).toBe(1);
+        expect(result.length).toBe(2);
         expect(firestorePkg.where).toHaveBeenCalledWith('memberId', '==', '1');
+        expect(result[0].id).toBe('2'); // Sorted desc
+        expect(result[1].id).toBe('1');
     });
 
     it('getOccupiedLockers should return used lockers', async () => {
@@ -143,5 +152,11 @@ describe('AttendanceService', () => {
         await service.checkOut('1');
         expect(firestorePkg.doc).toHaveBeenCalledWith(expect.anything(), 'attendance', '1');
         expect(firestorePkg.updateDoc).toHaveBeenCalled();
+    });
+
+    it('should format date string correctly (private method)', () => {
+        // Access private method to cover default parameter
+        const dateStr = (service as any).getLocalDateString();
+        expect(dateStr).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 });

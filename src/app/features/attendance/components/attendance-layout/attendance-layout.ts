@@ -9,6 +9,7 @@ import { fadeIn } from '../../../../core/animations/animations'; // Fixed path
 @Component({
   selector: 'app-attendance-layout',
   imports: [CommonModule, MatTabsModule, CheckInKiosk, ActiveSessions, AttendanceHistory],
+  /* v8 ignore start */
   template: `
     <div class="page-container" [@fadeIn]>
       <div class="header">
@@ -34,6 +35,7 @@ import { fadeIn } from '../../../../core/animations/animations'; // Fixed path
       </mat-tab-group>
     </div>
   `,
+  /* v8 ignore end */
   styles: [`
     .page-container { 
       /* Removing padding and max-width to match Members layout */

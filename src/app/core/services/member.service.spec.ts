@@ -2,13 +2,13 @@ import { TestBed } from '@angular/core/testing';
 import { MemberService } from './member.service';
 import { Firestore } from '@angular/fire/firestore';
 import { of } from 'rxjs';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+// import { vi, describe, it, expect, beforeEach } from 'vitest';
 import * as firestorePkg from '@angular/fire/firestore';
 
-vi.mock('@angular/fire/firestore', async (importOriginal) => {
-    const actual = await importOriginal<typeof firestorePkg>();
+vi.mock('@angular/fire/firestore', async () => {
+    class Firestore {}
     return {
-        ...actual,
+        Firestore,
         collection: vi.fn(),
         collectionData: vi.fn(),
         addDoc: vi.fn(),
@@ -16,7 +16,8 @@ vi.mock('@angular/fire/firestore', async (importOriginal) => {
         updateDoc: vi.fn(),
         query: vi.fn(),
         orderBy: vi.fn(),
-        docData: vi.fn()
+        docData: vi.fn(),
+        getFirestore: vi.fn()
     };
 });
 

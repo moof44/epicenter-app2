@@ -2,13 +2,13 @@ import { TestBed } from '@angular/core/testing';
 import { ProgressService } from './progress.service';
 import { Firestore } from '@angular/fire/firestore';
 import { of } from 'rxjs';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+// import { vi, describe, it, expect, beforeEach } from 'vitest';
 import * as firestorePkg from '@angular/fire/firestore';
 
-vi.mock('@angular/fire/firestore', async (importOriginal) => {
-    const actual = await importOriginal<typeof firestorePkg>();
+vi.mock('@angular/fire/firestore', async () => {
+    class Firestore {}
     return {
-        ...actual,
+        Firestore,
         collection: vi.fn(),
         collectionData: vi.fn(),
         addDoc: vi.fn(),
