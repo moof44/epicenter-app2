@@ -20,6 +20,30 @@
           <mat-icon matListItemIcon>event_available</mat-icon>
           <span matListItemTitle>Attendance</span>
         </a>
+
+        <mat-divider></mat-divider>
+        <div class="nav-section-title">Store</div>
+
+        <a mat-list-item routerLink="/store/pos" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>point_of_sale</mat-icon>
+          <span matListItemTitle>Point of Sale</span>
+        </a>
+        <a mat-list-item routerLink="/store/manage" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>inventory_2</mat-icon>
+          <span matListItemTitle>Products</span>
+        </a>
+        <a mat-list-item routerLink="/store/history" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>receipt_long</mat-icon>
+          <span matListItemTitle>Transactions</span>
+        </a>
+        <a mat-list-item routerLink="/store/stats" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>analytics</mat-icon>
+          <span matListItemTitle>Analytics</span>
+        </a>
       </mat-nav-list>
     </mat-sidenav>
 

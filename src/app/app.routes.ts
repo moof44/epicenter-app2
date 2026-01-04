@@ -16,4 +16,9 @@ export const routes: Routes = [
         loadComponent: () => import('./features/attendance/components/attendance-layout/attendance-layout').then(m => m.AttendanceLayout),
         data: { animation: 'ListPage' }
     },
+    {
+        path: 'store',
+        loadChildren: () => import('./features/store/store.routes').then(m => m.storeRoutes),
+        data: { animation: 'StorePage' }
+    },
 ];

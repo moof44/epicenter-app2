@@ -1,0 +1,126 @@
+<div class="page-header">
+  <h1>Sales Analytics</h1>
+</div>
+
+<ng-container *ngIf="analytics$ | async as analytics">
+  <!-- Summary Cards -->
+  <div class="summary-cards" [@fadeIn]>
+    <mat-card class="summary-card revenue">
+      <mat-card-content>
+        <mat-icon>payments</mat-icon>
+        <div class="card-info">
+          <span class="label">Total Revenue</span>
+          <span class="value">₱{{ analytics.totalRevenue | number:'1.2-2' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card products">
+      <mat-card-content>
+        <mat-icon>trending_up</mat-icon>
+        <div class="card-info">
+          <span class="label">Top Seller</span>
+          <span class="value">{{ analytics.topSelling[0]?.productName || 'N/A' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card transactions">
+      <mat-card-content>
+        <mat-icon>receipt_long</mat-icon>
+        <div class="card-info">
+          <span class="label">Units Sold (Top)</span>
+          <span class="value">{{ analytics.topSelling[0]?.totalQuantitySold || 0 }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Top Selling Products -->
+  <div class="analytics-section" [@fadeIn]>
+    <h2><mat-icon>star</mat-icon> Top Selling Products</h2>
+    <div class="mat-elevation-z2 table-container">
+      <table mat-table [dataSource]="analytics.topSelling" class="full-width-table">
+        <ng-container matColumnDef="rank">
+          <th mat-header-cell *matHeaderCellDef>#</th>
+          <td mat-cell *matCellDef="let product; let i = index">
+            <span class="rank-badge" [class.gold]="i === 0" [class.silver]="i === 1" [class.bronze]="i === 2">
+              {{ i + 1 }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="productName">
+          <th mat-header-cell *matHeaderCellDef>Product</th>
+          <td mat-cell *matCellDef="let product">{{ product.productName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="totalQuantitySold">
+          <th mat-header-cell *matHeaderCellDef>Units Sold</th>
+          <td mat-cell *matCellDef="let product">
+            <div class="progress-cell">
+              <span>{{ product.totalQuantitySold }}</span>
+              <mat-progress-bar mode="determinate" 
+                [value]="(product.totalQuantitySold / getMaxQuantity(analytics.topSelling)) * 100">
+              </mat-progress-bar>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="totalRevenue">
+          <th mat-header-cell *matHeaderCellDef>Revenue</th>
+          <td mat-cell *matCellDef="let product" class="revenue-cell">
+            ₱{{ product.totalRevenue | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <div *ngIf="analytics.topSelling.length === 0" class="empty-state">
+        <mat-icon>analytics</mat-icon>
+        <p>No sales data yet</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Low Performance Products -->
+  <div class="analytics-section" [@fadeIn]>
+    <h2><mat-icon>trending_down</mat-icon> Low Performance Products</h2>
+    <div class="mat-elevation-z2 table-container">
+      <table mat-table [dataSource]="analytics.lowPerformance" class="full-width-table">
+        <ng-container matColumnDef="rank">
+          <th mat-header-cell *matHeaderCellDef>#</th>
+          <td mat-cell *matCellDef="let product; let i = index">{{ i + 1 }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="productName">
+          <th mat-header-cell *matHeaderCellDef>Product</th>
+          <td mat-cell *matCellDef="let product">{{ product.productName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="totalQuantitySold">
+          <th mat-header-cell *matHeaderCellDef>Units Sold</th>
+          <td mat-cell *matCellDef="let product">{{ product.totalQuantitySold }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="totalRevenue">
+          <th mat-header-cell *matHeaderCellDef>Revenue</th>
+          <td mat-cell *matCellDef="let product" class="revenue-cell low">
+            ₱{{ product.totalRevenue | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <div *ngIf="analytics.lowPerformance.length === 0" class="empty-state">
+        <mat-icon>analytics</mat-icon>
+        <p>No sales data yet</p>
+      </div>
+    </div>
+  </div>
+</ng-container>

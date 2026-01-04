@@ -1,0 +1,96 @@
+<div class="pos-container">
+  <!-- Left: Products Grid -->
+  <div class="products-section">
+    <div class="section-header">
+      <h2>Products</h2>
+      <mat-chip-listbox [(ngModel)]="selectedCategory" class="category-filter">
+        <mat-chip-option *ngFor="let cat of categories" [value]="cat">
+          {{ cat }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+
+    <div class="products-grid" *ngIf="products$ | async as products">
+      <mat-card *ngFor="let product of filterProducts(products)" 
+                class="product-card" 
+                [class.out-of-stock]="product.stock <= 0"
+                (click)="addToCart(product)"
+                [@fadeIn]>
+        <div class="product-image">
+          <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
+          <mat-icon *ngIf="!product.imageUrl" class="placeholder-icon">
+            {{ getCategoryIcon(product.category) }}
+          </mat-icon>
+        </div>
+        <mat-card-content>
+          <h3 class="product-name">{{ product.name }}</h3>
+          <p class="product-price">₱{{ product.price | number:'1.2-2' }}</p>
+          <p class="product-stock" [class.low]="product.stock < 10">
+            Stock: {{ product.stock }}
+          </p>
+        </mat-card-content>
+      </mat-card>
+
+      <div *ngIf="filterProducts(products).length === 0" class="empty-state">
+        <mat-icon>inventory_2</mat-icon>
+        <p>No products in this category</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Right: Cart Summary -->
+  <div class="cart-section mat-elevation-z4">
+    <div class="cart-header">
+      <h2>
+        <mat-icon>shopping_cart</mat-icon>
+        Cart
+      </h2>
+      <button mat-icon-button (click)="clearCart()" matTooltip="Clear Cart" *ngIf="(cart$ | async)?.length">
+        <mat-icon>delete_sweep</mat-icon>
+      </button>
+    </div>
+
+    <div class="cart-items" *ngIf="cart$ | async as cartItems">
+      <div *ngIf="cartItems.length === 0" class="empty-cart">
+        <mat-icon>remove_shopping_cart</mat-icon>
+        <p>Cart is empty</p>
+      </div>
+
+      <div *ngFor="let item of cartItems" class="cart-item" [@fadeIn]>
+        <div class="item-info">
+          <span class="item-name">{{ item.productName }}</span>
+          <span class="item-price">₱{{ item.price | number:'1.2-2' }} each</span>
+        </div>
+        <div class="item-controls">
+          <button mat-icon-button (click)="updateQuantity(item, -1)">
+            <mat-icon>remove</mat-icon>
+          </button>
+          <span class="quantity">{{ item.quantity }}</span>
+          <button mat-icon-button (click)="updateQuantity(item, 1)">
+            <mat-icon>add</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="removeItem(item.productId)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="item-subtotal">₱{{ item.subtotal | number:'1.2-2' }}</div>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span>Total:</span>
+        <span class="total-amount">₱{{ (cartTotal$ | async) | number:'1.2-2' }}</span>
+      </div>
+      <button mat-raised-button color="primary" class="checkout-btn"
+              (click)="checkout()" 
+              [disabled]="isProcessing || !(cart$ | async)?.length">
+        <mat-icon>point_of_sale</mat-icon>
+        {{ isProcessing ? 'Processing...' : 'Checkout' }}
+      </button>
+    </div>
+  </div>
+</div>

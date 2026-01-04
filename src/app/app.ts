@@ -7,13 +7,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
+import { MatDividerModule } from '@angular/material/divider';
 import { slideInOut } from './core/animations/animations';
 
 @Component({
   selector: 'app-root',
   imports: [
     CommonModule, RouterOutlet, RouterLink, RouterLinkActive,
-    MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule
+    MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule, MatDividerModule
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
