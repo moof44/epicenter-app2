@@ -16,9 +16,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 @Component({
   selector: 'app-attendance-history',
   imports: [
-      CommonModule, ReactiveFormsModule, FormsModule, MatTableModule, 
-      MatDatepickerModule, MatNativeDateModule, MatFormFieldModule, MatInputModule,
-      MatProgressSpinnerModule
+    CommonModule, ReactiveFormsModule, FormsModule, MatTableModule,
+    MatDatepickerModule, MatNativeDateModule, MatFormFieldModule, MatInputModule,
+    MatProgressSpinnerModule
   ],
   template: `
     <div class="history-container" [@fadeIn]>
@@ -114,25 +114,29 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   animations: [fadeIn, staggerList]
 })
 export class AttendanceHistory {
-    private attendanceService = inject(AttendanceService);
-    
-    dateControl = new FormControl(new Date());
-    
-    history$: Observable<AttendanceRecord[]> = this.dateControl.valueChanges.pipe(
-        startWith(new Date()),
-        switchMap(date => {
-            const dateStr = date ? date.toISOString().split('T')[0] : '';
-            return this.attendanceService.getHistoryByDate(dateStr);
-        })
-    );
+  private attendanceService = inject(AttendanceService);
 
-    displayedColumns: string[] = ['name', 'lockerNumber', 'expiration', 'checkInTime', 'checkOutTime', 'status'];
-    
-    isExpired(timestamp: any): boolean {
-        if (!timestamp) return false;
-        const exp = new Date(timestamp.seconds * 1000);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); 
-        return exp < today;
-    }
+  dateControl = new FormControl(new Date());
+
+  history$: Observable<AttendanceRecord[]> = this.dateControl.valueChanges.pipe(
+    startWith(new Date()),
+    switchMap(date => {
+      if (!date) return this.attendanceService.getHistoryByDate('');
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      return this.attendanceService.getHistoryByDate(dateStr);
+    })
+  );
+
+  displayedColumns: string[] = ['name', 'lockerNumber', 'expiration', 'checkInTime', 'checkOutTime', 'status'];
+
+  isExpired(timestamp: any): boolean {
+    if (!timestamp) return false;
+    const exp = new Date(timestamp.seconds * 1000);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return exp < today;
+  }
 }

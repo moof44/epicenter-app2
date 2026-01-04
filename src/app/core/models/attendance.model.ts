@@ -8,6 +8,6 @@ export interface AttendanceRecord {
     lockerNumber?: number | null; // 1-12 or null
     date: string; // YYYY-MM-DD
     status: 'Checked In' | 'Checked Out';
-    memberSubscription?: string;
-    memberExpiration?: any; // Timestamp or Date or string
+    memberSubscription?: string | null;
+    memberExpiration?: any | null; // Timestamp or Date or string
 }
