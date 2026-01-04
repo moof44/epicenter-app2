@@ -38,15 +38,16 @@
     </div>
   </div>
 
-
   <!-- Right: Cart Summary -->
-  <div class="cart-section mat-elevation-z4">
-    <div class="cart-header">
+  <div class="cart-section mat-elevation-z4" [class.expanded]="cartExpanded">
+    <div class="cart-header" (click)="toggleCart()" (keydown.enter)="toggleCart()" tabindex="0" role="button">
       <h2>
         <mat-icon>shopping_cart</mat-icon>
         Cart
+        <span class="cart-count" *ngIf="(cart$ | async)?.length as count">({{ count }})</span>
       </h2>
-      <button mat-icon-button (click)="clearCart()" matTooltip="Clear Cart" *ngIf="(cart$ | async)?.length">
+      <button mat-icon-button (click)="clearCart(); $event.stopPropagation()" 
+              matTooltip="Clear Cart" *ngIf="(cart$ | async)?.length">
         <mat-icon>delete_sweep</mat-icon>
       </button>
     </div>
@@ -63,22 +64,20 @@
           <span class="item-price">₱{{ item.price | number:'1.2-2' }} each</span>
         </div>
         <div class="item-controls">
-          <button mat-icon-button (click)="updateQuantity(item, -1)">
+          <button mat-icon-button (click)="updateQuantity(item, -1); $event.stopPropagation()">
             <mat-icon>remove</mat-icon>
           </button>
           <span class="quantity">{{ item.quantity }}</span>
-          <button mat-icon-button (click)="updateQuantity(item, 1)">
+          <button mat-icon-button (click)="updateQuantity(item, 1); $event.stopPropagation()">
             <mat-icon>add</mat-icon>
           </button>
-          <button mat-icon-button color="warn" (click)="removeItem(item.productId)">
+          <button mat-icon-button color="warn" (click)="removeItem(item.productId); $event.stopPropagation()">
             <mat-icon>close</mat-icon>
           </button>
         </div>
         <div class="item-subtotal">₱{{ item.subtotal | number:'1.2-2' }}</div>
       </div>
     </div>
-
-    <mat-divider></mat-divider>
 
     <div class="cart-footer">
       <div class="cart-total">

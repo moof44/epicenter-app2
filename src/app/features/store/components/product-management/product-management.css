@@ -2,13 +2,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .page-header h1 {
   margin: 0;
 }
 
+/* Form Card */
 .form-card {
   background: white;
   padding: 24px;
@@ -39,14 +42,22 @@
   margin-top: 8px;
 }
 
+.form-actions button {
+  min-height: 44px;
+}
+
+/* Table Container - Same as member-list */
 .table-container {
+  overflow: auto;
+  border-radius: 4px;
+  position: relative;
+  min-height: 200px;
   background: white;
-  border-radius: 8px;
-  overflow: hidden;
 }
 
 .full-width-table {
   width: 100%;
+  min-width: 600px;
 }
 
 .product-info {
@@ -60,6 +71,7 @@
   height: 40px;
   object-fit: cover;
   border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .low-stock {
@@ -73,4 +85,24 @@
   width: 16px;
   vertical-align: middle;
   margin-left: 4px;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header button {
+    min-height: 44px;
+  }
+
+  .form-card {
+    padding: 16px;
+  }
+
+  .product-form {
+    grid-template-columns: 1fr;
+  }
 }

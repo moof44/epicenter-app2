@@ -4,6 +4,8 @@
       <mat-icon>menu</mat-icon>
     </button>
     <span>Epicenter Gym Management System</span>
+    <span class="toolbar-spacer"></span>
+    <app-shift-status-widget></app-shift-status-widget>
   </mat-toolbar>
 
   <mat-sidenav-container class="sidenav-container">
@@ -43,6 +45,16 @@
           (click)="mobileQuery.matches ? snav.close() : null">
           <mat-icon matListItemIcon>analytics</mat-icon>
           <span matListItemTitle>Analytics</span>
+        </a>
+        <a mat-list-item routerLink="/store/cash" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
+          <span matListItemTitle>Cash Register</span>
+        </a>
+        <a mat-list-item routerLink="/store/reports" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>summarize</mat-icon>
+          <span matListItemTitle>Cash Reports</span>
         </a>
       </mat-nav-list>
     </mat-sidenav>

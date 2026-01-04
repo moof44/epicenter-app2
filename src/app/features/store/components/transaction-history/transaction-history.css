@@ -4,16 +4,21 @@
 
 .page-header h1 {
   margin: 0;
+  font-size: 24px;
 }
 
+/* Table Container - Simple horizontal scroll */
 .table-container {
   background: white;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: auto;
+  position: relative;
+  min-height: 200px;
 }
 
 .full-width-table {
   width: 100%;
+  min-width: 600px;
 }
 
 .items-panel {
@@ -39,4 +44,16 @@
   font-weight: 600;
   color: #1976d2;
   font-size: 16px;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .page-header h1 {
+    font-size: 20px;
+  }
+
+  .item-row {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
 }

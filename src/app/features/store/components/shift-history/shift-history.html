@@ -1,0 +1,242 @@
+<mat-drawer-container class="drawer-container">
+  <!-- Main Content -->
+  <mat-drawer-content>
+    <div class="page-header">
+      <h1>Cash Reports & Shift History</h1>
+    </div>
+
+    <div class="mat-elevation-z2 table-container" [@fadeIn]>
+      <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
+        
+        <!-- Date Column -->
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Date/Time</th>
+          <td mat-cell *matCellDef="let shift">
+            <div class="date-cell">
+              <span class="date">{{ formatDate(shift.startTime) | date:'mediumDate' }}</span>
+              <span class="time">{{ formatDate(shift.startTime) | date:'shortTime' }} - {{ formatDate(shift.endTime) | date:'shortTime' }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Opening Cash Column -->
+        <ng-container matColumnDef="openingCash">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Opening</th>
+          <td mat-cell *matCellDef="let shift">
+            ₱{{ shift.openingBalance | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <!-- Sales Column -->
+        <ng-container matColumnDef="sales">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Sales</th>
+          <td mat-cell *matCellDef="let shift" class="sales-cell">
+            +₱{{ shift.totalSales | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <!-- Expenses Column -->
+        <ng-container matColumnDef="expenses">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Expenses</th>
+          <td mat-cell *matCellDef="let shift" class="expenses-cell">
+            -₱{{ shift.totalExpenses | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <!-- Ending Balance Column -->
+        <ng-container matColumnDef="endingBalance">
+          <th mat-header-cell *matHeaderCellDef>Ending Balance</th>
+          <td mat-cell *matCellDef="let shift">
+            <div class="balance-cell">
+              <span class="expected" matTooltip="Expected">₱{{ shift.expectedClosingBalance | number:'1.2-2' }}</span>
+              <span class="vs">vs</span>
+              <span class="actual" matTooltip="Actual">₱{{ shift.actualClosingBalance | number:'1.2-2' }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Variance Column -->
+        <ng-container matColumnDef="variance">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Variance</th>
+          <td mat-cell *matCellDef="let shift">
+            <mat-chip-set>
+              <mat-chip [class]="'variance-chip ' + getVarianceType(shift)">
+                <mat-icon>{{ getVarianceIcon(getVarianceType(shift)) }}</mat-icon>
+                <span *ngIf="getVariance(shift) === 0">Balanced</span>
+                <span *ngIf="getVariance(shift) !== 0">
+                  {{ getVariance(shift) > 0 ? '+' : '' }}₱{{ getVariance(shift) | number:'1.2-2' }}
+                </span>
+              </mat-chip>
+            </mat-chip-set>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let shift">
+            <button mat-icon-button (click)="viewDetails(shift)" matTooltip="View Details">
+              <mat-icon>visibility</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+            class="clickable-row" (click)="viewDetails(row)"></tr>
+      </table>
+
+      <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+
+      <div *ngIf="dataSource.data.length === 0" class="empty-state">
+        <mat-icon>history</mat-icon>
+        <p>No shift history yet</p>
+      </div>
+    </div>
+  </mat-drawer-content>
+
+
+  <!-- Detail Drawer -->
+  <mat-drawer #detailDrawer mode="over" position="end" class="detail-drawer">
+    <ng-container *ngIf="selectedShift">
+      <div class="drawer-header">
+        <h2>Shift Details</h2>
+        <button mat-icon-button (click)="closeDetails()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="drawer-content">
+        <!-- Shift Summary -->
+        <div class="shift-summary">
+          <div class="summary-row">
+            <span class="label">Date</span>
+            <span class="value">{{ formatDate(selectedShift.startTime) | date:'fullDate' }}</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Duration</span>
+            <span class="value">
+              {{ formatDate(selectedShift.startTime) | date:'shortTime' }} - 
+              {{ formatDate(selectedShift.endTime) | date:'shortTime' }}
+            </span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Opened By</span>
+            <span class="value">{{ selectedShift.openedBy }}</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Closed By</span>
+            <span class="value">{{ selectedShift.closedBy }}</span>
+          </div>
+          
+          <mat-divider></mat-divider>
+
+          <div class="summary-row">
+            <span class="label">Opening Balance</span>
+            <span class="value">₱{{ selectedShift.openingBalance | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Net Cash Flow</span>
+            <span class="value" [class.positive]="getNetCashFlow(selectedShift) >= 0" 
+                  [class.negative]="getNetCashFlow(selectedShift) < 0">
+              {{ getNetCashFlow(selectedShift) >= 0 ? '+' : '' }}₱{{ getNetCashFlow(selectedShift) | number:'1.2-2' }}
+            </span>
+          </div>
+          <div class="summary-row highlight">
+            <span class="label">Variance</span>
+            <span class="value variance" [class]="getVarianceType(selectedShift)">
+              <mat-icon>{{ getVarianceIcon(getVarianceType(selectedShift)) }}</mat-icon>
+              {{ getVarianceLabel(getVarianceType(selectedShift)) }}
+              <span *ngIf="getVariance(selectedShift) !== 0">
+                ({{ getVariance(selectedShift) > 0 ? '+' : '' }}₱{{ getVariance(selectedShift) | number:'1.2-2' }})
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Transaction Tabs -->
+        <mat-tab-group>
+          <!-- Sales Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>point_of_sale</mat-icon>
+              Sales ({{ getSalesTransactions(selectedShift).length }})
+            </ng-template>
+            <div class="tab-content">
+              <div *ngIf="getSalesTransactions(selectedShift).length === 0" class="empty-tab">
+                No sales in this shift
+              </div>
+              <div *ngFor="let tx of getSalesTransactions(selectedShift)" class="transaction-item">
+                <div class="tx-info">
+                  <span class="tx-reason">{{ tx.reason }}</span>
+                  <span class="tx-time">{{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
+                </div>
+                <span class="tx-amount positive">+₱{{ tx.amount | number:'1.2-2' }}</span>
+              </div>
+              <div class="tab-total" *ngIf="getSalesTransactions(selectedShift).length > 0">
+                <span>Total Sales</span>
+                <span class="positive">₱{{ selectedShift.totalSales | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </mat-tab>
+
+          <!-- Expenses Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>receipt</mat-icon>
+              Expenses ({{ getExpenseTransactions(selectedShift).length }})
+            </ng-template>
+            <div class="tab-content">
+              <div *ngIf="getExpenseTransactions(selectedShift).length === 0" class="empty-tab">
+                No expenses in this shift
+              </div>
+              <div *ngFor="let tx of getExpenseTransactions(selectedShift)" class="transaction-item">
+                <div class="tx-info">
+                  <span class="tx-reason">{{ tx.reason }}</span>
+                  <span class="tx-time">{{ formatDate(tx.timestamp) | date:'shortTime' }} · {{ tx.performedBy }}</span>
+                </div>
+                <span class="tx-amount negative">-₱{{ tx.amount | number:'1.2-2' }}</span>
+              </div>
+              <div class="tab-total" *ngIf="getExpenseTransactions(selectedShift).length > 0">
+                <span>Total Expenses</span>
+                <span class="negative">₱{{ selectedShift.totalExpenses | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </mat-tab>
+
+          <!-- Float In/Out Tab -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon>swap_horiz</mat-icon>
+              Float ({{ getFloatInTransactions(selectedShift).length + getFloatOutTransactions(selectedShift).length }})
+            </ng-template>
+            <div class="tab-content">
+              <div *ngIf="getFloatInTransactions(selectedShift).length === 0 && getFloatOutTransactions(selectedShift).length === 0" 
+                   class="empty-tab">
+                No float transactions in this shift
+              </div>
+              
+              <div *ngFor="let tx of getFloatInTransactions(selectedShift)" class="transaction-item">
+                <div class="tx-info">
+                  <mat-icon class="tx-icon positive">add_circle</mat-icon>
+                  <span class="tx-reason">{{ tx.reason }}</span>
+                  <span class="tx-time">{{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
+                </div>
+                <span class="tx-amount positive">+₱{{ tx.amount | number:'1.2-2' }}</span>
+              </div>
+              
+              <div *ngFor="let tx of getFloatOutTransactions(selectedShift)" class="transaction-item">
+                <div class="tx-info">
+                  <mat-icon class="tx-icon negative">remove_circle</mat-icon>
+                  <span class="tx-reason">{{ tx.reason }}</span>
+                  <span class="tx-time">{{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
+                </div>
+                <span class="tx-amount negative">-₱{{ tx.amount | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+    </ng-container>
+  </mat-drawer>
+</mat-drawer-container>
