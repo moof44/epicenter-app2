@@ -40,5 +40,15 @@ export const storeRoutes: Routes = [
     path: 'stock-take',
     loadComponent: () => import('./components/stock-take/stock-take.component').then(m => m.StockTakeComponent),
     data: { animation: 'StockTakePage' }
+  },
+  {
+    path: 'restock',
+    loadComponent: () => import('./components/purchase-entry/purchase-entry.component').then(m => m.PurchaseEntryComponent),
+    data: { animation: 'RestockPage' }
+  },
+  {
+    path: 'purchases',
+    loadComponent: () => import('./components/purchase-history/purchase-history.component').then(m => m.PurchaseHistoryComponent),
+    data: { animation: 'PurchaseHistoryPage' }
   }
 ];

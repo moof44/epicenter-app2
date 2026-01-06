@@ -1,0 +1,97 @@
+<div class="container" @fadeIn>
+  <div class="header">
+    <h1>Purchase History</h1>
+  </div>
+
+  <div class="summary-cards">
+    <div class="card">
+      <div class="card-title">Total Spent (All Time)</div>
+      <div class="card-value">{{ totalSpent | currency }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Orders This Month</div>
+      <div class="card-value">{{ ordersThisMonth }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recent Spending (30d)</div>
+      <div class="card-value">{{ recentSpending | currency }}</div>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table mat-table [dataSource]="dataSource" multiTemplateDataRows>
+      
+      <!-- Date Column -->
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef> Date </th>
+        <td mat-cell *matCellDef="let element"> {{element.date?.toDate() | date}} </td>
+      </ng-container>
+
+      <!-- Supplier Column -->
+      <ng-container matColumnDef="supplier">
+        <th mat-header-cell *matHeaderCellDef> Supplier </th>
+        <td mat-cell *matCellDef="let element"> {{element.supplierName}} </td>
+      </ng-container>
+
+      <!-- Items Count -->
+      <ng-container matColumnDef="items">
+        <th mat-header-cell *matHeaderCellDef> Items </th>
+        <td mat-cell *matCellDef="let element"> {{element.items.length}} </td>
+      </ng-container>
+
+      <!-- Total Cost -->
+      <ng-container matColumnDef="total">
+        <th mat-header-cell *matHeaderCellDef> Total Cost </th>
+        <td mat-cell *matCellDef="let element"> 
+          <strong>{{element.totalCost | currency}}</strong>
+        </td>
+      </ng-container>
+
+      <!-- Expand Toggle -->
+      <ng-container matColumnDef="expand">
+        <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
+        <td mat-cell *matCellDef="let element">
+          <button mat-icon-button aria-label="expand row" (click)="(expandedElement = expandedElement === element ? null : element); $event.stopPropagation()">
+            <mat-icon *ngIf="expandedElement !== element">keyboard_arrow_down</mat-icon>
+            <mat-icon *ngIf="expandedElement === element">keyboard_arrow_up</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Expanded Content Column -->
+      <ng-container matColumnDef="expandedDetail">
+        <td mat-cell *matCellDef="let element" [attr.colspan]="columnsToDisplayWithExpand.length">
+          <div class="element-detail"
+               [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
+            <div class="detail-content">
+              <h4>Order Details <span style="font-weight: normal; color: #666;">(Ref: {{element.referenceNumber || 'N/A'}})</span></h4>
+              <table class="detail-table" style="width: 100%; text-align: left;">
+                 <tr>
+                   <th>Product</th>
+                   <th>Qty</th>
+                   <th>Unit Cost</th>
+                   <th>Total</th>
+                 </tr>
+                 <tr *ngFor="let item of element.items">
+                   <td>{{item.productName}}</td>
+                   <td>{{item.quantity}}</td>
+                   <td>{{item.unitCost | currency}}</td>
+                   <td>{{item.totalRowCost | currency}}</td>
+                 </tr>
+              </table>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnsToDisplayWithExpand"></tr>
+      <tr mat-row *matRowDef="let element; columns: columnsToDisplayWithExpand;"
+          class="element-row"
+          [class.example-expanded-row]="expandedElement === element"
+          (click)="expandedElement = expandedElement === element ? null : element">
+      </tr>
+      <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="detail-row"></tr>
+    </table>
+    <mat-paginator [pageSizeOptions]="[10, 20]" showFirstLastButtons></mat-paginator>
+  </div>
+</div>

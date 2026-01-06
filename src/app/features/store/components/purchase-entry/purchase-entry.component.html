@@ -1,0 +1,102 @@
+<div class="page-container" @fadeIn>
+  <div class="page-header">
+    <h1>Restock Inventory</h1>
+  </div>
+
+  <form [formGroup]="purchaseForm">
+    <!-- Meta Data Card -->
+    <div class="form-card">
+      <h2 class="section-title">Purchase Details</h2>
+      <div class="meta-row">
+        <mat-form-field appearance="outline" class="meta-field">
+          <mat-label>Supplier Name</mat-label>
+          <input matInput formControlName="supplierName" placeholder="e.g. Costco">
+          <mat-icon matSuffix>store</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="meta-field">
+          <mat-label>Date</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="date">
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="meta-field">
+          <mat-label>Reference #</mat-label>
+          <input matInput formControlName="referenceNumber" placeholder="Receipt Number">
+          <mat-icon matSuffix>receipt</mat-icon>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Items Card -->
+    <div class="form-card">
+      <div class="items-header">
+        <h3>Items</h3>
+        <button mat-stroked-button color="primary" type="button" (click)="addItem()">
+          <mat-icon>add</mat-icon> Add Item
+        </button>
+      </div>
+
+      <div class="items-section" formArrayName="items">
+        <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="item-row">
+          <!-- Product Selection -->
+          <mat-form-field appearance="outline" class="product-select">
+            <mat-label>Product</mat-label>
+            <mat-select formControlName="productId" (selectionChange)="onProductSelected(i, $event.value)" #matSelect>
+              <mat-option>
+                <button mat-button class="w-full text-left" color="primary" (click)="openNewProductDialog(i); matSelect.close()">
+                  <mat-icon>add</mat-icon> Create New Product
+                </button>
+              </mat-option>
+              <mat-optgroup label="Retail">
+                <mat-option *ngFor="let p of retailProducts" [value]="p.id">
+                  {{ p.name }} (Stock: {{ p.stock }})
+                </mat-option>
+              </mat-optgroup>
+              <mat-optgroup label="Consumables">
+                <mat-option *ngFor="let p of consumableProducts" [value]="p.id">
+                  {{ p.name }} (Stock: {{ p.stock }})
+                </mat-option>
+              </mat-optgroup>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Qty -->
+          <mat-form-field appearance="outline" class="number-input">
+            <mat-label>Qty</mat-label>
+            <input matInput type="number" formControlName="quantity" min="1">
+          </mat-form-field>
+
+          <!-- Unit Cost -->
+          <mat-form-field appearance="outline" class="number-input">
+            <mat-label>Unit Cost</mat-label>
+            <span matTextPrefix>$&nbsp;</span>
+            <input matInput type="number" formControlName="unitCost" min="0">
+          </mat-form-field>
+
+          <!-- Total -->
+          <div class="row-total">
+            {{ (item.get('quantity')?.value * item.get('unitCost')?.value) | currency }}
+          </div>
+
+          <button mat-icon-button class="remove-btn" type="button" (click)="removeItem(i)" matTooltip="Remove Item">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </div>
+      </div>
+       <div *ngIf="items.length === 0" class="no-items-placeholder">
+          No items added. Click "Add Item" to start.
+       </div>
+    </div>
+
+    <!-- Sticky Footer -->
+    <div class="actions-bar">
+      <div class="total-label">Total Cost: <span class="total-amount">{{ totalCost | currency }}</span></div>
+      
+      <button mat-raised-button color="primary" [disabled]="purchaseForm.invalid || items.length === 0" (click)="save()">
+        <mat-icon>save</mat-icon> Record Purchase
+      </button>
+    </div>
+  </form>
+</div>
