@@ -106,3 +106,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.out-of-stock {
+  color: #b71c1c;
+  font-weight: bold;
+  background-color: #ffebee;
+}

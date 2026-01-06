@@ -1,40 +1,80 @@
 <div class="page-header">
-  <h1>Product Management</h1>
+  <div>
+    <h1>Product Management</h1>
+    <p class="subtitle">Manage simplified inventory and consumables</p>
+  </div>
   <button mat-raised-button color="primary" (click)="openAddForm()">
     <mat-icon>add</mat-icon> Add Product
   </button>
 </div>
 
+<!-- Tabs -->
+<mat-tab-group
+  (selectedIndexChange)="onTabChange($event)"
+  animationDuration="0ms"
+  class="mat-elevation-z2"
+  style="background: white; border-radius: 4px; margin-bottom: 16px"
+>
+  <mat-tab label="Retail Items"></mat-tab>
+  <mat-tab label="Internal Consumables"></mat-tab>
+</mat-tab-group>
+
 <!-- Product Form -->
 <div class="form-card mat-elevation-z2" *ngIf="showForm" [@fadeIn]>
-  <h2>{{ editingProduct ? 'Edit Product' : 'Add New Product' }}</h2>
+  <h2>
+    {{
+      editingProduct
+        ? 'Edit Product'
+        : 'Add New ' + (currentFilter === 'RETAIL' ? 'Retail' : 'Consumable') + ' Item'
+    }}
+  </h2>
   <form (ngSubmit)="saveProduct()" class="product-form">
     <mat-form-field appearance="outline">
       <mat-label>Product Name</mat-label>
-      <input matInput [(ngModel)]="formData.name" name="name" required>
+      <input matInput [(ngModel)]="formData.name" name="name" required />
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
+    <!-- Category (Only for Retail usually, but keep for all as organization?) -->
+    <mat-form-field appearance="outline" *ngIf="currentFilter === 'RETAIL'">
       <mat-label>Category</mat-label>
       <mat-select [(ngModel)]="formData.category" name="category" required>
         <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
+    <!-- Price (Only Retail) -->
+    <mat-form-field appearance="outline" *ngIf="currentFilter === 'RETAIL'">
       <mat-label>Price</mat-label>
-      <input matInput type="number" [(ngModel)]="formData.price" name="price" required min="0">
+      <input matInput type="number" [(ngModel)]="formData.price" name="price" required min="0" />
       <span matTextPrefix>₱&nbsp;</span>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Stock</mat-label>
-      <input matInput type="number" [(ngModel)]="formData.stock" name="stock" required min="0">
+      <mat-label>Current Stock</mat-label>
+      <input matInput type="number" [(ngModel)]="formData.stock" name="stock" required min="0" />
+    </mat-form-field>
+
+    <!-- New Fields -->
+    <mat-form-field appearance="outline">
+      <mat-label>Min Stock Level</mat-label>
+      <input
+        matInput
+        type="number"
+        [(ngModel)]="formData.minStockLevel"
+        name="minStockLevel"
+        required
+        min="0"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Unit (e.g. Bottle, Roll)</mat-label>
+      <input matInput [(ngModel)]="formData.unit" name="unit" required placeholder="e.g. Bottle" />
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Image URL (optional)</mat-label>
-      <input matInput [(ngModel)]="formData.imageUrl" name="imageUrl">
+      <input matInput [(ngModel)]="formData.imageUrl" name="imageUrl" />
     </mat-form-field>
 
     <div class="form-actions">
@@ -46,7 +86,6 @@
   </form>
 </div>
 
-
 <!-- Products Table -->
 <div class="mat-elevation-z2 table-container" [@fadeIn]>
   <table mat-table [dataSource]="dataSource" class="full-width-table">
@@ -54,8 +93,18 @@
       <th mat-header-cell *matHeaderCellDef>Product</th>
       <td mat-cell *matCellDef="let product">
         <div class="product-info">
-          <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="product-thumb">
-          <span>{{ product.name }}</span>
+          <img
+            *ngIf="product.imageUrl"
+            [src]="product.imageUrl"
+            [alt]="product.name"
+            class="product-thumb"
+          />
+          <div style="display: flex; flex-direction: column">
+            <span style="font-weight: 500">{{ product.name }}</span>
+            <span *ngIf="product.type === 'CONSUMABLE'" style="font-size: 0.8em; color: #666">{{
+              product.unit
+            }}</span>
+          </div>
         </div>
       </td>
     </ng-container>
@@ -63,30 +112,59 @@
     <ng-container matColumnDef="category">
       <th mat-header-cell *matHeaderCellDef>Category</th>
       <td mat-cell *matCellDef="let product">
-        <mat-chip-set>
+        <mat-chip-set *ngIf="product.type === 'RETAIL'">
           <mat-chip [color]="getCategoryColor(product.category)" selected>
             {{ product.category }}
           </mat-chip>
         </mat-chip-set>
+        <span *ngIf="product.type !== 'RETAIL'">-</span>
       </td>
+    </ng-container>
+
+    <ng-container matColumnDef="unit">
+      <th mat-header-cell *matHeaderCellDef>Unit</th>
+      <td mat-cell *matCellDef="let product">{{ product.unit }}</td>
     </ng-container>
 
     <ng-container matColumnDef="price">
       <th mat-header-cell *matHeaderCellDef>Price</th>
-      <td mat-cell *matCellDef="let product">₱{{ product.price | number:'1.2-2' }}</td>
+      <td mat-cell *matCellDef="let product">₱{{ product.price | number : '1.2-2' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="stock">
       <th mat-header-cell *matHeaderCellDef>Stock</th>
-      <td mat-cell *matCellDef="let product" [class.low-stock]="product.stock < 10">
+      <td
+        mat-cell
+        *matCellDef="let product"
+        [class.low-stock]="product.stock <= (product.minStockLevel || 5)"
+        [class.out-of-stock]="product.stock === 0"
+      >
         {{ product.stock }}
-        <mat-icon *ngIf="product.stock < 10" class="warning-icon">warning</mat-icon>
+        <mat-icon
+          *ngIf="product.stock <= (product.minStockLevel || 5)"
+          class="warning-icon"
+          [matTooltip]="'Low stock! Min: ' + (product.minStockLevel || 5)"
+        >
+          warning
+        </mat-icon>
       </td>
     </ng-container>
 
     <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let product">
+      <th mat-header-cell *matHeaderCellDef style="text-align: right">Actions</th>
+      <td mat-cell *matCellDef="let product" style="text-align: right">
+        <!-- Quick Consume -->
+        <button
+          *ngIf="product.type === 'CONSUMABLE'"
+          mat-icon-button
+          color="primary"
+          (click)="quickConsume(product)"
+          matTooltip="Quick Consume 1 Unit"
+          style="margin-right: 8px; background-color: #e3f2fd"
+        >
+          <mat-icon>remove_circle_outline</mat-icon>
+        </button>
+
         <button mat-icon-button (click)="openEditForm(product)" matTooltip="Edit">
           <mat-icon>edit</mat-icon>
         </button>
@@ -97,7 +175,7 @@
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
   </table>
 
   <mat-paginator [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons></mat-paginator>

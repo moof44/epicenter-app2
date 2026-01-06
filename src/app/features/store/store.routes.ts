@@ -35,5 +35,10 @@ export const storeRoutes: Routes = [
     path: 'reports',
     loadComponent: () => import('./components/shift-history/shift-history').then(m => m.ShiftHistory),
     data: { animation: 'ReportsPage' }
+  },
+  {
+    path: 'stock-take',
+    loadComponent: () => import('./components/stock-take/stock-take.component').then(m => m.StockTakeComponent),
+    data: { animation: 'StockTakePage' }
   }
 ];

@@ -11,10 +11,11 @@ import {
   orderBy,
   docData,
   writeBatch,
-  increment
+  increment,
+  getDoc
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
-import { Product, CartItem, Transaction, ProductSalesData } from '../models/store.model';
+import { Product, CartItem, Transaction, ProductSalesData, StockMovement } from '../models/store.model';
 
 export interface SaleCompletedEvent {
   transactionId: string;
@@ -29,6 +30,7 @@ export class StoreService {
   private firestore = inject(Firestore);
   private productsCollection = collection(this.firestore, 'products');
   private transactionsCollection = collection(this.firestore, 'transactions');
+  private stockMovementsCollection = collection(this.firestore, 'stockMovements');
 
   // Cart state
   private cartItems = new BehaviorSubject<CartItem[]>([]);
@@ -131,16 +133,28 @@ export class StoreService {
 
     const batch = writeBatch(this.firestore);
     const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const timestamp = new Date();
 
     // Deduct stock for each product
     for (const item of cartItems) {
       const productRef = doc(this.firestore, 'products', item.productId);
       batch.update(productRef, { stock: increment(-item.quantity) });
+
+      // Create Stock Movement Log (SALE)
+      const movementRef = doc(this.stockMovementsCollection);
+      const movement: StockMovement = {
+        productId: item.productId,
+        changeAmount: -item.quantity,
+        reason: 'SALE',
+        timestamp: timestamp,
+        performedBy: 'SYSTEM_POS' // Could be replaced by auth user in future
+      };
+      batch.set(movementRef, movement);
     }
 
     // Create transaction record
     const transaction: Omit<Transaction, 'id'> = {
-      date: new Date(),
+      date: timestamp,
       totalAmount: total,
       items: cartItems
     };
@@ -150,14 +164,75 @@ export class StoreService {
     await batch.commit();
     this.clearCart();
 
-    // Emit sale completed event for cash register
+    // Emit sale completed event for cash register integration
     this.saleCompleted.next({
       transactionId: transactionRef.id,
       amount: total,
-      timestamp: new Date()
+      timestamp: timestamp
     });
 
     return transactionRef.id;
+  }
+
+  // Inventory Management (Gym Inventory System)
+
+  async logConsumption(productId: string, amount: number, notes?: string): Promise<void> {
+    if (amount <= 0) return;
+
+    const batch = writeBatch(this.firestore);
+    const productRef = doc(this.firestore, 'products', productId);
+    
+    // Decrement stock
+    batch.update(productRef, { stock: increment(-amount) });
+
+    // Log Movement
+    const movementRef = doc(this.stockMovementsCollection);
+    const movement: StockMovement = {
+      productId,
+      changeAmount: -amount,
+      reason: 'INTERNAL_USE',
+      timestamp: new Date(),
+      notes,
+      performedBy: 'STAFF' // Placeholder
+    };
+    batch.set(movementRef, movement);
+
+    await batch.commit();
+  }
+
+  async reconcileInventory(auditData: { productId: string; physicalCount: number }[]): Promise<void> {
+    const batch = writeBatch(this.firestore);
+    const timestamp = new Date();
+
+    for (const data of auditData) {
+      const productRef = doc(this.firestore, 'products', data.productId);
+      const productSnap = await getDoc(productRef);
+      
+      if (!productSnap.exists()) continue;
+      
+      const product = productSnap.data() as Product;
+      const systemStock = product.stock || 0;
+      const difference = data.physicalCount - systemStock;
+
+      if (difference !== 0) {
+        // Update stock to match physical count
+        batch.update(productRef, { stock: increment(difference) });
+
+        // Log Movement
+        const movementRef = doc(this.stockMovementsCollection);
+        const movement: StockMovement = {
+          productId: data.productId,
+          changeAmount: difference,
+          reason: 'AUDIT_ADJUSTMENT',
+          timestamp: timestamp,
+          notes: `Stock Take: System ${systemStock} -> Physical ${data.physicalCount}`,
+          performedBy: 'STAFF_AUDIT'
+        };
+        batch.set(movementRef, movement);
+      }
+    }
+
+    await batch.commit();
   }
 
   // Transactions

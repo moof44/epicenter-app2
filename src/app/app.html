@@ -36,6 +36,11 @@
           <mat-icon matListItemIcon>inventory_2</mat-icon>
           <span matListItemTitle>Products</span>
         </a>
+        <a mat-list-item routerLink="/store/stock-take" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>checklist</mat-icon>
+          <span matListItemTitle>Inventory Audit</span>
+        </a>
         <a mat-list-item routerLink="/store/history" routerLinkActive="active"
           (click)="mobileQuery.matches ? snav.close() : null">
           <mat-icon matListItemIcon>receipt_long</mat-icon>
