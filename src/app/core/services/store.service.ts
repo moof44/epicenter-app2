@@ -11,6 +11,7 @@ import {
   orderBy,
   docData,
   writeBatch,
+  increment,
   limit,
   where,
   documentId,
