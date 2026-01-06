@@ -1,0 +1,70 @@
+<div class="page-container" [@fadeIn]>
+  <div class="page-header">
+    <h1>Stock Take & Reconciliation</h1>
+    <p class="subtitle">Enter physical counts to adjust stock levels. Discrepancies will be logged.</p>
+  </div>
+
+  <div class="table-container">
+    <table mat-table [dataSource]="dataSource" class="full-width-table">
+      
+      <!-- Product Name -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Product</th>
+        <td mat-cell *matCellDef="let product" class="name-cell">
+          <span class="product-name">{{ product.name }}</span>
+          <span class="product-meta">{{ product.category }} • {{ product.type || 'RETAIL' }}</span>
+        </td>
+      </ng-container>
+
+      <!-- System Stock -->
+      <ng-container matColumnDef="systemStock">
+        <th mat-header-cell *matHeaderCellDef>System Stock</th>
+        <td mat-cell *matCellDef="let product">{{ product.stock }}</td>
+      </ng-container>
+
+      <!-- Physical Count Input -->
+      <ng-container matColumnDef="physicalCount">
+        <th mat-header-cell *matHeaderCellDef>Physical Count</th>
+        <td mat-cell *matCellDef="let product">
+          <mat-form-field appearance="outline" density="compact" class="count-input">
+            <input matInput type="number" min="0" 
+                   [ngModel]="auditValues[product.id!]" 
+                   (ngModelChange)="updateAuditValue(product.id!, $event)"
+                   placeholder="-">
+          </mat-form-field>
+        </td>
+      </ng-container>
+
+      <!-- Variance / Status -->
+      <ng-container matColumnDef="variance">
+        <th mat-header-cell *matHeaderCellDef>Variance</th>
+        <td mat-cell *matCellDef="let product">
+          <div class="variance-cell">
+            <div *ngIf="hasValue(product)" class="variance-badge" [ngClass]="getVarianceClass(product)">
+              <mat-icon *ngIf="getVariance(product) === 0">check_circle</mat-icon>
+              <mat-icon *ngIf="getVariance(product) < 0">warning</mat-icon>
+              <mat-icon *ngIf="getVariance(product) > 0">add_circle</mat-icon>
+              
+              <span>
+                {{ getVariance(product) > 0 ? '+' : '' }}{{ getVariance(product) }}
+              </span>
+            </div>
+            <span *ngIf="!hasValue(product)" class="no-entry">Pending Input</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </div>
+
+  <div class="actions-bar">
+    <div class="summary">
+      <span>Items Counted: <strong>{{ getCountedItems() }}</strong> / {{ dataSource.data.length }}</span>
+    </div>
+    <button mat-raised-button color="primary" [disabled]="getCountedItems() === 0" (click)="finalizeAdjustment()">
+      <mat-icon>save_alt</mat-icon> Finalize Adjustment
+    </button>
+  </div>
+</div>
