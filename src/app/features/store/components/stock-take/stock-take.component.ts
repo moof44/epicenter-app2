@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -12,6 +12,7 @@ import { StoreService } from '../../../../core/services/store.service';
 import { Product } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
 import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-stock-take',
@@ -19,7 +20,7 @@ import { MatCardModule } from '@angular/material/card';
   imports: [
     CommonModule, FormsModule, MatTableModule, MatButtonModule, MatIconModule,
     MatInputModule, MatFormFieldModule, MatSnackBarModule, MatTooltipModule,
-    MatCardModule
+    MatCardModule, MatProgressSpinnerModule
   ],
   templateUrl: './stock-take.html',
   styleUrl: './stock-take.css',
@@ -28,16 +29,25 @@ import { MatCardModule } from '@angular/material/card';
 export class StockTakeComponent implements OnInit {
   private storeService = inject(StoreService);
   private snackBar = inject(MatSnackBar);
+  private cdr = inject(ChangeDetectorRef);
 
   dataSource = new MatTableDataSource<Product>([]);
   displayedColumns = ['name', 'systemStock', 'physicalCount', 'variance'];
   
-  auditValues: { [id: string]: number } = {};
+  auditValues: Record<string, number> = {};
+  isLoading = true; // Start loading
 
   ngOnInit() {
-    this.storeService.getProducts().subscribe(products => {
-      // Sort by Name
-      this.dataSource.data = products.sort((a, b) => a.name.localeCompare(b.name));
+    this.storeService.getProducts().subscribe({
+      next: (products) => {
+        this.dataSource.data = products;
+        this.isLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 
