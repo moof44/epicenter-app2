@@ -55,6 +55,7 @@
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0,0,0,0.05);
+  margin-bottom: 24px;
 }
 
 table {
@@ -112,4 +113,10 @@ table {
 
 .detail-table tr:last-child td {
   border-bottom: none;
+}
+
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40px;
 }

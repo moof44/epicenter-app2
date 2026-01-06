@@ -62,7 +62,7 @@
       <ng-container matColumnDef="expandedDetail">
         <td mat-cell *matCellDef="let element" [attr.colspan]="columnsToDisplayWithExpand.length">
           <div class="element-detail"
-               [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
+               [@detailExpand]="element === expandedElement ? 'expanded' : 'collapsed'">
             <div class="detail-content">
               <h4>Order Details <span style="font-weight: normal; color: #666;">(Ref: {{element.referenceNumber || 'N/A'}})</span></h4>
               <table class="detail-table" style="width: 100%; text-align: left;">
@@ -93,5 +93,13 @@
       <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="detail-row"></tr>
     </table>
     <mat-paginator [pageSizeOptions]="[10, 20]" showFirstLastButtons></mat-paginator>
+  </div>
+
+  <div class="load-more-container" *ngIf="hasMore">
+    <button mat-stroked-button color="primary" (click)="loadOrders()" [disabled]="isLoading">
+      <mat-icon *ngIf="!isLoading">expand_more</mat-icon>
+      <mat-spinner *ngIf="isLoading" diameter="20" style="display:inline-block; margin-right: 8px"></mat-spinner>
+      {{ isLoading ? 'Loading...' : 'Load Older Orders' }}
+    </button>
   </div>
 </div>

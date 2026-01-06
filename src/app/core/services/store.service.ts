@@ -11,8 +11,10 @@ import {
   orderBy,
   docData,
   writeBatch,
-  increment,
-  getDoc
+  limit,
+  where,
+  documentId,
+  getDocs
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
 import { Product, CartItem, Transaction, ProductSalesData, StockMovement } from '../models/store.model';
@@ -204,17 +206,35 @@ export class StoreService {
     const batch = writeBatch(this.firestore);
     const timestamp = new Date();
 
+    // 1. Fetch current product states in batches (to avoid N+1 reads)
+    // Firestore 'in' query supports up to 10 values (or 30, but safe 10)
+    const productIds = auditData.map(d => d.productId);
+    const chunkSize = 10;
+    const productsMap = new Map<string, Product>();
+
+    for (let i = 0; i < productIds.length; i += chunkSize) {
+      const chunk = productIds.slice(i, i + chunkSize);
+      // Query by document ID (__name__)
+      const q = query(this.productsCollection, where(documentId(), 'in', chunk));
+      const snapshot = await getDocs(q);
+      
+      snapshot.forEach(docSnap => {
+        productsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as Product);
+      });
+    }
+
+    // 2. Compare and update
     for (const data of auditData) {
-      const productRef = doc(this.firestore, 'products', data.productId);
-      const productSnap = await getDoc(productRef);
+      const product = productsMap.get(data.productId);
       
-      if (!productSnap.exists()) continue;
-      
-      const product = productSnap.data() as Product;
+      if (!product) continue; // Product might have been deleted
+
       const systemStock = product.stock || 0;
       const difference = data.physicalCount - systemStock;
 
       if (difference !== 0) {
+        const productRef = doc(this.firestore, 'products', data.productId);
+        
         // Update stock to match physical count
         batch.update(productRef, { stock: increment(difference) });
 
@@ -236,8 +256,24 @@ export class StoreService {
   }
 
   // Transactions
-  getTransactions(): Observable<Transaction[]> {
-    const q = query(this.transactionsCollection, orderBy('date', 'desc'));
+  getTransactions(constraints: { limit?: number; startDate?: Date; endDate?: Date } = {}): Observable<Transaction[]> {
+    const queryConstraints: any[] = [orderBy('date', 'desc')];
+
+    // Apply Filters
+    if (constraints.startDate) {
+      queryConstraints.push(where('date', '>=', constraints.startDate));
+    }
+    if (constraints.endDate) {
+      queryConstraints.push(where('date', '<=', constraints.endDate));
+    }
+
+    // Default to 50 if no specific limit or strict date range is set? 
+    // We enforce a limit unless specifically asked for "all" (which safely shouldn't happen often)
+    // Or just apply limit if it's set or default.
+    const limitCount = constraints.limit ?? 50;
+    queryConstraints.push(limit(limitCount));
+
+    const q = query(this.transactionsCollection, ...queryConstraints);
     return collectionData(q, { idField: 'id' }) as Observable<Transaction[]>;
   }
 
@@ -248,7 +284,7 @@ export class StoreService {
     totalRevenue: number;
   }> {
     return combineLatest([this.getTransactions(), this.getProducts()]).pipe(
-      map(([transactions, _products]) => {
+      map(([transactions]) => {
         const salesMap = new Map<string, ProductSalesData>();
 
         // Aggregate sales data

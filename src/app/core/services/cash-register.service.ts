@@ -12,12 +12,10 @@ import {
   limit,
   getDocs
 } from '@angular/fire/firestore';
-import { Observable, BehaviorSubject, Subscription, map, firstValueFrom } from 'rxjs';
+import { Observable, BehaviorSubject, Subscription } from 'rxjs';
 import {
   CashTransaction,
-  CashTransactionType,
   ShiftSession,
-  ShiftStatus,
   ShiftSummary
 } from '../models/cash-register.model';
 import { StoreService } from './store.service';
@@ -259,8 +257,8 @@ export class CashRegisterService implements OnDestroy {
   }
 
   // Get all shifts (for history)
-  getShiftHistory(): Observable<ShiftSession[]> {
-    const q = query(this.shiftsCollection, orderBy('startTime', 'desc'));
+  getShiftHistory(limitCount = 50): Observable<ShiftSession[]> {
+    const q = query(this.shiftsCollection, orderBy('startTime', 'desc'), limit(limitCount));
     return collectionData(q, { idField: 'id' }) as Observable<ShiftSession[]>;
   }
 
