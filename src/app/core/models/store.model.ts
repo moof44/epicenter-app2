@@ -13,6 +13,9 @@ export interface Product {
   type: ProductType;
   unit: string;
   minStockLevel: number;
+  // Cost tracking
+  lastCostPrice?: number;
+  averageCost?: number;
 }
 
 export interface CartItem {
