@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,7 +24,8 @@ import { fadeIn } from '../../../../core/animations/animations';
   ],
   templateUrl: './pos.html',
   styleUrl: './pos.css',
-  animations: [fadeIn]
+  animations: [fadeIn],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class POS {
   private storeService = inject(StoreService);
