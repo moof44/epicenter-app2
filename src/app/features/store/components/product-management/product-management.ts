@@ -34,8 +34,8 @@ export class ProductManagement implements AfterViewInit {
 
   dataSource = new MatTableDataSource<Product>([]);
   displayedColumns = ['name', 'category', 'price', 'stock', 'actions']; // Default to RETAIL columns
-  categories: ProductCategory[] = ['Supplement', 'Drink', 'Merch'];
-  
+  categories: ProductCategory[] = ['Supplement', 'Drink', 'Merch', 'Fitness'];
+
   // Data State
   private allProducts: Product[] = [];
   currentFilter: ProductType = 'RETAIL';
@@ -79,11 +79,11 @@ export class ProductManagement implements AfterViewInit {
 
 
   private getEmptyForm(): Omit<Product, 'id'> {
-    return { 
-      name: '', 
-      category: 'Supplement', 
-      price: 0, 
-      stock: 0, 
+    return {
+      name: '',
+      category: 'Supplement',
+      price: 0,
+      stock: 0,
       imageUrl: '',
       type: 'RETAIL',
       unit: 'Item',
@@ -160,7 +160,8 @@ export class ProductManagement implements AfterViewInit {
     const colors: Record<ProductCategory, string> = {
       'Supplement': 'primary',
       'Drink': 'accent',
-      'Merch': 'warn'
+      'Merch': 'warn',
+      'Fitness': 'accent'
     };
     return colors[category] || 'primary';
   }

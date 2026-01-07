@@ -11,7 +11,8 @@
         </a>
     </div>
 
-    <div class="loading-shade position-relative" style="min-height: 100px; position: relative;" *ngIf="!(latest$ | async)">
+    <div class="loading-shade position-relative" style="min-height: 100px; position: relative;"
+        *ngIf="!(latest$ | async)">
         <mat-spinner diameter="50"></mat-spinner>
     </div>
 
@@ -106,6 +107,6 @@
 
     <!-- Attendance Chart -->
     <div class="attendance-section" *ngIf="member.id">
-        <app-attendance-chart [memberId]="member.id"></app-attendance-chart>
+        <app-attendance-calendar [memberId]="member.id"></app-attendance-calendar>
     </div>
 </div>
