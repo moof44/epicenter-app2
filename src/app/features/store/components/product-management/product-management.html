@@ -9,12 +9,8 @@
 </div>
 
 <!-- Tabs -->
-<mat-tab-group
-  (selectedIndexChange)="onTabChange($event)"
-  animationDuration="0ms"
-  class="mat-elevation-z2"
-  style="background: white; border-radius: 4px; margin-bottom: 16px"
->
+<mat-tab-group (selectedIndexChange)="onTabChange($event)" animationDuration="0ms" class="mat-elevation-z2"
+  style="background: white; border-radius: 4px; margin-bottom: 16px">
   <mat-tab label="Retail Items"></mat-tab>
   <mat-tab label="Internal Consumables"></mat-tab>
 </mat-tab-group>
@@ -23,9 +19,9 @@
 <div class="form-card mat-elevation-z2" *ngIf="showForm" [@fadeIn]>
   <h2>
     {{
-      editingProduct
-        ? 'Edit Product'
-        : 'Add New ' + (currentFilter === 'RETAIL' ? 'Retail' : 'Consumable') + ' Item'
+    editingProduct
+    ? 'Edit Product'
+    : 'Add New ' + (currentFilter === 'RETAIL' ? 'Retail' : 'Consumable') + ' Item'
     }}
   </h2>
   <form (ngSubmit)="saveProduct()" class="product-form">
@@ -49,22 +45,12 @@
       <span matTextPrefix>₱&nbsp;</span>
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Current Stock</mat-label>
-      <input matInput type="number" [(ngModel)]="formData.stock" name="stock" required min="0" />
-    </mat-form-field>
+    <!-- Stock is modified via Receive Stock only -->
 
     <!-- New Fields -->
     <mat-form-field appearance="outline">
       <mat-label>Min Stock Level</mat-label>
-      <input
-        matInput
-        type="number"
-        [(ngModel)]="formData.minStockLevel"
-        name="minStockLevel"
-        required
-        min="0"
-      />
+      <input matInput type="number" [(ngModel)]="formData.minStockLevel" name="minStockLevel" required min="0" />
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -93,17 +79,12 @@
       <th mat-header-cell *matHeaderCellDef>Product</th>
       <td mat-cell *matCellDef="let product">
         <div class="product-info">
-          <img
-            *ngIf="product.imageUrl"
-            [src]="product.imageUrl"
-            [alt]="product.name"
-            class="product-thumb"
-          />
+          <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="product-thumb" />
           <div style="display: flex; flex-direction: column">
             <span style="font-weight: 500">{{ product.name }}</span>
             <span *ngIf="product.type === 'CONSUMABLE'" style="font-size: 0.8em; color: #666">{{
               product.unit
-            }}</span>
+              }}</span>
           </div>
         </div>
       </td>
@@ -112,12 +93,12 @@
     <ng-container matColumnDef="category">
       <th mat-header-cell *matHeaderCellDef>Category</th>
       <td mat-cell *matCellDef="let product">
-        <mat-chip-set *ngIf="product.type === 'RETAIL'">
+        <mat-chip-set *ngIf="(product.type || 'RETAIL') === 'RETAIL'">
           <mat-chip [color]="getCategoryColor(product.category)" selected>
             {{ product.category }}
           </mat-chip>
         </mat-chip-set>
-        <span *ngIf="product.type !== 'RETAIL'">-</span>
+        <span *ngIf="(product.type || 'RETAIL') !== 'RETAIL'">-</span>
       </td>
     </ng-container>
 
@@ -133,18 +114,11 @@
 
     <ng-container matColumnDef="stock">
       <th mat-header-cell *matHeaderCellDef>Stock</th>
-      <td
-        mat-cell
-        *matCellDef="let product"
-        [class.low-stock]="product.stock <= (product.minStockLevel || 5)"
-        [class.out-of-stock]="product.stock === 0"
-      >
+      <td mat-cell *matCellDef="let product" [class.low-stock]="product.stock <= (product.minStockLevel || 5)"
+        [class.out-of-stock]="product.stock === 0">
         {{ product.stock }}
-        <mat-icon
-          *ngIf="product.stock <= (product.minStockLevel || 5)"
-          class="warning-icon"
-          [matTooltip]="'Low stock! Min: ' + (product.minStockLevel || 5)"
-        >
+        <mat-icon *ngIf="product.stock <= (product.minStockLevel || 5)" class="warning-icon"
+          [matTooltip]="'Low stock! Min: ' + (product.minStockLevel || 5)">
           warning
         </mat-icon>
       </td>
@@ -154,14 +128,8 @@
       <th mat-header-cell *matHeaderCellDef style="text-align: right">Actions</th>
       <td mat-cell *matCellDef="let product" style="text-align: right">
         <!-- Quick Consume -->
-        <button
-          *ngIf="product.type === 'CONSUMABLE'"
-          mat-icon-button
-          color="primary"
-          (click)="quickConsume(product)"
-          matTooltip="Quick Consume 1 Unit"
-          style="margin-right: 8px; background-color: #e3f2fd"
-        >
+        <button *ngIf="product.type === 'CONSUMABLE'" mat-icon-button color="primary" (click)="quickConsume(product)"
+          matTooltip="Quick Consume 1 Unit" style="margin-right: 8px; background-color: #e3f2fd">
           <mat-icon>remove_circle_outline</mat-icon>
         </button>
 

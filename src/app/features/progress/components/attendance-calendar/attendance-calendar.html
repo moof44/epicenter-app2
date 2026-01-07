@@ -1,0 +1,51 @@
+<mat-card class="calendar-card">
+  <mat-card-header>
+    <div class="header-content">
+      <mat-card-title>Attendance Consistency</mat-card-title>
+      <div class="month-selector">
+        <button mat-icon-button (click)="changeMonth(-1)">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="current-month">{{ currentDate | date:'MMMM yyyy' }}</span>
+        <button mat-icon-button (click)="changeMonth(1)">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+  </mat-card-header>
+  
+  <mat-card-content>
+    <div class="calendar-grid">
+      <!-- Weekday Headers -->
+      <div class="weekday-header" *ngFor="let day of weekDays">{{ day }}</div>
+      
+      <!-- Days -->
+      <div *ngFor="let day of calendarDays" 
+           class="day-cell" 
+           [ngClass]="[day.colorClass, day.isToday ? 'today' : '']"
+           [class.faded]="!day.isInCurrentMonth">
+        
+        <span class="day-number">{{ day.dayOfMonth }}</span>
+        
+        <div class="status-icon" *ngIf="day.icon">
+          <mat-icon>{{ day.icon }}</mat-icon>
+        </div>
+      </div>
+    </div>
+    
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot present"></div>
+        <span>Workout</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot rest"></div>
+        <span>Rest</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot skipped"></div>
+        <span>Skipped</span>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

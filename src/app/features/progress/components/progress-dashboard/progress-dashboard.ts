@@ -13,13 +13,13 @@ import { ProgressService } from '../../../../core/services/progress.service';
 import { Member } from '../../../../core/models/member.model';
 import { Measurement } from '../../../../core/models/measurement.model';
 import { fadeIn, staggerList } from '../../../../core/animations/animations';
-import { AttendanceChart } from '../../../attendance/components/attendance-chart/attendance-chart';
+import { AttendanceCalendarComponent } from '../attendance-calendar/attendance-calendar';
 
 @Component({
   selector: 'app-progress-dashboard',
   imports: [
     CommonModule, RouterLink, MatCardModule, MatTableModule,
-    MatButtonModule, MatIconModule, MatProgressSpinnerModule, AttendanceChart
+    MatButtonModule, MatIconModule, MatProgressSpinnerModule, AttendanceCalendarComponent
   ],
   templateUrl: './progress-dashboard.html',
   styleUrl: './progress-dashboard.css',

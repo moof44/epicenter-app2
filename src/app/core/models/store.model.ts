@@ -1,4 +1,4 @@
-export type ProductCategory = 'Supplement' | 'Drink' | 'Merch';
+export type ProductCategory = 'Supplement' | 'Drink' | 'Merch' | 'Fitness';
 export type ProductType = 'RETAIL' | 'CONSUMABLE';
 export type StockMovementReason = 'SALE' | 'INTERNAL_USE' | 'RESTOCK' | 'AUDIT_ADJUSTMENT';
 

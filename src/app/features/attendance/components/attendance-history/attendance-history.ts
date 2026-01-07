@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AttendanceService } from '../../../../core/services/attendance.service'; // Fixed path
 import { AttendanceRecord } from '../../../../core/models/attendance.model'; // Fixed path
-import { Observable, switchMap, startWith } from 'rxjs';
+import { Observable, switchMap, startWith, combineLatest } from 'rxjs';
 import { fadeIn, staggerList } from '../../../../core/animations/animations'; // Fixed path
 
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -118,9 +118,11 @@ export class AttendanceHistory {
 
   dateControl = new FormControl(new Date());
 
-  history$: Observable<AttendanceRecord[]> = this.dateControl.valueChanges.pipe(
-    startWith(new Date()),
-    switchMap(date => {
+  history$: Observable<AttendanceRecord[]> = combineLatest([
+    this.dateControl.valueChanges.pipe(startWith(new Date())),
+    this.attendanceService.refreshHistory$
+  ]).pipe(
+    switchMap(([date, _]) => {
       if (!date) return this.attendanceService.getHistoryByDate('');
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');

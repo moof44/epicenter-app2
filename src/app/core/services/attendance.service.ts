@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, collectionData, query, where, orderBy, addDoc, doc, updateDoc, Timestamp, getDocs, limit } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AttendanceRecord } from '../models/attendance.model';
 import { Member } from '../models/member.model';
@@ -71,7 +71,7 @@ export class AttendanceService {
         const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
 
         // Sort descending and take top 50
-        return records.sort((a, b) => b.checkInTime.seconds - a.checkInTime.seconds).slice(0, 50);
+        return records.sort((a, b) => b.checkInTime.seconds - a.checkInTime.seconds).slice(0, 365);
     }
 
     /**
@@ -98,8 +98,14 @@ export class AttendanceService {
     /**
      * Check In a member.
      */
+    private _refreshHistory$ = new BehaviorSubject<void>(undefined);
+    refreshHistory$ = this._refreshHistory$.asObservable();
+
+    /**
+     * Check In a member.
+     */
     async checkIn(member: Member, lockerNumber?: number): Promise<void> {
-        // Validate locker if selected
+        // ... existing validation ...
         if (lockerNumber) {
             const occupied = await this.getOccupiedLockers(member.gender);
             if (occupied.includes(lockerNumber)) {
@@ -123,6 +129,7 @@ export class AttendanceService {
         };
 
         await addDoc(this.attendanceCollection, record);
+        this._refreshHistory$.next(); // Trigger refresh
     }
 
     /**
@@ -134,5 +141,6 @@ export class AttendanceService {
             checkOutTime: Timestamp.now(),
             status: 'Checked Out'
         });
+        this._refreshHistory$.next(); // Trigger refresh
     }
 }
