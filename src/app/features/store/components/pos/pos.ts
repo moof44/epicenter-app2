@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -41,13 +41,13 @@ export class POS {
   cartTotal$: Observable<number> = this.storeService.getCartTotal();
   isShiftOpen$ = this.cashRegisterService.currentShift$.pipe(map(s => s?.status === 'OPEN'));
 
-  selectedCategory: ProductCategory | 'All' = 'All';
+  selectedCategory = signal<ProductCategory | 'All'>('All');
   categories: (ProductCategory | 'All')[] = ['All', 'Supplement', 'Drink', 'Merch', 'Fitness'];
-  isProcessing = false;
-  cartExpanded = false;
+  isProcessing = signal(false);
+  cartExpanded = signal(false);
 
   toggleCart(): void {
-    this.cartExpanded = !this.cartExpanded;
+    this.cartExpanded.update(v => !v);
   }
 
   addToCart(product: Product): void {
@@ -95,20 +95,21 @@ export class POS {
       return;
     }
 
-    this.isProcessing = true;
+    this.isProcessing.set(true);
     try {
       const transactionId = await this.storeService.checkout();
       this.snackBar.open(`Sale completed! Transaction: ${transactionId.slice(0, 8)}...`, 'Close', { duration: 4000 });
     } catch (error: any) {
       this.snackBar.open(error.message || 'Checkout failed', 'Close', { duration: 3000 });
     } finally {
-      this.isProcessing = false;
+      this.isProcessing.set(false);
     }
   }
 
   filterProducts(products: Product[]): Product[] {
-    if (this.selectedCategory === 'All') return products;
-    return products.filter(p => p.category === this.selectedCategory);
+    const category = this.selectedCategory();
+    if (category === 'All') return products;
+    return products.filter(p => p.category === category);
   }
 
   getCategoryIcon(category: ProductCategory): string {

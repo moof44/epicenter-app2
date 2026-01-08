@@ -1,6 +1,64 @@
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 @import 'https://fonts.googleapis.com/icon?family=Material+Icons';
 
+@media screen and (max-width: 768px) {
+  table.mat-mdc-table.mobile-card-table {
+    display: block !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  table.mat-mdc-table.mobile-card-table thead {
+    display: none !important;
+  }
+
+  table.mat-mdc-table.mobile-card-table tbody {
+    display: block !important;
+  }
+
+  table.mat-mdc-table.mobile-card-table tr.mat-mdc-row {
+    display: block !important;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    padding: 16px;
+    background: var(--mat-sys-surface-container, #ffffff);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: auto !important;
+    /* Override mat-row height */
+  }
+
+  table.mat-mdc-table.mobile-card-table td.mat-mdc-cell {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+    padding: 12px 0 !important;
+    min-height: 44px;
+    /* Touch target */
+    font-size: 16px;
+    /* Legible on mobile */
+  }
+
+  table.mat-mdc-table.mobile-card-table td.mat-mdc-cell:last-child {
+    border-bottom: none;
+  }
+
+  /* Add label via data-label attribute */
+  table.mat-mdc-table.mobile-card-table td.mat-mdc-cell::before {
+    content: attr(data-label);
+    font-weight: 500;
+    color: var(--mat-sys-on-surface-variant, #666);
+    margin-right: 16px;
+    font-size: 14px;
+  }
+}
+
+/* Global Touch Target Fixes */
+button.mat-mdc-button-base,
+.mat-mdc-form-field-infix {
+  min-height: 44px;
+}
+
 :root {
   --primary-color: #3f51b5;
   /* Indigo */
@@ -17,7 +75,8 @@
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.5rem;
 
-  --container-padding: 1rem; /* Standard mobile padding */
+  --container-padding: 1rem;
+  /* Standard mobile padding */
 
   --bg-color: #fafafa;
   --surface-color: #ffffff;
@@ -40,7 +99,8 @@
     --font-size-lg: 1.5rem;
     --font-size-xl: 2rem;
 
-    --container-padding: 2rem; /* Increased padding for desktop */
+    --container-padding: 2rem;
+    /* Increased padding for desktop */
   }
 }
 
@@ -84,7 +144,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: inherit; /* Inherit border radius from parent if possible */
+  border-radius: inherit;
+  /* Inherit border radius from parent if possible */
 }
 
 
@@ -112,14 +173,20 @@ button {
 
 /* Touch-friendly targets */
 @media (pointer: coarse) {
-  button, a, [role="button"] {
+
+  button,
+  a,
+  [role="button"] {
     min-height: 44px;
     min-width: 44px;
   }
 
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     min-height: 44px;
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
+    /* Prevents zoom on iOS */
   }
 }
 

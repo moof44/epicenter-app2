@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, addDoc, query, orderBy } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, addDoc, query, orderBy, limit } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { Measurement } from '../models/measurement.model';
 
@@ -11,7 +11,7 @@ export class ProgressService {
 
     getTimeSeries(memberId: string): Observable<Measurement[]> {
         const colRef = collection(this.firestore, `members/${memberId}/measurements`);
-        const q = query(colRef, orderBy('date', 'desc'));
+        const q = query(colRef, orderBy('date', 'desc'), limit(50));
         return collectionData(q, { idField: 'id' }) as Observable<Measurement[]>;
     }
 

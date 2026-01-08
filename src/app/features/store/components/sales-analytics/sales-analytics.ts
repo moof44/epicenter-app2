@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,7 +15,8 @@ import { fadeIn } from '../../../../core/animations/animations';
   ],
   templateUrl: './sales-analytics.html',
   styleUrl: './sales-analytics.css',
-  animations: [fadeIn]
+  animations: [fadeIn],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SalesAnalytics {
   private storeService = inject(StoreService);

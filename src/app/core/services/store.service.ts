@@ -16,7 +16,10 @@ import {
   where,
   documentId,
   getDocs,
-  getDoc
+  getDoc,
+  startAfter,
+  QueryDocumentSnapshot,
+  DocumentData
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
 import { Product, CartItem, Transaction, ProductSalesData, StockMovement, InventoryLog } from '../models/store.model';
@@ -48,9 +51,23 @@ export class StoreService {
   saleCompleted$ = this.saleCompleted.asObservable();
 
   // Products
-  getProducts(): Observable<Product[]> {
-    const q = query(this.productsCollection, orderBy('name'));
+  getProducts(limitCount = 100): Observable<Product[]> {
+    const q = query(this.productsCollection, orderBy('name'), limit(limitCount));
     return collectionData(q, { idField: 'id' }) as Observable<Product[]>;
+  }
+
+  async getProductsPage(limitCount = 50, lastDoc?: QueryDocumentSnapshot<DocumentData>): Promise<{ products: Product[], lastDoc: QueryDocumentSnapshot<DocumentData> | null }> {
+    let q = query(this.productsCollection, orderBy('name'), limit(limitCount));
+
+    if (lastDoc) {
+      q = query(q, startAfter(lastDoc));
+    }
+
+    const snapshot = await getDocs(q);
+    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+    const lastDocument = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+
+    return { products, lastDoc: lastDocument };
   }
 
   getProduct(id: string): Observable<Product> {

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, addDoc, doc, updateDoc, query, orderBy, docData } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, addDoc, doc, updateDoc, query, orderBy, docData, limit, startAfter, getDocs } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { Member } from '../models/member.model';
 
@@ -10,9 +10,23 @@ export class MemberService {
     private firestore: Firestore = inject(Firestore);
     private membersCollection = collection(this.firestore, 'members');
 
-    getMembers(): Observable<Member[]> {
-        const q = query(this.membersCollection, orderBy('name'));
+    getMembers(limitCount = 100): Observable<Member[]> {
+        const q = query(this.membersCollection, orderBy('name'), limit(limitCount));
         return collectionData(q, { idField: 'id' }) as Observable<Member[]>;
+    }
+
+    async getMembersPage(limitCount = 50, lastDoc?: any): Promise<{ members: Member[], lastDoc: any | null }> {
+        let q = query(this.membersCollection, orderBy('name'), limit(limitCount));
+
+        if (lastDoc) {
+            q = query(q, startAfter(lastDoc));
+        }
+
+        const snapshot = await getDocs(q);
+        const members = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Member));
+        const lastDocument = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+
+        return { members, lastDoc: lastDocument };
     }
 
     getMember(id: string): Observable<Member> {
