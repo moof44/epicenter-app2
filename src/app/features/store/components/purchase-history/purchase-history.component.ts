@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ViewChild, AfterViewInit, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,21 +22,21 @@ import { fadeIn } from '../../../../core/animations/animations';
   animations: [
     fadeIn,
     trigger('detailExpand', [
-      state('collapsed,void', style({height: '0px', minHeight: '0'})),
-      state('expanded', style({height: '*'})),
+      state('collapsed,void', style({ height: '0px', minHeight: '0' })),
+      state('expanded', style({ height: '*' })),
       transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
     ]),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PurchaseHistoryComponent implements AfterViewInit {
+export class PurchaseHistoryComponent implements OnInit, AfterViewInit {
   private firestore = inject(Firestore);
 
   dataSource = new MatTableDataSource<PurchaseOrder>([]);
   columnsToDisplay = ['date', 'supplier', 'items', 'total'];
   columnsToDisplayWithExpand = [...this.columnsToDisplay, 'expand'];
   expandedElement: PurchaseOrder | null = null;
-  
+
   // Stats
   totalSpent = 0;
   ordersThisMonth = 0;
@@ -51,7 +51,9 @@ export class PurchaseHistoryComponent implements AfterViewInit {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor() {
+  constructor() { }
+
+  ngOnInit() {
     this.loadOrders();
   }
 
@@ -61,28 +63,28 @@ export class PurchaseHistoryComponent implements AfterViewInit {
 
   async loadOrders() {
     if (this.isLoading || (!this.hasMore && this.lastDoc)) return;
-    
+
     this.isLoading = true;
     try {
       const ordersCol = collection(this.firestore, 'purchase_orders');
-      
+
       let q = query(
-        ordersCol, 
-        orderBy('date', 'desc'), 
+        ordersCol,
+        orderBy('date', 'desc'),
         limit(this.pageSize)
       );
-      
+
       if (this.lastDoc) {
         q = query(
-          ordersCol, 
-          orderBy('date', 'desc'), 
-          startAfter(this.lastDoc), 
+          ordersCol,
+          orderBy('date', 'desc'),
+          startAfter(this.lastDoc),
           limit(this.pageSize)
         );
       }
-      
+
       const snapshot = await getDocs(q);
-      
+
       if (snapshot.empty) {
         this.hasMore = false;
         this.isLoading = false;
@@ -90,7 +92,7 @@ export class PurchaseHistoryComponent implements AfterViewInit {
       }
 
       this.lastDoc = snapshot.docs[snapshot.docs.length - 1];
-      
+
       const newOrders = snapshot.docs.map(d => {
         const data = d.data();
         return { id: d.id, ...data } as PurchaseOrder;
@@ -98,7 +100,7 @@ export class PurchaseHistoryComponent implements AfterViewInit {
 
       this.orders = [...this.orders, ...newOrders];
       this.dataSource.data = this.orders;
-      
+
       this.calculateStats(this.orders);
 
       if (snapshot.docs.length < this.pageSize) {
@@ -115,7 +117,7 @@ export class PurchaseHistoryComponent implements AfterViewInit {
     // Note: This only calculates stats for LOADED orders. 
     // For full dataset stats, we would need a server-side aggregation.
     this.totalSpent = orders.reduce((acc, o) => acc + o.totalCost, 0);
-    
+
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const thirtyDaysAgo = new Date();

@@ -1,0 +1,87 @@
+.inventory-history-container {
+  padding: 24px;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.table-container {
+  position: relative;
+  overflow: auto;
+  border-radius: 8px;
+  background: white; /* or var(--mat-card-container-color) */
+  flex: 1;
+  min-height: 400px;
+}
+
+table {
+  width: 100%;
+}
+
+.positive {
+  color: green;
+  font-weight: 500;
+}
+
+.negative {
+  color: red;
+  font-weight: 500;
+}
+
+.text-secondary {
+  color: rgba(0,0,0,0.6);
+  font-size: 0.9em;
+}
+
+.stock-cell {
+  font-weight: bold;
+}
+
+.loading-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.7);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: rgba(0,0,0,0.5);
+  gap: 16px;
+}
+
+.empty-state mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+.footer-actions {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
