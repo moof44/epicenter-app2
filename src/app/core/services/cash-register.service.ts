@@ -10,7 +10,8 @@ import {
   where,
   orderBy,
   limit,
-  getDocs
+  getDocs,
+  startAfter
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subscription } from 'rxjs';
 import {
@@ -256,10 +257,23 @@ export class CashRegisterService implements OnDestroy {
     this.currentShift.next(null);
   }
 
-  // Get all shifts (for history)
   getShiftHistory(limitCount = 50): Observable<ShiftSession[]> {
     const q = query(this.shiftsCollection, orderBy('startTime', 'desc'), limit(limitCount));
     return collectionData(q, { idField: 'id' }) as Observable<ShiftSession[]>;
+  }
+
+  async getShiftHistoryPage(limitCount = 50, lastDoc?: any): Promise<{ shifts: ShiftSession[], lastDoc: any | null }> {
+    let q = query(this.shiftsCollection, orderBy('startTime', 'desc'), limit(limitCount));
+
+    if (lastDoc) {
+      q = query(q, startAfter(lastDoc));
+    }
+
+    const snapshot = await getDocs(q);
+    const shifts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShiftSession));
+    const lastDocument = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+
+    return { shifts, lastDoc: lastDocument };
   }
 
   // Get today's transactions from current shift

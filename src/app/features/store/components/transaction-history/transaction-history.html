@@ -3,17 +3,18 @@
 </div>
 
 <div class="mat-elevation-z2 table-container" [@fadeIn]>
-  <table mat-table [dataSource]="dataSource" class="full-width-table">
+  <table mat-table [dataSource]="dataSource" class="full-width-table mobile-card-table"
+    *ngIf="dataSource.data.length > 0; else emptyState">
     <ng-container matColumnDef="date">
       <th mat-header-cell *matHeaderCellDef>Date</th>
-      <td mat-cell *matCellDef="let tx">
+      <td mat-cell *matCellDef="let tx" data-label="Date">
         {{ formatDate(tx.date) | date:'medium' }}
       </td>
     </ng-container>
 
     <ng-container matColumnDef="items">
       <th mat-header-cell *matHeaderCellDef>Items</th>
-      <td mat-cell *matCellDef="let tx">
+      <td mat-cell *matCellDef="let tx" data-label="Items" class="items-cell">
         <mat-expansion-panel class="items-panel">
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -33,7 +34,7 @@
 
     <ng-container matColumnDef="totalAmount">
       <th mat-header-cell *matHeaderCellDef>Total</th>
-      <td mat-cell *matCellDef="let tx" class="total-cell">
+      <td mat-cell *matCellDef="let tx" class="total-cell" data-label="Total">
         ₱{{ tx.totalAmount | number:'1.2-2' }}
       </td>
     </ng-container>
@@ -41,6 +42,13 @@
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
   </table>
+
+  <ng-template #emptyState>
+    <div class="empty-state">
+      <mat-icon class="empty-icon">receipt_long</mat-icon>
+      <p>No transactions found.</p>
+    </div>
+  </ng-template>
 
   <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
 </div>

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,7 +20,8 @@ import { DocumentData, QueryDocumentSnapshot } from '@angular/fire/firestore';
     ],
     templateUrl: './inventory-history.html',
     styleUrl: './inventory-history.css',
-    animations: [fadeIn]
+    animations: [fadeIn],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InventoryHistoryComponent implements OnInit {
     private historyService = inject(InventoryHistoryService);
@@ -30,8 +31,8 @@ export class InventoryHistoryComponent implements OnInit {
     displayedColumns = ['date', 'type', 'product', 'performedBy', 'change', 'newStock'];
 
     lastDoc: QueryDocumentSnapshot<DocumentData> | null = null;
-    isLoading = false;
-    hasMore = true;
+    isLoading = signal(false);
+    hasMore = signal(true);
     pageSize = 20;
 
     ngOnInit() {
@@ -39,8 +40,8 @@ export class InventoryHistoryComponent implements OnInit {
     }
 
     async loadHistory(loadMore = false) {
-        if (this.isLoading) return;
-        this.isLoading = true;
+        if (this.isLoading()) return;
+        this.isLoading.set(true);
 
         try {
             const result = await this.historyService.getHistory(
@@ -56,11 +57,11 @@ export class InventoryHistoryComponent implements OnInit {
             }
 
             this.lastDoc = result.lastDoc;
-            this.hasMore = result.logs.length === this.pageSize; // Simple check
+            this.hasMore.set(result.logs.length === this.pageSize);
         } catch (err) {
             console.error('Error loading history', err);
         } finally {
-            this.isLoading = false;
+            this.isLoading.set(false);
             this.cdr.markForCheck();
         }
     }

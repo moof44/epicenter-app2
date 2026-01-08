@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, query, where, orderBy, addDoc, doc, updateDoc, Timestamp, getDocs, limit } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, query, where, orderBy, addDoc, doc, updateDoc, Timestamp, getDocs, limit, startAfter } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AttendanceRecord } from '../models/attendance.model';
@@ -64,7 +64,9 @@ export class AttendanceService {
     async getMemberAttendance(memberId: string): Promise<AttendanceRecord[]> {
         const q = query(
             this.attendanceCollection,
-            where('memberId', '==', memberId)
+            where('memberId', '==', memberId),
+            orderBy('checkInTime', 'desc'),
+            limit(100)
         );
 
         const snapshot = await getDocs(q);
@@ -72,6 +74,25 @@ export class AttendanceService {
 
         // Sort descending and take top 50
         return records.sort((a, b) => b.checkInTime.seconds - a.checkInTime.seconds).slice(0, 365);
+    }
+
+    async getMemberAttendancePage(memberId: string, limitCount = 20, lastDoc?: any): Promise<{ records: AttendanceRecord[], lastDoc: any | null }> {
+        let q = query(
+            this.attendanceCollection,
+            where('memberId', '==', memberId),
+            orderBy('checkInTime', 'desc'),
+            limit(limitCount)
+        );
+
+        if (lastDoc) {
+            q = query(q, startAfter(lastDoc));
+        }
+
+        const snapshot = await getDocs(q);
+        const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
+        const lastDocument = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+
+        return { records, lastDoc: lastDocument };
     }
 
     /**

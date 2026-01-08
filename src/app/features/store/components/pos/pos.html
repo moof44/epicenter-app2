@@ -18,7 +18,8 @@
     <div class="products-section">
       <div class="section-header">
         <h2>Items for Sale</h2>
-        <mat-chip-listbox [(ngModel)]="selectedCategory" class="category-filter">
+        <mat-chip-listbox [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)"
+          class="category-filter">
           <mat-chip-option *ngFor="let cat of categories" [value]="cat">
             {{ cat === 'All' ? 'All Items' : cat }}
           </mat-chip-option>
@@ -52,7 +53,7 @@
     </div>
 
     <!-- Right: Cart Summary -->
-    <div class="cart-section mat-elevation-z4" [class.expanded]="cartExpanded">
+    <div class="cart-section mat-elevation-z4" [class.expanded]="cartExpanded()">
       <div class="cart-header" (click)="toggleCart()" (keydown.enter)="toggleCart()" tabindex="0" role="button">
         <h2>
           <mat-icon>shopping_cart</mat-icon>
@@ -101,9 +102,9 @@
           <span class="total-amount">₱{{ (cartTotal$ | async) | number:'1.2-2' }}</span>
         </div>
         <button mat-raised-button color="primary" class="checkout-btn" (click)="checkout()"
-          [disabled]="isProcessing || !(cart$ | async)?.length || !(isShiftOpen$ | async)">
+          [disabled]="isProcessing() || !(cart$ | async)?.length || !(isShiftOpen$ | async)">
           <mat-icon>point_of_sale</mat-icon>
-          {{ isProcessing ? 'Processing...' : 'Checkout' }}
+          {{ isProcessing() ? 'Processing...' : 'Checkout' }}
         </button>
       </div>
     </div>

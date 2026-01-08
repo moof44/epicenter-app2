@@ -11,12 +11,13 @@
          Spinner can be conditional on an 'isLoading' flag if we added one. 
          For simplicity, keeping it simple. -->
 
-    <table mat-table [dataSource]="dataSource" class="full-width-table" [@staggerList]>
+    <table mat-table [dataSource]="dataSource" class="full-width-table mobile-card-table" [@staggerList]
+        *ngIf="dataSource.data.length > 0; else emptyState">
 
         <!-- Name Column -->
         <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef> Name </th>
-            <td mat-cell *matCellDef="let member">
+            <td mat-cell *matCellDef="let member" data-label="Name">
                 <div class="member-name">{{ member.name }}</div>
                 <div class="member-email">{{ member.contactNumber }}</div>
             </td>
@@ -25,7 +26,7 @@
         <!-- Status Column -->
         <ng-container matColumnDef="membershipStatus">
             <th mat-header-cell *matHeaderCellDef> Status </th>
-            <td mat-cell *matCellDef="let member">
+            <td mat-cell *matCellDef="let member" data-label="Status">
                 <mat-chip-set>
                     <mat-chip [color]="member.membershipStatus === 'Active' ? 'accent' : 'warn'" selected>
                         {{ member.membershipStatus | titlecase }}
@@ -37,20 +38,21 @@
         <!-- Expiration Column -->
         <ng-container matColumnDef="expiration">
             <th mat-header-cell *matHeaderCellDef> Expiration </th>
-            <td mat-cell *matCellDef="let member" [class.expired]="isExpired(member.expiration)"> 
-                 <ng-container *ngIf="member.expiration?.seconds; else dateObj">
+            <td mat-cell *matCellDef="let member" [class.expired]="isExpired(member.expiration)"
+                data-label="Expiration">
+                <ng-container *ngIf="member.expiration?.seconds; else dateObj">
                     {{ member.expiration.seconds * 1000 | date:'mediumDate' }}
-                 </ng-container>
-                 <ng-template #dateObj>
+                </ng-container>
+                <ng-template #dateObj>
                     {{ member.expiration | date:'mediumDate' }}
-                 </ng-template>
+                </ng-template>
             </td>
         </ng-container>
 
         <!-- Actions Column -->
         <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef> Actions </th>
-            <td mat-cell *matCellDef="let member">
+            <td mat-cell *matCellDef="let member" data-label="Actions">
                 <a mat-icon-button [routerLink]="['/members', member.id, 'progress']" matTooltip="View Progress"
                     color="primary">
                     <mat-icon>insights</mat-icon>
@@ -69,8 +71,14 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
 
-    <mat-paginator [pageSizeOptions]="[10, 20, 50]"
-                 showFirstLastButtons
-                 aria-label="Select page of members">
+    <ng-template #emptyState>
+        <div class="empty-state">
+            <mat-icon class="empty-icon">person_off</mat-icon>
+            <p>No members found.</p>
+            <a mat-stroked-button color="primary" routerLink="/members/add">Add Member</a>
+        </div>
+    </ng-template>
+
+    <mat-paginator [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons aria-label="Select page of members">
     </mat-paginator>
 </div>
