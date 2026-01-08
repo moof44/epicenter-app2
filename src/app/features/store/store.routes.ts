@@ -50,5 +50,10 @@ export const storeRoutes: Routes = [
     path: 'purchases',
     loadComponent: () => import('./components/purchase-history/purchase-history.component').then(m => m.PurchaseHistoryComponent),
     data: { animation: 'PurchaseHistoryPage' }
+  },
+  {
+    path: 'inventory-history',
+    loadComponent: () => import('./components/inventory-history/inventory-history').then(m => m.InventoryHistoryComponent),
+    data: { animation: 'HistoryPage' }
   }
 ];

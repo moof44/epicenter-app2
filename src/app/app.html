@@ -46,6 +46,11 @@
           <mat-icon matListItemIcon>input</mat-icon>
           <span matListItemTitle>Receive Stock</span>
         </a>
+        <a mat-list-item routerLink="/store/inventory-history" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>manage_search</mat-icon>
+          <span matListItemTitle>Stock Movement</span>
+        </a>
         <a mat-list-item routerLink="/store/purchases" routerLinkActive="active"
           (click)="mobileQuery.matches ? snav.close() : null">
           <mat-icon matListItemIcon>history</mat-icon>

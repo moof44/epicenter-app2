@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, Injector } from '@angular/core';
 import {
   Firestore,
   collection,
@@ -15,10 +15,12 @@ import {
   limit,
   where,
   documentId,
-  getDocs
+  getDocs,
+  getDoc
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
-import { Product, CartItem, Transaction, ProductSalesData, StockMovement } from '../models/store.model';
+import { Product, CartItem, Transaction, ProductSalesData, StockMovement, InventoryLog } from '../models/store.model';
+import { CashRegisterService } from './cash-register.service';
 
 export interface SaleCompletedEvent {
   transactionId: string;
@@ -31,9 +33,11 @@ export interface SaleCompletedEvent {
 })
 export class StoreService {
   private firestore = inject(Firestore);
+  private injector = inject(Injector);
   private productsCollection = collection(this.firestore, 'products');
   private transactionsCollection = collection(this.firestore, 'transactions');
-  private stockMovementsCollection = collection(this.firestore, 'stockMovements');
+  // private stockMovementsCollection = collection(this.firestore, 'stockMovements'); // Deprecated
+  private inventoryLogsCollection = collection(this.firestore, 'inventory_logs'); // New Collection
 
   // Cart state
   private cartItems = new BehaviorSubject<CartItem[]>([]);
@@ -130,29 +134,63 @@ export class StoreService {
 
 
   // Checkout
-  async checkout(): Promise<string> {
-    const cartItems = this.cartItems.getValue();
+  async checkout(customItems?: CartItem[], performedBy = 'SYSTEM_POS'): Promise<string> {
+    // Enforce Open Register
+    const cashRegisterService = this.injector.get(CashRegisterService);
+    if (!cashRegisterService.isShiftOpen()) {
+      throw new Error('Transaction blocked: Register is closed. Please open a shift.');
+    }
+
+    const isCustomTransaction = !!customItems;
+    const cartItems = customItems || this.cartItems.getValue();
+
     if (cartItems.length === 0) throw new Error('Cart is empty');
 
     const batch = writeBatch(this.firestore);
     const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
-    const timestamp = new Date();
+    const timestamp = new Date(); // Use ServerTimestamp ideally, but Date is okay for now if consistent
 
-    // Deduct stock for each product
+    // 1. Fetch current product states (Snapshot for Audit Trail)
+    // We need to know previous stock to log it.
+    const productIds = [...new Set(cartItems.map(i => i.productId))];
+    const productsMap = new Map<string, Product>();
+
+    const chunkedIds = [];
+    for (let i = 0; i < productIds.length; i += 10) {
+      chunkedIds.push(productIds.slice(i, i + 10));
+    }
+
+    for (const chunk of chunkedIds) {
+      const q = query(this.productsCollection, where(documentId(), 'in', chunk));
+      const snapshot = await getDocs(q);
+      snapshot.forEach(doc => productsMap.set(doc.id, { id: doc.id, ...doc.data() } as Product));
+    }
+
+    // Deduct stock and Create Logs
     for (const item of cartItems) {
+      const product = productsMap.get(item.productId);
+      if (!product) continue; // Should not happen
+
       const productRef = doc(this.firestore, 'products', item.productId);
+      const previousStock = product.stock;
+      const newStock = previousStock - item.quantity;
+
+      // Update Product Stock
       batch.update(productRef, { stock: increment(-item.quantity) });
 
-      // Create Stock Movement Log (SALE)
-      const movementRef = doc(this.stockMovementsCollection);
-      const movement: StockMovement = {
+      // Create Inventory Log (SALE)
+      const logRef = doc(this.inventoryLogsCollection);
+      const log: InventoryLog = {
         productId: item.productId,
+        productName: product.name,
+        type: 'SALE',
         changeAmount: -item.quantity,
-        reason: 'SALE',
+        previousStock: previousStock,
+        newStock: newStock,
         timestamp: timestamp,
-        performedBy: 'SYSTEM_POS' // Could be replaced by auth user in future
+        performedBy: performedBy
       };
-      batch.set(movementRef, movement);
+      batch.set(logRef, log);
     }
 
     // Create transaction record
@@ -165,7 +203,11 @@ export class StoreService {
     batch.set(transactionRef, transaction);
 
     await batch.commit();
-    this.clearCart();
+
+    // Only clear the global cart if this was a standard POS checkout
+    if (!isCustomTransaction) {
+      this.clearCart();
+    }
 
     // Emit sale completed event for cash register integration
     this.saleCompleted.next({
@@ -182,23 +224,35 @@ export class StoreService {
   async logConsumption(productId: string, amount: number, notes?: string): Promise<void> {
     if (amount <= 0) return;
 
+    // Fetch current product for snapshot
+    const productDocRef = doc(this.firestore, 'products', productId);
+    const productSnapshot = await getDoc(productDocRef);
+    if (!productSnapshot.exists()) throw new Error('Product not found');
+    const product = { id: productSnapshot.id, ...productSnapshot.data() } as Product;
+
     const batch = writeBatch(this.firestore);
     const productRef = doc(this.firestore, 'products', productId);
-    
+
+    const previousStock = product.stock;
+    const newStock = previousStock - amount;
+
     // Decrement stock
     batch.update(productRef, { stock: increment(-amount) });
 
     // Log Movement
-    const movementRef = doc(this.stockMovementsCollection);
-    const movement: StockMovement = {
+    const logRef = doc(this.inventoryLogsCollection);
+    const log: InventoryLog = {
       productId,
+      productName: product.name,
+      type: 'INTERNAL_USE',
       changeAmount: -amount,
-      reason: 'INTERNAL_USE',
+      previousStock: previousStock,
+      newStock: newStock,
       timestamp: new Date(),
-      notes,
-      performedBy: 'STAFF' // Placeholder
+      performedBy: 'STAFF', // Placeholder - should ideally be passed in
+      notes
     };
-    batch.set(movementRef, movement);
+    batch.set(logRef, log);
 
     await batch.commit();
   }
@@ -208,17 +262,15 @@ export class StoreService {
     const timestamp = new Date();
 
     // 1. Fetch current product states in batches (to avoid N+1 reads)
-    // Firestore 'in' query supports up to 10 values (or 30, but safe 10)
     const productIds = auditData.map(d => d.productId);
     const chunkSize = 10;
     const productsMap = new Map<string, Product>();
 
     for (let i = 0; i < productIds.length; i += chunkSize) {
       const chunk = productIds.slice(i, i + chunkSize);
-      // Query by document ID (__name__)
       const q = query(this.productsCollection, where(documentId(), 'in', chunk));
       const snapshot = await getDocs(q);
-      
+
       snapshot.forEach(docSnap => {
         productsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as Product);
       });
@@ -227,34 +279,40 @@ export class StoreService {
     // 2. Compare and update
     for (const data of auditData) {
       const product = productsMap.get(data.productId);
-      
-      if (!product) continue; // Product might have been deleted
+
+      if (!product) continue;
 
       const systemStock = product.stock || 0;
       const difference = data.physicalCount - systemStock;
 
       if (difference !== 0) {
         const productRef = doc(this.firestore, 'products', data.productId);
-        
+
         // Update stock to match physical count
         batch.update(productRef, { stock: increment(difference) });
 
         // Log Movement
-        const movementRef = doc(this.stockMovementsCollection);
-        const movement: StockMovement = {
+        const logRef = doc(this.inventoryLogsCollection);
+        const log: InventoryLog = {
           productId: data.productId,
+          productName: product.name,
+          type: 'AUDIT_ADJUSTMENT',
           changeAmount: difference,
-          reason: 'AUDIT_ADJUSTMENT',
+          previousStock: systemStock,
+          newStock: data.physicalCount,
           timestamp: timestamp,
-          notes: `Stock Take: System ${systemStock} -> Physical ${data.physicalCount}`,
-          performedBy: 'STAFF_AUDIT'
+          performedBy: 'STAFF_AUDIT',
+          notes: `Stock Take: System ${systemStock} -> Physical ${data.physicalCount}`
         };
-        batch.set(movementRef, movement);
+        batch.set(logRef, log);
       }
     }
 
     await batch.commit();
   }
+
+  // New Method for Receiving Stock (if not already present, I'll add it or ensure used appropriately)
+  // ...
 
   // Transactions
   getTransactions(constraints: { limit?: number; startDate?: Date; endDate?: Date } = {}): Observable<Transaction[]> {

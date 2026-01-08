@@ -5,12 +5,12 @@ export type StockMovementReason = 'SALE' | 'INTERNAL_USE' | 'RESTOCK' | 'AUDIT_A
 export interface Product {
   id?: string;
   name: string;
-  category: ProductCategory;
+  category: 'Supplement' | 'Drink' | 'Merch' | 'Fitness';
   price: number;
   stock: number;
   imageUrl?: string;
   // New fields for Gym Inventory System
-  type: ProductType;
+  type: 'RETAIL' | 'CONSUMABLE';
   unit: string;
   minStockLevel: number;
   // Cost tracking
@@ -31,6 +31,19 @@ export interface Transaction {
   date: any; // Firestore Timestamp or Date
   totalAmount: number;
   items: CartItem[];
+}
+
+export interface InventoryLog {
+  id?: string;
+  productId: string;
+  productName: string; // Snapshot
+  type: StockMovementReason;
+  changeAmount: number;
+  previousStock: number;
+  newStock: number; // Snapshot
+  timestamp: any; // Firestore Timestamp
+  performedBy: string;
+  notes?: string;
 }
 
 export interface StockMovement {

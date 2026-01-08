@@ -13,23 +13,38 @@ import { Observable, combineLatest, startWith, map } from 'rxjs';
 import { Member } from '../../../../core/models/member.model'; // Fixed path
 import { MemberService } from '../../../../core/services/member.service'; // Fixed path
 import { AttendanceService } from '../../../../core/services/attendance.service'; // Fixed path
+import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { fadeIn } from '../../../../core/animations/animations';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { StoreService } from '../../../../core/services/store.service';
+import { WalkInDialog } from '../walk-in-dialog/walk-in-dialog';
+import { LockerRestrictionDialog } from '../locker-restriction-dialog/locker-restriction-dialog';
+import { SubscriptionUpdateDialog } from '../subscription-update-dialog/subscription-update-dialog';
+import { firstValueFrom } from 'rxjs';
+import { Timestamp } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-check-in-kiosk',
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule, MatFormFieldModule,
     MatInputModule, MatAutocompleteModule, MatButtonModule, MatIconModule,
-    MatCardModule, MatGridListModule, MatSnackBarModule
+    MatCardModule, MatGridListModule, MatSnackBarModule, MatDialogModule
   ],
   /* v8 ignore start */
   template: `
     <div class="kiosk-container">
+      
+      <!-- Register Closed Warning -->
+      <mat-card class="warning-card" *ngIf="(isShiftOpen$ | async) === false" [@fadeIn]>
+        <mat-icon color="warn">warning</mat-icon>
+        <span>Register is closed. Please open a shift in Store to proceed.</span>
+      </mat-card>
+
       <mat-card class="search-card">
         <h2>Check In</h2>
         <mat-form-field class="full-width" appearance="outline">
           <mat-label>Search Member</mat-label>
-          <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto">
+          <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" [disabled]="(isShiftOpen$ | async) === false">
           <mat-icon matSuffix>search</mat-icon>
           <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onMemberSelected($event)">
             <mat-option *ngFor="let member of filteredMembers$ | async" [value]="member">
@@ -48,7 +63,7 @@ import { fadeIn } from '../../../../core/animations/animations';
                    mat-fab 
                    [class.occupied]="isLockerOccupied(num)"
                    [class.selected]="selectedLocker === num"
-                   [disabled]="isLockerOccupied(num)"
+                   [disabled]="isLockerOccupied(num) || (isShiftOpen$ | async) === false"
                    (click)="selectLocker(num)"
                    color="primary">
              {{num}}
@@ -57,7 +72,7 @@ import { fadeIn } from '../../../../core/animations/animations';
 
         <div class="actions">
             <button mat-raised-button color="primary" (click)="confirmCheckIn()" class="check-in-btn" 
-                    [disabled]="isSubmitting">
+                    [disabled]="isSubmitting || (isShiftOpen$ | async) === false">
                 <span *ngIf="!isSubmitting">CHECK IN <span *ngIf="selectedLocker">(Locker {{selectedLocker}})</span></span>
                 <span *ngIf="isSubmitting">Checking In...</span>
             </button>
@@ -70,6 +85,16 @@ import { fadeIn } from '../../../../core/animations/animations';
   styles: [`
     .kiosk-container { max-width: 600px; margin: 0 auto; text-align: center; padding: var(--spacing-md); }
     .search-card { padding: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
+    .warning-card { 
+      background-color: #fef2f2 !important; 
+      color: #b91c1c !important; 
+      margin-bottom: var(--spacing-lg); 
+      padding: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
     .full-width { width: 100%; }
     .locker-selection { 
       /* Removed CSS animation */ 
@@ -91,16 +116,20 @@ import { fadeIn } from '../../../../core/animations/animations';
 export class CheckInKiosk implements OnInit {
   private memberService = inject(MemberService);
   private attendanceService = inject(AttendanceService);
+  private storeService = inject(StoreService);
+  private cashRegisterService = inject(CashRegisterService); // Inject CashRegisterService
   private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   searchControl = new FormControl<string | Member>('');
   members$: Observable<Member[]> = this.memberService.getMembers(); // Explicit type
   filteredMembers$!: Observable<Member[]>;
+  isShiftOpen$ = this.cashRegisterService.currentShift$.pipe(map(s => s?.status === 'OPEN')); // Check Shift Status
 
   selectedMember: Member | null = null;
   selectedLocker: number | null = null;
   occupiedLockers: number[] = [];
-  lockerNumbers = Array.from({length: 12}, (_, i) => i + 1);
+  lockerNumbers = Array.from({ length: 12 }, (_, i) => i + 1);
   isSubmitting = false;
 
   ngOnInit() {
@@ -125,52 +154,193 @@ export class CheckInKiosk implements OnInit {
     this.selectedMember = event.option.value;
     this.selectedLocker = null;
     if (this.selectedMember && this.selectedMember.gender) { // Check gender exists
-        this.occupiedLockers = await this.attendanceService.getOccupiedLockers(this.selectedMember.gender);
+      this.occupiedLockers = await this.attendanceService.getOccupiedLockers(this.selectedMember.gender);
     }
   }
 
   isLockerOccupied(num: number): boolean {
-      return this.occupiedLockers.includes(num);
+    return this.occupiedLockers.includes(num);
   }
 
   selectLocker(num: number) {
-      if (this.selectedLocker === num) {
-          this.selectedLocker = null; 
-      } else {
-          this.selectedLocker = num;
-      }
+    if (this.selectedLocker === num) {
+      this.selectedLocker = null;
+    } else {
+      this.selectedLocker = num;
+    }
   }
 
   async confirmCheckIn() {
-      // console.log('confirmCheckIn called', this.selectedMember);
-      if (!this.selectedMember) return;
-      this.isSubmitting = true;
-      try {
-          await this.attendanceService.checkIn(this.selectedMember, this.selectedLocker || undefined);
-          // console.log('checkIn successful');
-          
-          let message = `Checked in ${this.selectedMember.name}!`;
-          if (this.selectedMember.subscription) {
-              const expDate = this.selectedMember.expiration ? new Date(this.selectedMember.expiration.seconds * 1000).toLocaleDateString() : 'No Expiry';
-              message += ` (${this.selectedMember.subscription} - Exp: ${expDate})`;
-          }
-          
-          this.snackBar.open(message, 'Close', { duration: 5000 });
-          this.reset();
-      } catch (error: any) {
-          this.snackBar.open(error.message, 'Close', { duration: 3000 });
-      } finally {
-          this.isSubmitting = false;
+    if (!this.cashRegisterService.isShiftOpen()) {
+      this.snackBar.open('Register is closed. Please open a shift first.', 'Close', { duration: 3000 });
+      return;
+    }
+
+    if (!this.selectedMember) return;
+    this.isSubmitting = true;
+    try {
+      const member = this.selectedMember;
+      const now = new Date();
+      let expirationDate: Date | null = null;
+
+      if (member.expiration) {
+        expirationDate = member.expiration.toDate ? member.expiration.toDate() : new Date(member.expiration);
       }
+
+      const hasActiveSubscription = !!member.subscription && (!!expirationDate && expirationDate > now);
+      const hasLocker = !!this.selectedLocker;
+
+      // 1. Locker Restriction Check
+      if (hasLocker && !hasActiveSubscription) {
+        const restrictionDialog = this.dialog.open(LockerRestrictionDialog, {
+          data: { member }
+        });
+
+        const result = await firstValueFrom(restrictionDialog.afterClosed());
+
+        if (!result || result.action === 'cancel') {
+          this.isSubmitting = false;
+          return;
+        }
+
+        if (result.action === 'check-in-no-locker') {
+          this.selectedLocker = null; // Clear locker selection
+          // Proceed to standard flow (will hit Step 2)
+        }
+        else if (result.action === 'update-subscription') {
+          const updateDialog = this.dialog.open(SubscriptionUpdateDialog, {
+            data: { member }
+          });
+          const updateResult = await firstValueFrom(updateDialog.afterClosed());
+
+          if (!updateResult || updateResult.action === 'cancel') {
+            this.isSubmitting = false;
+            return;
+          }
+
+          // Update Member Subscription
+          const newExpiration = Timestamp.fromDate(updateResult.subscriptionDate);
+          await this.memberService.updateMember(member.id!, {
+            subscription: 'Monthly Membership',
+            expiration: newExpiration,
+            membershipStatus: 'Active'
+          });
+
+          // Update local member object for subsequent checks
+          member.subscription = 'Monthly Membership';
+          member.expiration = newExpiration;
+          // Re-evaluate active status (it's active now)
+          // But we proceed directly to check-in or pay flow
+
+          if (updateResult.action === 'pay-and-check-in') {
+            const products = await firstValueFrom(this.storeService.getProducts());
+            // Try to find "Monthly", "Membership", or similar
+            const membershipProduct = products.find(p =>
+              p.name.toLowerCase().includes('monthly') ||
+              p.name.toLowerCase().includes('membership')
+            );
+
+            if (!membershipProduct) {
+              // Fallback or Warning? For now, we error to be safe.
+              throw new Error('Membership product not found (search "Monthly" or "Membership"). Cannot process payment.');
+            }
+
+            await this.storeService.checkout([{
+              productId: membershipProduct.id!,
+              productName: membershipProduct.name,
+              price: membershipProduct.price,
+              quantity: 1,
+              subtotal: membershipProduct.price
+            }], 'ATTENDANCE_SUBSCRIPTION_UPDATE');
+
+            this.snackBar.open('Subscription updated & Payment processed.', undefined, { duration: 2000 });
+          } else {
+            this.snackBar.open('Subscription updated.', undefined, { duration: 2000 });
+          }
+
+          // Proceed to Check-In (Skip Walk-in check since they are now subscribed)
+          await this.doCheckIn(member);
+          return;
+        }
+      }
+
+      // 2. Subscription / Walk-in Check (Only if still not actively subscribed)
+      // We re-check active status because it might have changed above? 
+      // Actually, if we updated sub above, we returned early. So we only reach here if NO sub update happened.
+      // OR if 'check-in-no-locker' was chosen.
+
+      if (!hasActiveSubscription) {
+        const dialogRef = this.dialog.open(WalkInDialog, {
+          data: {
+            member: member,
+            isExpired: !!member.subscription // Distinguish expired vs never had one
+          }
+        });
+
+        const result = await firstValueFrom(dialogRef.afterClosed());
+
+        if (!result || result.action === 'cancel') {
+          this.isSubmitting = false;
+          return;
+        }
+
+        if (result.action === 'walk-in') {
+          const products = await firstValueFrom(this.storeService.getProducts());
+          const walkInProduct = products.find(p => p.name.toLowerCase().includes('walk-in'));
+
+          if (!walkInProduct) {
+            throw new Error('Walk-in product not found. Please contact admin.');
+          }
+
+          await this.storeService.checkout([{
+            productId: walkInProduct.id!,
+            productName: walkInProduct.name,
+            price: walkInProduct.price,
+            quantity: 1,
+            subtotal: walkInProduct.price
+          }], 'ATTENDANCE_WALK_IN');
+
+          this.snackBar.open('Walk-in transaction created.', undefined, { duration: 2000 });
+        }
+        // If 'check-in' (no walk-in), we just fall through to doCheckIn
+      }
+
+      // 3. Final Check-in
+      await this.doCheckIn(member);
+
+    } catch (error: any) {
+      this.snackBar.open(error.message, 'Close', { duration: 3000 });
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  async doCheckIn(member: Member) {
+    await this.attendanceService.checkIn(member, this.selectedLocker || undefined);
+
+    let message = `Checked in ${member.name}!`;
+    // Resolve expiration for display
+    let expDisplay = 'No Expiry';
+    if (member.expiration) {
+      const d = member.expiration.toDate ? member.expiration.toDate() : new Date(member.expiration);
+      expDisplay = d.toLocaleDateString();
+    }
+
+    if (member.subscription) {
+      message += ` (${member.subscription} - Exp: ${expDisplay})`;
+    }
+
+    this.snackBar.open(message, 'Close', { duration: 5000 });
+    this.reset();
   }
 
   cancel() {
-      this.reset();
+    this.reset();
   }
 
   reset() {
-      this.selectedMember = null;
-      this.selectedLocker = null;
-      this.searchControl.setValue('');
+    this.selectedMember = null;
+    this.selectedLocker = null;
+    this.searchControl.setValue('');
   }
 }
