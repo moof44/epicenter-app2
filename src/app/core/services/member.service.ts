@@ -46,4 +46,14 @@ export class MemberService {
     setInactive(id: string): Promise<void> {
         return this.updateMember(id, { membershipStatus: 'Inactive' });
     }
+
+    isMembershipExpired(member: Member): boolean {
+        if (!member.expiration) return false;
+        // Handle Firestore Timestamp or Date object
+        const expiry = member.expiration instanceof Date
+            ? member.expiration
+            : (member.expiration as any).toDate();
+
+        return expiry < new Date();
+    }
 }

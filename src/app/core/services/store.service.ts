@@ -300,7 +300,7 @@ export class StoreService {
       if (!product) continue;
 
       const systemStock = product.stock || 0;
-      const difference = data.physicalCount - systemStock;
+      const difference = this.calculateStockVariance(systemStock, data.physicalCount);
 
       if (difference !== 0) {
         const productRef = doc(this.firestore, 'products', data.productId);
@@ -326,6 +326,11 @@ export class StoreService {
     }
 
     await batch.commit();
+  }
+
+  // Helper for Inventory Variance
+  calculateStockVariance(currentStock: number, physicalCount: number): number {
+    return physicalCount - currentStock;
   }
 
   // New Method for Receiving Stock (if not already present, I'll add it or ensure used appropriately)

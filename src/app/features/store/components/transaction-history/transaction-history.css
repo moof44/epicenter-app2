@@ -56,6 +56,18 @@
     grid-template-columns: 1fr auto;
     gap: 8px;
   }
+
+  /* Override global mobile-card-table flex for expansion panel column */
+  .mobile-card-table .items-cell.mat-mdc-cell {
+    display: block !important;
+    width: 100%;
+    padding: 8px 0 !important;
+  }
+
+  .mobile-card-table .items-cell.mat-mdc-cell::before {
+    margin-bottom: 8px;
+    display: block;
+  }
 }
 
 .empty-state {

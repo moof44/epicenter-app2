@@ -130,3 +130,7 @@
   margin-bottom: 16px;
   opacity: 0.5;
 }
+.mat-column-actions button {
+    min-width: 44px;
+    min-height: 44px;
+}

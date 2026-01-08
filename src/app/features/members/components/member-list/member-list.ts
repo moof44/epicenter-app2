@@ -25,7 +25,7 @@ import { fadeIn, staggerList } from '../../../../core/animations/animations';
 })
 export class MemberList implements AfterViewInit {
   private memberService = inject(MemberService);
-  
+
   dataSource = new MatTableDataSource<Member>([]);
   displayedColumns: string[] = ['name', 'membershipStatus', 'expiration', 'actions'];
 
@@ -47,11 +47,7 @@ export class MemberList implements AfterViewInit {
     await this.memberService.updateMember(member.id, { membershipStatus: newStatus });
   }
 
-  isExpired(timestamp: any): boolean {
-    if (!timestamp) return false;
-    const exp = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return exp < today;
+  isExpired(member: Member): boolean {
+    return this.memberService.isMembershipExpired(member);
   }
 }
