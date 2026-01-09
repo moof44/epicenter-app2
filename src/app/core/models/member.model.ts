@@ -9,4 +9,6 @@ export interface Member {
     goal: string;
     subscription?: string;
     membershipStatus: 'Active' | 'Inactive' | 'Pending';
+    createdBy?: { uid: string; name: string; timestamp: any };
+    lastModifiedBy?: { uid: string; name: string; timestamp: any };
 }

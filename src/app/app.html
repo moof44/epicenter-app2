@@ -1,90 +1,110 @@
 <div class="app-container">
   <mat-toolbar color="primary" class="main-toolbar">
-    <button mat-icon-button (click)="snav.toggle()" class="menu-button">
+    <button mat-icon-button (click)="snav.toggle()" class="menu-button" *ngIf="authService.isLoggedIn()">
       <mat-icon>menu</mat-icon>
     </button>
     <span>Epicenter Gym Management System</span>
     <span class="toolbar-spacer"></span>
-    <app-shift-status-widget></app-shift-status-widget>
+    <app-shift-status-widget *ngIf="authService.isLoggedIn()"></app-shift-status-widget>
   </mat-toolbar>
 
   <mat-sidenav-container class="sidenav-container">
-    <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'" [opened]="!mobileQuery.matches"
-      [fixedInViewport]="mobileQuery.matches" fixedTopGap="56">
+    <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'"
+      [opened]="!mobileQuery.matches && authService.isLoggedIn()" [fixedInViewport]="mobileQuery.matches"
+      fixedTopGap="56">
       <mat-nav-list>
-        <a mat-list-item routerLink="/members" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>group</mat-icon>
-          <span matListItemTitle>Members</span>
-        </a>
-        <a mat-list-item routerLink="/attendance" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>event_available</mat-icon>
-          <span matListItemTitle>Attendance</span>
-        </a>
+        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])">
+          <a mat-list-item routerLink="/members" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>group</mat-icon>
+            <span matListItemTitle>Members</span>
+          </a>
+          <a mat-list-item routerLink="/attendance" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>event_available</mat-icon>
+            <span matListItemTitle>Attendance</span>
+          </a>
+        </ng-container>
 
-        <mat-divider></mat-divider>
-        <div class="nav-section-title">Admin</div>
+        <mat-divider *ngIf="authService.hasAnyRole(['ADMIN'])"></mat-divider>
+        <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN'])">Admin</div>
 
         <a mat-list-item routerLink="/users" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
+          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
           <mat-icon matListItemIcon>badge</mat-icon>
           <span matListItemTitle>Staff</span>
         </a>
 
-        <mat-divider></mat-divider>
-        <div class="nav-section-title">Store</div>
+        <mat-divider *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])"></mat-divider>
+        <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">Store</div>
 
-        <a mat-list-item routerLink="/store/pos" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>point_of_sale</mat-icon>
-          <span matListItemTitle>Sell Items</span>
-        </a>
-        <a mat-list-item routerLink="/store/manage" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>inventory_2</mat-icon>
-          <span matListItemTitle>Item List</span>
-        </a>
-        <a mat-list-item routerLink="/store/stock-take" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>checklist</mat-icon>
-          <span matListItemTitle>Stock Check</span>
-        </a>
-        <a mat-list-item routerLink="/store/restock" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>input</mat-icon>
-          <span matListItemTitle>Receive Stock</span>
-        </a>
-        <a mat-list-item routerLink="/store/inventory-history" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>manage_search</mat-icon>
-          <span matListItemTitle>Stock Movement</span>
-        </a>
-        <a mat-list-item routerLink="/store/purchases" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>history</mat-icon>
-          <span matListItemTitle>Purchase History</span>
-        </a>
-        <a mat-list-item routerLink="/store/history" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>receipt_long</mat-icon>
-          <span matListItemTitle>Transactions</span>
-        </a>
-        <a mat-list-item routerLink="/store/stats" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>analytics</mat-icon>
-          <span matListItemTitle>Analytics</span>
-        </a>
-        <a mat-list-item routerLink="/store/cash" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
-          <span matListItemTitle>Shift Management</span>
-        </a>
-        <a mat-list-item routerLink="/store/reports" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>summarize</mat-icon>
-          <span matListItemTitle>Cash Reports</span>
-        </a>
+        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">
+          <a mat-list-item routerLink="/store/pos" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>point_of_sale</mat-icon>
+            <span matListItemTitle>Sell Items</span>
+          </a>
+        </ng-container>
+
+        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
+          <a mat-list-item routerLink="/store/manage" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>inventory_2</mat-icon>
+            <span matListItemTitle>Item List</span>
+          </a>
+          <a mat-list-item routerLink="/store/stock-take" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>checklist</mat-icon>
+            <span matListItemTitle>Stock Check</span>
+          </a>
+          <a mat-list-item routerLink="/store/restock" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>input</mat-icon>
+            <span matListItemTitle>Receive Stock</span>
+          </a>
+          <a mat-list-item routerLink="/store/inventory-history" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>manage_search</mat-icon>
+            <span matListItemTitle>Stock Movement</span>
+          </a>
+          <a mat-list-item routerLink="/store/purchases" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>history</mat-icon>
+            <span matListItemTitle>Purchase History</span>
+          </a>
+        </ng-container>
+
+        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">
+          <a mat-list-item routerLink="/store/history" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>receipt_long</mat-icon>
+            <span matListItemTitle>Transactions</span>
+          </a>
+        </ng-container>
+
+        <ng-container *ngIf="authService.hasAnyRole(['ADMIN'])">
+          <a mat-list-item routerLink="/store/stats" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>analytics</mat-icon>
+            <span matListItemTitle>Analytics</span>
+          </a>
+        </ng-container>
+
+        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">
+          <a mat-list-item routerLink="/store/cash" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
+            <span matListItemTitle>Shift Management</span>
+          </a>
+        </ng-container>
+
+        <ng-container *ngIf="authService.hasAnyRole(['ADMIN'])">
+          <a mat-list-item routerLink="/store/reports" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>summarize</mat-icon>
+            <span matListItemTitle>Cash Reports</span>
+          </a>
+        </ng-container>
 
         <mat-divider></mat-divider>
         <button mat-list-item (click)="logout(); mobileQuery.matches ? snav.close() : null" type="button">
