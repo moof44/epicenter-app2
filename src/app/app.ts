@@ -10,6 +10,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { slideInOut } from './core/animations/animations';
 import { ShiftStatusWidget } from './features/store/components/shift-status-widget/shift-status-widget';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -42,5 +43,11 @@ export class App implements OnDestroy {
 
   getRouteAnimation(outlet: RouterOutlet) {
     return outlet && outlet.activatedRouteData && outlet.activatedRouteData['animation'];
+  }
+
+  readonly authService = inject(AuthService);
+
+  logout() {
+    this.authService.logout().subscribe();
   }
 }

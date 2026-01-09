@@ -1,8 +1,9 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { initializeApp, provideFirebaseApp, getApp } from '@angular/fire/app';
-import { getFirestore, provideFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from '@angular/fire/firestore';
+import { provideFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from '@angular/fire/firestore';
 import { getFunctions, provideFunctions } from '@angular/fire/functions';
+import { getAuth, provideAuth } from '@angular/fire/auth';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { firebaseConfig } from './core/firebase.config';
 
@@ -17,6 +18,7 @@ export const appConfig: ApplicationConfig = {
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
     })),
     provideFunctions(() => getFunctions()),
+    provideAuth(() => getAuth()),
     provideAnimationsAsync()
   ]
 };

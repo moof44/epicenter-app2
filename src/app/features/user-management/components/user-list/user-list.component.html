@@ -1,0 +1,137 @@
+<div class="container">
+    <div class="header">
+        <h1>Staff Management</h1>
+    </div>
+
+    <ng-container *ngIf="users$ | async as users">
+        <!-- Desktop Table View -->
+        <table mat-table [dataSource]="users" class="desktop-table">
+            <!-- Photo Column -->
+            <ng-container matColumnDef="photo">
+                <th mat-header-cell *matHeaderCellDef> Photo </th>
+                <td mat-cell *matCellDef="let user" [class.dimmed]="user.isActive === false">
+                    <div class="avatar-placeholder" [class.admin]="user.roles?.includes('ADMIN')">
+                        {{ user.displayName.charAt(0).toUpperCase() }}
+                    </div>
+                </td>
+            </ng-container>
+
+            <!-- Name Column -->
+            <ng-container matColumnDef="displayName">
+                <th mat-header-cell *matHeaderCellDef> Name </th>
+                <td mat-cell *matCellDef="let user" [class.dimmed]="user.isActive === false">
+                    <div class="user-name">
+                        <span>{{ user.displayName }}</span>
+                        <span class="user-email">{{ user.email }}</span>
+                    </div>
+                </td>
+            </ng-container>
+
+            <!-- Roles Column -->
+            <ng-container matColumnDef="roles">
+                <th mat-header-cell *matHeaderCellDef> Roles </th>
+                <td mat-cell *matCellDef="let user" [class.dimmed]="user.isActive === false">
+                    <mat-chip-set>
+                        @for (role of user.roles; track role) {
+                        <mat-chip [color]="getRoleColor(role)" highlighted>{{ role }}</mat-chip>
+                        }
+                    </mat-chip-set>
+                </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef> Status </th>
+                <td mat-cell *matCellDef="let user" [class.dimmed]="user.isActive === false">
+                    <span class="status-badge" [class.active]="user.isActive !== false"
+                        [class.inactive]="user.isActive === false">
+                        {{ user.isActive !== false ? 'Active' : 'Inactive' }}
+                    </span>
+                </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef> Actions </th>
+                <td mat-cell *matCellDef="let user">
+                    <button mat-icon-button [matMenuTriggerFor]="menu" [matMenuTriggerData]="{user: user}"
+                        aria-label="Example icon-button with a menu">
+                        <mat-icon>more_vert</mat-icon>
+                    </button>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <!-- Mobile Card View -->
+        <div class="mobile-cards">
+            @for (user of users; track user.uid) {
+            <div class="user-card" [class.dimmed-card]="user.isActive === false">
+                <div class="card-header">
+                    <div class="avatar-placeholder big" [class.admin]="user.roles.includes('ADMIN')">
+                        {{ user.displayName.charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="header-info">
+                        <h3>{{ user.displayName }}</h3>
+                        <span class="email">{{ user.email }}</span>
+                    </div>
+                    <button mat-icon-button [matMenuTriggerFor]="menu" [matMenuTriggerData]="{user: user}">
+                        <mat-icon>more_vert</mat-icon>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="role-list">
+                        @for (role of user.roles; track role) {
+                        <span class="role-badge" [class.admin-role]="role === 'ADMIN'">{{ role }}</span>
+                        }
+                    </div>
+                    <div class="info-row">
+                        <mat-icon>phone</mat-icon>
+                        <span>{{ user.phone || 'N/A' }}</span>
+                    </div>
+                    <div class="info-row status-row">
+                        <span class="status-badge" [class.active]="user.isActive !== false"
+                            [class.inactive]="user.isActive === false">
+                            {{ user.isActive !== false ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Empty State -->
+        @if (users.length === 0) {
+        <div class="empty-state">
+            <mat-icon>group_off</mat-icon>
+            <p>No staff members found.</p>
+        </div>
+        }
+
+    </ng-container>
+
+    <button mat-fab color="primary" class="fab-add" (click)="openAddUserDialog()">
+        <mat-icon>add</mat-icon>
+    </button>
+</div>
+
+<mat-menu #menu="matMenu">
+    <ng-template matMenuContent let-user="user">
+        <button mat-menu-item (click)="editUser(user)">
+            <mat-icon>edit</mat-icon>
+            <span>Edit</span>
+        </button>
+        <button mat-menu-item (click)="toggleUserStatus(user)">
+            <ng-container *ngIf="user.isActive !== false; else unblockIcon">
+                <mat-icon color="warn">block</mat-icon>
+                <span>Deactivate</span>
+            </ng-container>
+            <ng-template #unblockIcon>
+                <mat-icon color="primary">check_circle</mat-icon>
+                <span>Activate</span>
+            </ng-template>
+        </button>
+    </ng-template>
+</mat-menu>

@@ -14,6 +14,7 @@ export interface User {
     lastLoginAt?: any;
     phone?: string;
     address?: string;
+    isActive?: boolean;
 }
 
 export interface CreateUserDto {
