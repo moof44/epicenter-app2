@@ -1,4 +1,5 @@
-import { Component, inject, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, inject, ViewChild, AfterViewInit, signal, computed, effect, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -26,31 +27,52 @@ import { fadeIn } from '../../../../core/animations/animations';
   ],
   templateUrl: './product-management.html',
   styleUrl: './product-management.css',
-  animations: [fadeIn]
+  animations: [fadeIn],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductManagement implements AfterViewInit {
   private storeService = inject(StoreService);
   private snackBar = inject(MatSnackBar);
+  private cdr = inject(ChangeDetectorRef);
 
   dataSource = new MatTableDataSource<Product>([]);
   displayedColumns = ['name', 'category', 'price', 'stock', 'actions']; // Default to RETAIL columns
   categories: ProductCategory[] = ['Supplement', 'Drink', 'Merch', 'Fitness'];
 
-  // Data State
-  private allProducts: Product[] = [];
-  currentFilter: ProductType = 'RETAIL';
+  // Data State - Reactive
+  products$ = this.storeService.getProducts();
+  products = toSignal(this.products$, { initialValue: [] as Product[] });
 
-  // Form state
-  showForm = false;
+  // UI State - Signals
+  currentFilter = signal<ProductType>('RETAIL');
+  showForm = signal(false);
+
+  // Form State - Mutable for Template Forms
   editingProduct: Product | null = null;
   formData: Omit<Product, 'id'> = this.getEmptyForm();
+
+  // Computed filtered data
+  filteredProducts = computed(() => {
+    const all = this.products();
+    const filter = this.currentFilter();
+    return all.filter(p => {
+      const type = p.type || 'RETAIL';
+      return type === filter;
+    });
+  });
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   constructor() {
-    this.storeService.getProducts().subscribe(products => {
-      this.allProducts = products;
-      this.applyFilter();
+    effect(() => {
+      this.dataSource.data = this.filteredProducts();
+
+      if (this.currentFilter() === 'CONSUMABLE') {
+        this.displayedColumns = ['name', 'unit', 'stock', 'actions'];
+      } else {
+        this.displayedColumns = ['name', 'category', 'price', 'stock', 'actions'];
+      }
+      this.cdr.markForCheck(); // Mark for check when data or columns change
     });
   }
 
@@ -59,24 +81,8 @@ export class ProductManagement implements AfterViewInit {
   }
 
   onTabChange(index: number) {
-    this.currentFilter = index === 0 ? 'RETAIL' : 'CONSUMABLE';
-    this.applyFilter();
+    this.currentFilter.set(index === 0 ? 'RETAIL' : 'CONSUMABLE');
   }
-
-  applyFilter() {
-    const filtered = this.allProducts.filter(p => {
-      const type = p.type || 'RETAIL'; // Default to RETAIL for existing data
-      return type === this.currentFilter;
-    });
-    this.dataSource.data = filtered;
-
-    if (this.currentFilter === 'CONSUMABLE') {
-      this.displayedColumns = ['name', 'unit', 'stock', 'actions'];
-    } else {
-      this.displayedColumns = ['name', 'category', 'price', 'stock', 'actions'];
-    }
-  }
-
 
   private getEmptyForm(): Omit<Product, 'id'> {
     return {
@@ -94,13 +100,15 @@ export class ProductManagement implements AfterViewInit {
   openAddForm(): void {
     this.editingProduct = null;
     this.formData = this.getEmptyForm();
+
     // Pre-set type based on current tab
-    this.formData.type = this.currentFilter;
-    if (this.currentFilter === 'CONSUMABLE') {
+    this.formData.type = this.currentFilter();
+    if (this.currentFilter() === 'CONSUMABLE') {
       this.formData.price = 0;
-      this.formData.unit = 'Bottle'; // Example default
+      this.formData.unit = 'Bottle';
     }
-    this.showForm = true;
+
+    this.showForm.set(true);
   }
 
   openEditForm(product: Product): void {
@@ -111,11 +119,11 @@ export class ProductManagement implements AfterViewInit {
     if (!this.formData.unit) this.formData.unit = 'Item';
     if (this.formData.minStockLevel === undefined) this.formData.minStockLevel = 5;
 
-    this.showForm = true;
+    this.showForm.set(true);
   }
 
   closeForm(): void {
-    this.showForm = false;
+    this.showForm.set(false);
     this.editingProduct = null;
     this.formData = this.getEmptyForm();
   }
@@ -132,6 +140,8 @@ export class ProductManagement implements AfterViewInit {
       this.closeForm();
     } catch {
       this.snackBar.open('Error saving product', 'Close', { duration: 3000 });
+    } finally {
+      this.cdr.markForCheck();
     }
   }
 
@@ -142,6 +152,8 @@ export class ProductManagement implements AfterViewInit {
       this.snackBar.open('Product deleted', 'Close', { duration: 3000 });
     } catch {
       this.snackBar.open('Error deleting product', 'Close', { duration: 3000 });
+    } finally {
+      this.cdr.markForCheck();
     }
   }
 
@@ -153,6 +165,8 @@ export class ProductManagement implements AfterViewInit {
     } catch (err) {
       console.error(err);
       this.snackBar.open('Error logging consumption', 'Close', { duration: 3000 });
+    } finally {
+      this.cdr.markForCheck();
     }
   }
 
@@ -165,4 +179,10 @@ export class ProductManagement implements AfterViewInit {
     };
     return colors[category] || 'primary';
   }
+
+  // Helper for template binding since we use signals now
+  // This method is no longer needed as formData is a plain object
+  // updateFormData(field: keyof Omit<Product, 'id'>, value: any) {
+  //   this.formData.update(current => ({ ...current, [field]: value }));
+  // }
 }

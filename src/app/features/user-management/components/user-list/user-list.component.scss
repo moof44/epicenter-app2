@@ -1,0 +1,178 @@
+.container {
+    padding: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    min-height: 80vh;
+}
+
+.header {
+    margin-bottom: 24px;
+}
+
+/* Avatar Placeholder */
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    background-color: #eee;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #555;
+
+    &.admin {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+
+    &.big {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+}
+
+.user-name {
+    display: flex;
+    flex-direction: column;
+
+    .user-email {
+        font-size: 0.8rem;
+        color: #777;
+    }
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+
+    &.active {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    &.inactive {
+        background-color: #f5f5f5;
+        color: #757575;
+    }
+}
+
+.dimmed {
+    opacity: 0.5;
+    background-color: #fafafa;
+}
+
+.fab-add {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100;
+}
+
+/* Responsive Logic */
+.desktop-table {
+    width: 100%;
+
+    @media (max-width: 768px) {
+        display: none;
+    }
+}
+
+.mobile-cards {
+    display: none;
+
+    @media (max-width: 768px) {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+}
+
+.user-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eee;
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+
+        .header-info {
+            flex: 1;
+
+            h3 {
+                margin: 0;
+                font-size: 1.1rem;
+            }
+
+            .email {
+                color: #666;
+                font-size: 0.9rem;
+            }
+        }
+    }
+
+    .card-body {
+        padding-top: 8px;
+        border-top: 1px solid #f0f0f0;
+
+        .role-list {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .role-badge {
+            font-size: 0.8rem;
+            background: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+
+            &.admin-role {
+                background: #ffebee;
+                color: #c62828;
+                font-weight: 500;
+            }
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #555;
+            margin-top: 4px;
+
+            mat-icon {
+                font-size: 18px;
+                width: 18px;
+                height: 18px;
+            }
+        }
+    }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px;
+    color: #999;
+
+    mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+    }
+}
+
+.dimmed-card {
+    opacity: 0.6;
+    background-color: #f9f9f9;
+}

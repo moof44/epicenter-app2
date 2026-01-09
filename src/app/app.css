@@ -34,8 +34,8 @@ mat-sidenav {
 
 .content {
   padding: var(--container-padding, 16px);
-  overflow-y: auto;
   min-height: 100%;
+  box-sizing: border-box;
 }
 
 .active {

@@ -24,6 +24,15 @@
         </a>
 
         <mat-divider></mat-divider>
+        <div class="nav-section-title">Admin</div>
+
+        <a mat-list-item routerLink="/users" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null">
+          <mat-icon matListItemIcon>badge</mat-icon>
+          <span matListItemTitle>Staff</span>
+        </a>
+
+        <mat-divider></mat-divider>
         <div class="nav-section-title">Store</div>
 
         <a mat-list-item routerLink="/store/pos" routerLinkActive="active"
@@ -76,6 +85,12 @@
           <mat-icon matListItemIcon>summarize</mat-icon>
           <span matListItemTitle>Cash Reports</span>
         </a>
+
+        <mat-divider></mat-divider>
+        <button mat-list-item (click)="logout(); mobileQuery.matches ? snav.close() : null" type="button">
+          <mat-icon matListItemIcon color="warn">logout</mat-icon>
+          <span matListItemTitle>Logout</span>
+        </button>
       </mat-nav-list>
     </mat-sidenav>
 

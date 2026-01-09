@@ -16,12 +16,12 @@
 </mat-tab-group>
 
 <!-- Product Form -->
-<div class="form-card mat-elevation-z2" *ngIf="showForm" [@fadeIn]>
+<div class="form-card mat-elevation-z2" *ngIf="showForm()" [@fadeIn]>
   <h2>
     {{
     editingProduct
     ? 'Edit Product'
-    : 'Add New ' + (currentFilter === 'RETAIL' ? 'Retail' : 'Consumable') + ' Item'
+    : 'Add New ' + (currentFilter() === 'RETAIL' ? 'Retail' : 'Consumable') + ' Item'
     }}
   </h2>
   <form (ngSubmit)="saveProduct()" class="product-form">
@@ -31,7 +31,7 @@
     </mat-form-field>
 
     <!-- Category (Only for Retail usually, but keep for all as organization?) -->
-    <mat-form-field appearance="outline" *ngIf="currentFilter === 'RETAIL'">
+    <mat-form-field appearance="outline" *ngIf="currentFilter() === 'RETAIL'">
       <mat-label>Category</mat-label>
       <mat-select [(ngModel)]="formData.category" name="category" required>
         <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
@@ -39,7 +39,7 @@
     </mat-form-field>
 
     <!-- Price (Only Retail) -->
-    <mat-form-field appearance="outline" *ngIf="currentFilter === 'RETAIL'">
+    <mat-form-field appearance="outline" *ngIf="currentFilter() === 'RETAIL'">
       <mat-label>Price</mat-label>
       <input matInput type="number" [(ngModel)]="formData.price" name="price" required min="0" />
       <span matTextPrefix>₱&nbsp;</span>

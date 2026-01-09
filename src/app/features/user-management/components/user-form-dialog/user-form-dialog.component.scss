@@ -1,0 +1,31 @@
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+  
+  .half-width {
+    flex: 1;
+  }
+}
+
+.spinner-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ensure dialog content doesn't have excessive padding issues with scrolling */
+mat-dialog-content {
+  max-width: 500px;
+  min-width: 350px;
+}

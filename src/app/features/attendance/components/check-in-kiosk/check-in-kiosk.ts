@@ -180,14 +180,8 @@ export class CheckInKiosk implements OnInit {
     this.isSubmitting = true;
     try {
       const member = this.selectedMember;
-      const now = new Date();
-      let expirationDate: Date | null = null;
-
-      if (member.expiration) {
-        expirationDate = member.expiration.toDate ? member.expiration.toDate() : new Date(member.expiration);
-      }
-
-      const hasActiveSubscription = !!member.subscription && (!!expirationDate && expirationDate > now);
+      const isExpired = this.memberService.isMembershipExpired(member);
+      const hasActiveSubscription = !!member.subscription && !isExpired;
       const hasLocker = !!this.selectedLocker;
 
       // 1. Locker Restriction Check
