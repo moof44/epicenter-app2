@@ -37,6 +37,16 @@ export class AuthService {
         return user?.roles?.includes('ADMIN') ?? false;
     });
 
+    /**
+     * Checks if the user has at least one of the required roles.
+     * @param requiredRoles Array of roles to check against.
+     */
+    hasAnyRole(requiredRoles: string[]): boolean {
+        const user = this.userProfile();
+        if (!user || !user.roles) return false;
+        return requiredRoles.some(role => user.roles.includes(role));
+    }
+
     login(email: string, password: string): Observable<any> {
         return from(signInWithEmailAndPassword(this.auth, email, password));
     }

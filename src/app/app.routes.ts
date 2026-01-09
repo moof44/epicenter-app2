@@ -6,6 +6,7 @@ import { ProgressForm } from './features/progress/components/progress-form/progr
 
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
     { path: '', redirectTo: '/members', pathMatch: 'full' },
@@ -17,38 +18,38 @@ export const routes: Routes = [
     {
         path: 'members',
         component: MemberList,
-        canActivate: [authGuard],
-        data: { animation: 'ListPage' }
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'ListPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
     },
     {
         path: 'members/add',
         component: MemberForm,
-        canActivate: [authGuard],
-        data: { animation: 'FormPage' }
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF'] }
     },
     {
         path: 'members/edit/:id',
         component: MemberForm,
-        canActivate: [authGuard],
-        data: { animation: 'FormPage' }
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF'] }
     },
     {
         path: 'members/:id/progress',
         component: ProgressDashboard,
-        canActivate: [authGuard],
-        data: { animation: 'DashboardPage' }
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'DashboardPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
     },
     {
         path: 'members/:id/progress/new',
         component: ProgressForm,
-        canActivate: [authGuard],
-        data: { animation: 'FormPage' }
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
     },
     {
         path: 'attendance',
         loadComponent: () => import('./features/attendance/components/attendance-layout/attendance-layout').then(m => m.AttendanceLayout),
-        canActivate: [authGuard],
-        data: { animation: 'ListPage' }
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'ListPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
     },
     {
         path: 'store',
@@ -59,7 +60,7 @@ export const routes: Routes = [
     {
         path: 'users',
         loadComponent: () => import('./features/user-management/components/user-list/user-list.component').then(m => m.UserListComponent),
-        canActivate: [authGuard, adminGuard],
-        data: { animation: 'ListPage' }
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'ListPage', roles: ['ADMIN'] }
     },
 ];
