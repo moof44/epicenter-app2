@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { AuthService } from './auth.service';
 import { Firestore, collection, collectionData, query, where, orderBy, addDoc, doc, updateDoc, Timestamp, getDocs, limit, startAfter } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -10,8 +11,18 @@ import { Member } from '../models/member.model';
 })
 export class AttendanceService {
     private firestore: Firestore = inject(Firestore);
+    private authService = inject(AuthService);
     private collectionPath = 'attendance';
     private attendanceCollection = collection(this.firestore, this.collectionPath);
+
+    private get _currentUserSnapshot() {
+        const user = this.authService.userProfile();
+        if (!user) throw new Error('Action requires authentication');
+        return {
+            uid: user.uid,
+            name: user.displayName
+        };
+    }
 
     private getLocalDateString(date: Date = new Date()): string {
         const year = date.getFullYear();
@@ -146,7 +157,8 @@ export class AttendanceService {
             date: dateStr,
             status: 'Checked In',
             memberSubscription: member.subscription || null,
-            memberExpiration: member.expiration || null
+            memberExpiration: member.expiration || null,
+            checkedInBy: this._currentUserSnapshot
         };
 
         await addDoc(this.attendanceCollection, record);
@@ -160,7 +172,8 @@ export class AttendanceService {
         const docRef = doc(this.firestore, this.collectionPath, recordId);
         await updateDoc(docRef, {
             checkOutTime: Timestamp.now(),
-            status: 'Checked Out'
+            status: 'Checked Out',
+            checkedOutBy: this._currentUserSnapshot
         });
         this._refreshHistory$.next(); // Trigger refresh
     }

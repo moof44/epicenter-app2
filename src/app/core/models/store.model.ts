@@ -14,8 +14,10 @@ export interface Product {
   unit: string;
   minStockLevel: number;
   // Cost tracking
+  // Cost tracking
   lastCostPrice?: number;
   averageCost?: number;
+  lastModifiedBy?: { uid: string; name: string; timestamp: any };
 }
 
 export interface CartItem {
@@ -31,6 +33,8 @@ export interface Transaction {
   date: any; // Firestore Timestamp or Date
   totalAmount: number;
   items: CartItem[];
+  staffId?: string;
+  staffName?: string;
 }
 
 export interface InventoryLog {
@@ -43,6 +47,8 @@ export interface InventoryLog {
   newStock: number; // Snapshot
   timestamp: any; // Firestore Timestamp
   performedBy: string;
+  staffId?: string;
+  staffName?: string;
   notes?: string;
 }
 

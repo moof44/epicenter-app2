@@ -10,4 +10,6 @@ export interface AttendanceRecord {
     status: 'Checked In' | 'Checked Out';
     memberSubscription?: string | null;
     memberExpiration?: any | null; // Timestamp or Date or string
+    checkedInBy?: { uid: string; name: string };
+    checkedOutBy?: { uid: string; name: string };
 }

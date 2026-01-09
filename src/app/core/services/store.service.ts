@@ -24,6 +24,7 @@ import {
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
 import { Product, CartItem, Transaction, ProductSalesData, StockMovement, InventoryLog } from '../models/store.model';
 import { CashRegisterService } from './cash-register.service';
+import { AuthService } from './auth.service';
 
 export interface SaleCompletedEvent {
   transactionId: string;
@@ -37,10 +38,23 @@ export interface SaleCompletedEvent {
 export class StoreService {
   private firestore = inject(Firestore);
   private injector = inject(Injector);
+  private authService = inject(AuthService);
   private productsCollection = collection(this.firestore, 'products');
   private transactionsCollection = collection(this.firestore, 'transactions');
   // private stockMovementsCollection = collection(this.firestore, 'stockMovements'); // Deprecated
   private inventoryLogsCollection = collection(this.firestore, 'inventory_logs'); // New Collection
+
+  private get _currentUserSnapshot() {
+    const user = this.authService.userProfile();
+    // System actions might not have user, but UI actions should.
+    // If called from UI without user, throw.
+    if (!user) throw new Error('Action requires authentication');
+    return {
+      uid: user.uid,
+      name: user.displayName,
+      timestamp: new Date()
+    };
+  }
 
   // Cart state
   private cartItems = new BehaviorSubject<CartItem[]>([]);
@@ -76,12 +90,14 @@ export class StoreService {
   }
 
   addProduct(product: Omit<Product, 'id'>): Promise<any> {
-    return addDoc(this.productsCollection, product);
+    const trace = this._currentUserSnapshot;
+    return addDoc(this.productsCollection, { ...product, lastModifiedBy: trace });
   }
 
   updateProduct(id: string, data: Partial<Product>): Promise<void> {
     const docRef = doc(this.firestore, 'products', id);
-    return updateDoc(docRef, data);
+    const trace = this._currentUserSnapshot;
+    return updateDoc(docRef, { ...data, lastModifiedBy: trace });
   }
 
   deleteProduct(id: string): Promise<void> {
@@ -197,6 +213,7 @@ export class StoreService {
 
       // Create Inventory Log (SALE)
       const logRef = doc(this.inventoryLogsCollection);
+      const staff = this.authService.userProfile();
       const log: InventoryLog = {
         productId: item.productId,
         productName: product.name,
@@ -205,16 +222,21 @@ export class StoreService {
         previousStock: previousStock,
         newStock: newStock,
         timestamp: timestamp,
-        performedBy: performedBy
+        performedBy: performedBy,
+        staffId: staff?.uid,
+        staffName: staff?.displayName
       };
       batch.set(logRef, log);
     }
 
     // Create transaction record
+    const staff = this.authService.userProfile();
     const transaction: Omit<Transaction, 'id'> = {
       date: timestamp,
       totalAmount: total,
-      items: cartItems
+      items: cartItems,
+      staffId: staff?.uid,
+      staffName: staff?.displayName
     };
     const transactionRef = doc(this.transactionsCollection);
     batch.set(transactionRef, transaction);
@@ -258,6 +280,7 @@ export class StoreService {
 
     // Log Movement
     const logRef = doc(this.inventoryLogsCollection);
+    const staff = this.authService.userProfile();
     const log: InventoryLog = {
       productId,
       productName: product.name,
@@ -266,7 +289,9 @@ export class StoreService {
       previousStock: previousStock,
       newStock: newStock,
       timestamp: new Date(),
-      performedBy: 'STAFF', // Placeholder - should ideally be passed in
+      performedBy: 'STAFF',
+      staffId: staff?.uid,
+      staffName: staff?.displayName,
       notes
     };
     batch.set(logRef, log);
@@ -310,6 +335,7 @@ export class StoreService {
 
         // Log Movement
         const logRef = doc(this.inventoryLogsCollection);
+        const staff = this.authService.userProfile();
         const log: InventoryLog = {
           productId: data.productId,
           productName: product.name,
@@ -319,6 +345,8 @@ export class StoreService {
           newStock: data.physicalCount,
           timestamp: timestamp,
           performedBy: 'STAFF_AUDIT',
+          staffId: staff?.uid,
+          staffName: staff?.displayName,
           notes: `Stock Take: System ${systemStock} -> Physical ${data.physicalCount}`
         };
         batch.set(logRef, log);
