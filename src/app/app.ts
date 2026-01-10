@@ -11,13 +11,15 @@ import { MatDividerModule } from '@angular/material/divider';
 import { slideInOut } from './core/animations/animations';
 import { ShiftStatusWidget } from './features/store/components/shift-status-widget/shift-status-widget';
 import { AuthService } from './core/services/auth.service';
+import { QuotaStatusWidget } from './core/components/quota-status-widget/quota-status-widget';
 
 @Component({
   selector: 'app-root',
   imports: [
     CommonModule, RouterOutlet, RouterLink, RouterLinkActive,
     MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule, MatDividerModule,
-    ShiftStatusWidget
+    ShiftStatusWidget,
+    QuotaStatusWidget
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',

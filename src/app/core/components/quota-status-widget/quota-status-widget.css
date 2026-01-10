@@ -1,0 +1,58 @@
+.quota-widget {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 16px;
+    background: white;
+    padding: 4px;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.status-item mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.divider {
+    width: 1px;
+    height: 24px;
+    background-color: #e0e0e0;
+}
+
+/* Specific text shadows to ensure readability on yellow */
+.status-item[style*="rgb(255, 235, 59)"] {
+    /* Yellow */
+    color: #fbc02d !important;
+    /* Darker yellow text */
+}
+
+@media (max-width: 900px) {
+    .status-text {
+        font-size: 12px;
+    }
+
+    .status-item {
+        padding: 4px 8px;
+    }
+}
+
+@media (max-width: 600px) {
+    .quota-widget {
+        display: none;
+        /* Hide on mobile to save space */
+    }
+}
