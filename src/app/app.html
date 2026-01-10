@@ -9,6 +9,8 @@
     <app-shift-status-widget *ngIf="authService.isLoggedIn()"></app-shift-status-widget>
   </mat-toolbar>
 
+  <app-staff-reminders *ngIf="authService.isLoggedIn()"></app-staff-reminders>
+
   <mat-sidenav-container class="sidenav-container">
     <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'"
       [opened]="!mobileQuery.matches && authService.isLoggedIn()" [fixedInViewport]="mobileQuery.matches"

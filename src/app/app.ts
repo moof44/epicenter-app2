@@ -12,14 +12,17 @@ import { slideInOut } from './core/animations/animations';
 import { ShiftStatusWidget } from './features/store/components/shift-status-widget/shift-status-widget';
 import { AuthService } from './core/services/auth.service';
 import { QuotaStatusWidget } from './core/components/quota-status-widget/quota-status-widget';
+import { StaffRemindersComponent } from './core/components/staff-reminders/staff-reminders';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
   imports: [
     CommonModule, RouterOutlet, RouterLink, RouterLinkActive,
     MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule, MatDividerModule,
     ShiftStatusWidget,
-    QuotaStatusWidget
+    QuotaStatusWidget,
+    StaffRemindersComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',

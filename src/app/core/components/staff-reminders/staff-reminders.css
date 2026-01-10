@@ -1,0 +1,47 @@
+.ticker-container {
+    width: 100%;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    height: 32px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.ticker-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    position: absolute;
+    animation: marquee 30s linear infinite;
+    font-weight: 600;
+    font-size: 13px;
+    will-change: transform;
+}
+
+.icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+@keyframes marquee {
+
+    /* Start from right side */
+    0% {
+        transform: translateX(100vw);
+    }
+
+    /* Move to left side */
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* Pause on hover to let them read it */
+.ticker-container:hover .ticker-content {
+    animation-play-state: paused;
+}

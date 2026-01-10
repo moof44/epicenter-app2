@@ -1,6 +1,6 @@
-<div class="quota-widget" *ngIf="monthlyQuota() > 0">
+<div class="quota-widget" *ngIf="isWidgetVisible() && monthlyQuota() > 0">
     <!-- Monthly Status -->
-    <div class="status-item" [style.background-color]="getBgColor(monthlyStatus())"
+    <div class="status-item" *ngIf="isMonthlyVisible()" [style.background-color]="getBgColor(monthlyStatus())"
         [style.color]="getStatusColor(monthlyStatus())" matTooltip="Monthly Progress: Sales / Quota">
         <mat-icon>calendar_view_month</mat-icon>
         <span class="status-text">
@@ -8,7 +8,7 @@
         </span>
     </div>
 
-    <div class="divider"></div>
+    <div class="divider" *ngIf="isMonthlyVisible()"></div>
 
     <!-- Daily Status -->
     <div class="status-item" [style.background-color]="getBgColor(dailyStatus())"

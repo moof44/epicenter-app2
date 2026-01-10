@@ -22,6 +22,7 @@ import { fadeIn } from '../../../../core/animations/animations';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CheckoutDialog, CheckoutDialogResult } from './checkout-dialog/checkout-dialog';
 import { PriceOverrideDialog, PriceOverrideDialogResult } from './price-override-dialog/price-override-dialog';
+import { getRandomCommendation } from '../../../../core/constants/commendations';
 
 @Component({
   selector: 'app-pos',
@@ -178,7 +179,9 @@ export class POS {
         currentMember?.id || null, // Pass memberId
         currentMember?.name || 'Walk-in' // Pass memberName
       );
-      this.snackBar.open(`Sale completed! Transaction: ${transactionId.slice(0, 8)}...`, 'Close', { duration: 4000 });
+
+      const commendation = getRandomCommendation('SALES');
+      this.snackBar.open(`${commendation} (Tx: ${transactionId.slice(0, 8)})`, 'Close', { duration: 4000 });
 
       // Reset member selection after sale
       this.clearMember();

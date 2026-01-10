@@ -1,0 +1,6 @@
+<div class="ticker-container" *ngIf="currentReminder() as reminder">
+    <div class="ticker-content" [style.color]="getPriorityColor(reminder.priority)">
+        <mat-icon class="icon">{{ getPriorityIcon(reminder.priority) }}</mat-icon>
+        <span class="message">{{ reminder.text }}</span>
+    </div>
+</div>

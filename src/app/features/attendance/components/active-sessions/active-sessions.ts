@@ -10,10 +10,12 @@ import { Observable } from 'rxjs';
 import { fadeIn, staggerList } from '../../../../core/animations/animations'; // Fixed path
 
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { getRandomCommendation } from '../../../../core/constants/commendations';
 
 @Component({
   selector: 'app-active-sessions',
-  imports: [CommonModule, MatTableModule, MatButtonModule, MatIconModule, MatChipsModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatTableModule, MatButtonModule, MatIconModule, MatChipsModule, MatProgressSpinnerModule, MatSnackBarModule],
   template: `
     <div class="table-container" [@fadeIn]>
        <div class="loading-shade" *ngIf="!(activeSessions$ | async)">
@@ -100,21 +102,25 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   animations: [fadeIn, staggerList]
 })
 export class ActiveSessions {
-    private attendanceService = inject(AttendanceService);
-    
-    activeSessions$: Observable<AttendanceRecord[]> = this.attendanceService.getActiveCheckIns();
-    displayedColumns: string[] = ['name', 'checkInTime', 'locker', 'expiration', 'actions'];
+  private attendanceService = inject(AttendanceService);
+  private snackBar = inject(MatSnackBar);
 
-    isExpired(timestamp: any): boolean {
-        if (!timestamp) return false;
-        const exp = new Date(timestamp.seconds * 1000);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); 
-        return exp < today;
-    }
+  activeSessions$: Observable<AttendanceRecord[]> = this.attendanceService.getActiveCheckIns();
+  displayedColumns: string[] = ['name', 'checkInTime', 'locker', 'expiration', 'actions'];
 
-    async checkOut(record: AttendanceRecord) {
-        if (!record.id) return;
-        await this.attendanceService.checkOut(record.id);
-    }
+  isExpired(timestamp: any): boolean {
+    if (!timestamp) return false;
+    const exp = new Date(timestamp.seconds * 1000);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return exp < today;
+  }
+
+  async checkOut(record: AttendanceRecord) {
+    if (!record.id) return;
+    await this.attendanceService.checkOut(record.id);
+
+    const message = getRandomCommendation('CHECKOUT');
+    this.snackBar.open(`${message}`, 'Close', { duration: 5000 });
+  }
 }

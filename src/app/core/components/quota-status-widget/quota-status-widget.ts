@@ -5,6 +5,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { StoreService } from '../../services/store.service';
 import { SettingsService } from '../../services/settings.service';
+import { AuthService } from '../../services/auth.service';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -17,6 +18,7 @@ import { map } from 'rxjs/operators';
 export class QuotaStatusWidget {
     private storeService = inject(StoreService);
     private settingsService = inject(SettingsService);
+    private authService = inject(AuthService);
 
     analytics$ = this.storeService.getSalesAnalytics();
     settings$ = this.settingsService.getSettings();
@@ -35,6 +37,23 @@ export class QuotaStatusWidget {
     monthlyQuota = computed(() => this.settings().monthlyQuota || 0);
     monthlyRevenue = computed(() => this.analytics().monthlyRevenue || 0);
     todayRevenue = computed(() => this.analytics()?.todayRevenue || 0);
+
+    // Visibility Logic
+    isWidgetVisible = computed(() => {
+        const user = this.authService.userProfile();
+        const roles = user?.roles || [];
+        // Visible to everyone with a role basically
+        const allowed = ['ADMIN', 'MANAGER', 'TRAINER', 'STAFF'];
+        return roles.some(r => allowed.includes(r));
+    });
+
+    isMonthlyVisible = computed(() => {
+        const user = this.authService.userProfile();
+        const roles = user?.roles || [];
+        // Hidden for STAFF, visible to others
+        const allowed = ['ADMIN', 'MANAGER', 'TRAINER'];
+        return roles.some(r => allowed.includes(r));
+    });
 
     // Daily Quota Calculation
     dailyTarget = computed(() => {
