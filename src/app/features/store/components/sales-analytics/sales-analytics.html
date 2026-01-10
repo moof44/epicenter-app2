@@ -34,6 +34,39 @@
         </div>
       </mat-card-content>
     </mat-card>
+
+    <mat-card class="summary-card quota" *ngIf="settings().monthlyQuota">
+      <mat-card-content>
+        <mat-icon [color]="getMonthlyProgress(analytics.monthlyRevenue) >= 100 ? 'primary' : 'warn'">
+          flag
+        </mat-icon>
+        <div class="card-info flex-grow">
+          <div class="quota-header">
+            <span class="label">Monthly Quota</span>
+            <span class="quota-badge" [class.achieved]="getMonthlyProgress(analytics.monthlyRevenue) >= 100">
+              {{ getMonthlyProgress(analytics.monthlyRevenue) | number:'1.0-0' }}%
+            </span>
+          </div>
+          <span class="value">
+            ₱{{ analytics.monthlyRevenue | number:'1.0-0' }} / ₱{{ settings().monthlyQuota | number:'1.0-0' }}
+          </span>
+          <mat-progress-bar mode="determinate" [value]="getMonthlyProgress(analytics.monthlyRevenue)"
+            [color]="getMonthlyProgress(analytics.monthlyRevenue) >= 100 ? 'primary' : 'warn'" class="mt-8">
+          </mat-progress-bar>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card daily-quota" *ngIf="settings().monthlyQuota">
+      <mat-card-content>
+        <mat-icon>event_repeat</mat-icon>
+        <div class="card-info">
+          <span class="label">Daily Quota Needed</span>
+          <span class="value">₱{{ getDailyQuota(analytics.monthlyRevenue) | number:'1.2-2' }}</span>
+          <span class="sub-label">to hit monthly target</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
   </div>
 
   <!-- Top Selling Products -->
@@ -60,7 +93,7 @@
           <td mat-cell *matCellDef="let product">
             <div class="progress-cell">
               <span>{{ product.totalQuantitySold }}</span>
-              <mat-progress-bar mode="determinate" 
+              <mat-progress-bar mode="determinate"
                 [value]="(product.totalQuantitySold / getMaxQuantity(analytics.topSelling)) * 100">
               </mat-progress-bar>
             </div>

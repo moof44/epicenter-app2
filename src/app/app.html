@@ -5,8 +5,11 @@
     </button>
     <span>Epicenter Gym Management System</span>
     <span class="toolbar-spacer"></span>
+    <app-quota-status-widget></app-quota-status-widget>
     <app-shift-status-widget *ngIf="authService.isLoggedIn()"></app-shift-status-widget>
   </mat-toolbar>
+
+  <app-staff-reminders *ngIf="authService.isLoggedIn()"></app-staff-reminders>
 
   <mat-sidenav-container class="sidenav-container">
     <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'"
@@ -103,6 +106,22 @@
             (click)="mobileQuery.matches ? snav.close() : null">
             <mat-icon matListItemIcon>summarize</mat-icon>
             <span matListItemTitle>Cash Reports</span>
+          </a>
+          <a mat-list-item routerLink="/store/monthly-sales" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>calendar_month</mat-icon>
+            <span matListItemTitle>Monthly Sales</span>
+          </a>
+        </ng-container>
+
+        <mat-divider *ngIf="authService.hasAnyRole(['ADMIN'])"></mat-divider>
+        <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN'])">Settings</div>
+
+        <ng-container *ngIf="authService.hasAnyRole(['ADMIN'])">
+          <a mat-list-item routerLink="/settings" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>settings</mat-icon>
+            <span matListItemTitle>General Settings</span>
           </a>
         </ng-container>
 

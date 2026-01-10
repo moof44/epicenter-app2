@@ -22,6 +22,7 @@ import { LockerRestrictionDialog } from '../locker-restriction-dialog/locker-res
 import { SubscriptionUpdateDialog, SubscriptionUpdateResult } from '../subscription-update-dialog/subscription-update-dialog';
 import { firstValueFrom } from 'rxjs';
 import { Timestamp } from '@angular/fire/firestore';
+import { getRandomCommendation } from '../../../../core/constants/commendations';
 
 @Component({
   selector: 'app-check-in-kiosk',
@@ -323,7 +324,8 @@ export class CheckInKiosk implements OnInit {
       message += ` (Exp: ${expDisplay})`;
     }
 
-    this.snackBar.open(message, 'Close', { duration: 5000 });
+    const commendation = getRandomCommendation('CHECKIN');
+    this.snackBar.open(`${message}\n${commendation}`, 'Close', { duration: 5000 });
     this.reset();
   }
 

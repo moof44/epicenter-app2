@@ -50,3 +50,7 @@
 - **Null Safety**: Use optional chaining `?.`.
 - **Error Handling**: `catchError` in Observables. Log errors to console and return safe defaults.
 - **Validation**: Forms must use `Validators` before submission.
+
+## 7. Validation Protocol
+- **Verify Before Finish**: You must ALWAYS run `npm run build` and fix ALL errors/warnings before reporting a task as finished.
+- **Zero Warnings**: The goal is a clean build. Address Angular template warnings immediately (e.g., `NG8107`).

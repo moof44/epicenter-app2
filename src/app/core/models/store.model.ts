@@ -77,3 +77,8 @@ export interface ProductSalesData {
   totalQuantitySold: number;
   totalRevenue: number;
 }
+
+export interface DailySales {
+  date: Date;
+  totalSales: number;
+}

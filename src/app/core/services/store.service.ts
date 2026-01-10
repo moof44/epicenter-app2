@@ -22,7 +22,7 @@ import {
   DocumentData
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
-import { Product, CartItem, Transaction, ProductSalesData, InventoryLog } from '../models/store.model';
+import { Product, CartItem, Transaction, ProductSalesData, InventoryLog, DailySales } from '../models/store.model';
 import { CashRegisterService } from './cash-register.service';
 import { AuthService } from './auth.service';
 import { MemberService } from './member.service';
@@ -483,13 +483,39 @@ export class StoreService {
     topSelling: ProductSalesData[];
     lowPerformance: ProductSalesData[];
     totalRevenue: number;
+    monthlyRevenue: number;
+    todayRevenue: number;
   }> {
-    return combineLatest([this.getTransactions(), this.getProducts()]).pipe(
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+    // Start of Today (00:00:00)
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+    return combineLatest([
+      this.getTransactions({ limit: 1000 }), // Monthly analytics needs more transactions
+      this.getProducts()
+    ]).pipe(
       map(([transactions]) => {
         const salesMap = new Map<string, ProductSalesData>();
+        let totalRevenue = 0;
+        let monthlyRevenue = 0;
+        let todayRevenue = 0;
 
-        // Aggregate sales data
         transactions.forEach(tx => {
+          const txDate = tx.date instanceof Date ? tx.date : (tx.date as any).toDate();
+          totalRevenue += tx.totalAmount;
+
+          if (txDate >= startOfMonth && txDate <= endOfMonth) {
+            monthlyRevenue += tx.totalAmount;
+          }
+
+          if (txDate >= startOfToday && txDate <= endOfToday) {
+            todayRevenue += tx.totalAmount;
+          }
+
           tx.items.forEach(item => {
             const existing = salesMap.get(item.productId);
             if (existing) {
@@ -509,14 +535,57 @@ export class StoreService {
         const salesData = Array.from(salesMap.values());
         const sortedBySales = [...salesData].sort((a, b) => b.totalQuantitySold - a.totalQuantitySold);
 
-        const totalRevenue = transactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
-
         return {
           topSelling: sortedBySales.slice(0, 5),
           lowPerformance: sortedBySales.slice(-5).reverse(),
-          totalRevenue
+          totalRevenue,
+          monthlyRevenue,
+          todayRevenue
         };
       })
     );
   }
+
+  /**
+   * Fetches transactions for a specific month and aggregates them by day.
+   */
+  getMonthlySalesReport(year: number, month: number): Observable<{ days: DailySales[], total: number }> {
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+
+    return this.getTransactions({
+      startDate,
+      endDate,
+      limit: 2000 // Safely cover a month of heavy traffic
+    }).pipe(
+      map(transactions => {
+        const dailyMap = new Map<number, number>();
+        let monthlyTotal = 0;
+
+        // Initialize all days of the month with 0
+        const daysInMonth = endDate.getDate();
+        for (let i = 1; i <= daysInMonth; i++) {
+          dailyMap.set(i, 0);
+        }
+
+        transactions.forEach(tx => {
+          const date = tx.date instanceof Date ? tx.date : (tx.date as any).toDate();
+          const day = date.getDate();
+          const current = dailyMap.get(day) || 0;
+          dailyMap.set(day, current + tx.totalAmount);
+          monthlyTotal += tx.totalAmount;
+        });
+
+        const days: DailySales[] = Array.from(dailyMap.entries())
+          .map(([day, total]) => ({
+            date: new Date(year, month, day),
+            totalSales: total
+          }))
+          .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+        return { days, total: monthlyTotal };
+      })
+    );
+  }
 }
+

@@ -1,0 +1,54 @@
+.settings-container {
+    padding: 24px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.helper-text {
+    color: #666;
+    margin: 0;
+}
+
+.settings-card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.settings-form {
+    padding: 24px 0;
+}
+
+.form-row {
+    margin-bottom: 24px;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.actions button {
+    min-width: 160px;
+    height: 48px;
+    border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+    .settings-container {
+        padding: 16px;
+    }
+}

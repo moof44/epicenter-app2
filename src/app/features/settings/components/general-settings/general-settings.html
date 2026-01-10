@@ -1,0 +1,41 @@
+<div class="settings-container" [@fadeIn]>
+    <div class="page-header">
+        <h1>General Settings</h1>
+        <p class="helper-text">Manage global application configurations and goals.</p>
+    </div>
+
+    <mat-card class="settings-card">
+        <mat-card-header>
+            <mat-icon mat-card-avatar>settings</mat-icon>
+            <mat-card-title>Application Goals</mat-card-title>
+            <mat-card-subtitle>Set targets for gym performance tracking</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+            <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="settings-form">
+                <div class="form-row">
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Monthly Sales Quota (₱)</mat-label>
+                        <mat-icon matPrefix>payments</mat-icon>
+                        <input matInput type="number" formControlName="monthlyQuota" placeholder="e.g. 45000">
+                        <mat-hint>The target total revenue for each month</mat-hint>
+                        <mat-error *ngIf="settingsForm.get('monthlyQuota')?.hasError('min')">
+                            Quota cannot be negative
+                        </mat-error>
+                        <mat-error *ngIf="settingsForm.get('monthlyQuota')?.hasError('required')">
+                            Monthly quota is required
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+
+                <div class="actions">
+                    <button mat-raised-button color="primary" type="submit"
+                        [disabled]="settingsForm.invalid || isSaving">
+                        <mat-icon>{{ isSaving ? 'sync' : 'save' }}</mat-icon>
+                        {{ isSaving ? 'Saving...' : 'Save Settings' }}
+                    </button>
+                </div>
+            </form>
+        </mat-card-content>
+    </mat-card>
+</div>

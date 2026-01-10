@@ -29,9 +29,17 @@
   flex-shrink: 0;
 }
 
-.summary-card.revenue mat-icon { color: #4caf50; }
-.summary-card.products mat-icon { color: #2196f3; }
-.summary-card.transactions mat-icon { color: #ff9800; }
+.summary-card.revenue mat-icon {
+  color: #4caf50;
+}
+
+.summary-card.products mat-icon {
+  color: #2196f3;
+}
+
+.summary-card.transactions mat-icon {
+  color: #ff9800;
+}
 
 .card-info {
   display: flex;
@@ -90,9 +98,20 @@
   flex-shrink: 0;
 }
 
-.rank-badge.gold { background: #ffd700; color: #000; }
-.rank-badge.silver { background: #c0c0c0; color: #000; }
-.rank-badge.bronze { background: #cd7f32; color: #fff; }
+.rank-badge.gold {
+  background: #ffd700;
+  color: #000;
+}
+
+.rank-badge.silver {
+  background: #c0c0c0;
+  color: #000;
+}
+
+.rank-badge.bronze {
+  background: #cd7f32;
+  color: #fff;
+}
 
 .progress-cell {
   display: flex;
@@ -111,6 +130,51 @@
 
 .revenue-cell.low {
   color: #f44336;
+}
+
+/* Quota Specific Styles */
+.summary-card.quota .card-info {
+  width: 100%;
+}
+
+.quota-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.quota-badge {
+  font-size: 11px;
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.quota-badge.achieved {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.sub-label {
+  font-size: 12px;
+  color: #666;
+  display: block;
+  margin-top: 2px;
+}
+
+.summary-card.daily-quota mat-icon {
+  color: #1976d2;
 }
 
 .empty-state {
