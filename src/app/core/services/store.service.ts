@@ -22,14 +22,16 @@ import {
   DocumentData
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
-import { Product, CartItem, Transaction, ProductSalesData, StockMovement, InventoryLog } from '../models/store.model';
+import { Product, CartItem, Transaction, ProductSalesData, InventoryLog } from '../models/store.model';
 import { CashRegisterService } from './cash-register.service';
 import { AuthService } from './auth.service';
+import { MemberService } from './member.service';
 
 export interface SaleCompletedEvent {
   transactionId: string;
   amount: number;
   timestamp: Date;
+  paymentMethod: 'CASH' | 'GCASH';
 }
 
 @Injectable({
@@ -39,6 +41,7 @@ export class StoreService {
   private firestore = inject(Firestore);
   private injector = inject(Injector);
   private authService = inject(AuthService);
+  private memberService = inject(MemberService);
   private productsCollection = collection(this.firestore, 'products');
   private transactionsCollection = collection(this.firestore, 'transactions');
   // private stockMovementsCollection = collection(this.firestore, 'stockMovements'); // Deprecated
@@ -119,7 +122,9 @@ export class StoreService {
       updated[existingIndex] = {
         ...updated[existingIndex],
         quantity: newQty,
-        subtotal: newQty * product.price
+        // Preserve price override if exists, otherwise use current product price? 
+        // Logic: If already in cart, keep existing price strategy.
+        subtotal: newQty * updated[existingIndex].price
       };
       this.cartItems.next(updated);
     } else {
@@ -129,6 +134,8 @@ export class StoreService {
           productId: product.id,
           productName: product.name,
           price: product.price,
+          originalPrice: product.price, // Initialize original price
+          isPriceOverridden: false,
           quantity,
           subtotal: quantity * product.price
         }
@@ -150,6 +157,23 @@ export class StoreService {
     this.cartItems.next(updated);
   }
 
+  updateCartItemPrice(productId: string, newPrice: number, reason: string): void {
+    const currentCart = this.cartItems.getValue();
+    const updated = currentCart.map(item => {
+      if (item.productId === productId) {
+        return {
+          ...item,
+          price: newPrice,
+          isPriceOverridden: newPrice !== item.originalPrice,
+          overrideReason: reason,
+          subtotal: item.quantity * newPrice
+        };
+      }
+      return item;
+    });
+    this.cartItems.next(updated);
+  }
+
   removeFromCart(productId: string): void {
     const currentCart = this.cartItems.getValue();
     this.cartItems.next(currentCart.filter(item => item.productId !== productId));
@@ -167,7 +191,7 @@ export class StoreService {
 
 
   // Checkout
-  async checkout(customItems?: CartItem[], performedBy = 'SYSTEM_POS'): Promise<string> {
+  async checkout(customItems?: CartItem[], performedBy = 'SYSTEM_POS', paymentMethod: 'CASH' | 'GCASH' = 'CASH', referenceNumber?: string, amountTendered?: number, changeDue?: number, memberId?: string | null, memberName?: string): Promise<string> {
     // Enforce Open Register
     const cashRegisterService = this.injector.get(CashRegisterService);
     if (!cashRegisterService.isShiftOpen()) {
@@ -235,8 +259,14 @@ export class StoreService {
       date: timestamp,
       totalAmount: total,
       items: cartItems,
-      staffId: staff?.uid,
-      staffName: staff?.displayName
+      staffId: staff?.uid || null,
+      staffName: staff?.displayName || null,
+      paymentMethod,
+      referenceNumber: referenceNumber || null,
+      amountTendered: amountTendered || null,
+      changeDue: changeDue || null,
+      memberId: memberId || null,
+      memberName: memberName || 'Walk-in'
     };
     const transactionRef = doc(this.transactionsCollection);
     batch.set(transactionRef, transaction);
@@ -252,8 +282,49 @@ export class StoreService {
     this.saleCompleted.next({
       transactionId: transactionRef.id,
       amount: total,
-      timestamp: timestamp
+      timestamp: timestamp,
+      paymentMethod
     });
+
+    // 4. Automatic Membership Renewal
+    // Check if any purchased item is a 'Membership' type
+    if (memberId) {
+      const membershipItem = cartItems.find(item => {
+        // We need to look up the category from the map we fetched earlier, OR fetched in the loop.
+        // The loop above inside 'Deduct Stock' had productsMap.
+        // We need to access that productsMap here or check the cart item if we carry the category (we don't atm).
+        // Best way: use the productsMap populated earlier.
+        const product = productsMap.get(item.productId);
+        return product?.category === 'Membership';
+      });
+
+      if (membershipItem) {
+        // Trigger generic 30-day renewal
+        // We do this async and don't block the checkout return necessarily, or we await it to ensure consistency.
+        // Let's await it to be safe.
+        try {
+          await this.memberService.renewMembership(memberId);
+        } catch (error) {
+          console.error('Failed to auto-renew membership:', error);
+          // We don't throw here to avoid failing the already-committed transaction, 
+          // but we should probably notify/alert in a real app.
+        }
+      }
+
+      // Check for 'Training' type
+      const trainingItem = cartItems.find(item => {
+        const product = productsMap.get(item.productId);
+        return product?.category === 'Training';
+      });
+
+      if (trainingItem) {
+        try {
+          await this.memberService.renewTraining(memberId);
+        } catch (error) {
+          console.error('Failed to auto-renew training:', error);
+        }
+      }
+    }
 
     return transactionRef.id;
   }
@@ -365,7 +436,16 @@ export class StoreService {
   // ...
 
   // Transactions
-  getTransactions(constraints: { limit?: number; startDate?: Date; endDate?: Date } = {}): Observable<Transaction[]> {
+  getTransactions(constraints: {
+    limit?: number;
+    startDate?: Date;
+    endDate?: Date;
+    paymentMethod?: 'CASH' | 'GCASH';
+    // For exact matches only (Firestore limitation without advanced indexing)
+    memberId?: string;
+    referenceNumber?: string;
+    staffName?: string;
+  } = {}): Observable<Transaction[]> {
     const queryConstraints: any[] = [orderBy('date', 'desc')];
 
     // Apply Filters
@@ -374,6 +454,18 @@ export class StoreService {
     }
     if (constraints.endDate) {
       queryConstraints.push(where('date', '<=', constraints.endDate));
+    }
+    if (constraints.paymentMethod) {
+      queryConstraints.push(where('paymentMethod', '==', constraints.paymentMethod));
+    }
+    if (constraints.memberId) {
+      queryConstraints.push(where('memberId', '==', constraints.memberId));
+    }
+    if (constraints.referenceNumber) {
+      queryConstraints.push(where('referenceNumber', '==', constraints.referenceNumber));
+    }
+    if (constraints.staffName) {
+      queryConstraints.push(where('staffName', '==', constraints.staffName));
     }
 
     // Default to 50 if no specific limit or strict date range is set? 

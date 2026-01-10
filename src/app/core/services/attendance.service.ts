@@ -156,8 +156,7 @@ export class AttendanceService {
             lockerNumber: lockerNumber || null,
             date: dateStr,
             status: 'Checked In',
-            memberSubscription: member.subscription || null,
-            memberExpiration: member.expiration || null,
+            memberExpiration: member.membershipExpiration || null,
             checkedInBy: this._currentUserSnapshot
         };
 

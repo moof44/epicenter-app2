@@ -16,6 +16,27 @@
   <div class="content-layout">
     <!-- Left: Products Grid -->
     <div class="products-section">
+      <!-- Member Search (Optional) -->
+      <div class="member-search-bar">
+        <mat-form-field appearance="outline" class="search-field full-width">
+          <mat-label>Select Member (Optional)</mat-label>
+          <mat-icon matPrefix>person_search</mat-icon>
+          <input type="text" matInput [formControl]="memberControl" [matAutocomplete]="auto"
+            placeholder="Search by name...">
+          <button *ngIf="selectedMember()" matSuffix mat-icon-button (click)="clearMember()">
+            <mat-icon>close</mat-icon>
+          </button>
+          <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayMember"
+            (optionSelected)="selectMember($event.option.value)">
+            <mat-option *ngFor="let member of members$ | async" [value]="member">
+              {{ member.name }}
+            </mat-option>
+          </mat-autocomplete>
+          <mat-hint *ngIf="!selectedMember()">Guest / Walk-in</mat-hint>
+          <mat-hint *ngIf="selectedMember()">Member: {{ selectedMember()?.name }}</mat-hint>
+        </mat-form-field>
+      </div>
+
       <div class="section-header">
         <h2>Items for Sale</h2>
         <mat-chip-listbox [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)"
@@ -75,7 +96,19 @@
         <div *ngFor="let item of cartItems" class="cart-item" [@fadeIn]>
           <div class="item-info">
             <span class="item-name">{{ item.productName }}</span>
-            <span class="item-price">₱{{ item.price | number:'1.2-2' }} each</span>
+            <div class="price-container">
+              <span class="original-price" *ngIf="item.isPriceOverridden">
+                <del>₱{{ item.originalPrice | number:'1.2-2' }}</del>
+              </span>
+              <span class="item-price" [class.overridden]="item.isPriceOverridden">
+                ₱{{ item.price | number:'1.2-2' }} each
+              </span>
+              <button mat-icon-button class="edit-price-btn"
+                (click)="openPriceOverrideDialog(item); $event.stopPropagation()" [disabled]="!(isShiftOpen$ | async)"
+                matTooltip="Override Price">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
           </div>
           <div class="item-controls">
             <button mat-icon-button (click)="updateQuantity(item, -1); $event.stopPropagation()"

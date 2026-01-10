@@ -37,7 +37,7 @@ export class ProductManagement implements AfterViewInit {
 
   dataSource = new MatTableDataSource<Product>([]);
   displayedColumns = ['name', 'category', 'price', 'stock', 'actions']; // Default to RETAIL columns
-  categories: ProductCategory[] = ['Supplement', 'Drink', 'Merch', 'Fitness'];
+  categories: ProductCategory[] = ['Supplement', 'Drink', 'Merch', 'Fitness', 'Membership', 'Training'];
 
   // Data State - Reactive
   products$ = this.storeService.getProducts();
@@ -175,7 +175,9 @@ export class ProductManagement implements AfterViewInit {
       'Supplement': 'primary',
       'Drink': 'accent',
       'Merch': 'warn',
-      'Fitness': 'accent'
+      'Fitness': 'primary',
+      'Membership': 'accent',
+      'Training': 'warn'
     };
     return colors[category] || 'primary';
   }

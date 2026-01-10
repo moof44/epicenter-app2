@@ -11,8 +11,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { AuthService } from '../../../../core/services/auth.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
-import { CashTransaction, CashTransactionType } from '../../../../core/models/cash-register.model';
+import { CashTransactionType } from '../../../../core/models/cash-register.model';
 import { ShiftControlModal } from '../shift-control-modal/shift-control-modal';
 import { fadeIn } from '../../../../core/animations/animations';
 
@@ -31,6 +32,7 @@ export class CashManagement {
   private cashRegisterService = inject(CashRegisterService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
+  private authService = inject(AuthService);
 
   currentShift$ = this.cashRegisterService.currentShift$;
   displayedColumns = ['timestamp', 'type', 'reason', 'amount'];
@@ -66,15 +68,18 @@ export class CashManagement {
 
     this.isSubmitting = true;
     try {
+      const user = this.authService.userProfile();
+      const userName = user?.displayName || user?.email || 'Unknown Staff';
+
       switch (this.formType) {
         case 'expense':
-          await this.cashRegisterService.addExpense(this.formAmount, this.formReason, 'Staff');
+          await this.cashRegisterService.addExpense(this.formAmount, this.formReason, userName);
           break;
         case 'floatIn':
-          await this.cashRegisterService.addFloatIn(this.formAmount, this.formReason, 'Staff');
+          await this.cashRegisterService.addFloatIn(this.formAmount, this.formReason, userName);
           break;
         case 'floatOut':
-          await this.cashRegisterService.addFloatOut(this.formAmount, this.formReason, 'Staff');
+          await this.cashRegisterService.addFloatOut(this.formAmount, this.formReason, userName);
           break;
       }
       this.snackBar.open('Transaction recorded', 'Close', { duration: 3000 });

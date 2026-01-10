@@ -6,6 +6,38 @@
     </button>
   </div>
 
+  <!-- Filters -->
+  <div class="filters-section">
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Date Range</mat-label>
+      <mat-date-range-input [rangePicker]="picker">
+        <input matStartDate [(ngModel)]="startDate" placeholder="Start date">
+        <input matEndDate [(ngModel)]="endDate" placeholder="End date" (dateChange)="applyFilters()">
+      </mat-date-range-input>
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-date-range-picker #picker></mat-date-range-picker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Movement Type</mat-label>
+      <mat-select [(ngModel)]="selectedType" (selectionChange)="applyFilters()">
+        <mat-option value="">All Types</mat-option>
+        <mat-option value="SALE">Sale</mat-option>
+        <mat-option value="RESTOCK">Restock</mat-option>
+        <mat-option value="INTERNAL_USE">Internal Use</mat-option>
+        <mat-option value="AUDIT_ADJUSTMENT">Audit Adjustment</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field search-field">
+      <mat-label>Search (Product/Staff)</mat-label>
+      <input matInput [(ngModel)]="searchQuery" (keyup.enter)="applyFilters()" placeholder="Enter name...">
+      <button mat-icon-button matSuffix (click)="applyFilters()">
+        <mat-icon>search</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
+
   <div class="table-container mat-elevation-z2">
     <table mat-table [dataSource]="dataSource" class="mobile-card-table">
 

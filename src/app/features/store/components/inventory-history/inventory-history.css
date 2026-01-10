@@ -11,6 +11,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 24px;
 }
 
 h1 {
@@ -19,11 +20,44 @@ h1 {
   font-weight: 500;
 }
 
+.filters-section {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filter-field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-field {
+  flex: 2;
+}
+
+@media (max-width: 600px) {
+  .filters-section {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .filter-field,
+  .search-field {
+    width: 100%;
+  }
+}
+
 .table-container {
   position: relative;
   overflow: auto;
   border-radius: 8px;
-  background: white; /* or var(--mat-card-container-color) */
+  background: white;
+  /* or var(--mat-card-container-color) */
   flex: 1;
   min-height: 400px;
 }
@@ -43,7 +77,7 @@ table {
 }
 
 .text-secondary {
-  color: rgba(0,0,0,0.6);
+  color: rgba(0, 0, 0, 0.6);
   font-size: 0.9em;
 }
 
@@ -57,7 +91,7 @@ table {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255,255,255,0.7);
+  background: rgba(255, 255, 255, 0.7);
   z-index: 100;
   display: flex;
   justify-content: center;
@@ -70,7 +104,7 @@ table {
   align-items: center;
   justify-content: center;
   padding: 48px;
-  color: rgba(0,0,0,0.5);
+  color: rgba(0, 0, 0, 0.5);
   gap: 16px;
 }
 

@@ -5,7 +5,7 @@
     </mat-card-header>
     <mat-card-content>
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        
+
         <!-- Name -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Full Name</mat-label>
@@ -15,70 +15,65 @@
 
         <!-- Address -->
         <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Address</mat-label>
-            <input matInput formControlName="address" placeholder="Ex. 123 Main St">
-            <mat-error *ngIf="form.get('address')?.hasError('required')">Address is required</mat-error>
+          <mat-label>Address</mat-label>
+          <input matInput formControlName="address" placeholder="Ex. 123 Main St">
+          <mat-error *ngIf="form.get('address')?.hasError('required')">Address is required</mat-error>
         </mat-form-field>
 
         <div class="row">
-            <!-- Contact Number -->
-            <mat-form-field appearance="outline">
-                <mat-label>Contact Number</mat-label>
-                <input matInput formControlName="contactNumber" placeholder="09123456789">
-                <mat-error *ngIf="form.get('contactNumber')?.hasError('required')">Required</mat-error>
-            </mat-form-field>
+          <!-- Contact Number -->
+          <mat-form-field appearance="outline">
+            <mat-label>Contact Number</mat-label>
+            <input matInput formControlName="contactNumber" placeholder="09123456789">
+            <mat-error *ngIf="form.get('contactNumber')?.hasError('required')">Required</mat-error>
+          </mat-form-field>
 
-             <!-- Gender -->
-             <mat-form-field appearance="outline">
-                <mat-label>Gender</mat-label>
-                <mat-select formControlName="gender">
-                    <mat-option value="Male">Male</mat-option>
-                    <mat-option value="Female">Female</mat-option>
-                    <mat-option value="Other">Other</mat-option>
-                </mat-select>
-            </mat-form-field>
+          <!-- Gender -->
+          <mat-form-field appearance="outline">
+            <mat-label>Gender</mat-label>
+            <mat-select formControlName="gender">
+              <mat-option value="Male">Male</mat-option>
+              <mat-option value="Female">Female</mat-option>
+              <mat-option value="Other">Other</mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
         <div class="row">
-             <!-- Birthday -->
-             <mat-form-field appearance="outline">
-                <mat-label>Birthday</mat-label>
-                <input matInput [matDatepicker]="pickerBirthday" formControlName="birthday">
-                <mat-datepicker-toggle matIconSuffix [for]="pickerBirthday"></mat-datepicker-toggle>
-                <mat-datepicker #pickerBirthday></mat-datepicker>
-                <mat-error *ngIf="form.get('birthday')?.hasError('required')">Required</mat-error>
-            </mat-form-field>
+          <!-- Birthday -->
+          <mat-form-field appearance="outline">
+            <mat-label>Birthday</mat-label>
+            <input matInput [matDatepicker]="pickerBirthday" formControlName="birthday">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerBirthday"></mat-datepicker-toggle>
+            <mat-datepicker #pickerBirthday></mat-datepicker>
+            <mat-error *ngIf="form.get('birthday')?.hasError('required')">Required</mat-error>
+          </mat-form-field>
 
-            <!-- Expiration -->
-            <mat-form-field appearance="outline">
-                <mat-label>Expiration</mat-label>
-                <input matInput [matDatepicker]="pickerExpiration" formControlName="expiration">
-                <mat-datepicker-toggle matIconSuffix [for]="pickerExpiration"></mat-datepicker-toggle>
-                <mat-datepicker #pickerExpiration></mat-datepicker>
-            </mat-form-field>
-        </div>
+          <!-- Membership Expiration -->
+          <mat-form-field appearance="outline">
+            <mat-label>Membership Expiration</mat-label>
+            <input matInput [matDatepicker]="pickerExpiration" formControlName="membershipExpiration">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerExpiration"></mat-datepicker-toggle>
+            <mat-datepicker #pickerExpiration></mat-datepicker>
+          </mat-form-field>
 
-        <div class="row">
-            <!-- Subscription -->
-            <mat-form-field appearance="outline">
-                <mat-label>Subscription</mat-label>
-                <mat-select formControlName="subscription">
-                    <mat-option [value]="null">None</mat-option>
-                    <mat-option value="Monthly">Monthly</mat-option>
-                    <mat-option value="Quarterly">Quarterly</mat-option>
-                    <mat-option value="Annually">Annually</mat-option>
-                </mat-select>
-            </mat-form-field>
+          <!-- Training Expiration -->
+          <mat-form-field appearance="outline">
+            <mat-label>Training Expiration</mat-label>
+            <input matInput [matDatepicker]="pickerTrainingExpiration" formControlName="trainingExpiration">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerTrainingExpiration"></mat-datepicker-toggle>
+            <mat-datepicker #pickerTrainingExpiration></mat-datepicker>
+          </mat-form-field>
 
-             <!-- Status -->
-             <mat-form-field appearance="outline">
-                <mat-label>Membership Status</mat-label>
-                <mat-select formControlName="membershipStatus">
-                    <mat-option value="Active">Active</mat-option>
-                    <mat-option value="Inactive">Inactive</mat-option>
-                    <mat-option value="Pending">Pending</mat-option>
-                </mat-select>
-            </mat-form-field>
+          <!-- Status -->
+          <mat-form-field appearance="outline">
+            <mat-label>Membership Status</mat-label>
+            <mat-select formControlName="membershipStatus">
+              <mat-option value="Active">Active</mat-option>
+              <mat-option value="Inactive">Inactive</mat-option>
+              <mat-option value="Pending">Pending</mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
         <!-- Goal -->

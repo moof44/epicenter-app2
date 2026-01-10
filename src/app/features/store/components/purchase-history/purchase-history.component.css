@@ -17,10 +17,27 @@
 
 /* Summary Cards */
 .summary-cards {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.filters-section {
+  display: flex;
+  gap: 16px;
   flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+mat-form-field {
+  flex: 1;
+  min-width: 200px;
 }
 
 .card {
@@ -30,7 +47,7 @@
   flex: 1;
   min-width: 200px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .card-title {
@@ -45,7 +62,8 @@
 .card-value {
   font-size: 28px;
   font-weight: bold;
-  color: #3f51b5; /* Primary */
+  color: #3f51b5;
+  /* Primary */
 }
 
 /* Table Container */
@@ -54,7 +72,7 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
 }
 
@@ -88,7 +106,7 @@ table {
   padding: 24px;
   background: #fafafa;
   border-top: 1px solid #eee;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .detail-content h4 {

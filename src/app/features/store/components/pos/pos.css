@@ -41,6 +41,14 @@
   overflow: hidden;
 }
 
+.member-search-bar {
+  margin-bottom: 8px;
+}
+
+.full-width {
+  width: 100%;
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -233,6 +241,42 @@
 .item-price {
   font-size: 12px;
   color: #666;
+}
+
+.price-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.original-price {
+  font-size: 11px;
+  color: #999;
+  text-decoration-color: #f44336;
+}
+
+.item-price.overridden {
+  color: #f57c00;
+  font-weight: 600;
+}
+
+.edit-price-btn {
+  width: 24px !important;
+  height: 24px !important;
+  line-height: 24px !important;
+  padding: 0;
+}
+
+.edit-price-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #9e9e9e;
+}
+
+.edit-price-btn:hover mat-icon {
+  color: #1976d2;
 }
 
 .item-controls {

@@ -10,13 +10,19 @@ import { InventoryHistoryService } from '../../services/inventory-history.servic
 import { InventoryLog } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
 import { DocumentData, QueryDocumentSnapshot } from '@angular/fire/firestore';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-inventory-history',
     standalone: true,
     imports: [
         CommonModule, MatTableModule, MatButtonModule, MatIconModule,
-        MatProgressSpinnerModule, MatChipsModule, MatTooltipModule
+        MatProgressSpinnerModule, MatChipsModule, MatTooltipModule,
+        MatDatepickerModule, MatNativeDateModule, MatSelectModule, MatInputModule, FormsModule
     ],
     templateUrl: './inventory-history.html',
     styleUrl: './inventory-history.css',
@@ -35,7 +41,19 @@ export class InventoryHistoryComponent implements OnInit {
     hasMore = signal(true);
     pageSize = 20;
 
+    // Filters
+    startDate: Date | null = null;
+    endDate: Date | null = null;
+    selectedType = '';
+    searchQuery = '';
+
     ngOnInit() {
+        this.loadHistory();
+    }
+
+    applyFilters() {
+        this.lastDoc = null;
+        this.hasMore.set(true);
         this.loadHistory();
     }
 
@@ -44,8 +62,15 @@ export class InventoryHistoryComponent implements OnInit {
         this.isLoading.set(true);
 
         try {
+            const filters = {
+                startDate: this.startDate || undefined,
+                endDate: this.endDate || undefined,
+                type: this.selectedType || undefined,
+                search: this.searchQuery || undefined
+            };
+
             const result = await this.historyService.getHistory(
-                undefined, // No product filter for global view
+                filters,
                 this.pageSize,
                 loadMore ? (this.lastDoc || undefined) : undefined
             );

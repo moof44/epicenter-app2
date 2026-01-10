@@ -17,9 +17,9 @@ import { CashRegisterService } from '../../../../core/services/cash-register.ser
 import { fadeIn } from '../../../../core/animations/animations';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { StoreService } from '../../../../core/services/store.service';
-import { WalkInDialog } from '../walk-in-dialog/walk-in-dialog';
+import { WalkInDialog, WalkInDialogResult } from '../walk-in-dialog/walk-in-dialog';
 import { LockerRestrictionDialog } from '../locker-restriction-dialog/locker-restriction-dialog';
-import { SubscriptionUpdateDialog } from '../subscription-update-dialog/subscription-update-dialog';
+import { SubscriptionUpdateDialog, SubscriptionUpdateResult } from '../subscription-update-dialog/subscription-update-dialog';
 import { firstValueFrom } from 'rxjs';
 import { Timestamp } from '@angular/fire/firestore';
 
@@ -181,7 +181,7 @@ export class CheckInKiosk implements OnInit {
     try {
       const member = this.selectedMember;
       const isExpired = this.memberService.isMembershipExpired(member);
-      const hasActiveSubscription = !!member.subscription && !isExpired;
+      const hasActiveSubscription = member.membershipStatus === 'Active' && !!member.membershipExpiration && !isExpired;
       const hasLocker = !!this.selectedLocker;
 
       // 1. Locker Restriction Check
@@ -205,7 +205,7 @@ export class CheckInKiosk implements OnInit {
           const updateDialog = this.dialog.open(SubscriptionUpdateDialog, {
             data: { member }
           });
-          const updateResult = await firstValueFrom(updateDialog.afterClosed());
+          const updateResult = await firstValueFrom(updateDialog.afterClosed()) as SubscriptionUpdateResult;
 
           if (!updateResult || updateResult.action === 'cancel') {
             this.isSubmitting = false;
@@ -215,14 +215,12 @@ export class CheckInKiosk implements OnInit {
           // Update Member Subscription
           const newExpiration = Timestamp.fromDate(updateResult.subscriptionDate);
           await this.memberService.updateMember(member.id!, {
-            subscription: 'Monthly Membership',
-            expiration: newExpiration,
+            membershipExpiration: newExpiration,
             membershipStatus: 'Active'
           });
 
           // Update local member object for subsequent checks
-          member.subscription = 'Monthly Membership';
-          member.expiration = newExpiration;
+          member.membershipExpiration = newExpiration;
           // Re-evaluate active status (it's active now)
           // But we proceed directly to check-in or pay flow
 
@@ -243,9 +241,11 @@ export class CheckInKiosk implements OnInit {
               productId: membershipProduct.id!,
               productName: membershipProduct.name,
               price: membershipProduct.price,
+              originalPrice: membershipProduct.price,
+              isPriceOverridden: false,
               quantity: 1,
               subtotal: membershipProduct.price
-            }], 'ATTENDANCE_SUBSCRIPTION_UPDATE');
+            }], 'ATTENDANCE_SUBSCRIPTION_UPDATE', updateResult.paymentMethod, updateResult.referenceNumber, undefined, undefined, member.id, member.name);
 
             this.snackBar.open('Subscription updated & Payment processed.', undefined, { duration: 2000 });
           } else {
@@ -267,11 +267,11 @@ export class CheckInKiosk implements OnInit {
         const dialogRef = this.dialog.open(WalkInDialog, {
           data: {
             member: member,
-            isExpired: !!member.subscription // Distinguish expired vs never had one
+            isExpired: !!member.membershipExpiration // Distinguish expired vs never had one
           }
         });
 
-        const result = await firstValueFrom(dialogRef.afterClosed());
+        const result = await firstValueFrom(dialogRef.afterClosed()) as WalkInDialogResult;
 
         if (!result || result.action === 'cancel') {
           this.isSubmitting = false;
@@ -290,9 +290,11 @@ export class CheckInKiosk implements OnInit {
             productId: walkInProduct.id!,
             productName: walkInProduct.name,
             price: walkInProduct.price,
+            originalPrice: walkInProduct.price,
+            isPriceOverridden: false,
             quantity: 1,
             subtotal: walkInProduct.price
-          }], 'ATTENDANCE_WALK_IN');
+          }], 'ATTENDANCE_WALK_IN', result.paymentMethod, result.referenceNumber, undefined, undefined, member.id, member.name);
 
           this.snackBar.open('Walk-in transaction created.', undefined, { duration: 2000 });
         }
@@ -315,13 +317,10 @@ export class CheckInKiosk implements OnInit {
     let message = `Checked in ${member.name}!`;
     // Resolve expiration for display
     let expDisplay = 'No Expiry';
-    if (member.expiration) {
-      const d = member.expiration.toDate ? member.expiration.toDate() : new Date(member.expiration);
+    if (member.membershipExpiration) {
+      const d = member.membershipExpiration.toDate ? member.membershipExpiration.toDate() : new Date(member.membershipExpiration);
       expDisplay = d.toLocaleDateString();
-    }
-
-    if (member.subscription) {
-      message += ` (${member.subscription} - Exp: ${expDisplay})`;
+      message += ` (Exp: ${expDisplay})`;
     }
 
     this.snackBar.open(message, 'Close', { duration: 5000 });

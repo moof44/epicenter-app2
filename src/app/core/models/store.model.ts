@@ -1,11 +1,11 @@
-export type ProductCategory = 'Supplement' | 'Drink' | 'Merch' | 'Fitness';
+export type ProductCategory = 'Supplement' | 'Drink' | 'Merch' | 'Fitness' | 'Membership' | 'Training';
 export type ProductType = 'RETAIL' | 'CONSUMABLE';
 export type StockMovementReason = 'SALE' | 'INTERNAL_USE' | 'RESTOCK' | 'AUDIT_ADJUSTMENT';
 
 export interface Product {
   id?: string;
   name: string;
-  category: 'Supplement' | 'Drink' | 'Merch' | 'Fitness';
+  category: 'Supplement' | 'Drink' | 'Merch' | 'Fitness' | 'Membership' | 'Training';
   price: number;
   stock: number;
   imageUrl?: string;
@@ -24,6 +24,9 @@ export interface CartItem {
   productId: string;
   productName: string;
   price: number;
+  originalPrice: number;
+  isPriceOverridden: boolean;
+  overrideReason?: string;
   quantity: number;
   subtotal: number;
 }
@@ -33,8 +36,14 @@ export interface Transaction {
   date: any; // Firestore Timestamp or Date
   totalAmount: number;
   items: CartItem[];
-  staffId?: string;
-  staffName?: string;
+  staffId?: string | null;
+  staffName?: string | null;
+  paymentMethod: 'CASH' | 'GCASH';
+  referenceNumber?: string | null;
+  amountTendered?: number | null;
+  changeDue?: number | null;
+  memberId?: string | null;
+  memberName?: string;
 }
 
 export interface InventoryLog {
@@ -47,8 +56,8 @@ export interface InventoryLog {
   newStock: number; // Snapshot
   timestamp: any; // Firestore Timestamp
   performedBy: string;
-  staffId?: string;
-  staffName?: string;
+  staffId?: string | null;
+  staffName?: string | null;
   notes?: string;
 }
 

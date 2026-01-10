@@ -1,0 +1,153 @@
+.summary {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.payment-method-selector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    /* Modified from 20px */
+}
+
+.payment-method-selector label {
+    font-weight: 500;
+    color: #666;
+}
+
+.payment-method-selector .label {
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+mat-button-toggle-group {
+    width: 100%;
+}
+
+mat-button-toggle {
+    width: 50%;
+    font-weight: bold;
+}
+
+mat-button-toggle mat-icon {
+    margin-right: 8px;
+}
+
+/* New styles for calculator layout */
+.summary h3 {
+    margin: 8px 0 24px 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1976d2;
+    text-align: center;
+}
+
+/* New Cash Calculator Styles */
+.cash-calculator {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.calculator-row {
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+    /* Force equal height */
+}
+
+.tendered-input {
+    flex: 1;
+}
+
+/* Fix Pesos sign overlap by adding padding to the prefix container */
+::ng-deep .tendered-input .mat-mdc-form-field-prefix {
+    padding-right: 4px;
+    color: #444;
+}
+
+.change-display {
+    flex: 0 0 160px;
+    /* Slightly wider */
+    background: white;
+    border-radius: 8px;
+    padding: 8px 16px;
+    text-align: center;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.change-display .label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.change-display .amount {
+    font-size: 22px;
+    font-weight: 700;
+    color: #444;
+}
+
+.change-display .amount.has-change {
+    color: #2e7d32;
+    /* Green for change */
+}
+
+.quick-cash-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+.quick-cash-buttons button {
+    min-width: 90px;
+    font-weight: 500;
+}
+
+/* Modal sizing */
+:host {
+    display: block;
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    :host {
+        min-width: 100%;
+    }
+
+    .calculator-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .change-display {
+        flex: none;
+        padding: 16px;
+    }
+}
+
+.payment-details {
+    margin-top: 15px;
+}
+
+.full-width {
+    width: 100%;
+}

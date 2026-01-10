@@ -13,9 +13,13 @@ export interface SubscriptionUpdateDialogData {
   member: Member;
 }
 
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+
 export interface SubscriptionUpdateResult {
   action: 'check-in-only' | 'pay-and-check-in' | 'cancel',
-  subscriptionDate: Date
+  subscriptionDate: Date,
+  paymentMethod?: 'CASH' | 'GCASH';
+  referenceNumber?: string;
 }
 
 @Component({
@@ -23,7 +27,7 @@ export interface SubscriptionUpdateResult {
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule, MatDialogModule,
     MatButtonModule, MatDatepickerModule, MatFormFieldModule,
-    MatInputModule, MatNativeDateModule
+    MatInputModule, MatNativeDateModule, MatButtonToggleModule
   ],
   template: `
     <h2 mat-dialog-title>Update Subscription</h2>
@@ -42,13 +46,29 @@ export interface SubscriptionUpdateResult {
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
+
+        <div class="payment-section">
+            <p><strong>Payment Method:</strong></p>
+            <mat-button-toggle-group [(ngModel)]="paymentMethod" [ngModelOptions]="{standalone: true}" name="paymentMethod">
+              <mat-button-toggle value="CASH">Cash</mat-button-toggle>
+              <mat-button-toggle value="GCASH">GCash</mat-button-toggle>
+            </mat-button-toggle-group>
+    
+            <mat-form-field appearance="outline" class="full-width" *ngIf="paymentMethod === 'GCASH'">
+              <mat-label>Reference Number</mat-label>
+              <input matInput [(ngModel)]="referenceNumber" [ngModelOptions]="{standalone: true}" required placeholder="Ref No.">
+            </mat-form-field>
+        </div>
       </div>
 
     </mat-dialog-content>
     <mat-dialog-actions align="end" class="actions-column">
       <button mat-button (click)="onAction('cancel')">Cancel</button>
       <button mat-stroked-button (click)="onAction('check-in-only')">Update & Check-in (No Pay)</button>
-      <button mat-raised-button color="primary" (click)="onAction('pay-and-check-in')">Update, Pay & Check-in</button>
+      <button mat-raised-button color="primary" (click)="onAction('pay-and-check-in')"
+        [disabled]="paymentMethod === 'GCASH' && !referenceNumber">
+        Update, Pay & Check-in
+      </button>
     </mat-dialog-actions>
   `,
   styles: [`
@@ -56,12 +76,16 @@ export interface SubscriptionUpdateResult {
     .full-width { width: 100%; }
     .actions-column { flex-direction: column; align-items: flex-end; gap: 8px; }
     .actions-column button { margin: 0; width: 100%; max-width: 250px; }
+    .payment-section { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; width: 100%; box-sizing: border-box; }
   `]
 })
 export class SubscriptionUpdateDialog {
   dateControl = new FormControl(this.getDefaultDate(), [Validators.required]);
   dialogRef = inject(MatDialogRef<SubscriptionUpdateDialog>);
   data = inject<SubscriptionUpdateDialogData>(MAT_DIALOG_DATA);
+
+  paymentMethod: 'CASH' | 'GCASH' = 'CASH';
+  referenceNumber = '';
 
   getDefaultDate(): Date {
     const date = new Date();
@@ -80,9 +104,15 @@ export class SubscriptionUpdateDialog {
       return;
     }
 
+    if (action === 'pay-and-check-in') {
+      if (this.paymentMethod === 'GCASH' && !this.referenceNumber) return;
+    }
+
     this.dialogRef.close({
       action,
-      subscriptionDate: this.dateControl.value
+      subscriptionDate: this.dateControl.value,
+      paymentMethod: this.paymentMethod,
+      referenceNumber: this.referenceNumber
     });
   }
 }
