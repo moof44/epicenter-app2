@@ -25,6 +25,7 @@ import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
 import { Product, CartItem, Transaction, ProductSalesData, InventoryLog } from '../models/store.model';
 import { CashRegisterService } from './cash-register.service';
 import { AuthService } from './auth.service';
+import { MemberService } from './member.service';
 
 export interface SaleCompletedEvent {
   transactionId: string;
@@ -40,6 +41,7 @@ export class StoreService {
   private firestore = inject(Firestore);
   private injector = inject(Injector);
   private authService = inject(AuthService);
+  private memberService = inject(MemberService);
   private productsCollection = collection(this.firestore, 'products');
   private transactionsCollection = collection(this.firestore, 'transactions');
   // private stockMovementsCollection = collection(this.firestore, 'stockMovements'); // Deprecated
@@ -189,7 +191,7 @@ export class StoreService {
 
 
   // Checkout
-  async checkout(customItems?: CartItem[], performedBy = 'SYSTEM_POS', paymentMethod: 'CASH' | 'GCASH' = 'CASH', referenceNumber?: string, amountTendered?: number, changeDue?: number): Promise<string> {
+  async checkout(customItems?: CartItem[], performedBy = 'SYSTEM_POS', paymentMethod: 'CASH' | 'GCASH' = 'CASH', referenceNumber?: string, amountTendered?: number, changeDue?: number, memberId?: string | null, memberName?: string): Promise<string> {
     // Enforce Open Register
     const cashRegisterService = this.injector.get(CashRegisterService);
     if (!cashRegisterService.isShiftOpen()) {
@@ -262,7 +264,9 @@ export class StoreService {
       paymentMethod,
       referenceNumber: referenceNumber || null,
       amountTendered: amountTendered || null,
-      changeDue: changeDue || null
+      changeDue: changeDue || null,
+      memberId: memberId || null,
+      memberName: memberName || 'Walk-in'
     };
     const transactionRef = doc(this.transactionsCollection);
     batch.set(transactionRef, transaction);
@@ -281,6 +285,38 @@ export class StoreService {
       timestamp: timestamp,
       paymentMethod
     });
+
+    // 4. Automatic Membership Renewal
+    // Check if any purchased item is a 'Membership' type
+    if (memberId) {
+      const membershipItem = cartItems.find(item => {
+        // We need to look up the category from the map we fetched earlier, OR fetched in the loop.
+        // The loop above inside 'Deduct Stock' had productsMap.
+        // We need to access that productsMap here or check the cart item if we carry the category (we don't atm).
+        // Best way: use the productsMap populated earlier.
+        const product = productsMap.get(item.productId);
+        return product?.category === 'Membership';
+      });
+
+      if (membershipItem) {
+        // Trigger generic 30-day renewal
+        // We do this async and don't block the checkout return necessarily, or we await it to ensure consistency.
+        // Let's await it to be safe.
+        try {
+          // Normalize subscription name
+          let planName = membershipItem.productName;
+          if (planName.toLowerCase().includes('monthly')) {
+            planName = 'Monthly';
+          }
+
+          await this.memberService.renewMembership(memberId, planName);
+        } catch (error) {
+          console.error('Failed to auto-renew membership:', error);
+          // We don't throw here to avoid failing the already-committed transaction, 
+          // but we should probably notify/alert in a real app.
+        }
+      }
+    }
 
     return transactionRef.id;
   }
@@ -392,7 +428,16 @@ export class StoreService {
   // ...
 
   // Transactions
-  getTransactions(constraints: { limit?: number; startDate?: Date; endDate?: Date } = {}): Observable<Transaction[]> {
+  getTransactions(constraints: {
+    limit?: number;
+    startDate?: Date;
+    endDate?: Date;
+    paymentMethod?: 'CASH' | 'GCASH';
+    // For exact matches only (Firestore limitation without advanced indexing)
+    memberId?: string;
+    referenceNumber?: string;
+    staffName?: string;
+  } = {}): Observable<Transaction[]> {
     const queryConstraints: any[] = [orderBy('date', 'desc')];
 
     // Apply Filters
@@ -401,6 +446,18 @@ export class StoreService {
     }
     if (constraints.endDate) {
       queryConstraints.push(where('date', '<=', constraints.endDate));
+    }
+    if (constraints.paymentMethod) {
+      queryConstraints.push(where('paymentMethod', '==', constraints.paymentMethod));
+    }
+    if (constraints.memberId) {
+      queryConstraints.push(where('memberId', '==', constraints.memberId));
+    }
+    if (constraints.referenceNumber) {
+      queryConstraints.push(where('referenceNumber', '==', constraints.referenceNumber));
+    }
+    if (constraints.staffName) {
+      queryConstraints.push(where('staffName', '==', constraints.staffName));
     }
 
     // Default to 50 if no specific limit or strict date range is set? 

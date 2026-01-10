@@ -41,6 +41,14 @@
   overflow: hidden;
 }
 
+.member-search-bar {
+  margin-bottom: 8px;
+}
+
+.full-width {
+  width: 100%;
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;

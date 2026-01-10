@@ -247,7 +247,7 @@ export class CheckInKiosk implements OnInit {
               isPriceOverridden: false,
               quantity: 1,
               subtotal: membershipProduct.price
-            }], 'ATTENDANCE_SUBSCRIPTION_UPDATE', updateResult.paymentMethod, updateResult.referenceNumber);
+            }], 'ATTENDANCE_SUBSCRIPTION_UPDATE', updateResult.paymentMethod, updateResult.referenceNumber, undefined, undefined, member.id, member.name);
 
             this.snackBar.open('Subscription updated & Payment processed.', undefined, { duration: 2000 });
           } else {
@@ -296,7 +296,7 @@ export class CheckInKiosk implements OnInit {
             isPriceOverridden: false,
             quantity: 1,
             subtotal: walkInProduct.price
-          }], 'ATTENDANCE_WALK_IN', result.paymentMethod, result.referenceNumber);
+          }], 'ATTENDANCE_WALK_IN', result.paymentMethod, result.referenceNumber, undefined, undefined, member.id, member.name);
 
           this.snackBar.open('Walk-in transaction created.', undefined, { duration: 2000 });
         }

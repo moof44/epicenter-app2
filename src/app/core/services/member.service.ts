@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
-import { Firestore, collection, collectionData, addDoc, doc, updateDoc, query, orderBy, docData, limit, startAfter, getDocs } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, addDoc, doc, updateDoc, query, orderBy, docData, limit, startAfter, getDocs, getDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { Member } from '../models/member.model';
 
@@ -24,8 +24,9 @@ export class MemberService {
         };
     }
 
-    getMembers(limitCount = 100): Observable<Member[]> {
-        const q = query(this.membersCollection, orderBy('name'), limit(limitCount));
+    // Exemption: No limit applied to ensure all members are streamed and updated in real-time.
+    getMembers(): Observable<Member[]> {
+        const q = query(this.membersCollection, orderBy('name'));
         return collectionData(q, { idField: 'id' }) as Observable<Member[]>;
     }
 
@@ -56,6 +57,41 @@ export class MemberService {
             lastModifiedBy: trace
         };
         return addDoc(this.membersCollection, memberWithTrace);
+    }
+
+    async renewMembership(id: string, planName: string): Promise<void> {
+        // Fetch current member data to check existing expiration
+        const docRef = doc(this.firestore, 'members', id);
+        const snapshot = await getDoc(docRef);
+
+        if (!snapshot.exists()) {
+            throw new Error('Member not found');
+        }
+
+        const memberData = snapshot.data() as Member;
+        const now = new Date();
+        let baseDate = now;
+
+        // Check if current expiration is valid and in the future
+        if (memberData.expiration) {
+            const currentExpiry = memberData.expiration instanceof Date
+                ? memberData.expiration
+                : (memberData.expiration as any).toDate();
+
+            if (currentExpiry > now) {
+                baseDate = currentExpiry;
+            }
+        }
+
+        // Calculate new expiration: Base Date + 30 days
+        const newExpiration = new Date(baseDate);
+        newExpiration.setDate(newExpiration.getDate() + 30);
+
+        return this.updateMember(id, {
+            membershipStatus: 'Active',
+            subscription: planName,
+            expiration: newExpiration
+        });
     }
 
     updateMember(id: string, data: Partial<Member>): Promise<void> {

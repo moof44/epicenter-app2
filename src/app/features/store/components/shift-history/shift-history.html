@@ -5,6 +5,26 @@
       <h1>Cash Reports & Shift History</h1>
     </div>
 
+    <div class="filters-section">
+      <mat-form-field appearance="outline">
+        <mat-label>Date Range</mat-label>
+        <mat-date-range-input [rangePicker]="picker">
+          <input matStartDate [(ngModel)]="startDate" placeholder="Start date">
+          <input matEndDate [(ngModel)]="endDate" placeholder="End date" (dateChange)="applyFilters()">
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-date-range-picker #picker></mat-date-range-picker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Opened By</mat-label>
+        <input matInput [(ngModel)]="staffFilter" (keyup.enter)="applyFilters()" placeholder="Staff name...">
+        <button mat-icon-button matSuffix (click)="applyFilters()">
+          <mat-icon>search</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
     <div class="mat-elevation-z2 table-container" [@fadeIn]>
       <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
 

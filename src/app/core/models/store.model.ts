@@ -1,11 +1,11 @@
-export type ProductCategory = 'Supplement' | 'Drink' | 'Merch' | 'Fitness';
+export type ProductCategory = 'Supplement' | 'Drink' | 'Merch' | 'Fitness' | 'Membership';
 export type ProductType = 'RETAIL' | 'CONSUMABLE';
 export type StockMovementReason = 'SALE' | 'INTERNAL_USE' | 'RESTOCK' | 'AUDIT_ADJUSTMENT';
 
 export interface Product {
   id?: string;
   name: string;
-  category: 'Supplement' | 'Drink' | 'Merch' | 'Fitness';
+  category: 'Supplement' | 'Drink' | 'Merch' | 'Fitness' | 'Membership';
   price: number;
   stock: number;
   imageUrl?: string;
@@ -42,6 +42,8 @@ export interface Transaction {
   referenceNumber?: string | null;
   amountTendered?: number | null;
   changeDue?: number | null;
+  memberId?: string | null;
+  memberName?: string;
 }
 
 export interface InventoryLog {

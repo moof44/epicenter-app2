@@ -11,11 +11,18 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
 import { PurchaseOrder } from '../../../../core/models/purchase.model';
 import { fadeIn } from '../../../../core/animations/animations';
 
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { where } from '@angular/fire/firestore';
+
 @Component({
   selector: 'app-purchase-history',
   standalone: true,
   imports: [
-    CommonModule, MatTableModule, MatButtonModule, MatIconModule, MatPaginatorModule, MatCardModule, MatProgressSpinnerModule
+    CommonModule, MatTableModule, MatButtonModule, MatIconModule, MatPaginatorModule, MatCardModule, MatProgressSpinnerModule,
+    MatDatepickerModule, MatNativeDateModule, MatInputModule, FormsModule
   ],
   templateUrl: './purchase-history.component.html',
   styleUrl: './purchase-history.component.css',
@@ -51,6 +58,12 @@ export class PurchaseHistoryComponent implements OnInit, AfterViewInit {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
+  // Filters
+  startDate: Date | null = null;
+  endDate: Date | null = null;
+  supplierFilter = '';
+  productFilter = '';
+
   constructor() { }
 
   ngOnInit() {
@@ -61,6 +74,13 @@ export class PurchaseHistoryComponent implements OnInit, AfterViewInit {
     this.dataSource.paginator = this.paginator;
   }
 
+  applyFilters() {
+    this.orders = []; // Clear existing
+    this.lastDoc = null;
+    this.hasMore = true;
+    this.loadOrders();
+  }
+
   async loadOrders() {
     if (this.isLoading || (!this.hasMore && this.lastDoc)) return;
 
@@ -68,35 +88,54 @@ export class PurchaseHistoryComponent implements OnInit, AfterViewInit {
     try {
       const ordersCol = collection(this.firestore, 'purchase_orders');
 
-      let q = query(
-        ordersCol,
-        orderBy('date', 'desc'),
-        limit(this.pageSize)
-      );
+      const constraints: any[] = [orderBy('date', 'desc')];
+
+      // Date Filters
+      if (this.startDate) {
+        constraints.push(where('date', '>=', this.startDate));
+      }
+      if (this.endDate) {
+        constraints.push(where('date', '<=', this.endDate));
+      }
+
+      // Limit
+      constraints.push(limit(this.pageSize));
 
       if (this.lastDoc) {
-        q = query(
-          ordersCol,
-          orderBy('date', 'desc'),
-          startAfter(this.lastDoc),
-          limit(this.pageSize)
-        );
+        constraints.push(startAfter(this.lastDoc));
       }
+
+      const q = query(ordersCol, ...constraints);
 
       const snapshot = await getDocs(q);
 
       if (snapshot.empty) {
         this.hasMore = false;
         this.isLoading = false;
+        if (this.orders.length === 0) this.dataSource.data = [];
         return;
       }
 
       this.lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
-      const newOrders = snapshot.docs.map(d => {
+      let newOrders = snapshot.docs.map(d => {
         const data = d.data();
         return { id: d.id, ...data } as PurchaseOrder;
       });
+
+      // Client-side Supplier Filtering (Best effort without full index)
+      if (this.supplierFilter) {
+        const term = this.supplierFilter.toLowerCase();
+        newOrders = newOrders.filter(o => o.supplierName?.toLowerCase().includes(term));
+      }
+
+      // Client-side Product Filtering
+      if (this.productFilter) {
+        const term = this.productFilter.toLowerCase();
+        newOrders = newOrders.filter(o =>
+          o.items.some(item => item.productName.toLowerCase().includes(term))
+        );
+      }
 
       this.orders = [...this.orders, ...newOrders];
       this.dataSource.data = this.orders;

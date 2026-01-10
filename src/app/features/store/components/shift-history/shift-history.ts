@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, inject, ViewChild, AfterViewInit, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
@@ -20,19 +20,23 @@ import {
   formatShiftDate
 } from '../../../../core/utils/cash-register.utils';
 import { fadeIn } from '../../../../core/animations/animations';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-shift-history',
   imports: [
     CommonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatButtonModule,
     MatIconModule, MatChipsModule, MatTooltipModule, MatSidenavModule, MatDividerModule,
-    MatTabsModule
+    MatTabsModule, MatDatepickerModule, MatNativeDateModule, MatInputModule, FormsModule
   ],
   templateUrl: './shift-history.html',
   styleUrl: './shift-history.css',
   animations: [fadeIn]
 })
-export class ShiftHistory implements AfterViewInit {
+export class ShiftHistory implements AfterViewInit, OnInit {
   private cashRegisterService = inject(CashRegisterService);
 
   dataSource = new MatTableDataSource<ShiftSession>([]);
@@ -44,11 +48,41 @@ export class ShiftHistory implements AfterViewInit {
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild('detailDrawer') detailDrawer!: MatDrawer;
 
-  constructor() {
-    this.cashRegisterService.getShiftHistory().subscribe(shifts => {
-      // Only show closed shifts
-      this.dataSource.data = shifts.filter(s => s.status === 'CLOSED');
+  // Filters
+  startDate: Date | null = null;
+  endDate: Date | null = null;
+  staffFilter = '';
+
+  constructor() { }
+
+  ngOnInit() {
+    this.loadShifts();
+  }
+
+  loadShifts() {
+    this.cashRegisterService.getShiftHistory(
+      50,
+      this.startDate || undefined,
+      this.endDate || undefined
+    ).subscribe(shifts => {
+      // Server filters status? No, duplicate filter on client? 
+      // Service only did LIMIT. Service code says: "orderBy('startTime'), limit()".
+      // I just added Date filters to Service. I still need to filter 'CLOSED' status?
+      // The original code filtered: `shifts.filter(s => s.status === 'CLOSED')`.
+
+      let filtered = shifts.filter(s => s.status === 'CLOSED');
+
+      if (this.staffFilter) {
+        const term = this.staffFilter.toLowerCase();
+        filtered = filtered.filter(s => s.openedBy && s.openedBy.toLowerCase().includes(term));
+      }
+
+      this.dataSource.data = filtered;
     });
+  }
+
+  applyFilters() {
+    this.loadShifts();
   }
 
   ngAfterViewInit() {

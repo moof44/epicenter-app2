@@ -273,8 +273,15 @@ export class CashRegisterService implements OnDestroy {
     this.currentShift.next(null);
   }
 
-  getShiftHistory(limitCount = 50): Observable<ShiftSession[]> {
-    const q = query(this.shiftsCollection, orderBy('startTime', 'desc'), limit(limitCount));
+  getShiftHistory(limitCount = 50, startDate?: Date, endDate?: Date): Observable<ShiftSession[]> {
+    const constraints: any[] = [orderBy('startTime', 'desc')];
+
+    if (startDate) constraints.push(where('startTime', '>=', startDate));
+    if (endDate) constraints.push(where('startTime', '<=', endDate));
+
+    constraints.push(limit(limitCount));
+
+    const q = query(this.shiftsCollection, ...constraints);
     return collectionData(q, { idField: 'id' }) as Observable<ShiftSession[]>;
   }
 

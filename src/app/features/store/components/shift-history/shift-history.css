@@ -31,7 +31,24 @@
 }
 
 .clickable-row:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: transparent !important;
+}
+
+.filters-section {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+mat-form-field {
+  flex: 1;
+  min-width: 200px;
 }
 
 .clickable-row:active {
