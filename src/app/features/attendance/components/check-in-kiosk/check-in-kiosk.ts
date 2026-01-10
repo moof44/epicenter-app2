@@ -181,7 +181,7 @@ export class CheckInKiosk implements OnInit {
     try {
       const member = this.selectedMember;
       const isExpired = this.memberService.isMembershipExpired(member);
-      const hasActiveSubscription = !!member.subscription && !isExpired;
+      const hasActiveSubscription = member.membershipStatus === 'Active' && !!member.membershipExpiration && !isExpired;
       const hasLocker = !!this.selectedLocker;
 
       // 1. Locker Restriction Check
@@ -215,14 +215,12 @@ export class CheckInKiosk implements OnInit {
           // Update Member Subscription
           const newExpiration = Timestamp.fromDate(updateResult.subscriptionDate);
           await this.memberService.updateMember(member.id!, {
-            subscription: 'Monthly Membership',
-            expiration: newExpiration,
+            membershipExpiration: newExpiration,
             membershipStatus: 'Active'
           });
 
           // Update local member object for subsequent checks
-          member.subscription = 'Monthly Membership';
-          member.expiration = newExpiration;
+          member.membershipExpiration = newExpiration;
           // Re-evaluate active status (it's active now)
           // But we proceed directly to check-in or pay flow
 
@@ -269,7 +267,7 @@ export class CheckInKiosk implements OnInit {
         const dialogRef = this.dialog.open(WalkInDialog, {
           data: {
             member: member,
-            isExpired: !!member.subscription // Distinguish expired vs never had one
+            isExpired: !!member.membershipExpiration // Distinguish expired vs never had one
           }
         });
 
@@ -319,13 +317,10 @@ export class CheckInKiosk implements OnInit {
     let message = `Checked in ${member.name}!`;
     // Resolve expiration for display
     let expDisplay = 'No Expiry';
-    if (member.expiration) {
-      const d = member.expiration.toDate ? member.expiration.toDate() : new Date(member.expiration);
+    if (member.membershipExpiration) {
+      const d = member.membershipExpiration.toDate ? member.membershipExpiration.toDate() : new Date(member.membershipExpiration);
       expDisplay = d.toLocaleDateString();
-    }
-
-    if (member.subscription) {
-      message += ` (${member.subscription} - Exp: ${expDisplay})`;
+      message += ` (Exp: ${expDisplay})`;
     }
 
     this.snackBar.open(message, 'Close', { duration: 5000 });

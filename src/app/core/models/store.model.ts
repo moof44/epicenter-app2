@@ -1,11 +1,11 @@
-export type ProductCategory = 'Supplement' | 'Drink' | 'Merch' | 'Fitness' | 'Membership';
+export type ProductCategory = 'Supplement' | 'Drink' | 'Merch' | 'Fitness' | 'Membership' | 'Training';
 export type ProductType = 'RETAIL' | 'CONSUMABLE';
 export type StockMovementReason = 'SALE' | 'INTERNAL_USE' | 'RESTOCK' | 'AUDIT_ADJUSTMENT';
 
 export interface Product {
   id?: string;
   name: string;
-  category: 'Supplement' | 'Drink' | 'Merch' | 'Fitness' | 'Membership';
+  category: 'Supplement' | 'Drink' | 'Merch' | 'Fitness' | 'Membership' | 'Training';
   price: number;
   stock: number;
   imageUrl?: string;

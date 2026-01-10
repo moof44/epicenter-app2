@@ -31,7 +31,7 @@ export interface WalkInDialogResult {
     <mat-dialog-content>
       <p>
         <strong>{{data.member.name}}</strong> 
-        <span *ngIf="data.isExpired">has an expired subscription (Enc: {{data.member.expiration?.toDate() | date}}).</span>
+        <span *ngIf="data.isExpired">has an expired subscription (Enc: {{data.member.membershipExpiration?.toDate() | date}}).</span>
         <span *ngIf="!data.isExpired">does not have an active subscription.</span>
       </p>
       

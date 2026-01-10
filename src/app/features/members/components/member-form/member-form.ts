@@ -43,9 +43,9 @@ export class MemberForm implements OnInit {
       contactNumber: ['', [Validators.required]],
       gender: ['Male', [Validators.required]],
       birthday: [null, [Validators.required]],
-      expiration: [null],
+      membershipExpiration: [null],
+      trainingExpiration: [null],
       goal: [''],
-      subscription: [null],
       membershipStatus: ['Active', [Validators.required]]
     });
   }
@@ -61,13 +61,16 @@ export class MemberForm implements OnInit {
   async loadMember(id: string) {
     this.loading = true;
     this.memberService.getMember(id).subscribe(member => {
-       // Convert timestamps to Date objects if needed for form
+      // Convert timestamps to Date objects if needed for form
       const data = { ...member };
       if (data.birthday && data.birthday.seconds) {
         data.birthday = new Date(data.birthday.seconds * 1000);
       }
-      if (data.expiration && data.expiration.seconds) {
-        data.expiration = new Date(data.expiration.seconds * 1000);
+      if (data.membershipExpiration && data.membershipExpiration.seconds) {
+        data.membershipExpiration = new Date(data.membershipExpiration.seconds * 1000);
+      }
+      if (data.trainingExpiration && data.trainingExpiration.seconds) {
+        data.trainingExpiration = new Date(data.trainingExpiration.seconds * 1000);
       }
       this.form.patchValue(data);
       this.loading = false;

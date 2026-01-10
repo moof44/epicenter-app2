@@ -32,7 +32,7 @@ export class MemberList implements AfterViewInit {
   private memberService = inject(MemberService);
 
   dataSource = new MatTableDataSource<Member>([]);
-  displayedColumns: string[] = ['name', 'membershipStatus', 'expiration', 'actions'];
+  displayedColumns: string[] = ['name', 'membershipStatus', 'membershipExpiration', 'actions'];
 
   searchQuery = '';
   statusFilter = 'All';

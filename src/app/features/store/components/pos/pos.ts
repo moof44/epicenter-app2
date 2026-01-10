@@ -52,7 +52,7 @@ export class POS {
   isShiftOpen$ = this.cashRegisterService.currentShift$.pipe(map(s => s?.status === 'OPEN'));
 
   selectedCategory = signal<ProductCategory | 'All'>('All');
-  categories: (ProductCategory | 'All')[] = ['All', 'Supplement', 'Drink', 'Merch', 'Fitness'];
+  categories: (ProductCategory | 'All')[] = ['All', 'Supplement', 'Drink', 'Merch', 'Fitness', 'Membership', 'Training'];
   isProcessing = signal(false);
   cartExpanded = signal(false);
 
@@ -201,7 +201,8 @@ export class POS {
       'Drink': 'local_drink',
       'Merch': 'checkroom',
       'Fitness': 'fitness_center',
-      'Membership': 'card_membership'
+      'Membership': 'card_membership',
+      'Training': 'sports_martial_arts'
     };
     return icons[category];
   }

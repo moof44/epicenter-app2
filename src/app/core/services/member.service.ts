@@ -59,7 +59,7 @@ export class MemberService {
         return addDoc(this.membersCollection, memberWithTrace);
     }
 
-    async renewMembership(id: string, planName: string): Promise<void> {
+    async renewMembership(id: string): Promise<void> {
         // Fetch current member data to check existing expiration
         const docRef = doc(this.firestore, 'members', id);
         const snapshot = await getDoc(docRef);
@@ -73,10 +73,10 @@ export class MemberService {
         let baseDate = now;
 
         // Check if current expiration is valid and in the future
-        if (memberData.expiration) {
-            const currentExpiry = memberData.expiration instanceof Date
-                ? memberData.expiration
-                : (memberData.expiration as any).toDate();
+        if (memberData.membershipExpiration) {
+            const currentExpiry = memberData.membershipExpiration instanceof Date
+                ? memberData.membershipExpiration
+                : (memberData.membershipExpiration as any).toDate();
 
             if (currentExpiry > now) {
                 baseDate = currentExpiry;
@@ -89,8 +89,37 @@ export class MemberService {
 
         return this.updateMember(id, {
             membershipStatus: 'Active',
-            subscription: planName,
-            expiration: newExpiration
+            membershipExpiration: newExpiration
+        });
+    }
+
+    async renewTraining(id: string): Promise<void> {
+        const docRef = doc(this.firestore, 'members', id);
+        const snapshot = await getDoc(docRef);
+
+        if (!snapshot.exists()) {
+            throw new Error('Member not found');
+        }
+
+        const memberData = snapshot.data() as Member;
+        const now = new Date();
+        let baseDate = now;
+
+        if (memberData.trainingExpiration) {
+            const currentExpiry = memberData.trainingExpiration instanceof Date
+                ? memberData.trainingExpiration
+                : (memberData.trainingExpiration as any).toDate();
+
+            if (currentExpiry > now) {
+                baseDate = currentExpiry;
+            }
+        }
+
+        const newExpiration = new Date(baseDate);
+        newExpiration.setDate(newExpiration.getDate() + 30);
+
+        return this.updateMember(id, {
+            trainingExpiration: newExpiration
         });
     }
 
@@ -105,11 +134,11 @@ export class MemberService {
     }
 
     isMembershipExpired(member: Member): boolean {
-        if (!member.expiration) return false;
+        if (!member.membershipExpiration) return false;
         // Handle Firestore Timestamp or Date object
-        const expiry = member.expiration instanceof Date
-            ? member.expiration
-            : (member.expiration as any).toDate();
+        const expiry = member.membershipExpiration instanceof Date
+            ? member.membershipExpiration
+            : (member.membershipExpiration as any).toDate();
 
         return expiry < new Date();
     }

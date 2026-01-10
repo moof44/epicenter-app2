@@ -54,14 +54,14 @@
         </ng-container>
 
         <!-- Expiration Column -->
-        <ng-container matColumnDef="expiration">
+        <ng-container matColumnDef="membershipExpiration">
             <th mat-header-cell *matHeaderCellDef> Expiration </th>
             <td mat-cell *matCellDef="let member" [class.expired]="isExpired(member)" data-label="Expiration">
-                <ng-container *ngIf="member.expiration?.seconds; else dateObj">
-                    {{ member.expiration.seconds * 1000 | date:'mediumDate' }}
+                <ng-container *ngIf="member.membershipExpiration?.seconds; else dateObj">
+                    {{ member.membershipExpiration.seconds * 1000 | date:'mediumDate' }}
                 </ng-container>
                 <ng-template #dateObj>
-                    {{ member.expiration | date:'mediumDate' }}
+                    {{ member.membershipExpiration | date:'mediumDate' }}
                 </ng-template>
             </td>
         </ng-container>

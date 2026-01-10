@@ -303,17 +303,25 @@ export class StoreService {
         // We do this async and don't block the checkout return necessarily, or we await it to ensure consistency.
         // Let's await it to be safe.
         try {
-          // Normalize subscription name
-          let planName = membershipItem.productName;
-          if (planName.toLowerCase().includes('monthly')) {
-            planName = 'Monthly';
-          }
-
-          await this.memberService.renewMembership(memberId, planName);
+          await this.memberService.renewMembership(memberId);
         } catch (error) {
           console.error('Failed to auto-renew membership:', error);
           // We don't throw here to avoid failing the already-committed transaction, 
           // but we should probably notify/alert in a real app.
+        }
+      }
+
+      // Check for 'Training' type
+      const trainingItem = cartItems.find(item => {
+        const product = productsMap.get(item.productId);
+        return product?.category === 'Training';
+      });
+
+      if (trainingItem) {
+        try {
+          await this.memberService.renewTraining(memberId);
+        } catch (error) {
+          console.error('Failed to auto-renew training:', error);
         }
       }
     }
