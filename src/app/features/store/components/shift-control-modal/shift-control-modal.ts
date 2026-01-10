@@ -10,6 +10,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { ShiftSession, ShiftSummary } from '../../../../core/models/cash-register.model';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-shift-control-modal',
@@ -24,6 +25,7 @@ export class ShiftControlModal implements OnInit {
   private cashRegisterService = inject(CashRegisterService);
   private dialogRef = inject(MatDialogRef<ShiftControlModal>);
   private snackBar = inject(MatSnackBar);
+  private authService = inject(AuthService);
 
   currentShift: ShiftSession | null = null;
   isShiftOpen = false;
@@ -68,7 +70,9 @@ export class ShiftControlModal implements OnInit {
 
     this.isLoading = true;
     try {
-      await this.cashRegisterService.openShift(this.openingBalance, 'Staff'); // TODO: Get actual user
+      const user = this.authService.userProfile();
+      const userName = user?.displayName || user?.email || 'Unknown Staff';
+      await this.cashRegisterService.openShift(this.openingBalance, userName);
       this.snackBar.open('Shift opened successfully', 'Close', { duration: 3000 });
       this.dialogRef.close(true);
     } catch (err: any) {
@@ -86,7 +90,9 @@ export class ShiftControlModal implements OnInit {
 
     this.isLoading = true;
     try {
-      await this.cashRegisterService.closeShift(this.actualClosingBalance, 'Staff'); // TODO: Get actual user
+      const user = this.authService.userProfile();
+      const userName = user?.displayName || user?.email || 'Unknown Staff';
+      await this.cashRegisterService.closeShift(this.actualClosingBalance, userName);
       this.snackBar.open('Shift closed successfully', 'Close', { duration: 3000 });
       this.dialogRef.close(true);
     } catch (err: any) {

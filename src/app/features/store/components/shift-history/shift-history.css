@@ -180,6 +180,12 @@ button[mat-icon-button] {
   text-align: right;
 }
 
+.sub-row {
+  margin-left: 20px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
 .summary-row.highlight {
   padding: 12px 0;
   margin-top: 8px;
@@ -197,12 +203,25 @@ button[mat-icon-button] {
   height: 18px;
 }
 
-.summary-row .variance.balanced { color: #4caf50; }
-.summary-row .variance.shortage { color: #f44336; }
-.summary-row .variance.overage { color: #2196f3; }
+.summary-row .variance.balanced {
+  color: #4caf50;
+}
 
-.positive { color: #4caf50; }
-.negative { color: #f44336; }
+.summary-row .variance.shortage {
+  color: #f44336;
+}
+
+.summary-row .variance.overage {
+  color: #2196f3;
+}
+
+.positive {
+  color: #4caf50;
+}
+
+.negative {
+  color: #f44336;
+}
 
 /* Tabs */
 mat-tab-group {

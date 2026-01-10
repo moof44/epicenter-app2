@@ -65,7 +65,8 @@ export class CashRegisterService implements OnDestroy {
         amount: sale.amount,
         reason: `POS Sale #${sale.transactionId.slice(0, 8)}`,
         performedBy: 'System',
-        relatedTransactionId: sale.transactionId
+        relatedTransactionId: sale.transactionId,
+        paymentMethod: sale.paymentMethod
       });
     });
   }
@@ -124,6 +125,9 @@ export class CashRegisterService implements OnDestroy {
       closedBy: null,
       transactions: [],
       totalSales: 0,
+      totalCashSales: 0,
+      totalGcashSales: 0,
+      totalRevenue: 0,
       totalExpenses: 0,
       totalFloatIn: 0,
       totalFloatOut: 0
@@ -155,7 +159,15 @@ export class CashRegisterService implements OnDestroy {
 
     switch (transaction.type) {
       case 'Sale':
-        updates.totalSales = shift.totalSales + transaction.amount;
+        updates.totalRevenue = (shift.totalRevenue || 0) + transaction.amount;
+        updates.totalSales = (shift.totalSales || 0) + transaction.amount; // Legacy/Total
+
+        if (transaction.paymentMethod === 'GCASH') {
+          updates.totalGcashSales = (shift.totalGcashSales || 0) + transaction.amount;
+        } else {
+          // Default to CASH if undefined (for safety/legacy) or explicit CASH
+          updates.totalCashSales = (shift.totalCashSales || 0) + transaction.amount;
+        }
         break;
       case 'Float_In':
         updates.totalFloatIn = shift.totalFloatIn + transaction.amount;
@@ -169,13 +181,14 @@ export class CashRegisterService implements OnDestroy {
     }
 
     // Recalculate expected closing balance
-    const newTotalSales = updates.totalSales ?? shift.totalSales;
+    // Expected Cash = Opening + Cash Sales + Float In - Expenses - Float Out
+    const currentCashSales = updates.totalCashSales ?? shift.totalCashSales ?? 0;
     const newTotalFloatIn = updates.totalFloatIn ?? shift.totalFloatIn;
     const newTotalExpenses = updates.totalExpenses ?? shift.totalExpenses;
     const newTotalFloatOut = updates.totalFloatOut ?? shift.totalFloatOut;
 
     updates.expectedClosingBalance =
-      shift.openingBalance + newTotalSales + newTotalFloatIn - newTotalExpenses - newTotalFloatOut;
+      shift.openingBalance + currentCashSales + newTotalFloatIn - newTotalExpenses - newTotalFloatOut;
 
     const docRef = doc(this.firestore, 'shifts', shift.id);
     await updateDoc(docRef, updates);
@@ -220,7 +233,10 @@ export class CashRegisterService implements OnDestroy {
 
     return {
       openingBalance: shift.openingBalance,
-      totalSales: shift.totalSales,
+      totalSales: shift.totalSales, // Legacy
+      totalCashSales: shift.totalCashSales || 0,
+      totalGcashSales: shift.totalGcashSales || 0,
+      totalRevenue: shift.totalRevenue || 0,
       totalFloatIn: shift.totalFloatIn,
       totalExpenses: shift.totalExpenses,
       totalFloatOut: shift.totalFloatOut,

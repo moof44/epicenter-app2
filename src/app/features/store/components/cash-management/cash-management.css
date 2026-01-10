@@ -39,9 +39,17 @@
   flex-shrink: 0;
 }
 
-.summary-card.sales mat-icon { color: #4caf50; }
-.summary-card.expenses mat-icon { color: #f44336; }
-.summary-card.current mat-icon { color: #2196f3; }
+.summary-card.sales mat-icon {
+  color: #4caf50;
+}
+
+.summary-card.expenses mat-icon {
+  color: #f44336;
+}
+
+.summary-card.current mat-icon {
+  color: #2196f3;
+}
 
 .card-info {
   display: flex;
@@ -61,6 +69,14 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.sub-values {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+  color: #666;
+  font-weight: 500;
 }
 
 /* Action Buttons */
@@ -141,7 +157,8 @@
 }
 
 /* Empty States */
-.empty-state, .no-shift-state {
+.empty-state,
+.no-shift-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -151,7 +168,8 @@
   text-align: center;
 }
 
-.empty-state mat-icon, .no-shift-state mat-icon {
+.empty-state mat-icon,
+.no-shift-state mat-icon {
   font-size: 64px;
   width: 64px;
   height: 64px;

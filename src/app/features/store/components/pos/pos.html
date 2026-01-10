@@ -75,7 +75,19 @@
         <div *ngFor="let item of cartItems" class="cart-item" [@fadeIn]>
           <div class="item-info">
             <span class="item-name">{{ item.productName }}</span>
-            <span class="item-price">₱{{ item.price | number:'1.2-2' }} each</span>
+            <div class="price-container">
+              <span class="original-price" *ngIf="item.isPriceOverridden">
+                <del>₱{{ item.originalPrice | number:'1.2-2' }}</del>
+              </span>
+              <span class="item-price" [class.overridden]="item.isPriceOverridden">
+                ₱{{ item.price | number:'1.2-2' }} each
+              </span>
+              <button mat-icon-button class="edit-price-btn"
+                (click)="openPriceOverrideDialog(item); $event.stopPropagation()" [disabled]="!(isShiftOpen$ | async)"
+                matTooltip="Override Price">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
           </div>
           <div class="item-controls">
             <button mat-icon-button (click)="updateQuantity(item, -1); $event.stopPropagation()"

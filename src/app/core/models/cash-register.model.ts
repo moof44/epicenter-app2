@@ -8,6 +8,7 @@ export interface CashTransaction {
   timestamp: any; // Firestore Timestamp or Date
   performedBy: string;
   relatedTransactionId?: string; // Links to POS transaction for Sales
+  paymentMethod?: 'CASH' | 'GCASH';
 }
 
 export type ShiftStatus = 'OPEN' | 'CLOSED';
@@ -24,7 +25,10 @@ export interface ShiftSession {
   openedBy: string;
   closedBy: string | null;
   transactions: CashTransaction[];
-  totalSales: number;
+  totalSales: number; // Keep for backward compatibility or simple total
+  totalCashSales: number;
+  totalGcashSales: number;
+  totalRevenue: number;
   totalExpenses: number;
   totalFloatIn: number;
   totalFloatOut: number;
@@ -33,6 +37,9 @@ export interface ShiftSession {
 export interface ShiftSummary {
   openingBalance: number;
   totalSales: number;
+  totalCashSales: number;
+  totalGcashSales: number;
+  totalRevenue: number;
   totalFloatIn: number;
   totalExpenses: number;
   totalFloatOut: number;

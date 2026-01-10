@@ -7,14 +7,15 @@
 
     <div class="mat-elevation-z2 table-container" [@fadeIn]>
       <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
-        
+
         <!-- Date Column -->
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Date/Time</th>
           <td mat-cell *matCellDef="let shift">
             <div class="date-cell">
               <span class="date">{{ formatDate(shift.startTime) | date:'mediumDate' }}</span>
-              <span class="time">{{ formatDate(shift.startTime) | date:'shortTime' }} - {{ formatDate(shift.endTime) | date:'shortTime' }}</span>
+              <span class="time">{{ formatDate(shift.startTime) | date:'shortTime' }} - {{ formatDate(shift.endTime) |
+                date:'shortTime' }}</span>
             </div>
           </td>
         </ng-container>
@@ -82,8 +83,8 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
-            class="clickable-row" (click)="viewDetails(row)"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="clickable-row" (click)="viewDetails(row)">
+        </tr>
       </table>
 
       <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
@@ -116,7 +117,7 @@
           <div class="summary-row">
             <span class="label">Duration</span>
             <span class="value">
-              {{ formatDate(selectedShift.startTime) | date:'shortTime' }} - 
+              {{ formatDate(selectedShift.startTime) | date:'shortTime' }} -
               {{ formatDate(selectedShift.endTime) | date:'shortTime' }}
             </span>
           </div>
@@ -128,17 +129,33 @@
             <span class="label">Closed By</span>
             <span class="value">{{ selectedShift.closedBy }}</span>
           </div>
-          
-          <mat-divider></mat-divider>
 
           <div class="summary-row">
             <span class="label">Opening Balance</span>
             <span class="value">₱{{ selectedShift.openingBalance | number:'1.2-2' }}</span>
           </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="summary-row">
+            <span class="label">Total Revenue</span>
+            <span class="value">₱{{ (selectedShift.totalRevenue || selectedShift.totalSales) | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row sub-row">
+            <span class="label">Cash Sales</span>
+            <span class="value">₱{{ (selectedShift.totalCashSales || 0) | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row sub-row">
+            <span class="label">GCash Sales</span>
+            <span class="value">₱{{ (selectedShift.totalGcashSales || 0) | number:'1.2-2' }}</span>
+          </div>
+
+          <mat-divider></mat-divider>
+
           <div class="summary-row">
             <span class="label">Net Cash Flow</span>
-            <span class="value" [class.positive]="getNetCashFlow(selectedShift) >= 0" 
-                  [class.negative]="getNetCashFlow(selectedShift) < 0">
+            <span class="value" [class.positive]="getNetCashFlow(selectedShift) >= 0"
+              [class.negative]="getNetCashFlow(selectedShift) < 0">
               {{ getNetCashFlow(selectedShift) >= 0 ? '+' : '' }}₱{{ getNetCashFlow(selectedShift) | number:'1.2-2' }}
             </span>
           </div>
@@ -211,11 +228,12 @@
               Float ({{ getFloatInTransactions(selectedShift).length + getFloatOutTransactions(selectedShift).length }})
             </ng-template>
             <div class="tab-content">
-              <div *ngIf="getFloatInTransactions(selectedShift).length === 0 && getFloatOutTransactions(selectedShift).length === 0" 
-                   class="empty-tab">
+              <div
+                *ngIf="getFloatInTransactions(selectedShift).length === 0 && getFloatOutTransactions(selectedShift).length === 0"
+                class="empty-tab">
                 No float transactions in this shift
               </div>
-              
+
               <div *ngFor="let tx of getFloatInTransactions(selectedShift)" class="transaction-item">
                 <div class="tx-info">
                   <mat-icon class="tx-icon positive">add_circle</mat-icon>
@@ -224,7 +242,7 @@
                 </div>
                 <span class="tx-amount positive">+₱{{ tx.amount | number:'1.2-2' }}</span>
               </div>
-              
+
               <div *ngFor="let tx of getFloatOutTransactions(selectedShift)" class="transaction-item">
                 <div class="tx-info">
                   <mat-icon class="tx-icon negative">remove_circle</mat-icon>

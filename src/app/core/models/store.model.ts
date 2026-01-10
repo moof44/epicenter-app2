@@ -24,6 +24,9 @@ export interface CartItem {
   productId: string;
   productName: string;
   price: number;
+  originalPrice: number;
+  isPriceOverridden: boolean;
+  overrideReason?: string;
   quantity: number;
   subtotal: number;
 }
@@ -33,8 +36,12 @@ export interface Transaction {
   date: any; // Firestore Timestamp or Date
   totalAmount: number;
   items: CartItem[];
-  staffId?: string;
-  staffName?: string;
+  staffId?: string | null;
+  staffName?: string | null;
+  paymentMethod: 'CASH' | 'GCASH';
+  referenceNumber?: string | null;
+  amountTendered?: number | null;
+  changeDue?: number | null;
 }
 
 export interface InventoryLog {
@@ -47,8 +54,8 @@ export interface InventoryLog {
   newStock: number; // Snapshot
   timestamp: any; // Firestore Timestamp
   performedBy: string;
-  staffId?: string;
-  staffName?: string;
+  staffId?: string | null;
+  staffName?: string | null;
   notes?: string;
 }
 

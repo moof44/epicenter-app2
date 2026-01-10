@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>Checkout</h2>
+<mat-dialog-content>
+    <div class="summary">
+        <h3>Total: {{data.total | currency:'PHP'}}</h3>
+    </div>
+
+    <div class="payment-method-selector">
+        <div class="label">Select Payment Method:</div>
+        <mat-button-toggle-group [value]="paymentMethod()" (change)="paymentMethod.set($event.value)"
+            name="paymentMethod" aria-labelledby="payment-method-label">
+            <mat-button-toggle value="CASH">
+                <mat-icon>payments</mat-icon> Cash
+            </mat-button-toggle>
+            <mat-button-toggle value="GCASH">
+                <mat-icon>qr_code</mat-icon> GCash
+            </mat-button-toggle>
+        </mat-button-toggle-group>
+    </div>
+
+    <div *ngIf="paymentMethod() === 'GCASH'" class="payment-details" [@fadeIn]>
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Reference Number</mat-label>
+            <input matInput [value]="referenceNumber()" (input)="referenceNumber.set($event.target.value)" required
+                placeholder="Last 4 digits or Ref No.">
+            <mat-icon matSuffix>confirmation_number</mat-icon>
+            <mat-hint>Enter the GCash reference number</mat-hint>
+        </mat-form-field>
+    </div>
+
+    <div *ngIf="paymentMethod() === 'CASH'" class="payment-details cash-calculator">
+        <div class="calculator-row">
+            <mat-form-field appearance="outline" class="tendered-input">
+                <mat-label>Cash Received</mat-label>
+                <input matInput type="number" [ngModel]="amountTendered()" (ngModelChange)="amountTendered.set($event)"
+                    placeholder="0.00" min="0">
+                <span matPrefix>₱&nbsp;</span>
+            </mat-form-field>
+
+            <div class="change-display">
+                <div class="label">CHANGE</div>
+                <div class="amount" [class.has-change]="changeDue() > 0">
+                    {{ changeDue() | currency:'PHP' }}
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-cash-buttons">
+            <button mat-stroked-button (click)="setExactAmount()">Exact</button>
+            <button mat-stroked-button (click)="addCash(100)">₱100</button>
+            <button mat-stroked-button (click)="addCash(500)">₱500</button>
+            <button mat-stroked-button (click)="addCash(1000)">₱1,000</button>
+        </div>
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="confirm()"
+        [disabled]="(paymentMethod() === 'GCASH' && !referenceNumber().trim()) || (paymentMethod() === 'CASH' && (amountTendered() === null || amountTendered()! < data.total))">
+        Confirm Payment
+    </button>
+</mat-dialog-actions>

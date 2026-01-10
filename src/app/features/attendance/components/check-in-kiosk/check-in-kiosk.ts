@@ -17,9 +17,9 @@ import { CashRegisterService } from '../../../../core/services/cash-register.ser
 import { fadeIn } from '../../../../core/animations/animations';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { StoreService } from '../../../../core/services/store.service';
-import { WalkInDialog } from '../walk-in-dialog/walk-in-dialog';
+import { WalkInDialog, WalkInDialogResult } from '../walk-in-dialog/walk-in-dialog';
 import { LockerRestrictionDialog } from '../locker-restriction-dialog/locker-restriction-dialog';
-import { SubscriptionUpdateDialog } from '../subscription-update-dialog/subscription-update-dialog';
+import { SubscriptionUpdateDialog, SubscriptionUpdateResult } from '../subscription-update-dialog/subscription-update-dialog';
 import { firstValueFrom } from 'rxjs';
 import { Timestamp } from '@angular/fire/firestore';
 
@@ -205,7 +205,7 @@ export class CheckInKiosk implements OnInit {
           const updateDialog = this.dialog.open(SubscriptionUpdateDialog, {
             data: { member }
           });
-          const updateResult = await firstValueFrom(updateDialog.afterClosed());
+          const updateResult = await firstValueFrom(updateDialog.afterClosed()) as SubscriptionUpdateResult;
 
           if (!updateResult || updateResult.action === 'cancel') {
             this.isSubmitting = false;
@@ -243,9 +243,11 @@ export class CheckInKiosk implements OnInit {
               productId: membershipProduct.id!,
               productName: membershipProduct.name,
               price: membershipProduct.price,
+              originalPrice: membershipProduct.price,
+              isPriceOverridden: false,
               quantity: 1,
               subtotal: membershipProduct.price
-            }], 'ATTENDANCE_SUBSCRIPTION_UPDATE');
+            }], 'ATTENDANCE_SUBSCRIPTION_UPDATE', updateResult.paymentMethod, updateResult.referenceNumber);
 
             this.snackBar.open('Subscription updated & Payment processed.', undefined, { duration: 2000 });
           } else {
@@ -271,7 +273,7 @@ export class CheckInKiosk implements OnInit {
           }
         });
 
-        const result = await firstValueFrom(dialogRef.afterClosed());
+        const result = await firstValueFrom(dialogRef.afterClosed()) as WalkInDialogResult;
 
         if (!result || result.action === 'cancel') {
           this.isSubmitting = false;
@@ -290,9 +292,11 @@ export class CheckInKiosk implements OnInit {
             productId: walkInProduct.id!,
             productName: walkInProduct.name,
             price: walkInProduct.price,
+            originalPrice: walkInProduct.price,
+            isPriceOverridden: false,
             quantity: 1,
             subtotal: walkInProduct.price
-          }], 'ATTENDANCE_WALK_IN');
+          }], 'ATTENDANCE_WALK_IN', result.paymentMethod, result.referenceNumber);
 
           this.snackBar.open('Walk-in transaction created.', undefined, { duration: 2000 });
         }

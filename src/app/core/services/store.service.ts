@@ -22,7 +22,7 @@ import {
   DocumentData
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
-import { Product, CartItem, Transaction, ProductSalesData, StockMovement, InventoryLog } from '../models/store.model';
+import { Product, CartItem, Transaction, ProductSalesData, InventoryLog } from '../models/store.model';
 import { CashRegisterService } from './cash-register.service';
 import { AuthService } from './auth.service';
 
@@ -30,6 +30,7 @@ export interface SaleCompletedEvent {
   transactionId: string;
   amount: number;
   timestamp: Date;
+  paymentMethod: 'CASH' | 'GCASH';
 }
 
 @Injectable({
@@ -119,7 +120,9 @@ export class StoreService {
       updated[existingIndex] = {
         ...updated[existingIndex],
         quantity: newQty,
-        subtotal: newQty * product.price
+        // Preserve price override if exists, otherwise use current product price? 
+        // Logic: If already in cart, keep existing price strategy.
+        subtotal: newQty * updated[existingIndex].price
       };
       this.cartItems.next(updated);
     } else {
@@ -129,6 +132,8 @@ export class StoreService {
           productId: product.id,
           productName: product.name,
           price: product.price,
+          originalPrice: product.price, // Initialize original price
+          isPriceOverridden: false,
           quantity,
           subtotal: quantity * product.price
         }
@@ -150,6 +155,23 @@ export class StoreService {
     this.cartItems.next(updated);
   }
 
+  updateCartItemPrice(productId: string, newPrice: number, reason: string): void {
+    const currentCart = this.cartItems.getValue();
+    const updated = currentCart.map(item => {
+      if (item.productId === productId) {
+        return {
+          ...item,
+          price: newPrice,
+          isPriceOverridden: newPrice !== item.originalPrice,
+          overrideReason: reason,
+          subtotal: item.quantity * newPrice
+        };
+      }
+      return item;
+    });
+    this.cartItems.next(updated);
+  }
+
   removeFromCart(productId: string): void {
     const currentCart = this.cartItems.getValue();
     this.cartItems.next(currentCart.filter(item => item.productId !== productId));
@@ -167,7 +189,7 @@ export class StoreService {
 
 
   // Checkout
-  async checkout(customItems?: CartItem[], performedBy = 'SYSTEM_POS'): Promise<string> {
+  async checkout(customItems?: CartItem[], performedBy = 'SYSTEM_POS', paymentMethod: 'CASH' | 'GCASH' = 'CASH', referenceNumber?: string, amountTendered?: number, changeDue?: number): Promise<string> {
     // Enforce Open Register
     const cashRegisterService = this.injector.get(CashRegisterService);
     if (!cashRegisterService.isShiftOpen()) {
@@ -235,8 +257,12 @@ export class StoreService {
       date: timestamp,
       totalAmount: total,
       items: cartItems,
-      staffId: staff?.uid,
-      staffName: staff?.displayName
+      staffId: staff?.uid || null,
+      staffName: staff?.displayName || null,
+      paymentMethod,
+      referenceNumber: referenceNumber || null,
+      amountTendered: amountTendered || null,
+      changeDue: changeDue || null
     };
     const transactionRef = doc(this.transactionsCollection);
     batch.set(transactionRef, transaction);
@@ -252,7 +278,8 @@ export class StoreService {
     this.saleCompleted.next({
       transactionId: transactionRef.id,
       amount: total,
-      timestamp: timestamp
+      timestamp: timestamp,
+      paymentMethod
     });
 
     return transactionRef.id;
