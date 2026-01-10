@@ -124,7 +124,7 @@ export class POS {
     const total = await firstValueFrom(this.cartTotal$);
 
     const dialogRef = this.dialog.open(CheckoutDialog, {
-      width: '400px',
+      width: '500px',
       data: { total: total }
     });
 
