@@ -39,7 +39,14 @@ export class ProgressDashboard implements OnInit {
   diffs$: Observable<any> | undefined; // { weight: -2, bodyFat: -1.5 ... }
 
   memberId: string | null = null;
-  historyColumns: string[] = ['date', 'weight', 'bodyFat', 'muscleMass', 'bmi'];
+  historyColumns: string[] = [
+    'date', 'height', 'weight', 'bodyFat', 'subcutaneousFat', 'visceralFat', 'muscleMass',
+    'bmi', 'metabolism', 'bodyAge',
+    'sinistralFatFull', 'muscleFull',
+    'subcutaneousFatArms', 'muscleArms',
+    'subcutaneousFatTrunk', 'muscleTrunk',
+    'subcutaneousFatLegs', 'muscleLegs'
+  ];
 
   ngOnInit() {
     this.memberId = this.route.snapshot.paramMap.get('id');
@@ -62,7 +69,17 @@ export class ProgressDashboard implements OnInit {
           muscleMass: curr.muscleMass - prev.muscleMass,
           bmi: curr.bmi - prev.bmi,
           metabolism: curr.metabolism - prev.metabolism,
-          bodyAge: curr.bodyAge - prev.bodyAge
+          bodyAge: curr.bodyAge - prev.bodyAge,
+          height: curr.height - prev.height,
+          subcutaneousFat: curr.subcutaneousFat - prev.subcutaneousFat,
+          sinistralFatFull: curr.sinistralFatFull - prev.sinistralFatFull,
+          muscleFull: curr.muscleFull - prev.muscleFull,
+          subcutaneousFatArms: curr.subcutaneousFatArms - prev.subcutaneousFatArms,
+          muscleArms: curr.muscleArms - prev.muscleArms,
+          subcutaneousFatTrunk: curr.subcutaneousFatTrunk - prev.subcutaneousFatTrunk,
+          muscleTrunk: curr.muscleTrunk - prev.muscleTrunk,
+          subcutaneousFatLegs: curr.subcutaneousFatLegs - prev.subcutaneousFatLegs,
+          muscleLegs: curr.muscleLegs - prev.muscleLegs
         };
       })
     );
@@ -73,12 +90,18 @@ export class ProgressDashboard implements OnInit {
     return val.toFixed(1);
   }
 
+  getDiff(current: Measurement, next: Measurement | undefined, key: keyof Measurement): number | null {
+    if (!next || current[key] === undefined || next[key] === undefined) return null;
+    return (current[key] as number) - (next[key] as number);
+  }
+
   getDiffClass(key: string, val: number): string {
     // For weight/fat, negative is usually good (green), positive bad (red).
     // For muscle, positive is good.
     if (val === 0) return 'neutral';
 
-    const isBadIfPositive = ['weight', 'bodyFat', 'visceralFat', 'bmi', 'bodyAge'].includes(key);
+    const isBadIfPositive = ['weight', 'bodyFat', 'visceralFat', 'bmi', 'bodyAge', 'subcutaneousFat', 'sinistralFatFull',
+      'subcutaneousFatArms', 'subcutaneousFatTrunk', 'subcutaneousFatLegs'].includes(key);
 
     if (isBadIfPositive) {
       return val < 0 ? 'good' : 'bad';

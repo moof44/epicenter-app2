@@ -8,4 +8,14 @@ export interface Measurement {
     bmi: number;
     metabolism: number; // kcal
     bodyAge: number;
+    height: number; // cm
+    subcutaneousFat: number; // %
+    sinistralFatFull: number; // % (S-Fat Full)
+    muscleFull: number; // % (Muscle Full)
+    subcutaneousFatArms: number; // %
+    muscleArms: number; // %
+    subcutaneousFatTrunk: number; // %
+    muscleTrunk: number; // %
+    subcutaneousFatLegs: number; // %
+    muscleLegs: number; // %
 }

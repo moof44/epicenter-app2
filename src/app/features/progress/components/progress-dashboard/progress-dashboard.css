@@ -133,3 +133,21 @@
         font-weight: 500;
     }
 }
+
+.diff-small {
+    font-size: 0.75rem;
+    margin-left: 4px;
+    font-weight: 500;
+}
+
+.diff-small.good {
+    color: #166534;
+}
+
+.diff-small.bad {
+    color: #991b1b;
+}
+
+.diff-small.neutral {
+    color: var(--text-secondary);
+}

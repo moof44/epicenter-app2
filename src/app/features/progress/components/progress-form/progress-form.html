@@ -5,40 +5,85 @@
         </mat-card-header>
         <mat-card-content>
             <form [formGroup]="form" (ngSubmit)="onSubmit()" class="progress-form">
+                <h3>General Metrics</h3>
                 <div class="form-grid">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Height (cm)</mat-label>
+                        <input matInput type="number" formControlName="height" step="0.1">
+                    </mat-form-field>
                     <mat-form-field appearance="outline">
                         <mat-label>Weight (kg)</mat-label>
                         <input matInput type="number" formControlName="weight" step="0.1">
                     </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                        <mat-label>Body Fat (%)</mat-label>
-                        <input matInput type="number" formControlName="bodyFat" step="0.1">
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                        <mat-label>Skeletal Muscle (%)</mat-label>
-                        <input matInput type="number" formControlName="muscleMass" step="0.1">
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                        <mat-label>Visceral Fat</mat-label>
-                        <input matInput type="number" formControlName="visceralFat" step="1">
-                    </mat-form-field>
-
                     <mat-form-field appearance="outline">
                         <mat-label>BMI</mat-label>
                         <input matInput type="number" formControlName="bmi" step="0.1">
                     </mat-form-field>
-
                     <mat-form-field appearance="outline">
                         <mat-label>Resting Metabolism (kcal)</mat-label>
                         <input matInput type="number" formControlName="metabolism" step="1">
                     </mat-form-field>
-
                     <mat-form-field appearance="outline">
                         <mat-label>Body Age</mat-label>
                         <input matInput type="number" formControlName="bodyAge" step="1">
+                    </mat-form-field>
+                </div>
+
+                <h3>Body Composition (Full Body)</h3>
+                <div class="form-grid">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Body Fat (%)</mat-label>
+                        <input matInput type="number" formControlName="bodyFat" step="0.1">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                        <mat-label>Skeletal Muscle (%)</mat-label>
+                        <input matInput type="number" formControlName="muscleMass" step="0.1">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                        <mat-label>Visceral Fat (Level)</mat-label>
+                        <input matInput type="number" formControlName="visceralFat" step="1">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                        <mat-label>Subcutaneous Fat (Full %)</mat-label>
+                        <input matInput type="number" formControlName="subcutaneousFat" step="0.1">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                        <mat-label>S-Fat (Full % - Detailed)</mat-label>
+                        <input matInput type="number" formControlName="sinistralFatFull" step="0.1">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                        <mat-label>Muscle (Full % - Detailed)</mat-label>
+                        <input matInput type="number" formControlName="muscleFull" step="0.1">
+                    </mat-form-field>
+                </div>
+
+                <h3>Segmental Analysis</h3>
+                <div class="form-grid">
+                    <mat-form-field appearance="outline">
+                        <mat-label>S-Fat Arms (%)</mat-label>
+                        <input matInput type="number" formControlName="subcutaneousFatArms" step="0.1">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                        <mat-label>Muscle Arms (%)</mat-label>
+                        <input matInput type="number" formControlName="muscleArms" step="0.1">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>S-Fat Trunk (%)</mat-label>
+                        <input matInput type="number" formControlName="subcutaneousFatTrunk" step="0.1">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                        <mat-label>Muscle Trunk (%)</mat-label>
+                        <input matInput type="number" formControlName="muscleTrunk" step="0.1">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>S-Fat Legs (%)</mat-label>
+                        <input matInput type="number" formControlName="subcutaneousFatLegs" step="0.1">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                        <mat-label>Muscle Legs (%)</mat-label>
+                        <input matInput type="number" formControlName="muscleLegs" step="0.1">
                     </mat-form-field>
                 </div>
 

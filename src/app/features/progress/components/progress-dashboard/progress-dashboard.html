@@ -63,6 +63,37 @@
             </mat-card-header>
             <mat-card-content class="stat-content">
                 <span class="value">{{ latest.visceralFat }}</span>
+                <span class="diff" *ngIf="(previous$ | async)?.visceralFat as prev"
+                    [class.positive]="(latest.visceralFat - prev) < 0"
+                    [class.negative]="(latest.visceralFat - prev) > 0">
+                    {{ (latest.visceralFat - prev) | number:'1.1-1' }}
+                </span>
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+            <mat-card-header>
+                <mat-card-title>BMI</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="stat-content">
+                <span class="value">{{ latest.bmi }}</span>
+                <span class="diff" *ngIf="(previous$ | async)?.bmi as prev" [class.positive]="(latest.bmi - prev) < 0"
+                    [class.negative]="(latest.bmi - prev) > 0">
+                    {{ (latest.bmi - prev) | number:'1.1-1' }}
+                </span>
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+            <mat-card-header>
+                <mat-card-title>Body Age</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="stat-content">
+                <span class="value">{{ latest.bodyAge }}</span>
+                <span class="diff" *ngIf="(previous$ | async)?.bodyAge as prev"
+                    [class.positive]="(latest.bodyAge - prev) < 0" [class.negative]="(latest.bodyAge - prev) > 0">
+                    {{ (latest.bodyAge - prev) | number:'1.0-0' }}
+                </span>
             </mat-card-content>
         </mat-card>
     </div>
@@ -79,24 +110,188 @@
                     <td mat-cell *matCellDef="let m"> {{ m.date.seconds * 1000 | date:'shortDate' }} </td>
                 </ng-container>
 
+                <ng-container matColumnDef="height">
+                    <th mat-header-cell *matHeaderCellDef> Height </th>
+                    <td mat-cell *matCellDef="let m; let i = index">
+                        {{ m.height }}
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'height') as diff"
+                            [class]="getDiffClass('height', diff)">
+                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.0-1' }})
+                        </span>
+                    </td>
+                </ng-container>
+
                 <ng-container matColumnDef="weight">
                     <th mat-header-cell *matHeaderCellDef> Weight </th>
-                    <td mat-cell *matCellDef="let m"> {{ m.weight }} </td>
+                    <td mat-cell *matCellDef="let m; let i = index">
+                        {{ m.weight }}
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'weight') as diff"
+                            [class]="getDiffClass('weight', diff)">
+                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1' }})
+                        </span>
+                    </td>
                 </ng-container>
 
                 <ng-container matColumnDef="bodyFat">
                     <th mat-header-cell *matHeaderCellDef> Body Fat </th>
-                    <td mat-cell *matCellDef="let m"> {{ m.bodyFat }} </td>
+                    <td mat-cell *matCellDef="let m; let i = index">
+                        {{ m.bodyFat }}
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'bodyFat') as diff"
+                            [class]="getDiffClass('bodyFat', diff)">
+                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1' }})
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="subcutaneousFat">
+                    <th mat-header-cell *matHeaderCellDef> S-Fat </th>
+                    <td mat-cell *matCellDef="let m; let i = index">
+                        {{ m.subcutaneousFat }}
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'subcutaneousFat') as diff"
+                            [class]="getDiffClass('subcutaneousFat', diff)">
+                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1' }})
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="visceralFat">
+                    <th mat-header-cell *matHeaderCellDef> V-Fat </th>
+                    <td mat-cell *matCellDef="let m; let i = index">
+                        {{ m.visceralFat }}
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'visceralFat') as diff"
+                            [class]="getDiffClass('visceralFat', diff)">
+                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.0-1' }})
+                        </span>
+                    </td>
                 </ng-container>
 
                 <ng-container matColumnDef="muscleMass">
                     <th mat-header-cell *matHeaderCellDef> Muscle </th>
-                    <td mat-cell *matCellDef="let m"> {{ m.muscleMass }} </td>
+                    <td mat-cell *matCellDef="let m; let i = index">
+                        {{ m.muscleMass }}
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'muscleMass') as diff"
+                            [class]="getDiffClass('muscleMass', diff)">
+                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1' }})
+                        </span>
+                    </td>
                 </ng-container>
 
                 <ng-container matColumnDef="bmi">
                     <th mat-header-cell *matHeaderCellDef> BMI </th>
-                    <td mat-cell *matCellDef="let m"> {{ m.bmi }} </td>
+                    <td mat-cell *matCellDef="let m; let i = index">
+                        {{ m.bmi }}
+                        <span class="diff-small" *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'bmi') as diff"
+                            [class]="getDiffClass('bmi', diff)">
+                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1' }})
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="metabolism">
+                    <th mat-header-cell *matHeaderCellDef> RM </th>
+                    <td mat-cell *matCellDef="let m; let i = index">
+                        {{ m.metabolism }}
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'metabolism') as diff"
+                            [class]="getDiffClass('metabolism', diff)">
+                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.0-0' }})
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="bodyAge">
+                    <th mat-header-cell *matHeaderCellDef> Age </th>
+                    <td mat-cell *matCellDef="let m; let i = index">
+                        {{ m.bodyAge }}
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'bodyAge') as diff"
+                            [class]="getDiffClass('bodyAge', diff)">
+                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.0-0' }})
+                        </span>
+                    </td>
+                </ng-container>
+
+                <!-- Detailed Fat Metrics -->
+                <ng-container matColumnDef="sinistralFatFull">
+                    <th mat-header-cell *matHeaderCellDef> S-Fat(F) </th>
+                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.sinistralFatFull }}%
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'sinistralFatFull') as diff"
+                            [class]="getDiffClass('sinistralFatFull', diff)">({{ diff > 0 ? '+' : ''}}{{ diff |
+                            number:'1.1-1' }})</span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="muscleFull">
+                    <th mat-header-cell *matHeaderCellDef> Mus(F) </th>
+                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.muscleFull }}%
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'muscleFull') as diff"
+                            [class]="getDiffClass('muscleFull', diff)">({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1'
+                            }})</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="subcutaneousFatArms">
+                    <th mat-header-cell *matHeaderCellDef> S-Fat(Arm) </th>
+                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.subcutaneousFatArms }}%
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'subcutaneousFatArms') as diff"
+                            [class]="getDiffClass('subcutaneousFatArms', diff)">({{ diff > 0 ? '+' : ''}}{{ diff |
+                            number:'1.1-1' }})</span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="muscleArms">
+                    <th mat-header-cell *matHeaderCellDef> Mus(Arm) </th>
+                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.muscleArms }}%
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'muscleArms') as diff"
+                            [class]="getDiffClass('muscleArms', diff)">({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1'
+                            }})</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="subcutaneousFatTrunk">
+                    <th mat-header-cell *matHeaderCellDef> S-Fat(Trk) </th>
+                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.subcutaneousFatTrunk }}%
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'subcutaneousFatTrunk') as diff"
+                            [class]="getDiffClass('subcutaneousFatTrunk', diff)">({{ diff > 0 ? '+' : ''}}{{ diff |
+                            number:'1.1-1' }})</span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="muscleTrunk">
+                    <th mat-header-cell *matHeaderCellDef> Mus(Trk) </th>
+                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.muscleTrunk }}%
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'muscleTrunk') as diff"
+                            [class]="getDiffClass('muscleTrunk', diff)">({{ diff > 0 ? '+' : ''}}{{ diff |
+                            number:'1.1-1' }})</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="subcutaneousFatLegs">
+                    <th mat-header-cell *matHeaderCellDef> S-Fat(Leg) </th>
+                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.subcutaneousFatLegs }}%
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'subcutaneousFatLegs') as diff"
+                            [class]="getDiffClass('subcutaneousFatLegs', diff)">({{ diff > 0 ? '+' : ''}}{{ diff |
+                            number:'1.1-1' }})</span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="muscleLegs">
+                    <th mat-header-cell *matHeaderCellDef> Mus(Leg) </th>
+                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.muscleLegs }}%
+                        <span class="diff-small"
+                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'muscleLegs') as diff"
+                            [class]="getDiffClass('muscleLegs', diff)">({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1'
+                            }})</span>
+                    </td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
