@@ -33,13 +33,23 @@ export class ProgressForm implements OnInit {
 
   constructor() {
     this.form = this.fb.group({
+      height: ['', [Validators.required, Validators.min(0)]],
       weight: ['', [Validators.required, Validators.min(0)]],
       bodyFat: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
+      subcutaneousFat: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
       visceralFat: ['', [Validators.required, Validators.min(0)]],
       muscleMass: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
       bmi: ['', [Validators.required, Validators.min(0)]],
       metabolism: ['', [Validators.required, Validators.min(0)]],
-      bodyAge: ['', [Validators.required, Validators.min(0)]]
+      bodyAge: ['', [Validators.required, Validators.min(0)]],
+      sinistralFatFull: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
+      muscleFull: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
+      subcutaneousFatArms: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
+      muscleArms: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
+      subcutaneousFatTrunk: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
+      muscleTrunk: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
+      subcutaneousFatLegs: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
+      muscleLegs: ['', [Validators.required, Validators.min(0), Validators.max(100)]]
     });
   }
 
