@@ -16,8 +16,8 @@ export class StaffRemindersComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.updateReminder();
-        // Update every 5 minutes (300,000 ms)
-        this.intervalId = setInterval(() => this.updateReminder(), 300000);
+        // Update every 1 minute (60,000 ms)
+        this.intervalId = setInterval(() => this.updateReminder(), 60000);
     }
 
     ngOnDestroy() {
