@@ -1,1 +1,36 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+    /* Black & Gold Theme */
+    --bg-dark: #000000;
+    --bg-surface: #121212;
+    --surface-card: #1a1a1a;
+
+    --primary-gold: #D4AF37;
+    --gold-dim: #997d26;
+    --text-primary: #FFFFFF;
+    --text-secondary: #B0B0B0;
+
+    --border-gold: rgba(212, 175, 55, 0.3);
+    --border-subtle: rgba(255, 255, 255, 0.1);
+
+    --font-heading: 'Oswald', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+}
+
+/* Typography Utilities */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
