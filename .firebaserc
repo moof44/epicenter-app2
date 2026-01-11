@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "epicenter-app"
+  },
+  "targets": {
+    "epicenter-app": {
+      "hosting": {
+        "main": [
+          "epicenter-app"
+        ],
+        "portal": [
+          "epicenter-members-portal"
+        ]
+      }
+    }
   }
 }
