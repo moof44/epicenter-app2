@@ -13,6 +13,7 @@ import { ProductCardComponent } from './components/product-card/product-card.com
       <section class="hero-section">
         <div class="hero-overlay"></div>
         <div class="hero-content">
+          <img src="assets/logo.png" alt="Epicenter Gym Logo" class="hero-logo">
           <h1>Welcome to <span class="gold-text">Epicenter</span></h1>
           <p class="hero-subtitle">Premium Fitness. Science Based. Results Driven.</p>
           <button class="cta-button">Join Now</button>
@@ -88,47 +89,67 @@ import { ProductCardComponent } from './components/product-card/product-card.com
     .hero-overlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8));
+      background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.9));
     }
 
     .hero-content {
       position: relative;
       z-index: 10;
       padding: 0 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero-logo {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 2rem;
+      filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.3));
     }
 
     h1 {
       font-size: 3rem;
       margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
     }
 
     .gold-text {
       color: var(--primary-gold);
+      background: linear-gradient(to bottom, #FFD700, #D4AF37, #B8860B);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
     }
 
     .hero-subtitle {
       font-size: 1.2rem;
       margin-bottom: 2rem;
       color: var(--text-secondary);
+      font-weight: 300;
+      letter-spacing: 1px;
     }
 
     .cta-button {
-      background: var(--primary-gold);
+      background: linear-gradient(to bottom, #D4AF37, #B8860B);
       color: black;
-      border: none;
-      padding: 1rem 2.5rem;
+      border: 1px solid #FFD700;
+      padding: 1rem 3rem;
       font-size: 1.1rem;
       font-weight: bold;
       text-transform: uppercase;
+      letter-spacing: 1px;
       border-radius: 4px;
       cursor: pointer;
       transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
     }
 
     .cta-button:hover {
-      background: #fff;
-      color: black;
-      transform: scale(1.05);
+      background: linear-gradient(to bottom, #FFD700, #D4AF37);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
     }
 
     /* Sections */
