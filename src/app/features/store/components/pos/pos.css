@@ -368,7 +368,7 @@ mat-card-content {
 
 
 /* Tablet - 900px */
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
   .content-layout {
     grid-template-columns: 1fr;
     height: auto;

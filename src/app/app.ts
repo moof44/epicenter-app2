@@ -37,7 +37,7 @@ export class App implements OnDestroy {
     const changeDetectorRef = inject(ChangeDetectorRef);
     const media = inject(MediaMatcher);
 
-    this.mobileQuery = media.matchMedia('(max-width: 600px)');
+    this.mobileQuery = media.matchMedia('(max-width: 1200px)');
     this._mobileQueryListener = () => changeDetectorRef.detectChanges();
     this.mobileQuery.addListener(this._mobileQueryListener);
   }
