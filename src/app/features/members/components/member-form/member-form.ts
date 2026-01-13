@@ -90,7 +90,13 @@ export class MemberForm implements OnInit {
       } else {
         await this.memberService.addMember(data as Member);
       }
-      this.router.navigate(['/members']);
+
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+      if (returnUrl) {
+        this.router.navigate([returnUrl]);
+      } else {
+        this.router.navigate(['/members']);
+      }
     } catch (error) {
       console.error(error);
       this.loading = false;
