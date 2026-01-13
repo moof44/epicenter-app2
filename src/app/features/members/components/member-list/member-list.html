@@ -41,6 +41,19 @@
             </td>
         </ng-container>
 
+
+        <!-- Remarks Column -->
+        <ng-container matColumnDef="remarks">
+            <th mat-header-cell *matHeaderCellDef> Remarks </th>
+            <td mat-cell *matCellDef="let member" data-label="Remarks">
+                <span *ngIf="member.remarks" class="remarks-text" [matTooltip]="member.remarks">
+                    <mat-icon class="remark-icon"
+                        style="font-size: 18px; height: 18px; width: 18px; vertical-align: middle;">comment</mat-icon>
+                </span>
+                <span *ngIf="!member.remarks" class="no-remark">-</span>
+            </td>
+        </ng-container>
+
         <!-- Status Column -->
         <ng-container matColumnDef="membershipStatus">
             <th mat-header-cell *matHeaderCellDef> Status </th>
