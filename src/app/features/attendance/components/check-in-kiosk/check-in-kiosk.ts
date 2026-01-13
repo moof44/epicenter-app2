@@ -43,7 +43,7 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
         <span>Register is closed. Please open a shift in Store to proceed.</span>
       </mat-card>
 
-      <mat-card class="search-card">
+      <mat-card class="search-card" [class.mobile-hidden]="!!selectedMember">
         <div class="card-header">
             <h2>Check In</h2>
             <button mat-stroked-button color="primary" (click)="goToaddMember()">
@@ -52,7 +52,7 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
         </div>
         <mat-form-field class="full-width" appearance="outline">
           <mat-label>Search Member</mat-label>
-          <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" [disabled]="(isShiftOpen$ | async) === false">
+          <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" [disabled]="(isShiftOpen$ | async) === false" #searchInput>
           <mat-icon matSuffix>search</mat-icon>
           <mat-hint>Name not found? Click <strong>Add Member</strong> above.</mat-hint>
           <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onMemberSelected($event)">
@@ -64,6 +64,11 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
       </mat-card>
 
       <div *ngIf="selectedMember" class="locker-selection" [@fadeIn]>
+        <div class="mobile-visible" style="text-align: left; margin-bottom: 16px;">
+            <button mat-button color="primary" (click)="reset()">
+                <mat-icon>arrow_back</mat-icon> Back to Search
+            </button>
+        </div>
         <h3>Welcome, {{selectedMember.name}}!</h3>
         <p>Select a locker (optional) or just Check In.</p>
         
@@ -128,7 +133,12 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
         .kiosk-container { padding: 8px; }
         .locker-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 16px 0; }
         .check-in-btn { padding: 16px; font-size: 1.1rem; }
+        
+        /* Wizard Mode: Hide Search when Member Selected */
+        .mobile-hidden { display: none !important; }
+        .mobile-visible { display: block !important; }
     }
+    .mobile-visible { display: none; } /* Default hidden on desktop */
   `],
   animations: [fadeIn]
 })

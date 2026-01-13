@@ -109,7 +109,9 @@ import { MatDialog } from '@angular/material/dialog';
                       <div class="detail-row">
                           <mat-icon class="icon">schedule</mat-icon>
                           <span>In: {{ record.checkInTime.seconds * 1000 | date:'shortTime' }}</span>
-                          <mat-icon *ngIf="isOverdue(record.checkInTime)" class="overdue-icon">history</mat-icon>
+                          <span *ngIf="isOverdue(record.checkInTime)" class="overdue-label">
+                            <mat-icon class="overdue-icon-small">history</mat-icon> Overdue
+                          </span>
                       </div>
                       <div class="detail-row" *ngIf="record.memberExpiration">
                           <mat-icon class="icon">event</mat-icon>
@@ -159,6 +161,20 @@ import { MatDialog } from '@angular/material/dialog';
     .overdue-card { border-left: 4px solid #d97706 !important; background-color: #fffbef; }
     .overdue-icon { color: #d97706; margin-left: 8px; vertical-align: middle; font-size: 18px; width: 18px; height: 18px; }
     .warn-icon { color: #f59e0b; }
+    
+    .overdue-label {
+        display: inline-flex;
+        align-items: center;
+        background-color: #fff7ed;
+        color: #c2410c;
+        border: 1px solid #fdba74;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+    .overdue-icon-small { font-size: 14px; width: 14px; height: 14px; margin-right: 4px; vertical-align: middle; }
 
     /* Mobile Styles */
     .mobile-view { display: none; }
