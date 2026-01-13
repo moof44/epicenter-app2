@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -11,6 +12,8 @@ import { switchMap, map } from 'rxjs/operators';
 import { StoreService } from '../../../../core/services/store.service';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { fadeIn } from '../../../../core/animations/animations';
+
+import { ReportStateService } from '../../../../core/services/report.state.service';
 
 @Component({
     selector: 'app-monthly-sales-report',
@@ -30,6 +33,7 @@ import { fadeIn } from '../../../../core/animations/animations';
 })
 export class MonthlySalesReport {
     private storeService = inject(StoreService);
+    private reportStateService = inject(ReportStateService);
     private settingsService = inject(SettingsService);
 
     // State
@@ -41,7 +45,7 @@ export class MonthlySalesReport {
 
     // Data Loading
     report$ = toObservable(this.currentDate).pipe(
-        switchMap(date => this.storeService.getMonthlySalesReport(date.getFullYear(), date.getMonth()))
+        switchMap(date => this.reportStateService.getMonthlyReport(date.getFullYear(), date.getMonth()))
     );
     report = toSignal(this.report$);
 
@@ -85,5 +89,40 @@ export class MonthlySalesReport {
 
     getDayName(date: Date): string {
         return new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(date);
+    }
+
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+
+    constructor() {
+        // Initialize from params if available to restore state
+        this.route.queryParams.subscribe(params => {
+            if (params['date']) {
+                this.currentDate.set(new Date(params['date']));
+            }
+        });
+    }
+
+    goToSalesByUser() {
+        // Pass current date as 'date' (to init the user report with same month)
+        // AND 'returnDate' (so it knows where to come back to)
+        this.router.navigate(['/store/sales-by-user'], {
+            queryParams: {
+                date: this.currentDate().toISOString(),
+                returnDate: this.currentDate().toISOString()
+            }
+        });
+    }
+
+    async refreshData() {
+        if (confirm('Recalculate historical data? This may take moment.')) {
+            await this.storeService.recalculateDailySales();
+            this.reportStateService.clearCache(); // Clear cache so new data loads
+            // Trigger refresh of view
+            const current = this.currentDate();
+            this.currentDate.set(new Date(current.getTime() + 1));
+            this.currentDate.set(current);
+            alert('Data refreshed.');
+        }
     }
 }

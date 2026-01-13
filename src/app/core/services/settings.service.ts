@@ -7,7 +7,7 @@ import {
     getDoc
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay } from 'rxjs/operators';
 import { GeneralSettings } from '../models/settings.model';
 import { AuthService } from './auth.service';
 
@@ -18,19 +18,24 @@ export class SettingsService {
     private firestore = inject(Firestore);
     private authService = inject(AuthService);
     private settingsDocRef = doc(this.firestore, 'settings', 'general');
+    private settings$: Observable<GeneralSettings> | null = null;
 
     /**
      * Get settings as an Observable.
      */
     getSettings(): Observable<GeneralSettings> {
-        return docData(this.settingsDocRef).pipe(
-            map(data => {
-                if (!data) {
-                    return { monthlyQuota: 0 } as GeneralSettings;
-                }
-                return data as GeneralSettings;
-            })
-        );
+        if (!this.settings$) {
+            this.settings$ = docData(this.settingsDocRef).pipe(
+                map(data => {
+                    if (!data) {
+                        return { monthlyQuota: 0 } as GeneralSettings;
+                    }
+                    return data as GeneralSettings;
+                }),
+                shareReplay(1) // Cache the latest value
+            );
+        }
+        return this.settings$;
     }
 
     /**
