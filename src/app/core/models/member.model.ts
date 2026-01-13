@@ -12,4 +12,5 @@ export interface Member {
     membershipStatus: 'Active' | 'Inactive' | 'Pending';
     createdBy?: { uid: string; name: string; timestamp: any };
     lastModifiedBy?: { uid: string; name: string; timestamp: any };
+    remarks?: string;
 }

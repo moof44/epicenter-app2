@@ -19,7 +19,9 @@ import {
   getDoc,
   startAfter,
   QueryDocumentSnapshot,
-  DocumentData
+  DocumentData,
+  sum,
+  getAggregateFromServer
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
 import { Product, CartItem, Transaction, ProductSalesData, InventoryLog, DailySales } from '../models/store.model';
@@ -271,6 +273,14 @@ export class StoreService {
     const transactionRef = doc(this.transactionsCollection);
     batch.set(transactionRef, transaction);
 
+    // 3. Update Daily Sales (Denormalization)
+    const dateStr = timestamp.toISOString().split('T')[0]; // YYYY-MM-DD
+    const dfsRef = doc(this.firestore, 'daily_sales', dateStr);
+    batch.set(dfsRef, {
+      date: timestamp, // Keep a timestamp field for potential sorting/querying if needed, though ID is date
+      totalSales: increment(total)
+    }, { merge: true });
+
     await batch.commit();
 
     // Only clear the global cart if this was a standard POS checkout
@@ -445,6 +455,7 @@ export class StoreService {
     memberId?: string;
     referenceNumber?: string;
     staffName?: string;
+    staffId?: string;
   } = {}): Observable<Transaction[]> {
     const queryConstraints: any[] = [orderBy('date', 'desc')];
 
@@ -467,6 +478,9 @@ export class StoreService {
     if (constraints.staffName) {
       queryConstraints.push(where('staffName', '==', constraints.staffName));
     }
+    if (constraints.staffId) {
+      queryConstraints.push(where('staffId', '==', constraints.staffId));
+    }
 
     // Default to 50 if no specific limit or strict date range is set? 
     // We enforce a limit unless specifically asked for "all" (which safely shouldn't happen often)
@@ -476,6 +490,24 @@ export class StoreService {
 
     const q = query(this.transactionsCollection, ...queryConstraints);
     return collectionData(q, { idField: 'id' }) as Observable<Transaction[]>;
+  }
+
+  async getSalesTotal(constraints: {
+    startDate?: Date;
+    endDate?: Date;
+    staffId?: string;
+  }): Promise<number> {
+    const queryConstraints: any[] = [];
+    if (constraints.startDate) queryConstraints.push(where('date', '>=', constraints.startDate));
+    if (constraints.endDate) queryConstraints.push(where('date', '<=', constraints.endDate));
+    if (constraints.staffId) queryConstraints.push(where('staffId', '==', constraints.staffId));
+
+    const q = query(this.transactionsCollection, ...queryConstraints);
+    const snapshot = await getAggregateFromServer(q, {
+      totalSales: sum('totalAmount')
+    });
+
+    return snapshot.data().totalSales;
   }
 
   // Analytics
@@ -553,39 +585,86 @@ export class StoreService {
     const startDate = new Date(year, month, 1);
     const endDate = new Date(year, month + 1, 0, 23, 59, 59);
 
-    return this.getTransactions({
-      startDate,
-      endDate,
-      limit: 2000 // Safely cover a month of heavy traffic
-    }).pipe(
-      map(transactions => {
-        const dailyMap = new Map<number, number>();
-        let monthlyTotal = 0;
+    const dailySalesCol = collection(this.firestore, 'daily_sales');
+    // We can query by ID range since IDs are YYYY-MM-DD
+    // But easier to query by 'date' field if we saved it as timestamp (which we did in checkout cleanup)
+    // Actually, querying by ID string range is very efficient too.
+    const startId = startDate.toISOString().split('T')[0];
+    const endId = endDate.toISOString().split('T')[0];
 
-        // Initialize all days of the month with 0
+    const q = query(dailySalesCol,
+      where(documentId(), '>=', startId),
+      where(documentId(), '<=', endId)
+    );
+
+    return collectionData(q, { idField: 'id' }).pipe(
+      map(docs => {
+        let monthlyTotal = 0;
+        const days: DailySales[] = [];
+
+        // Pre-fill all days of month with 0?
+        // The previous implementation did fill 0s. Let's keep that behavior for the chart/table continuity.
+        const dailyMap = new Map<string, number>();
         const daysInMonth = endDate.getDate();
         for (let i = 1; i <= daysInMonth; i++) {
-          dailyMap.set(i, 0);
+          const d = new Date(year, month, i);
+          const k = d.toISOString().split('T')[0];
+          dailyMap.set(k, 0);
         }
 
-        transactions.forEach(tx => {
-          const date = tx.date instanceof Date ? tx.date : (tx.date as any).toDate();
-          const day = date.getDate();
-          const current = dailyMap.get(day) || 0;
-          dailyMap.set(day, current + tx.totalAmount);
-          monthlyTotal += tx.totalAmount;
+        docs.forEach((doc: any) => {
+          dailyMap.set(doc.id, doc.totalSales);
+          monthlyTotal += doc.totalSales;
         });
 
-        const days: DailySales[] = Array.from(dailyMap.entries())
-          .map(([day, total]) => ({
-            date: new Date(year, month, day),
-            totalSales: total
-          }))
-          .sort((a, b) => a.date.getTime() - b.date.getTime());
+        const sortedDays = Array.from(dailyMap.entries()).map(([k, v]) => ({
+          date: new Date(k),
+          totalSales: v
+        })).sort((a, b) => a.date.getTime() - b.date.getTime());
 
-        return { days, total: monthlyTotal };
+        return { days: sortedDays, total: monthlyTotal };
       })
     );
   }
-}
 
+  /**
+   * ADMIN UTILITY: Re-calculates daily sales from history to populate the daily_sales collection.
+   * This should be run once.
+   */
+  async recalculateDailySales(): Promise<void> {
+    console.log('Starting Daily Sales Recalculation...');
+    const allTransactions = await getDocs(this.transactionsCollection); // Heavy read, do once
+    const salesMap = new Map<string, number>();
+
+    allTransactions.forEach(docSnap => {
+      const data = docSnap.data() as Transaction;
+      const date = data.date instanceof Date ? data.date : (data.date as any).toDate();
+      const dateStr = date.toISOString().split('T')[0];
+      const current = salesMap.get(dateStr) || 0;
+      salesMap.set(dateStr, current + data.totalAmount);
+    });
+
+    let batch = writeBatch(this.firestore);
+    let count = 0;
+
+    for (const [dateStr, total] of salesMap.entries()) {
+      const ref = doc(this.firestore, 'daily_sales', dateStr);
+      // We can use set with date field for future flexibilty
+      batch.set(ref, {
+        totalSales: total,
+        date: new Date(dateStr) // Approximate timestamp for the day
+      });
+      count++;
+      // Batches have limit of 500
+      if (count >= 400) { // Safety margin
+        await batch.commit();
+        batch = writeBatch(this.firestore); // Can't reuse variable easily in loop without let re-assign logic or new batch
+        count = 0;
+      }
+    }
+    if (count > 0) {
+      await batch.commit();
+    }
+    console.log('Recalculation Complete.');
+  }
+}

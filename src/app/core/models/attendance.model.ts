@@ -11,5 +11,7 @@ export interface AttendanceRecord {
     memberSubscription?: string | null;
     memberExpiration?: any | null; // Timestamp or Date or string
     checkedInBy?: { uid: string; name: string };
+
     checkedOutBy?: { uid: string; name: string };
+    memberRemarks?: string | null;
 }

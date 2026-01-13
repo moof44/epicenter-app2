@@ -20,6 +20,13 @@ import { fadeIn } from '../../../../core/animations/animations'; // Fixed path
         <mat-tab label="Kiosk Check-in">
           <div class="tab-content">
              <app-check-in-kiosk></app-check-in-kiosk>
+             
+             <!-- Static Reminder -->
+             <div class="checkout-reminder" style="max-width: 600px; margin: 16px auto; padding: 12px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span class="material-icons" style="font-size: 20px;">info</span>
+                <strong>REMINDER:</strong> Don't forget to Check Out members when they leave!
+             </div>
+
           </div>
         </mat-tab>
         <mat-tab label="Active Sessions">
@@ -45,4 +52,4 @@ import { fadeIn } from '../../../../core/animations/animations'; // Fixed path
   `],
   animations: [fadeIn]
 })
-export class AttendanceLayout {}
+export class AttendanceLayout { }

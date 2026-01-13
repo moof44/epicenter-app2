@@ -14,6 +14,16 @@
                 <mat-icon>chevron_right</mat-icon>
             </button>
         </div>
+
+        <div class="actions">
+            <!-- Hidden utility for admin/dev to backfill -->
+            <button mat-icon-button (click)="refreshData()" matTooltip="Recalculate Data" style="opacity: 0.3">
+                <mat-icon>refresh</mat-icon>
+            </button>
+            <button mat-stroked-button (click)="goToSalesByUser()">
+                <mat-icon>person</mat-icon> View Sales by User
+            </button>
+        </div>
     </div>
 
     <div class="report-content">

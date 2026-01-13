@@ -157,6 +157,7 @@ export class AttendanceService {
             date: dateStr,
             status: 'Checked In',
             memberExpiration: member.membershipExpiration || null,
+            memberRemarks: member.remarks || null,
             checkedInBy: this._currentUserSnapshot
         };
 

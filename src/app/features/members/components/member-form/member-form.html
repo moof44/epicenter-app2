@@ -82,6 +82,13 @@
           <textarea matInput formControlName="goal" rows="3" placeholder="Ex. Lose weight, build muscle"></textarea>
         </mat-form-field>
 
+        <!-- Remarks -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Remarks</mat-label>
+          <textarea matInput formControlName="remarks" rows="2"
+            placeholder="Ex. Forgot locker key, Needs medical clearance"></textarea>
+        </mat-form-field>
+
         <div class="actions">
           <button mat-button type="button" routerLink="/members">Cancel</button>
           <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">

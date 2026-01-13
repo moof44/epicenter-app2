@@ -46,6 +46,7 @@ export class MemberForm implements OnInit {
       membershipExpiration: [null],
       trainingExpiration: [null],
       goal: [''],
+      remarks: [''],
       membershipStatus: ['Active', [Validators.required]]
     });
   }

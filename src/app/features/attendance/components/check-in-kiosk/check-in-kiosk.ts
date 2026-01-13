@@ -23,6 +23,7 @@ import { SubscriptionUpdateDialog, SubscriptionUpdateResult } from '../subscript
 import { firstValueFrom } from 'rxjs';
 import { Timestamp } from '@angular/fire/firestore';
 import { getRandomCommendation } from '../../../../core/constants/commendations';
+import { RemarksDialog, RemarksDialogResult } from '../../../../shared/components/remarks-dialog/remarks-dialog.component';
 
 @Component({
   selector: 'app-check-in-kiosk',
@@ -184,6 +185,26 @@ export class CheckInKiosk implements OnInit {
       const isExpired = this.memberService.isMembershipExpired(member);
       const hasActiveSubscription = member.membershipStatus === 'Active' && !!member.membershipExpiration && !isExpired;
       const hasLocker = !!this.selectedLocker;
+
+
+
+      // 0. Remarks Check
+      if (member.remarks) {
+        const remarkDialog = this.dialog.open(RemarksDialog, {
+          data: { member },
+          disableClose: true
+        });
+
+        const result = await firstValueFrom(remarkDialog.afterClosed()) as RemarksDialogResult;
+
+        if (result.action === 'clear') {
+          // Update member to remove remarks
+          await this.memberService.updateMember(member.id!, { remarks: '' });
+          member.remarks = ''; // Update local instance
+          this.snackBar.open('Remark cleared.', undefined, { duration: 2000 });
+        }
+        // If 'close', we simply proceed
+      }
 
       // 1. Locker Restriction Check
       if (hasLocker && !hasActiveSubscription) {

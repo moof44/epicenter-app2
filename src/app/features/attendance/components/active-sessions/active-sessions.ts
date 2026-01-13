@@ -6,12 +6,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { AttendanceService } from '../../../../core/services/attendance.service'; // Fixed path
 import { AttendanceRecord } from '../../../../core/models/attendance.model'; // Fixed path
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { fadeIn, staggerList } from '../../../../core/animations/animations'; // Fixed path
 
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { getRandomCommendation } from '../../../../core/constants/commendations';
+import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-active-sessions',
@@ -34,11 +36,24 @@ import { getRandomCommendation } from '../../../../core/constants/commendations'
                 </td>
               </ng-container>
 
+              <!-- Remarks Column -->
+              <ng-container matColumnDef="remarks">
+                <th mat-header-cell *matHeaderCellDef> Remarks </th>
+                <td mat-cell *matCellDef="let record">
+                   <div *ngIf="record.memberRemarks" class="remarks-cell">
+                      <mat-icon style="font-size:16px; width:16px; height:16px; vertical-align:middle; color:#f59e0b; margin-right:4px;">warning</mat-icon>
+                      {{record.memberRemarks | slice:0:20}}{{record.memberRemarks.length > 20 ? '...' : ''}}
+                   </div>
+                   <span *ngIf="!record.memberRemarks">-</span>
+                </td>
+              </ng-container>
+
               <!-- Check In Time -->
               <ng-container matColumnDef="checkInTime">
                 <th mat-header-cell *matHeaderCellDef> Time In </th>
                 <td mat-cell *matCellDef="let record"> 
                    {{ record.checkInTime.seconds * 1000 | date:'shortTime' }}
+                   <mat-icon *ngIf="isOverdue(record.checkInTime)" class="overdue-icon" matTooltip="Checked in > 3 hours. Check out?">history</mat-icon>
                 </td>
               </ng-container>
 
@@ -73,7 +88,7 @@ import { getRandomCommendation } from '../../../../core/constants/commendations'
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.overdue-row]="isOverdue(row.checkInTime)"></tr>
            </table>
            
            <div *ngIf="sessions.length === 0" class="empty-state">
@@ -98,15 +113,18 @@ import { getRandomCommendation } from '../../../../core/constants/commendations'
     .locker-badge { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .empty-state { padding: var(--spacing-xl); text-align: center; color: gray; background: white; }
     .expired { color: #ef4444; font-weight: bold; }
+    .overdue-row { background-color: #fff3cd !important; }
+    .overdue-icon { color: #d97706; margin-left: 8px; vertical-align: middle; }
   `],
   animations: [fadeIn, staggerList]
 })
 export class ActiveSessions {
   private attendanceService = inject(AttendanceService);
   private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   activeSessions$: Observable<AttendanceRecord[]> = this.attendanceService.getActiveCheckIns();
-  displayedColumns: string[] = ['name', 'checkInTime', 'locker', 'expiration', 'actions'];
+  displayedColumns: string[] = ['name', 'remarks', 'checkInTime', 'locker', 'expiration', 'actions'];
 
   isExpired(timestamp: any): boolean {
     if (!timestamp) return false;
@@ -116,8 +134,33 @@ export class ActiveSessions {
     return exp < today;
   }
 
+  isOverdue(checkInTime: any): boolean {
+    if (!checkInTime) return false;
+    const checkIn = new Date(checkInTime.seconds * 1000);
+    const now = new Date();
+    const diffMs = now.getTime() - checkIn.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    return diffHours >= 3;
+  }
+
   async checkOut(record: AttendanceRecord) {
     if (!record.id) return;
+
+    // Locker Key Confirmation
+    if (record.lockerNumber) {
+      const dialogRef = this.dialog.open(ConfirmationDialog, {
+        data: {
+          title: 'Locker Key Returned?',
+          message: `Please confirm that you have retrieved Locker Key #${record.lockerNumber} from ${record.memberName}.`,
+          confirmText: 'Yes, Retrieved',
+          cancelText: 'Cancel'
+        }
+      });
+
+      const result = await firstValueFrom(dialogRef.afterClosed());
+      if (!result) return;
+    }
+
     await this.attendanceService.checkOut(record.id);
 
     const message = getRandomCommendation('CHECKOUT');

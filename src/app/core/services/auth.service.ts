@@ -16,7 +16,7 @@ export class AuthService {
     private router = inject(Router);
 
     // Observable pipeline: Auth User -> Firestore Profile
-    private user$ = authState(this.auth).pipe(
+    user$ = authState(this.auth).pipe(
         switchMap(user => {
             if (!user) return of(null);
             // Fetch full profile from Firestore to get roles
