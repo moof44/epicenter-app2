@@ -53,6 +53,7 @@ import { MatDialog } from '@angular/material/dialog';
                 <th mat-header-cell *matHeaderCellDef> Time In </th>
                 <td mat-cell *matCellDef="let record"> 
                    {{ record.checkInTime.seconds * 1000 | date:'shortTime' }}
+                   <mat-icon *ngIf="isOverdue(record.checkInTime)" class="overdue-icon" matTooltip="Checked in > 3 hours. Check out?">history</mat-icon>
                 </td>
               </ng-container>
 
@@ -87,7 +88,7 @@ import { MatDialog } from '@angular/material/dialog';
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.overdue-row]="isOverdue(row.checkInTime)"></tr>
            </table>
            
            <div *ngIf="sessions.length === 0" class="empty-state">
@@ -112,6 +113,8 @@ import { MatDialog } from '@angular/material/dialog';
     .locker-badge { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     .empty-state { padding: var(--spacing-xl); text-align: center; color: gray; background: white; }
     .expired { color: #ef4444; font-weight: bold; }
+    .overdue-row { background-color: #fff3cd !important; }
+    .overdue-icon { color: #d97706; margin-left: 8px; vertical-align: middle; }
   `],
   animations: [fadeIn, staggerList]
 })
@@ -129,6 +132,15 @@ export class ActiveSessions {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return exp < today;
+  }
+
+  isOverdue(checkInTime: any): boolean {
+    if (!checkInTime) return false;
+    const checkIn = new Date(checkInTime.seconds * 1000);
+    const now = new Date();
+    const diffMs = now.getTime() - checkIn.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    return diffHours >= 3;
   }
 
   async checkOut(record: AttendanceRecord) {
