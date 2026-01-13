@@ -120,6 +120,15 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
     .check-in-btn { padding: var(--spacing-lg); font-size: 1.2rem; }
     .occupied { background-color: #e2e8f0 !important; color: #94a3b8 !important; }
     .selected { background-color: #4ade80 !important; color: #000 !important; transform: scale(1.1); }
+
+    @media (max-width: 480px) {
+        .card-header { flex-direction: column; gap: 12px; align-items: stretch; }
+        .card-header h2 { margin: 0; text-align: center; }
+        .search-card { padding: 16px; margin-bottom: 20px; }
+        .kiosk-container { padding: 8px; }
+        .locker-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 16px 0; }
+        .check-in-btn { padding: 16px; font-size: 1.1rem; }
+    }
   `],
   animations: [fadeIn]
 })

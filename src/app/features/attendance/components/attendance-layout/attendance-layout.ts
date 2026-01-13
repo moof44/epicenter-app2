@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatIconModule } from '@angular/material/icon';
 import { CheckInKiosk } from '../check-in-kiosk/check-in-kiosk';
 import { ActiveSessions } from '../active-sessions/active-sessions';
 import { AttendanceHistory } from '../attendance-history/attendance-history';
@@ -8,7 +9,7 @@ import { fadeIn } from '../../../../core/animations/animations'; // Fixed path
 
 @Component({
   selector: 'app-attendance-layout',
-  imports: [CommonModule, MatTabsModule, CheckInKiosk, ActiveSessions, AttendanceHistory],
+  imports: [CommonModule, MatTabsModule, MatIconModule, CheckInKiosk, ActiveSessions, AttendanceHistory],
   /* v8 ignore start */
   template: `
     <div class="page-container" [@fadeIn]>
@@ -16,8 +17,12 @@ import { fadeIn } from '../../../../core/animations/animations'; // Fixed path
         <h1>Attendance Management</h1>
       </div>
       
-      <mat-tab-group>
-        <mat-tab label="Kiosk Check-in">
+      <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+        <mat-tab>
+            <ng-template mat-tab-label>
+                <mat-icon class="tab-icon">check_circle</mat-icon>
+                Check-in
+            </ng-template>
           <div class="tab-content">
              <app-check-in-kiosk></app-check-in-kiosk>
              
@@ -29,12 +34,20 @@ import { fadeIn } from '../../../../core/animations/animations'; // Fixed path
 
           </div>
         </mat-tab>
-        <mat-tab label="Active Sessions">
+        <mat-tab>
+            <ng-template mat-tab-label>
+                <mat-icon class="tab-icon">group</mat-icon>
+                Active
+            </ng-template>
            <div class="tab-content">
              <app-active-sessions></app-active-sessions>
            </div>
         </mat-tab>
-         <mat-tab label="History">
+         <mat-tab>
+            <ng-template mat-tab-label>
+                <mat-icon class="tab-icon">history</mat-icon>
+                History
+            </ng-template>
            <div class="tab-content">
              <app-attendance-history></app-attendance-history>
            </div>
@@ -49,6 +62,22 @@ import { fadeIn } from '../../../../core/animations/animations'; // Fixed path
     }
     .header { margin-bottom: var(--spacing-md); }
     .tab-content { padding-top: var(--spacing-xl); }
+    .tab-icon { margin-right: 8px; }
+    
+    /* Mobile Override for Tab Labels */
+    @media (max-width: 480px) {
+        ::ng-deep .mat-mdc-tab-labels {
+             justify-content: space-between !important; 
+        }
+        ::ng-deep .mat-mdc-tab {
+            flex-grow: 1;
+            padding: 0 12px !important;
+            min-width: auto !important;
+        }
+        ::ng-deep .mdc-tab__text-label {
+            font-size: 0.85rem !important;
+        }
+    }
   `],
   animations: [fadeIn]
 })
