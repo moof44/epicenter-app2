@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -43,11 +44,17 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
       </mat-card>
 
       <mat-card class="search-card">
-        <h2>Check In</h2>
+        <div class="card-header">
+            <h2>Check In</h2>
+            <button mat-stroked-button color="primary" (click)="goToaddMember()">
+                <mat-icon>person_add</mat-icon> Add Member
+            </button>
+        </div>
         <mat-form-field class="full-width" appearance="outline">
           <mat-label>Search Member</mat-label>
           <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" [disabled]="(isShiftOpen$ | async) === false">
           <mat-icon matSuffix>search</mat-icon>
+          <mat-hint>Name not found? Click <strong>Add Member</strong> above.</mat-hint>
           <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onMemberSelected($event)">
             <mat-option *ngFor="let member of filteredMembers$ | async" [value]="member">
               {{member.name}} ({{member.membershipStatus}})
@@ -87,6 +94,7 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
   styles: [`
     .kiosk-container { max-width: 600px; margin: 0 auto; text-align: center; padding: var(--spacing-md); }
     .search-card { padding: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .warning-card { 
       background-color: #fef2f2 !important; 
       color: #b91c1c !important; 
@@ -122,6 +130,7 @@ export class CheckInKiosk implements OnInit {
   private cashRegisterService = inject(CashRegisterService); // Inject CashRegisterService
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
+  private router = inject(Router);
 
   searchControl = new FormControl<string | Member>('');
   members$: Observable<Member[]> = this.memberService.getMembers(); // Explicit type
@@ -358,5 +367,11 @@ export class CheckInKiosk implements OnInit {
     this.selectedMember = null;
     this.selectedLocker = null;
     this.searchControl.setValue('');
+  }
+
+  goToaddMember() {
+    this.router.navigate(['/members/add'], {
+      queryParams: { returnUrl: '/attendance' }
+    });
   }
 }
