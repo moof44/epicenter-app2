@@ -1,4 +1,4 @@
-import { Injectable, inject, OnDestroy } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
@@ -13,7 +13,7 @@ import {
   getDocs,
   startAfter
 } from '@angular/fire/firestore';
-import { Observable, BehaviorSubject, Subscription } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import {
   CashTransaction,
   ShiftSession,
@@ -24,7 +24,7 @@ import { StoreService } from './store.service';
 @Injectable({
   providedIn: 'root'
 })
-export class CashRegisterService implements OnDestroy {
+export class CashRegisterService {
   private firestore = inject(Firestore);
   private storeService = inject(StoreService);
   private shiftsCollection = collection(this.firestore, 'shifts');
@@ -33,43 +33,19 @@ export class CashRegisterService implements OnDestroy {
   private currentShift = new BehaviorSubject<ShiftSession | null>(null);
   currentShift$ = this.currentShift.asObservable();
 
-  // Subscription for auto-sync with POS
-  private saleSubscription: Subscription;
-
   constructor() {
-    this.initializeShift();
-    this.saleSubscription = this.subscribeToSales();
-  }
-
-  ngOnDestroy(): void {
-    this.saleSubscription?.unsubscribe();
+    this.refreshShift();
   }
 
 
   // Initialize: Check for active open session
-  private async initializeShift(): Promise<void> {
+  async refreshShift(): Promise<void> {
     const openShift = await this.getOpenShift();
-    if (openShift) {
-      this.currentShift.next(openShift);
-    }
+    this.currentShift.next(openShift); // Update even if null (to clear closed shift)
   }
 
-  // Subscribe to POS sales for auto-sync
-  private subscribeToSales(): Subscription {
-    return this.storeService.saleCompleted$.subscribe(async (sale) => {
-      const shift = this.currentShift.getValue();
-      if (!shift?.id || shift.status !== 'OPEN') return;
-
-      await this.addCashTransaction({
-        type: 'Sale',
-        amount: sale.amount,
-        reason: `POS Sale #${sale.transactionId.slice(0, 8)}`,
-        performedBy: 'System',
-        relatedTransactionId: sale.transactionId,
-        paymentMethod: sale.paymentMethod
-      });
-    });
-  }
+  // Removed subscribeToSales to prevent non-atomic updates
+  // private subscribeToSales(): Subscription { ... }
 
   // Get currently open shift
   private async getOpenShift(): Promise<ShiftSession | null> {
@@ -104,6 +80,10 @@ export class CashRegisterService implements OnDestroy {
   isShiftOpen(): boolean {
     const shift = this.currentShift.getValue();
     return shift?.status === 'OPEN';
+  }
+
+  getCurrentShiftId(): string | undefined {
+    return this.currentShift.getValue()?.id;
   }
 
 

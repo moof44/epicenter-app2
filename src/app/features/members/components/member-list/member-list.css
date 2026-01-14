@@ -117,3 +117,46 @@
 .btn-icon.danger {
     color: var(--danger-color);
 }
+
+/* Filters Responsive Layout */
+.filters-container {
+    display: flex;
+    gap: 16px;
+    padding: 0 8px;
+    /* Reduced padding for mobile */
+    margin-bottom: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    /* Allow wrapping */
+}
+
+/* Specific Field sizing */
+.filters-container mat-form-field {
+    width: 150px;
+    /* Default desktop width for selects */
+}
+
+.filters-container .search-field {
+    flex: 1;
+    min-width: 250px;
+    /* Prevent search from getting too small */
+    max-width: 400px;
+}
+
+/* Mobile Breakpoint */
+@media (max-width: 600px) {
+    .filters-container {
+        flex-direction: column;
+        align-items: stretch;
+        /* Full width items */
+        gap: 8px;
+    }
+
+    .filters-container .search-field,
+    .filters-container mat-form-field {
+        width: 100% !important;
+        /* Force full width */
+        min-width: 0;
+        max-width: none !important;
+    }
+}

@@ -21,7 +21,8 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
   sum,
-  getAggregateFromServer
+  getAggregateFromServer,
+  arrayUnion
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
 import { Product, CartItem, Transaction, ProductSalesData, InventoryLog, DailySales } from '../models/store.model';
@@ -277,11 +278,54 @@ export class StoreService {
     const dateStr = timestamp.toISOString().split('T')[0]; // YYYY-MM-DD
     const dfsRef = doc(this.firestore, 'daily_sales', dateStr);
     batch.set(dfsRef, {
-      date: timestamp, // Keep a timestamp field for potential sorting/querying if needed, though ID is date
+      date: timestamp,
       totalSales: increment(total)
     }, { merge: true });
 
+    // 4. ATOMIC UPDATE: Update Shift (Cash Management)
+    // We do this HERE instead of via listeners to prevent race conditions/missing data.
+
+    // NOTE: In the previous step we checked `isShiftOpen`.
+    // Let's get the ID.
+    const shiftId = cashRegisterService.getCurrentShiftId();
+    if (shiftId) {
+      const shiftRef = doc(this.firestore, 'shifts', shiftId);
+
+      const cashTx = {
+        type: 'Sale',
+        amount: total,
+        reason: `POS Sale #${transactionRef.id.slice(0, 8)}`,
+        performedBy: 'System',
+        relatedTransactionId: transactionRef.id,
+        paymentMethod: paymentMethod,
+        timestamp: timestamp
+      };
+
+      const shiftUpdates: any = {
+        transactions: arrayUnion(cashTx),
+        totalSales: increment(total),
+        totalRevenue: increment(total),
+        // Recalculate Expected? No, just increment totals. Expected is calculated on read/refresh usually or derived.
+        // But we maintain it in DB for queries.
+        // Expected = Opening + CashSales + FloatIn - Expenses - FloatOut
+        // If Cash, increment CashSales and Expected.
+        // If GCash, increment GCashSales (Expected stays same for Cash drawer?).
+      };
+
+      if (paymentMethod === 'GCASH') {
+        shiftUpdates.totalGcashSales = increment(total);
+      } else {
+        shiftUpdates.totalCashSales = increment(total);
+        shiftUpdates.expectedClosingBalance = increment(total);
+      }
+
+      batch.update(shiftRef, shiftUpdates);
+    }
+
     await batch.commit();
+
+    // 5. Refresh Shift State (UI)
+    cashRegisterService.refreshShift();
 
     // Only clear the global cart if this was a standard POS checkout
     if (!isCustomTransaction) {
@@ -600,7 +644,6 @@ export class StoreService {
     return collectionData(q, { idField: 'id' }).pipe(
       map(docs => {
         let monthlyTotal = 0;
-        const days: DailySales[] = [];
 
         // Pre-fill all days of month with 0?
         // The previous implementation did fill 0s. Let's keep that behavior for the chart/table continuity.

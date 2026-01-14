@@ -5,15 +5,14 @@
     </a>
 </div>
 
-<div class="filters-container"
-    style="display: flex; gap: 16px; padding: 0 16px; margin-bottom: 16px; align-items: center;">
-    <mat-form-field appearance="outline" style="flex: 1; max-width: 300px;">
+<div class="filters-container">
+    <mat-form-field appearance="outline" class="search-field">
         <mat-label>Search Members</mat-label>
         <input matInput [(ngModel)]="searchQuery" (keyup)="applyFilters()" placeholder="Name or Contact #">
         <mat-icon matSuffix>search</mat-icon>
     </mat-form-field>
 
-    <mat-form-field appearance="outline" style="width: 150px;">
+    <mat-form-field appearance="outline">
         <mat-label>Status</mat-label>
         <mat-select [(ngModel)]="statusFilter" (selectionChange)="applyFilters()">
             <mat-option value="All">All Status</mat-option>
@@ -22,7 +21,7 @@
         </mat-select>
     </mat-form-field>
 
-    <mat-form-field appearance="outline" style="width: 180px;">
+    <mat-form-field appearance="outline">
         <mat-label>Subscription</mat-label>
         <mat-select [(ngModel)]="subscriptionFilter" (selectionChange)="applyFilters()">
             <mat-option value="All">All Members</mat-option>
