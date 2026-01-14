@@ -9,6 +9,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { fadeIn } from '../../../../core/animations/animations';
+import { Functions, httpsCallable } from '@angular/fire/functions';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
     selector: 'app-general-settings',
@@ -32,12 +34,15 @@ export class GeneralSettingsComponent implements OnInit {
     private fb = inject(FormBuilder);
     private settingsService = inject(SettingsService);
     private snackBar = inject(MatSnackBar);
+    private functions = inject(Functions);
+    authService = inject(AuthService); // Public for template
 
     settingsForm: FormGroup = this.fb.group({
         monthlyQuota: [0, [Validators.required, Validators.min(0)]]
     });
 
     isSaving = false;
+    isLoggingOut = false;
 
     async ngOnInit() {
         try {
@@ -61,6 +66,25 @@ export class GeneralSettingsComponent implements OnInit {
             this.snackBar.open('Error saving settings', 'Close', { duration: 3000 });
         } finally {
             this.isSaving = false;
+        }
+    }
+
+    async forceLogoutAll() {
+        if (!confirm('ARE YOU SURE? This will immediately log out ALL users from ALL devices.')) {
+            return;
+        }
+
+        this.isLoggingOut = true;
+        const emergencyLogoutAll = httpsCallable(this.functions, 'emergencyLogoutAll');
+
+        try {
+            const result: any = await emergencyLogoutAll();
+            this.snackBar.open(`Success: Force logged out ${result.data.userCount} users.`, 'Close', { duration: 5000 });
+        } catch (error: any) {
+            console.error('Force logout failed:', error);
+            this.snackBar.open(`Failed: ${error.message}`, 'Close', { duration: 5000 });
+        } finally {
+            this.isLoggingOut = false;
         }
     }
 }

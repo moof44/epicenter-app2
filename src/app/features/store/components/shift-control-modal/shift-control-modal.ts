@@ -46,7 +46,17 @@ export class ShiftControlModal implements OnInit {
 
       if (this.isShiftOpen && shift) {
         this.shiftSummary = this.cashRegisterService.getShiftSummary();
-        this.actualClosingBalance = shift.expectedClosingBalance;
+
+        // Only set actualClosingBalance to expected if it hasn't been set yet (or on first load)
+        // We compare with 0 or check if it matches the *previous* expected balance to determine if we should update it.
+        // Better: Only set it when the modal Opens.
+        // However, this subscription runs whenever currentShift updates.
+        // If we are strictly in "Close Register" mode, we might want to start with the expected balance.
+
+        // Fix: Don't overwrite if we already have a value that might be user input
+        if (this.actualClosingBalance === 0 && shift.expectedClosingBalance > 0) {
+          this.actualClosingBalance = shift.expectedClosingBalance;
+        }
       }
     });
 
@@ -96,6 +106,7 @@ export class ShiftControlModal implements OnInit {
       this.snackBar.open('Shift closed successfully', 'Close', { duration: 3000 });
       this.dialogRef.close(true);
     } catch (err: any) {
+      console.error('Error closing shift:', err);
       this.snackBar.open(err.message || 'Failed to close shift', 'Close', { duration: 3000 });
     } finally {
       this.isLoading = false;

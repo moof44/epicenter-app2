@@ -40,7 +40,7 @@
 </div>
 
 <div class="mat-elevation-z2 table-container" [@fadeIn]>
-  <table mat-table [dataSource]="dataSource" class="full-width-table mobile-card-table"
+  <table mat-table [dataSource]="dataSource" [trackBy]="trackTransaction" class="full-width-table mobile-card-table"
     *ngIf="dataSource.data.length > 0; else emptyState">
     <ng-container matColumnDef="date">
       <th mat-header-cell *matHeaderCellDef>Date</th>
@@ -70,7 +70,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div class="items-list">
-            <div *ngFor="let item of tx.items" class="item-row">
+            <div *ngFor="let item of tx.items; trackBy: trackCartItem" class="item-row">
               <span>{{ item.productName }}</span>
               <span>x{{ item.quantity }}</span>
               <span>₱{{ item.subtotal | number:'1.2-2' }}</span>

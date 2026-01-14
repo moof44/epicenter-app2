@@ -43,7 +43,7 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
         <span>Register is closed. Please open a shift in Store to proceed.</span>
       </mat-card>
 
-      <mat-card class="search-card">
+      <mat-card class="search-card" [class.mobile-hidden]="!!selectedMember">
         <div class="card-header">
             <h2>Check In</h2>
             <button mat-stroked-button color="primary" (click)="goToaddMember()">
@@ -52,7 +52,7 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
         </div>
         <mat-form-field class="full-width" appearance="outline">
           <mat-label>Search Member</mat-label>
-          <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" [disabled]="(isShiftOpen$ | async) === false">
+          <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" [disabled]="(isShiftOpen$ | async) === false" #searchInput>
           <mat-icon matSuffix>search</mat-icon>
           <mat-hint>Name not found? Click <strong>Add Member</strong> above.</mat-hint>
           <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onMemberSelected($event)">
@@ -64,6 +64,11 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
       </mat-card>
 
       <div *ngIf="selectedMember" class="locker-selection" [@fadeIn]>
+        <div class="mobile-visible" style="text-align: left; margin-bottom: 16px;">
+            <button mat-button color="primary" (click)="reset()">
+                <mat-icon>arrow_back</mat-icon> Back to Search
+            </button>
+        </div>
         <h3>Welcome, {{selectedMember.name}}!</h3>
         <p>Select a locker (optional) or just Check In.</p>
         
@@ -120,6 +125,20 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
     .check-in-btn { padding: var(--spacing-lg); font-size: 1.2rem; }
     .occupied { background-color: #e2e8f0 !important; color: #94a3b8 !important; }
     .selected { background-color: #4ade80 !important; color: #000 !important; transform: scale(1.1); }
+
+    @media (max-width: 480px) {
+        .card-header { flex-direction: column; gap: 12px; align-items: stretch; }
+        .card-header h2 { margin: 0; text-align: center; }
+        .search-card { padding: 16px; margin-bottom: 20px; }
+        .kiosk-container { padding: 8px; }
+        .locker-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 16px 0; }
+        .check-in-btn { padding: 16px; font-size: 1.1rem; }
+        
+        /* Wizard Mode: Hide Search when Member Selected */
+        .mobile-hidden { display: none !important; }
+        .mobile-visible { display: block !important; }
+    }
+    .mobile-visible { display: none; } /* Default hidden on desktop */
   `],
   animations: [fadeIn]
 })
