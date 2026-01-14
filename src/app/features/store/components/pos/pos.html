@@ -48,7 +48,7 @@
       </div>
 
       <div class="products-grid" *ngIf="products$ | async as products">
-        <mat-card *ngFor="let product of filterProducts(products)" class="product-card"
+        <mat-card *ngFor="let product of filterProducts(products); trackBy: trackProduct" class="product-card"
           [class.out-of-stock]="product.stock <= 0" [class.disabled-state]="!(isShiftOpen$ | async)"
           (click)="addToCart(product)" [@fadeIn]>
           <div class="product-image">

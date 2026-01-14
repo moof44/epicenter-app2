@@ -38,4 +38,26 @@
             </form>
         </mat-card-content>
     </mat-card>
+
+    <mat-card class="settings-card security-card" *ngIf="authService.isAdmin()">
+        <mat-card-header>
+            <mat-icon mat-card-avatar color="warn">security</mat-icon>
+            <mat-card-title>Security Zone</mat-card-title>
+            <mat-card-subtitle>Emergency actions for system administration</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="security-warning">
+                <mat-icon color="warn">warning</mat-icon>
+                <p><strong>Warning:</strong> The action below will immediately log out ALL users from ALL devices. Use
+                    only in emergencies.</p>
+            </div>
+
+            <div class="actions">
+                <button mat-raised-button color="warn" (click)="forceLogoutAll()" [disabled]="isLoggingOut">
+                    <mat-icon>power_settings_new</mat-icon>
+                    {{ isLoggingOut ? 'Logging out everyone...' : 'Force Logout All Users' }}
+                </button>
+            </div>
+        </mat-card-content>
+    </mat-card>
 </div>

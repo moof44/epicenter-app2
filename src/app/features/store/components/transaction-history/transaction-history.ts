@@ -15,6 +15,8 @@ import { StoreService } from '../../../../core/services/store.service';
 import { Transaction } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
 
+import { Observable, firstValueFrom } from 'rxjs';
+
 @Component({
   selector: 'app-transaction-history',
   imports: [
@@ -29,7 +31,7 @@ export class TransactionHistory implements AfterViewInit, OnInit {
   private storeService = inject(StoreService);
 
   dataSource = new MatTableDataSource<Transaction>([]);
-  displayedColumns = ['date', 'items', 'paymentMethod', 'totalAmount']; // Added paymentMethod column? Or just filter. I'll add column too if useful, but sticking to existing plus filters first.
+  displayedColumns = ['date', 'items', 'paymentMethod', 'totalAmount'];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -47,7 +49,7 @@ export class TransactionHistory implements AfterViewInit, OnInit {
     this.loadTransactions();
   }
 
-  loadTransactions() {
+  async loadTransactions() {
     const filters: any = {};
     if (this.startDate) filters.startDate = this.startDate;
     if (this.endDate) filters.endDate = this.endDate;
@@ -56,9 +58,9 @@ export class TransactionHistory implements AfterViewInit, OnInit {
     if (this.staffName) filters.staffName = this.staffName;
     filters.limit = 50;
 
-    this.storeService.getTransactions(filters).subscribe(transactions => {
-      this.dataSource.data = transactions;
-    });
+    // Use snapshot to prevent real-time updates disrupting UI (e.g. closing expansion panels)
+    const transactions = await firstValueFrom(this.storeService.getTransactions(filters));
+    this.dataSource.data = transactions;
   }
 
   applyFilters() {
@@ -72,5 +74,13 @@ export class TransactionHistory implements AfterViewInit, OnInit {
   formatDate(timestamp: any): Date {
     if (!timestamp) return new Date();
     return timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+  }
+
+  trackTransaction(index: number, item: Transaction): string {
+    return item.id || index.toString();
+  }
+
+  trackCartItem(index: number, item: any): string {
+    return item.productId || index.toString();
   }
 }

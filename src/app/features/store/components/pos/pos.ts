@@ -209,4 +209,8 @@ export class POS {
     };
     return icons[category];
   }
+
+  trackProduct(index: number, product: Product): string {
+    return product.id || index.toString();
+  }
 }

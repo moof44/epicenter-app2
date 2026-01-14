@@ -164,3 +164,51 @@ export const toggleStaffStatus = functions.https.onCall(async (data: any, contex
         throw new functions.https.HttpsError('internal', 'Unable to change account status.', error);
     }
 });
+
+/**
+ * Forcefully logs out all users by revoking refresh tokens and updating a global timestamp.
+ * This function must be called by an ADMIN user.
+ */
+export const emergencyLogoutAll = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    // 1. Security Check
+    if (!context.auth || !context.auth.token.roles || !context.auth.token.roles.includes('ADMIN')) {
+        throw new functions.https.HttpsError(
+            'permission-denied',
+            'Only admins can perform emergency logout.'
+        );
+    }
+
+    try {
+        // 2. Revoke Refresh Tokens for ALL Users
+        // Note: listUsers() retrieves max 1000 users at a time. For large scale, we need pagination.
+        // For this project size, we'll assume < 1000 or iterate if needed.
+        let nextPageToken;
+        let count = 0;
+
+        do {
+            const listUsersResult = await admin.auth().listUsers(1000, nextPageToken);
+            const uids = listUsersResult.users.map(u => u.uid);
+
+            // Revoke tokens in parallel batches
+            // Note: revokeRefreshTokens is per user.
+            await Promise.all(uids.map(uid => admin.auth().revokeRefreshTokens(uid)));
+
+            count += uids.length;
+            nextPageToken = listUsersResult.pageToken;
+        } while (nextPageToken);
+
+        // 3. Update Global Signal in Firestore
+        // This triggers the client-side listener to logout immediately.
+        await admin.firestore().collection('system').doc('settings').set({
+            minAuthTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+            lastEmergencyLogoutBy: context.auth.uid,
+            lastEmergencyLogoutAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        return { success: true, userCount: count };
+
+    } catch (error: any) {
+        console.error('Error in emergency logout:', error);
+        throw new functions.https.HttpsError('internal', 'Emergency logout failed.', error);
+    }
+});
