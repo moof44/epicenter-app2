@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,6 +23,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CheckoutDialog, CheckoutDialogResult } from './checkout-dialog/checkout-dialog';
 import { PriceOverrideDialog, PriceOverrideDialogResult } from './price-override-dialog/price-override-dialog';
 import { getRandomCommendation } from '../../../../core/constants/commendations';
+import { TutorialService } from '../../../../core/services/tutorial.service';
+import { TUTORIALS } from '../../../../core/constants/tutorials';
 
 @Component({
   selector: 'app-pos',
@@ -36,12 +38,13 @@ import { getRandomCommendation } from '../../../../core/constants/commendations'
   animations: [fadeIn],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class POS {
+export class POS implements OnInit {
   private storeService = inject(StoreService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private authService = inject(AuthService);
   private memberService = inject(MemberService);
+  private tutorialService = inject(TutorialService);
 
   private cashRegisterService = inject(CashRegisterService);
 
@@ -56,6 +59,12 @@ export class POS {
   categories: (ProductCategory | 'All')[] = ['All', 'Supplement', 'Drink', 'Merch', 'Fitness', 'Membership', 'Training'];
   isProcessing = signal(false);
   cartExpanded = signal(false);
+
+  ngOnInit(): void {
+    setTimeout(() => {
+      this.tutorialService.startTutorial(TUTORIALS['POS'].id);
+    }, 1000);
+  }
 
   toggleCart(): void {
     this.cartExpanded.update(v => !v);

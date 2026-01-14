@@ -14,6 +14,8 @@ import { Member } from '../../../../core/models/member.model';
 import { Measurement } from '../../../../core/models/measurement.model';
 import { fadeIn, staggerList } from '../../../../core/animations/animations';
 import { AttendanceCalendarComponent } from '../attendance-calendar/attendance-calendar';
+import { TutorialService } from '../../../../core/services/tutorial.service';
+import { TUTORIALS } from '../../../../core/constants/tutorials';
 
 @Component({
   selector: 'app-progress-dashboard',
@@ -29,6 +31,7 @@ export class ProgressDashboard implements OnInit {
   private route = inject(ActivatedRoute);
   private memberService = inject(MemberService);
   private progressService = inject(ProgressService);
+  private tutorialService = inject(TutorialService);
 
   member$: Observable<Member | undefined> | undefined;
   measurements$: Observable<Measurement[]> | undefined;
@@ -83,6 +86,10 @@ export class ProgressDashboard implements OnInit {
         };
       })
     );
+
+    setTimeout(() => {
+      this.tutorialService.startTutorial(TUTORIALS['MEMBER_PROGRESS'].id);
+    }, 1000);
   }
 
   formatDiff(val: number): string {
