@@ -89,8 +89,16 @@ export class CashRegisterService {
 
   // Open a new shift
   async openShift(openingBalance: number, openedBy: string): Promise<string> {
+    // 1. Check local state pending initialization (optional but good UI feedback)
     if (this.isShiftOpen()) {
       throw new Error('A shift is already open. Close it first.');
+    }
+
+    // 2. CRITICAL: Check Firestore directly to prevent race conditions (double open)
+    const existingOpen = await this.getOpenShift();
+    if (existingOpen) {
+      this.currentShift.next(existingOpen); // Sync local state
+      throw new Error('A shift is ALREADY open in the system. Refreshed state.');
     }
 
     const newShift: Omit<ShiftSession, 'id'> = {
