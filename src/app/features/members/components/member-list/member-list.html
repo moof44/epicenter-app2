@@ -21,6 +21,15 @@
             <mat-option value="Inactive">Inactive</mat-option>
         </mat-select>
     </mat-form-field>
+
+    <mat-form-field appearance="outline" style="width: 180px;">
+        <mat-label>Subscription</mat-label>
+        <mat-select [(ngModel)]="subscriptionFilter" (selectionChange)="applyFilters()">
+            <mat-option value="All">All Members</mat-option>
+            <mat-option value="HasSubscription">Has Subscription</mat-option>
+            <mat-option value="NoSubscription">No Subscription</mat-option>
+        </mat-select>
+    </mat-form-field>
 </div>
 
 <div class="mat-elevation-z2 table-container" [@fadeIn]>

@@ -1,6 +1,6 @@
-import { Component, inject, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, inject, ViewChild, AfterViewInit, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -28,37 +28,110 @@ import { fadeIn, staggerList } from '../../../../core/animations/animations';
   styleUrl: './member-list.css',
   animations: [fadeIn, staggerList]
 })
-export class MemberList implements AfterViewInit {
+export class MemberList implements AfterViewInit, OnInit {
   private memberService = inject(MemberService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   dataSource = new MatTableDataSource<Member>([]);
   displayedColumns: string[] = ['name', 'remarks', 'membershipStatus', 'membershipExpiration', 'actions'];
 
   searchQuery = '';
   statusFilter = 'All';
+  subscriptionFilter = 'All';
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor() {
-    this.memberService.getMembers().subscribe(members => {
-      this.dataSource.data = members;
-    });
+  constructor() { }
 
-    // Custom filtering
+  ngOnInit() {
+    this.setupFilterPredicate();
+    this.setupUrlPersistence();
+    this.setupDataLoading();
+  }
+
+  setupFilterPredicate() {
     this.dataSource.filterPredicate = (data: Member, filter: string) => {
+
       const search = this.searchQuery.toLowerCase();
       const matchesSearch = data.name.toLowerCase().includes(search) ||
         data.contactNumber.includes(search);
 
       const matchesStatus = this.statusFilter === 'All' || data.membershipStatus === this.statusFilter;
 
-      return matchesSearch && matchesStatus;
+      let matchesSubscription = true;
+      if (this.subscriptionFilter !== 'All') {
+        const now = new Date();
+        const toDate = (d: any) => d ? (d.toDate ? d.toDate() : new Date(d)) : null;
+
+        const memExp = toDate(data.membershipExpiration);
+        const trainExp = toDate(data.trainingExpiration);
+
+        // Check if either expiration date is in the future
+        const hasActiveSub = (memExp && memExp > now) || (trainExp && trainExp > now);
+
+        if (this.subscriptionFilter === 'HasSubscription') {
+          matchesSubscription = !!hasActiveSub;
+        } else if (this.subscriptionFilter === 'NoSubscription') {
+          matchesSubscription = !hasActiveSub;
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesSubscription;
     };
   }
 
+  setupUrlPersistence() {
+    this.route.queryParams.subscribe(params => {
+
+      // Only update if changed to avoid cursor jumps / cycles
+      const newSearch = params['search'] || '';
+      const newStatus = params['status'] || 'All';
+      const newSub = params['subscription'] || 'All';
+
+      let changed = false;
+      if (this.searchQuery !== newSearch) {
+        this.searchQuery = newSearch;
+        changed = true;
+      }
+      if (this.statusFilter !== newStatus) {
+        this.statusFilter = newStatus;
+        changed = true;
+      }
+      if (this.subscriptionFilter !== newSub) {
+        this.subscriptionFilter = newSub;
+        changed = true;
+      }
+
+      // Always trigger filter if params changed
+      if (changed) {
+        this.dataSource.filter = '' + Math.random();
+      }
+    });
+  }
+
+  setupDataLoading() {
+    this.memberService.getMembers().subscribe(members => {
+      this.dataSource.data = members;
+      // Re-apply filter in case data comes after params
+      this.dataSource.filter = '' + Math.random();
+    });
+  }
+
   applyFilters() {
-    // Trigger filter update (value doesn't matter much as we use class props in predicate, 
-    // but changing it triggers the check)
+    // 2. Update URL on filter change
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        search: this.searchQuery || null,
+        status: this.statusFilter !== 'All' ? this.statusFilter : null,
+        subscription: this.subscriptionFilter !== 'All' ? this.subscriptionFilter : null
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+
+    // Trigger local filter
     this.dataSource.filter = '' + Math.random();
   }
   ngAfterViewInit() {

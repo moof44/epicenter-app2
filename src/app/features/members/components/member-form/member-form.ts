@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MemberService } from '../../../../core/services/member.service';
 import { Member } from '../../../../core/models/member.model';
 
@@ -17,7 +17,7 @@ import { fadeIn } from '../../../../core/animations/animations';
 @Component({
   selector: 'app-member-form',
   imports: [
-    CommonModule, ReactiveFormsModule, RouterLink, MatInputModule,
+    CommonModule, ReactiveFormsModule, MatInputModule,
     MatSelectModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule,
     MatDatepickerModule, MatNativeDateModule
   ],
@@ -30,6 +30,7 @@ export class MemberForm implements OnInit {
   private memberService = inject(MemberService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private location = inject(Location);
 
   form: FormGroup;
   isEditMode = false;
@@ -76,6 +77,10 @@ export class MemberForm implements OnInit {
       this.form.patchValue(data);
       this.loading = false;
     });
+  }
+
+  cancel() {
+    this.location.back();
   }
 
   async onSubmit() {
