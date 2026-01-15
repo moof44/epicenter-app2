@@ -11,7 +11,9 @@ import {
   orderBy,
   limit,
   getDocs,
-  startAfter
+  startAfter,
+  arrayUnion,
+  increment
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject } from 'rxjs';
 import {
@@ -140,49 +142,45 @@ export class CashRegisterService {
       timestamp: new Date()
     };
 
-    // Update totals based on transaction type
-    const updates: Partial<ShiftSession> = {
-      transactions: [...shift.transactions, newTransaction]
+    // ATOMIC UPDATE: Use arrayUnion and increment to prevent overwriting concurrent updates
+    const updates: any = {
+      transactions: arrayUnion(newTransaction)
     };
 
     switch (transaction.type) {
       case 'Sale':
-        updates.totalRevenue = (shift.totalRevenue || 0) + transaction.amount;
-        updates.totalSales = (shift.totalSales || 0) + transaction.amount; // Legacy/Total
+        updates.totalRevenue = increment(transaction.amount);
+        updates.totalSales = increment(transaction.amount); // Legacy/Total
 
         if (transaction.paymentMethod === 'GCASH') {
-          updates.totalGcashSales = (shift.totalGcashSales || 0) + transaction.amount;
+          updates.totalGcashSales = increment(transaction.amount);
         } else {
           // Default to CASH if undefined (for safety/legacy) or explicit CASH
-          updates.totalCashSales = (shift.totalCashSales || 0) + transaction.amount;
+          updates.totalCashSales = increment(transaction.amount);
+          updates.expectedClosingBalance = increment(transaction.amount);
         }
         break;
       case 'Float_In':
-        updates.totalFloatIn = shift.totalFloatIn + transaction.amount;
+        updates.totalFloatIn = increment(transaction.amount);
+        updates.expectedClosingBalance = increment(transaction.amount);
         break;
       case 'Expense':
-        updates.totalExpenses = shift.totalExpenses + transaction.amount;
+        updates.totalExpenses = increment(transaction.amount);
+        updates.expectedClosingBalance = increment(-transaction.amount);
         break;
       case 'Float_Out':
-        updates.totalFloatOut = shift.totalFloatOut + transaction.amount;
+        updates.totalFloatOut = increment(transaction.amount);
+        updates.expectedClosingBalance = increment(-transaction.amount);
         break;
     }
-
-    // Recalculate expected closing balance
-    // Expected Cash = Opening + Cash Sales + Float In - Expenses - Float Out
-    const currentCashSales = updates.totalCashSales ?? shift.totalCashSales ?? 0;
-    const newTotalFloatIn = updates.totalFloatIn ?? shift.totalFloatIn;
-    const newTotalExpenses = updates.totalExpenses ?? shift.totalExpenses;
-    const newTotalFloatOut = updates.totalFloatOut ?? shift.totalFloatOut;
-
-    updates.expectedClosingBalance =
-      shift.openingBalance + currentCashSales + newTotalFloatIn - newTotalExpenses - newTotalFloatOut;
 
     const docRef = doc(this.firestore, 'shifts', shift.id);
     await updateDoc(docRef, updates);
 
-    // Update local state
-    this.currentShift.next({ ...shift, ...updates });
+    // Refresh local state to reflect changes
+    // We call refreshShift() to get the updated authoritative state from Firestore
+    // This is safer than patching local state which might be slightly out of sync after atomic update
+    await this.refreshShift();
   }
 
 

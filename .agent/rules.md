@@ -55,3 +55,7 @@
 - **Verify Before Finish**: You must ALWAYS run `npm run build` and fix ALL errors/warnings before reporting a task as finished.
 - **Zero Warnings**: The goal is a clean build. Address Angular template warnings immediately (e.g., `NG8107`).
 - **Debug Mode**: Explicitly enter "Debug Mode" (roleplay as QA/Tester) to test critical logic paths, verify assumptions (e.g. network reads), and trace execution before minimizing context.
+
+## 8. Git Workflow & Cleanup
+- **Pre-Commit Cleanup**: ALWAYS perform a code cleanup (lint, format, remove `console.log` debugging, remove unused imports) before committing to git.
+- **Clean Slate**: Ensure the codebase is in a deployable state with no breaking build errors before push.

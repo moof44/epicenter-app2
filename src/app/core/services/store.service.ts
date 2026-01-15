@@ -675,7 +675,7 @@ export class StoreService {
    * This should be run once.
    */
   async recalculateDailySales(): Promise<void> {
-    console.log('Starting Daily Sales Recalculation...');
+    // console.log('Starting Daily Sales Recalculation...');
     const allTransactions = await getDocs(this.transactionsCollection); // Heavy read, do once
     const salesMap = new Map<string, number>();
 
@@ -708,6 +708,6 @@ export class StoreService {
     if (count > 0) {
       await batch.commit();
     }
-    console.log('Recalculation Complete.');
+    // console.log('Recalculation Complete.');
   }
 }

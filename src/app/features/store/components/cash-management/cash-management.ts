@@ -38,7 +38,7 @@ export class CashManagement implements OnInit {
   private tutorialService = inject(TutorialService);
 
   currentShift$ = this.cashRegisterService.currentShift$;
-  displayedColumns = ['timestamp', 'type', 'reason', 'amount'];
+  displayedColumns = ['timestamp', 'type', 'paymentMethod', 'reason', 'amount'];
 
   // Form state
   showForm = false;
