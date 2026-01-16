@@ -137,7 +137,11 @@ export class AttendanceService {
      * Check In a member.
      */
     async checkIn(member: Member, lockerNumber?: number): Promise<void> {
-        // ... existing validation ...
+        // Validation
+        if (!member.id) {
+            throw new Error('Member ID is missing. Cannot check in.');
+        }
+
         if (lockerNumber) {
             const occupied = await this.getOccupiedLockers(member.gender);
             if (occupied.includes(lockerNumber)) {
@@ -149,17 +153,24 @@ export class AttendanceService {
         const dateStr = this.getLocalDateString(now); // YYYY-MM-DD
 
         const record: AttendanceRecord = {
-            memberId: member.id!,
-            memberName: member.name,
-            memberGender: member.gender,
+            memberId: member.id,
+            memberName: member.name || 'Unknown Member',
+            memberGender: member.gender || 'Other',
             checkInTime: Timestamp.fromDate(now),
             lockerNumber: lockerNumber || null,
             date: dateStr,
             status: 'Checked In',
             memberExpiration: member.membershipExpiration || null,
             memberRemarks: member.remarks || null,
-            checkedInBy: this._currentUserSnapshot
+            checkedInBy: this._currentUserSnapshot // Throws if auth missing
         };
+
+        // Ensure no undefined values in record (Firestore doesn't like undefined)
+        Object.keys(record).forEach(key => {
+            if ((record as any)[key] === undefined) {
+                (record as any)[key] = null;
+            }
+        });
 
         await addDoc(this.attendanceCollection, record);
         this._refreshHistory$.next(); // Trigger refresh

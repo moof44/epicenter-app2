@@ -352,10 +352,14 @@ export class CheckInKiosk implements OnInit {
       }
 
       // 3. Final Check-in
+      if (!member.id) {
+        throw new Error('Critical: Member ID is missing from selection.');
+      }
       await this.doCheckIn(member);
 
     } catch (error: any) {
-      this.snackBar.open(error.message, 'Close', { duration: 3000 });
+      console.error('Check-In Error:', error);
+      this.snackBar.open(error.message || 'Check-in failed', 'Close', { duration: 5000 });
     } finally {
       this.isSubmitting = false;
     }

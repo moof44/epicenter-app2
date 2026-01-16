@@ -118,6 +118,22 @@ export class ShiftControlModal implements OnInit {
     return this.actualClosingBalance - this.shiftSummary.expectedClosingBalance;
   }
 
+  async recalculateTotals(): Promise<void> {
+    if (!this.currentShift?.id) return;
+
+    this.isLoading = true;
+    try {
+      const result = await this.cashRegisterService.recalculateShiftTotals(this.currentShift.id);
+      this.snackBar.open(`Recalculated. Adjustment: ₱${result.salesDiff.toFixed(2)}`, 'Close', { duration: 4000 });
+      // Reload summary
+      this.shiftSummary = this.cashRegisterService.getShiftSummary();
+    } catch (err: any) {
+      this.snackBar.open('Recalculation failed: ' + err.message, 'Close', { duration: 3000 });
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
   cancel(): void {
     this.dialogRef.close(false);
   }

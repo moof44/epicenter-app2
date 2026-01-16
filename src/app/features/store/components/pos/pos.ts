@@ -158,25 +158,36 @@ export class POS implements OnInit {
     return typeof member === 'string' ? member : member.name;
   }
 
+  isCheckoutPending = false; // Sync flag to prevent double-click entry
+
   async checkout(): Promise<void> {
+    if (this.isCheckoutPending || this.isProcessing()) return;
+
     if (!this.cashRegisterService.isShiftOpen()) {
       this.snackBar.open('Register is closed. Please open a shift first.', 'Close', { duration: 3000 });
       return;
     }
 
-    const total = await firstValueFrom(this.cartTotal$);
+    this.isCheckoutPending = true;
 
-    const dialogRef = this.dialog.open(CheckoutDialog, {
-      width: '500px',
-      data: { total: total }
-    });
-
-    const result = await firstValueFrom(dialogRef.afterClosed()) as CheckoutDialogResult;
-
-    if (!result) return; // User cancelled
-
-    this.isProcessing.set(true);
     try {
+      const total = await firstValueFrom(this.cartTotal$);
+
+      const dialogRef = this.dialog.open(CheckoutDialog, {
+        width: '500px',
+        data: { total: total }
+      });
+
+      const result = await firstValueFrom(dialogRef.afterClosed()) as CheckoutDialogResult;
+
+      if (!result) {
+        this.isCheckoutPending = false;
+        return; // User cancelled
+      }
+
+      this.isProcessing.set(true);
+      // isCheckoutPending stays true while processing
+
       const currentMember = this.selectedMember();
       const transactionId = await this.storeService.checkout(
         undefined,
@@ -198,6 +209,7 @@ export class POS implements OnInit {
       this.snackBar.open(error.message || 'Checkout failed', 'Close', { duration: 3000 });
     } finally {
       this.isProcessing.set(false);
+      this.isCheckoutPending = false;
     }
   }
 
