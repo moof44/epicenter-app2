@@ -113,3 +113,11 @@ mat-dialog-actions button {
     min-height: 48px;
   }
 }
+
+.summary-sub-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  color: #666;
+}

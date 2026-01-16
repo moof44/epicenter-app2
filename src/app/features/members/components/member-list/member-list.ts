@@ -16,6 +16,8 @@ import { MemberService } from '../../../../core/services/member.service';
 import { Member } from '../../../../core/models/member.model';
 import { Observable } from 'rxjs';
 import { fadeIn, staggerList } from '../../../../core/animations/animations';
+import { TutorialService } from '../../../../core/services/tutorial.service';
+import { TUTORIALS } from '../../../../core/constants/tutorials';
 
 @Component({
   selector: 'app-member-list',
@@ -32,6 +34,7 @@ export class MemberList implements AfterViewInit, OnInit {
   private memberService = inject(MemberService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private tutorialService = inject(TutorialService);
 
   dataSource = new MatTableDataSource<Member>([]);
   displayedColumns: string[] = ['name', 'remarks', 'membershipStatus', 'membershipExpiration', 'actions'];
@@ -48,6 +51,10 @@ export class MemberList implements AfterViewInit, OnInit {
     this.setupFilterPredicate();
     this.setupUrlPersistence();
     this.setupDataLoading();
+
+    setTimeout(() => {
+      this.tutorialService.startTutorial(TUTORIALS['MEMBERS_LIST'].id);
+    }, 1000);
   }
 
   setupFilterPredicate() {

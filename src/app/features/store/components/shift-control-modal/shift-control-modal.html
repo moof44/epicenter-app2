@@ -37,36 +37,44 @@
   <mat-dialog-content>
     <div class="summary-section">
       <h3>Shift Summary</h3>
-      
+
       <div class="summary-row">
         <span>Opening Balance</span>
         <span>₱{{ shiftSummary.openingBalance | number:'1.2-2' }}</span>
       </div>
-      
+
       <mat-divider></mat-divider>
-      
+
       <div class="summary-row positive">
         <span>+ Total Sales</span>
         <span>₱{{ shiftSummary.totalSales | number:'1.2-2' }}</span>
       </div>
-      
+      <div class="summary-sub-row">
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;💵 Cash Sales</span>
+        <span>₱{{ (shiftSummary.totalCashSales || 0) | number:'1.2-2' }}</span>
+      </div>
+      <div class="summary-sub-row">
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;📱 GCash Sales</span>
+        <span>₱{{ (shiftSummary.totalGcashSales || 0) | number:'1.2-2' }}</span>
+      </div>
+
       <div class="summary-row positive">
         <span>+ Cash In (Float)</span>
         <span>₱{{ shiftSummary.totalFloatIn | number:'1.2-2' }}</span>
       </div>
-      
+
       <div class="summary-row negative">
         <span>- Expenses</span>
         <span>₱{{ shiftSummary.totalExpenses | number:'1.2-2' }}</span>
       </div>
-      
+
       <div class="summary-row negative">
         <span>- Cash Out (Float)</span>
         <span>₱{{ shiftSummary.totalFloatOut | number:'1.2-2' }}</span>
       </div>
-      
+
       <mat-divider></mat-divider>
-      
+
       <div class="summary-row total">
         <span>Expected Cash</span>
         <span>₱{{ shiftSummary.expectedClosingBalance | number:'1.2-2' }}</span>
@@ -79,7 +87,8 @@
       <input matInput type="number" [(ngModel)]="actualClosingBalance" min="0" step="0.01">
     </mat-form-field>
 
-    <div class="discrepancy" [class.over]="getDiscrepancy() > 0" [class.short]="getDiscrepancy() < 0" *ngIf="getDiscrepancy() !== 0">
+    <div class="discrepancy" [class.over]="getDiscrepancy() > 0" [class.short]="getDiscrepancy() < 0"
+      *ngIf="getDiscrepancy() !== 0">
       <mat-icon>{{ getDiscrepancy() > 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
       <span>{{ getDiscrepancy() > 0 ? 'Over' : 'Short' }} by ₱{{ getDiscrepancy() | number:'1.2-2' | slice:1 }}</span>
     </div>

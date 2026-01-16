@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -16,6 +16,8 @@ import { CashRegisterService } from '../../../../core/services/cash-register.ser
 import { CashTransactionType } from '../../../../core/models/cash-register.model';
 import { ShiftControlModal } from '../shift-control-modal/shift-control-modal';
 import { fadeIn } from '../../../../core/animations/animations';
+import { TutorialService } from '../../../../core/services/tutorial.service';
+import { TUTORIALS } from '../../../../core/constants/tutorials';
 
 @Component({
   selector: 'app-cash-management',
@@ -28,14 +30,15 @@ import { fadeIn } from '../../../../core/animations/animations';
   styleUrl: './cash-management.css',
   animations: [fadeIn]
 })
-export class CashManagement {
+export class CashManagement implements OnInit {
   private cashRegisterService = inject(CashRegisterService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private authService = inject(AuthService);
+  private tutorialService = inject(TutorialService);
 
   currentShift$ = this.cashRegisterService.currentShift$;
-  displayedColumns = ['timestamp', 'type', 'reason', 'amount'];
+  displayedColumns = ['timestamp', 'type', 'paymentMethod', 'reason', 'amount'];
 
   // Form state
   showForm = false;
@@ -44,6 +47,11 @@ export class CashManagement {
   formReason = '';
   isSubmitting = false;
 
+  ngOnInit(): void {
+    setTimeout(() => {
+      this.tutorialService.startTutorial(TUTORIALS['SHIFT_MGMT'].id);
+    }, 1000);
+  }
 
   openForm(type: 'expense' | 'floatIn' | 'floatOut'): void {
     this.formType = type;
