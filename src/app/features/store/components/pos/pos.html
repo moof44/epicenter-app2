@@ -134,7 +134,8 @@
           <span>Total:</span>
           <span class="total-amount">₱{{ (cartTotal$ | async) | number:'1.2-2' }}</span>
         </div>
-        <button mat-raised-button color="primary" class="checkout-btn" (click)="checkout()"
+        <button mat-raised-button color="primary" class="checkout-btn" appPreventDoubleClick
+          (throttledClick)="checkout()"
           [disabled]="isProcessing() || !(cart$ | async)?.length || !(isShiftOpen$ | async)">
           <mat-icon>point_of_sale</mat-icon>
           {{ isProcessing() ? 'Processing...' : 'Checkout' }}

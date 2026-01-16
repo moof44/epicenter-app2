@@ -1,0 +1,186 @@
+[debug] [2026-01-16T14:34:02.690Z] ----------------------------------------------------------------------
+[debug] [2026-01-16T14:34:02.695Z] Command:       /home/jirehpadua/.config/nvm/versions/node/v25.2.1/bin/node /home/jirehpadua/.config/nvm/versions/node/v25.2.1/bin/firebase deploy
+[debug] [2026-01-16T14:34:02.696Z] CLI Version:   15.1.0
+[debug] [2026-01-16T14:34:02.696Z] Platform:      linux
+[debug] [2026-01-16T14:34:02.697Z] Node Version:  v25.2.1
+[debug] [2026-01-16T14:34:02.697Z] Time:          Fri Jan 16 2026 22:34:02 GMT+0800 (Philippine Standard Time)
+[debug] [2026-01-16T14:34:02.697Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-16T14:34:06.569Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-16T14:34:06.570Z] > authorizing via signed-in user (jireh.padua@gmail.com)
+[debug] [2026-01-16T14:34:06.570Z] [iam] checking project epicenter-app for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-01-16T14:34:06.597Z] Checked if tokens are valid: false, expires at: 1768570860381
+[debug] [2026-01-16T14:34:06.597Z] Checked if tokens are valid: false, expires at: 1768570860381
+[debug] [2026-01-16T14:34:06.598Z] > refreshing access token with scopes: []
+[debug] [2026-01-16T14:34:06.601Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-16T14:34:06.601Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-16T14:34:06.977Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-16T14:34:06.979Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-16T14:34:06.999Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app:testIamPermissions [none]
+[debug] [2026-01-16T14:34:07.000Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app:testIamPermissions x-goog-quota-user=projects/epicenter-app
+[debug] [2026-01-16T14:34:07.003Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-16T14:34:08.110Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app:testIamPermissions 200
+[debug] [2026-01-16T14:34:08.111Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-16T14:34:08.112Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:08.112Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:08.112Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/epicenter-app/serviceAccounts/epicenter-app@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-01-16T14:34:08.112Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/epicenter-app/serviceAccounts/epicenter-app@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-01-16T14:34:09.444Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/epicenter-app/serviceAccounts/epicenter-app@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2026-01-16T14:34:09.445Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/epicenter-app/serviceAccounts/epicenter-app@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-01-16T14:34:09.447Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:09.447Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:09.448Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/epicenter-app [none]
+[debug] [2026-01-16T14:34:09.920Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/epicenter-app 200
+[debug] [2026-01-16T14:34:09.920Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/epicenter-app {"projectId":"epicenter-app","projectNumber":"190360788968","displayName":"epicenter-app","name":"projects/epicenter-app","resources":{"hostingSite":"epicenter-app"},"state":"ACTIVE","etag":"1_93efdf0f-00fa-4792-9fb3-c4d470fc7b68"}
+[info] 
+[info] === Deploying to 'epicenter-app'...
+[info] 
+[info] i  deploying firestore, functions, hosting 
+[info] Running command: npm --prefix "$RESOURCE_DIR" run build
+[info] ✔  functions: Finished running predeploy script. 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-01-16T14:34:21.570Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:21.581Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:21.582Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default) [none]
+[debug] [2026-01-16T14:34:23.009Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default) 200
+[debug] [2026-01-16T14:34:23.010Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default) {"name":"projects/epicenter-app/databases/(default)","uid":"ca4c15b7-9da7-4a59-b9c2-c0334f413ccc","createTime":"2025-11-08T00:54:39.606124Z","updateTime":"2025-11-08T00:54:39.606124Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-01-16T13:34:24.010940Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":false,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"ILXJ4OajkJIDMI3zsI6t4ZAD"}
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[debug] [2026-01-16T14:34:23.014Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:23.014Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:23.015Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app [none]
+[debug] [2026-01-16T14:34:24.146Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app 200
+[debug] [2026-01-16T14:34:24.146Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app {"projectNumber":"190360788968","projectId":"epicenter-app","lifecycleState":"ACTIVE","name":"epicenter-app","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-08-20T11:25:52.631636Z"}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2026-01-16T14:34:24.148Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:24.148Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:24.148Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/epicenter-app/adminSdkConfig [none]
+[debug] [2026-01-16T14:34:24.555Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/epicenter-app/adminSdkConfig 200
+[debug] [2026-01-16T14:34:24.555Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/epicenter-app/adminSdkConfig {"projectId":"epicenter-app","storageBucket":"epicenter-app.firebasestorage.app"}
+[debug] [2026-01-16T14:34:24.557Z] Validating nodejs source
+[debug] [2026-01-16T14:34:34.586Z] checkFunctionsSDKVersion was unable to fetch information from NPM Error: spawnSync npm ETIMEDOUT
+    at Object.spawnSync (node:internal/child_process:1104:20)
+    at Object.spawnSync (node:child_process:911:24)
+    at spawn.spawnSync [as sync] (/home/jirehpadua/.config/nvm/versions/node/v25.2.1/lib/node_modules/firebase-tools/node_modules/cross-spawn/index.js:26:23)
+    at Object.getLatestSDKVersion (/home/jirehpadua/.config/nvm/versions/node/v25.2.1/lib/node_modules/firebase-tools/lib/deploy/functions/runtimes/node/versioning.js:54:25)
+    at Object.checkFunctionsSDKVersion (/home/jirehpadua/.config/nvm/versions/node/v25.2.1/lib/node_modules/firebase-tools/lib/deploy/functions/runtimes/node/versioning.js:74:32)
+    at Delegate.validate (/home/jirehpadua/.config/nvm/versions/node/v25.2.1/lib/node_modules/firebase-tools/lib/deploy/functions/runtimes/node/index.js:88:20)
+    at loadCodebases (/home/jirehpadua/.config/nvm/versions/node/v25.2.1/lib/node_modules/firebase-tools/lib/deploy/functions/prepare.js:316:31)
+    at async prepare (/home/jirehpadua/.config/nvm/versions/node/v25.2.1/lib/node_modules/firebase-tools/lib/deploy/functions/prepare.js:66:24)
+    at async chain (/home/jirehpadua/.config/nvm/versions/node/v25.2.1/lib/node_modules/firebase-tools/lib/deploy/index.js:43:9)
+    at async deploy (/home/jirehpadua/.config/nvm/versions/node/v25.2.1/lib/node_modules/firebase-tools/lib/deploy/index.js:123:9)
+[debug] [2026-01-16T14:34:34.587Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.4.1",
+    "typescript": "^5.7.3"
+  },
+  "private": true
+}
+[debug] [2026-01-16T14:34:34.588Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2026-01-16T14:34:34.591Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-01-16T14:34:34.609Z] Found firebase-functions binary at '/home/jirehpadua/epicenter-app2/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8395
+
+[debug] [2026-01-16T14:34:35.318Z] Got response from /__/functions.yaml {"endpoints":{"createStaffAccount":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"createStaffAccount"},"updateStaffAccount":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"updateStaffAccount"},"toggleStaffStatus":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"toggleStaffStatus"},"emergencyLogoutAll":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"emergencyLogoutAll"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2026-01-16T14:34:39.357Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-16T14:34:39.357Z] > authorizing via signed-in user (jireh.padua@gmail.com)
+[debug] [2026-01-16T14:34:39.357Z] [iam] checking project epicenter-app for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2026-01-16T14:34:39.357Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:39.357Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:39.357Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app:testIamPermissions [none]
+[debug] [2026-01-16T14:34:39.357Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app:testIamPermissions x-goog-quota-user=projects/epicenter-app
+[debug] [2026-01-16T14:34:39.357Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2026-01-16T14:34:40.360Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app:testIamPermissions 200
+[debug] [2026-01-16T14:34:40.360Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2026-01-16T14:34:40.360Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:40.360Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:40.361Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/epicenter-app/instances pageSize=100&pageToken=
+[debug] [2026-01-16T14:34:41.784Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/epicenter-app/instances 200
+[debug] [2026-01-16T14:34:41.784Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/epicenter-app/instances {}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged /home/jirehpadua/epicenter-app2/functions (99.85 KB) for uploading 
+[debug] [2026-01-16T14:34:41.842Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:41.842Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:41.842Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/epicenter-app/locations/-/functions [none]
+[debug] [2026-01-16T14:34:42.849Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/epicenter-app/locations/-/functions 200
+[debug] [2026-01-16T14:34:42.849Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/epicenter-app/locations/-/functions {"functions":[{"name":"projects/epicenter-app/locations/us-central1/functions/updateStaffAccount","httpsTrigger":{"url":"https://us-central1-epicenter-app.cloudfunctions.net/updateStaffAccount","securityLevel":"SECURE_ALWAYS"},"status":"ACTIVE","entryPoint":"updateStaffAccount","timeout":"60s","availableMemoryMb":256,"serviceAccountEmail":"epicenter-app@appspot.gserviceaccount.com","updateTime":"2026-01-14T09:55:58.765Z","versionId":"3","labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"022fe8797709fdfd4adb7af9e804dc4a3ced7e80"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-628396965514.us-central1.cloudfunctions.appspot.com/d8a11e03-b4d6-4626-817c-2af1660e1b80.zip","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"epicenter-app\",\"storageBucket\":\"epicenter-app.firebasestorage.app\"}","GCLOUD_PROJECT":"epicenter-app","EVENTARC_CLOUD_EVENT_SOURCE":"projects/epicenter-app/locations/us-central1/functions/updateStaffAccount"},"runtime":"nodejs20","ingressSettings":"ALLOW_ALL","buildId":"627b5c19-49b9-4c6a-8890-727553028f27","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"buildName":"projects/190360788968/locations/us-central1/builds/627b5c19-49b9-4c6a-8890-727553028f27","dockerRegistry":"ARTIFACT_REGISTRY","automaticUpdatePolicy":{},"buildServiceAccount":"projects/epicenter-app/serviceAccounts/190360788968-compute@developer.gserviceaccount.com","satisfiesPzi":true},{"name":"projects/epicenter-app/locations/us-central1/functions/createStaffAccount","httpsTrigger":{"url":"https://us-central1-epicenter-app.cloudfunctions.net/createStaffAccount","securityLevel":"SECURE_ALWAYS"},"status":"ACTIVE","entryPoint":"createStaffAccount","timeout":"60s","availableMemoryMb":256,"serviceAccountEmail":"epicenter-app@appspot.gserviceaccount.com","updateTime":"2026-01-14T09:55:52.049Z","versionId":"3","labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"022fe8797709fdfd4adb7af9e804dc4a3ced7e80"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-628396965514.us-central1.cloudfunctions.appspot.com/d8a11e03-b4d6-4626-817c-2af1660e1b80.zip","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"epicenter-app\",\"storageBucket\":\"epicenter-app.firebasestorage.app\"}","GCLOUD_PROJECT":"epicenter-app","EVENTARC_CLOUD_EVENT_SOURCE":"projects/epicenter-app/locations/us-central1/functions/createStaffAccount"},"runtime":"nodejs20","ingressSettings":"ALLOW_ALL","buildId":"627b5c19-49b9-4c6a-8890-727553028f27","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"buildName":"projects/190360788968/locations/us-central1/builds/627b5c19-49b9-4c6a-8890-727553028f27","dockerRegistry":"ARTIFACT_REGISTRY","automaticUpdatePolicy":{},"buildServiceAccount":"projects/epicenter-app/serviceAccounts/190360788968-compute@developer.gserviceaccount.com","satisfiesPzi":true},{"name":"projects/epicenter-app/locations/us-central1/functions/emergencyLogoutAll","httpsTrigger":{"url":"https://us-central1-epicenter-app.cloudfunctions.net/emergencyLogoutAll","securityLevel":"SECURE_ALWAYS"},"status":"ACTIVE","entryPoint":"emergencyLogoutAll","timeout":"60s","availableMemoryMb":256,"serviceAccountEmail":"epicenter-app@appspot.gserviceaccount.com","updateTime":"2026-01-14T04:19:11.855180417Z","versionId":"1","labels":{"deployment-callable":"true","firebase-functions-hash":"022fe8797709fdfd4adb7af9e804dc4a3ced7e80","deployment-tool":"cli-firebase"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-628396965514.us-central1.cloudfunctions.appspot.com/b635be72-5c37-49f7-ae58-4681d9ba54b0.zip","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"epicenter-app\",\"storageBucket\":\"epicenter-app.firebasestorage.app\"}","GCLOUD_PROJECT":"epicenter-app","EVENTARC_CLOUD_EVENT_SOURCE":"projects/epicenter-app/locations/us-central1/functions/emergencyLogoutAll"},"runtime":"nodejs20","ingressSettings":"ALLOW_ALL","buildId":"63e19e64-e53a-409d-ab1d-d1d7eb9ee393","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"buildName":"projects/190360788968/locations/us-central1/builds/63e19e64-e53a-409d-ab1d-d1d7eb9ee393","dockerRegistry":"ARTIFACT_REGISTRY","automaticUpdatePolicy":{},"buildServiceAccount":"projects/epicenter-app/serviceAccounts/190360788968-compute@developer.gserviceaccount.com","satisfiesPzi":true},{"name":"projects/epicenter-app/locations/us-central1/functions/toggleStaffStatus","httpsTrigger":{"url":"https://us-central1-epicenter-app.cloudfunctions.net/toggleStaffStatus","securityLevel":"SECURE_ALWAYS"},"status":"ACTIVE","entryPoint":"toggleStaffStatus","timeout":"60s","availableMemoryMb":256,"serviceAccountEmail":"epicenter-app@appspot.gserviceaccount.com","updateTime":"2026-01-14T09:55:59.234Z","versionId":"2","labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"022fe8797709fdfd4adb7af9e804dc4a3ced7e80"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-628396965514.us-central1.cloudfunctions.appspot.com/d8a11e03-b4d6-4626-817c-2af1660e1b80.zip","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"epicenter-app\",\"storageBucket\":\"epicenter-app.firebasestorage.app\"}","GCLOUD_PROJECT":"epicenter-app","EVENTARC_CLOUD_EVENT_SOURCE":"projects/epicenter-app/locations/us-central1/functions/toggleStaffStatus"},"runtime":"nodejs20","ingressSettings":"ALLOW_ALL","buildId":"627b5c19-49b9-4c6a-8890-727553028f27","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"buildName":"projects/190360788968/locations/us-central1/builds/627b5c19-49b9-4c6a-8890-727553028f27","dockerRegistry":"ARTIFACT_REGISTRY","automaticUpdatePolicy":{},"buildServiceAccount":"projects/epicenter-app/serviceAccounts/190360788968-compute@developer.gserviceaccount.com","satisfiesPzi":true}]}
+[debug] [2026-01-16T14:34:42.850Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:42.850Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:42.850Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/epicenter-app/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2026-01-16T14:34:44.182Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/epicenter-app/locations/-/functions 200
+[debug] [2026-01-16T14:34:44.182Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/epicenter-app/locations/-/functions {}
+[debug] [2026-01-16T14:34:44.188Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:44.189Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:44.189Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app [none]
+[debug] [2026-01-16T14:34:44.448Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app 200
+[debug] [2026-01-16T14:34:44.448Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/epicenter-app {"projectNumber":"190360788968","projectId":"epicenter-app","lifecycleState":"ACTIVE","name":"epicenter-app","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-08-20T11:25:52.631636Z"}
+[debug] [2026-01-16T14:34:44.454Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:44.454Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:44.456Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:44.456Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:44.457Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/epicenter-app/versions [none]
+[debug] [2026-01-16T14:34:44.457Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/epicenter-app/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-01-16T14:34:44.458Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/epicenter-members-portal/versions [none]
+[debug] [2026-01-16T14:34:44.458Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/epicenter-members-portal/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-01-16T14:34:46.029Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/epicenter-members-portal/versions 200
+[debug] [2026-01-16T14:34:46.058Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/epicenter-members-portal/versions {"name":"projects/190360788968/sites/epicenter-members-portal/versions/fbec5a43b29b3ced","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-01-16T14:34:46.124Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/epicenter-app/versions 200
+[debug] [2026-01-16T14:34:46.125Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/epicenter-app/versions {"name":"projects/190360788968/sites/epicenter-app/versions/b65300c262a99cae","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-01-16T14:34:46.163Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:46.164Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:46.172Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/epicenter-app/releases pageSize=10&pageToken=
+[debug] [2026-01-16T14:34:47.728Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/epicenter-app/releases 200
+[debug] [2026-01-16T14:34:47.729Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/epicenter-app/releases {"releases":[{"name":"projects/epicenter-app/releases/cloud.firestore","rulesetName":"projects/epicenter-app/rulesets/959c814c-3d91-46f5-b401-0dbd2a6d876b","createTime":"2025-11-08T00:54:47.825559Z","updateTime":"2025-11-08T01:13:23.080925Z"}]}
+[debug] [2026-01-16T14:34:47.730Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:47.730Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:47.730Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/epicenter-app/rulesets/959c814c-3d91-46f5-b401-0dbd2a6d876b [none]
+[debug] [2026-01-16T14:34:48.789Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/epicenter-app/rulesets/959c814c-3d91-46f5-b401-0dbd2a6d876b 200
+[debug] [2026-01-16T14:34:48.789Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/epicenter-app/rulesets/959c814c-3d91-46f5-b401-0dbd2a6d876b [omitted]
+[info] i  firestore: deploying indexes... 
+[debug] [2026-01-16T14:34:48.791Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:48.791Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:48.791Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default)/collectionGroups/-/indexes [none]
+[debug] [2026-01-16T14:34:50.151Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default)/collectionGroups/-/indexes 200
+[debug] [2026-01-16T14:34:50.238Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default)/collectionGroups/-/indexes {"indexes":[{"name":"projects/epicenter-app/databases/(default)/collectionGroups/transactions/indexes/CICAgJim14AK","queryScope":"COLLECTION","fields":[{"fieldPath":"staffId","order":"ASCENDING"},{"fieldPath":"date","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/epicenter-app/databases/(default)/collectionGroups/shifts/indexes/CICAgOjXh4EK","queryScope":"COLLECTION","fields":[{"fieldPath":"status","order":"ASCENDING"},{"fieldPath":"endTime","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/epicenter-app/databases/(default)/collectionGroups/transactions/indexes/CICAgJjF9oIK","queryScope":"COLLECTION","fields":[{"fieldPath":"staffId","order":"ASCENDING"},{"fieldPath":"date","order":"ASCENDING"},{"fieldPath":"totalAmount","order":"ASCENDING"},{"fieldPath":"__name__","order":"ASCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/epicenter-app/databases/(default)/collectionGroups/attendance/indexes/CICAgJiUpoMK","queryScope":"COLLECTION","fields":[{"fieldPath":"memberId","order":"ASCENDING"},{"fieldPath":"checkInTime","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"}]}
+[debug] [2026-01-16T14:34:50.238Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:50.239Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:50.239Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* [none]
+[debug] [2026-01-16T14:34:50.480Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* 200
+[debug] [2026-01-16T14:34:50.486Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* {"fields":[{"name":"projects/epicenter-app/databases/(default)/collectionGroups/__default__/fields/*","indexConfig":{"indexes":[{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"ASCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"DESCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","arrayConfig":"CONTAINS"}],"state":"READY"}]}}]}
+[debug] [2026-01-16T14:34:50.487Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:50.487Z] Checked if tokens are valid: true, expires at: 1768577645980
+[debug] [2026-01-16T14:34:50.487Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default) [none]
+[debug] [2026-01-16T14:34:50.793Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default) 200
+[debug] [2026-01-16T14:34:50.793Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/epicenter-app/databases/(default) {"name":"projects/epicenter-app/databases/(default)","uid":"ca4c15b7-9da7-4a59-b9c2-c0334f413ccc","createTime":"2025-11-08T00:54:39.606124Z","updateTime":"2025-11-08T00:54:39.606124Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-01-16T13:34:51.728065Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":false,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"II2l/POjkJIDMI3zsI6t4ZAD"}
+[info] i  firestore: The following indexes are defined in your project but are not present in your firestore indexes file:
+	(shifts) -- (status,ASCENDING) (endTime,DESCENDING)  -- Density:SPARSE_ALL 
+	(attendance) -- (memberId,ASCENDING) (checkInTime,DESCENDING)  -- Density:SPARSE_ALL  

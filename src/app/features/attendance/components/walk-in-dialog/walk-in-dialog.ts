@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { PreventDoubleClickDirective } from '../../../../shared/directives/prevent-double-click.directive';
 
 export interface WalkInDialogResult {
   action: 'walk-in' | 'check-in' | 'cancel';
@@ -24,7 +25,8 @@ export interface WalkInDialogResult {
   selector: 'app-walk-in-dialog',
   imports: [
     CommonModule, MatDialogModule, MatButtonModule, FormsModule,
-    MatButtonToggleModule, MatInputModule, MatFormFieldModule
+    MatButtonToggleModule, MatInputModule, MatFormFieldModule,
+    PreventDoubleClickDirective
   ],
   template: `
     <h2 mat-dialog-title>Subscription Alert</h2>
@@ -53,7 +55,7 @@ export interface WalkInDialogResult {
     <mat-dialog-actions align="end">
       <button mat-button (click)="onAction('cancel')">Cancel</button>
       <button mat-stroked-button color="warn" (click)="onAction('check-in')">No (Check-in Only)</button>
-      <button mat-raised-button color="primary" (click)="onAction('walk-in')"
+      <button mat-raised-button color="primary" appPreventDoubleClick (throttledClick)="onAction('walk-in')"
         [disabled]="paymentMethod === 'GCASH' && !referenceNumber">
         Yes (Walk-in Transaction)
       </button>

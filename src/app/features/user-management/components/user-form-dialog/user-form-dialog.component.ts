@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { UserService } from '../../../../core/services/user.service';
 import { CreateUserDto, User } from '../../../../core/models/user.model';
+import { PreventDoubleClickDirective } from '../../../../shared/directives/prevent-double-click.directive';
 
 @Component({
     selector: 'app-user-form-dialog',
@@ -23,8 +24,10 @@ import { CreateUserDto, User } from '../../../../core/models/user.model';
         MatInputModule,
         MatFormFieldModule,
         MatSelectModule,
+        MatSelectModule,
         MatProgressSpinnerModule,
-        MatSnackBarModule
+        MatSnackBarModule,
+        PreventDoubleClickDirective
     ],
     templateUrl: './user-form-dialog.component.html',
     styleUrls: ['./user-form-dialog.component.scss'],

@@ -15,6 +15,7 @@ import { Member } from '../../../../core/models/member.model'; // Fixed path
 import { MemberService } from '../../../../core/services/member.service'; // Fixed path
 import { AttendanceService } from '../../../../core/services/attendance.service'; // Fixed path
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
+import { PreventDoubleClickDirective } from '../../../../shared/directives/prevent-double-click.directive';
 import { fadeIn } from '../../../../core/animations/animations';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { StoreService } from '../../../../core/services/store.service';
@@ -31,7 +32,8 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule, MatFormFieldModule,
     MatInputModule, MatAutocompleteModule, MatButtonModule, MatIconModule,
-    MatCardModule, MatGridListModule, MatSnackBarModule, MatDialogModule
+    MatCardModule, MatGridListModule, MatSnackBarModule, MatDialogModule,
+    PreventDoubleClickDirective
   ],
   /* v8 ignore start */
   template: `
@@ -85,7 +87,7 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
         </div>
 
         <div class="actions">
-            <button mat-raised-button color="primary" (click)="confirmCheckIn()" class="check-in-btn" 
+            <button mat-raised-button color="primary" appPreventDoubleClick (throttledClick)="confirmCheckIn()" class="check-in-btn" 
                     [disabled]="isSubmitting || (isShiftOpen$ | async) === false">
                 <span *ngIf="!isSubmitting">CHECK IN <span *ngIf="selectedLocker">(Locker {{selectedLocker}})</span></span>
                 <span *ngIf="isSubmitting">Checking In...</span>

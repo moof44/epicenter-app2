@@ -17,13 +17,15 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { StoreService } from '../../../../core/services/store.service';
 import { Product, ProductCategory, ProductType } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
+import { PreventDoubleClickDirective } from '../../../../shared/directives/prevent-double-click.directive';
 
 @Component({
   selector: 'app-product-management',
   imports: [
     CommonModule, FormsModule, MatTableModule, MatButtonModule, MatIconModule,
     MatInputModule, MatFormFieldModule, MatSelectModule, MatDialogModule,
-    MatPaginatorModule, MatChipsModule, MatSnackBarModule, MatTabsModule, MatTooltipModule
+    MatPaginatorModule, MatChipsModule, MatSnackBarModule, MatTabsModule, MatTooltipModule,
+    PreventDoubleClickDirective
   ],
   templateUrl: './product-management.html',
   styleUrl: './product-management.css',

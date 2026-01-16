@@ -91,7 +91,8 @@
 
         <div class="actions">
           <button mat-button type="button" (click)="cancel()">Cancel</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">
+          <button mat-raised-button color="primary" type="button" appPreventDoubleClick (throttledClick)="onSubmit()"
+            [disabled]="form.invalid || loading">
             <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
             <span *ngIf="!loading">{{ isEditMode ? 'Update' : 'Create' }}</span>
           </button>

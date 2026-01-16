@@ -55,7 +55,7 @@
 
 <mat-dialog-actions align="end">
     <button mat-button (click)="cancel()">Cancel</button>
-    <button mat-raised-button color="primary" (click)="confirm()"
+    <button mat-raised-button color="primary" appPreventDoubleClick (throttledClick)="confirm()"
         [disabled]="(paymentMethod() === 'GCASH' && !referenceNumber().trim()) || (paymentMethod() === 'CASH' && (amountTendered() === null || amountTendered()! < data.total))">
         Confirm Payment
     </button>

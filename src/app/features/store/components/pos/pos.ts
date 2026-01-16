@@ -26,12 +26,14 @@ import { getRandomCommendation } from '../../../../core/constants/commendations'
 import { TutorialService } from '../../../../core/services/tutorial.service';
 import { TUTORIALS } from '../../../../core/constants/tutorials';
 
+import { PreventDoubleClickDirective } from '../../../../shared/directives/prevent-double-click.directive';
+
 @Component({
   selector: 'app-pos',
   imports: [
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatCardModule,
     MatBadgeModule, MatDividerModule, MatSnackBarModule, MatChipsModule,
-    MatInputModule, MatFormFieldModule, MatDialogModule, MatAutocompleteModule, ReactiveFormsModule
+    MatInputModule, MatFormFieldModule, MatDialogModule, MatAutocompleteModule, ReactiveFormsModule, PreventDoubleClickDirective
   ],
   templateUrl: './pos.html',
   styleUrl: './pos.css',

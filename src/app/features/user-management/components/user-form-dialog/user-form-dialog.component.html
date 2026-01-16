@@ -60,7 +60,8 @@
 
 <mat-dialog-actions align="end">
     <button mat-button (click)="onCancel()" [disabled]="isSubmitting()">Cancel</button>
-    <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="userForm.invalid || isSubmitting()">
+    <button mat-raised-button color="primary" appPreventDoubleClick (throttledClick)="onSubmit()"
+        [disabled]="userForm.invalid || isSubmitting()">
         @if (isSubmitting()) {
         <div class="spinner-container">
             <mat-spinner diameter="20"></mat-spinner>

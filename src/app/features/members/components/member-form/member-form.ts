@@ -13,13 +13,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { fadeIn } from '../../../../core/animations/animations';
+import { PreventDoubleClickDirective } from '../../../../shared/directives/prevent-double-click.directive';
 
 @Component({
   selector: 'app-member-form',
   imports: [
     CommonModule, ReactiveFormsModule, MatInputModule,
     MatSelectModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule,
-    MatDatepickerModule, MatNativeDateModule
+    MatDatepickerModule, MatNativeDateModule, PreventDoubleClickDirective
   ],
   templateUrl: './member-form.html',
   styleUrl: './member-form.css',

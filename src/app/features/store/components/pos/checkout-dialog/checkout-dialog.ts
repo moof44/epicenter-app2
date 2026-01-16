@@ -19,11 +19,13 @@ export interface CheckoutDialogResult {
     changeDue?: number;
 }
 
+import { PreventDoubleClickDirective } from '../../../../../shared/directives/prevent-double-click.directive';
+
 @Component({
     selector: 'app-checkout-dialog',
     imports: [
         CommonModule, MatDialogModule, MatButtonModule, MatButtonToggleModule,
-        MatIconModule, MatInputModule, MatFormFieldModule, FormsModule
+        MatIconModule, MatInputModule, MatFormFieldModule, FormsModule, PreventDoubleClickDirective
     ],
     templateUrl: './checkout-dialog.html',
     styleUrl: './checkout-dialog.css'
