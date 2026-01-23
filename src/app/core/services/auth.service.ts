@@ -1,5 +1,5 @@
 import { Injectable, inject, computed } from '@angular/core';
-import { Auth, signInWithEmailAndPassword, signOut, authState } from '@angular/fire/auth';
+import { Auth, signInWithEmailAndPassword, signOut, authState, setPersistence, browserLocalPersistence, browserSessionPersistence } from '@angular/fire/auth';
 import { Firestore, doc, docData } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -47,8 +47,11 @@ export class AuthService {
         return requiredRoles.some(role => user.roles.includes(role));
     }
 
-    login(email: string, password: string): Observable<any> {
-        return from(signInWithEmailAndPassword(this.auth, email, password));
+    login(email: string, password: string, rememberMe = false): Observable<any> {
+        return from(
+            setPersistence(this.auth, rememberMe ? browserLocalPersistence : browserSessionPersistence)
+                .then(() => signInWithEmailAndPassword(this.auth, email, password))
+        );
     }
 
     logout(): Observable<void> {
