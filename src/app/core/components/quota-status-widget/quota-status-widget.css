@@ -51,8 +51,30 @@
 }
 
 @media (max-width: 600px) {
+
+    /* Originally hidden, now we show it but selectively */
     .quota-widget {
-        display: none;
-        /* Hide on mobile to save space */
+        display: flex;
+        margin-right: 8px;
+        /* Reduce margin */
+        gap: 4px;
+    }
+
+    /* Hide monthly and divider on mobile to save space */
+    .monthly-status,
+    .divider {
+        display: none !important;
+    }
+
+    /* Keep daily status visible and compact */
+    .daily-status {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .daily-status mat-icon {
+        width: 16px;
+        height: 16px;
+        font-size: 16px;
     }
 }
