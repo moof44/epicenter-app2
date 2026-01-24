@@ -26,6 +26,9 @@ import { getRandomCommendation } from '../../../../core/constants/commendations'
 import { TutorialService } from '../../../../core/services/tutorial.service';
 import { TUTORIALS } from '../../../../core/constants/tutorials';
 
+import { MatStepperModule, MatStepper } from '@angular/material/stepper';
+import { ViewChild } from '@angular/core';
+
 import { PreventDoubleClickDirective } from '../../../../shared/directives/prevent-double-click.directive';
 
 @Component({
@@ -33,7 +36,8 @@ import { PreventDoubleClickDirective } from '../../../../shared/directives/preve
   imports: [
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatCardModule,
     MatBadgeModule, MatDividerModule, MatSnackBarModule, MatChipsModule,
-    MatInputModule, MatFormFieldModule, MatDialogModule, MatAutocompleteModule, ReactiveFormsModule, PreventDoubleClickDirective
+    MatInputModule, MatFormFieldModule, MatDialogModule, MatAutocompleteModule,
+    ReactiveFormsModule, MatStepperModule, PreventDoubleClickDirective
   ],
   templateUrl: './pos.html',
   styleUrl: './pos.css',
@@ -41,6 +45,8 @@ import { PreventDoubleClickDirective } from '../../../../shared/directives/preve
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class POS implements OnInit {
+  @ViewChild('stepper') stepper!: MatStepper;
+
   private storeService = inject(StoreService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
@@ -160,6 +166,24 @@ export class POS implements OnInit {
     return typeof member === 'string' ? member : member.name;
   }
 
+  // Stepper Logic
+  onMemberSelected(): void {
+    // Optional: Auto-advance if a member is picked via autocomplete? 
+    // For now, we'll let them click "Next" manually or call this if needed.
+    // this.stepper.next(); 
+  }
+
+  skipMemberSelection(): void {
+    this.clearMember();
+    this.stepper.next();
+  }
+
+  resetStepper(): void {
+    this.stepper.reset();
+    this.clearCart();
+    this.clearMember();
+  }
+
   isCheckoutPending = false; // Sync flag to prevent double-click entry
 
   async checkout(): Promise<void> {
@@ -205,8 +229,8 @@ export class POS implements OnInit {
       const commendation = getRandomCommendation('SALES');
       this.snackBar.open(`${commendation} (Tx: ${transactionId.slice(0, 8)})`, 'Close', { duration: 4000 });
 
-      // Reset member selection after sale
-      this.clearMember();
+      // Reset flow after sale
+      this.resetStepper();
     } catch (error: any) {
       this.snackBar.open(error.message || 'Checkout failed', 'Close', { duration: 3000 });
     } finally {
