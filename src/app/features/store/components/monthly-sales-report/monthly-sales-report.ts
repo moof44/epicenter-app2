@@ -53,7 +53,7 @@ export class MonthlySalesReport {
     settings = toSignal(this.settings$, { initialValue: { monthlyQuota: 0 } });
 
     // Columns
-    displayedColumns = ['date', 'dayName', 'totalSales'];
+    displayedColumns = ['date', 'dayName', 'totalSales', 'actions'];
 
     // Calculations
     progress = computed(() => {
@@ -114,15 +114,46 @@ export class MonthlySalesReport {
         });
     }
 
-    async refreshData() {
-        if (confirm('Recalculate historical data? This may take moment.')) {
+    async recalculateMonth() {
+        if (confirm(`Recalculate sales for ${this.getMonthName(this.viewMonth())} ${this.viewYear()}?`)) {
+            await this.storeService.recalculateSalesForMonth(this.viewYear(), this.viewMonth());
+            this.reportStateService.clearCache();
+            this.forceReload();
+            alert('Month recalculated.');
+        }
+    }
+
+    async recalculateDay(daySales: any) {
+        // daily_sales collection uses date object.
+        // The daySales object in the table comes from the report state service `DailySales` interface.
+        // It has `date: Date`.
+        if (confirm(`Recalculate sales for ${this.getDayName(daySales.date)} ${daySales.date.toLocaleDateString()}?`)) {
+            await this.storeService.recalculateSalesForDay(daySales.date);
+            this.reportStateService.clearCache();
+            this.forceReload();
+        }
+    }
+
+    private forceReload() {
+        const current = this.currentDate();
+        // Trigger signal update
+        this.currentDate.set(new Date(current.getTime() + 1));
+        setTimeout(() => this.currentDate.set(current), 0);
+    }
+
+    // Deprecate or remove old refreshData if it was doing full db recalc
+    // refreshData() { ... } -> Keeping as "Recalculate Everything" or removing? 
+    // The previous code had `refreshData` calling `recalculateDailySales` (FULL DB).
+    // I will rename it to `recalculateAll` or keep it as a separate option.
+    // The user asked for "per day and per month". 
+    // I'll keep the old one as a "Nuclear Option" but maybe move it or rename it.
+    // Use the name `recalculateAll` explicitly.
+    async recalculateAll() {
+        if (confirm('Recalculate ENTIRE historical database? This will be slow.')) {
             await this.storeService.recalculateDailySales();
-            this.reportStateService.clearCache(); // Clear cache so new data loads
-            // Trigger refresh of view
-            const current = this.currentDate();
-            this.currentDate.set(new Date(current.getTime() + 1));
-            this.currentDate.set(current);
-            alert('Data refreshed.');
+            this.reportStateService.clearCache();
+            this.forceReload();
+            alert('Full database refreshed.');
         }
     }
 }

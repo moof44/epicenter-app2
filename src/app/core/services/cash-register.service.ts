@@ -15,6 +15,7 @@ import {
   arrayUnion,
   increment
 } from '@angular/fire/firestore';
+import { documentId } from 'firebase/firestore';
 import { Observable, BehaviorSubject } from 'rxjs';
 import {
   CashTransaction,
@@ -257,6 +258,71 @@ export class CashRegisterService {
     await updateDoc(docRef, updates);
 
     this.currentShift.next(null);
+  }
+
+  // Recalculate shift totals from transactions (Fix sync issues)
+  async recalculateShiftTotals(shiftId: string): Promise<{ salesDiff: number }> {
+    const shiftRef = doc(this.firestore, 'shifts', shiftId);
+    const shiftSnap = await getDocs(query(this.shiftsCollection, where(documentId(), '==', shiftId)));
+
+    if (shiftSnap.empty) throw new Error('Shift not found');
+
+    const shiftData = shiftSnap.docs[0].data() as ShiftSession;
+    if (!shiftData.transactions || !Array.isArray(shiftData.transactions)) {
+      return { salesDiff: 0 };
+    }
+
+    let totalSales = 0;
+    let totalRevenue = 0;
+    let totalExpenses = 0;
+    let totalFloatIn = 0;
+    let totalFloatOut = 0;
+    let totalCashSales = 0;
+    let totalGcashSales = 0;
+
+    for (const tx of shiftData.transactions) {
+      switch (tx.type) {
+        case 'Sale':
+          totalRevenue += tx.amount;
+          totalSales += tx.amount; // Legacy
+          if (tx.paymentMethod === 'GCASH') {
+            totalGcashSales += tx.amount;
+          } else {
+            totalCashSales += tx.amount;
+          }
+          break;
+        case 'Float_In':
+          totalFloatIn += tx.amount;
+          break;
+        case 'Expense':
+          totalExpenses += tx.amount;
+          break;
+        case 'Float_Out':
+          totalFloatOut += tx.amount;
+          break;
+      }
+    }
+
+    const expectedClosingBalance = shiftData.openingBalance + totalCashSales + totalFloatIn - totalExpenses - totalFloatOut;
+    const diff = totalSales - (shiftData.totalSales || 0);
+
+    await updateDoc(shiftRef, {
+      totalSales,
+      totalRevenue,
+      totalExpenses,
+      totalFloatIn,
+      totalFloatOut,
+      totalCashSales,
+      totalGcashSales,
+      expectedClosingBalance
+    });
+
+    // Refresh if it's the current shift
+    if (this.currentShift.getValue()?.id === shiftId) {
+      await this.refreshShift();
+    }
+
+    return { salesDiff: diff };
   }
 
   getShiftHistory(limitCount = 50, startDate?: Date, endDate?: Date): Observable<ShiftSession[]> {

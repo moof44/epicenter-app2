@@ -22,7 +22,8 @@ import {
   DocumentData,
   sum,
   getAggregateFromServer,
-  arrayUnion
+  arrayUnion,
+  setDoc
 } from '@angular/fire/firestore';
 import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
 import { Product, CartItem, Transaction, ProductSalesData, InventoryLog, DailySales } from '../models/store.model';
@@ -709,5 +710,80 @@ export class StoreService {
       await batch.commit();
     }
     // console.log('Recalculation Complete.');
+  }
+
+  async recalculateSalesForDay(date: Date): Promise<void> {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+
+    const q = query(
+      this.transactionsCollection,
+      where('date', '>=', start),
+      where('date', '<=', end)
+    );
+
+    const snapshot = await getDocs(q);
+    let totalSales = 0;
+
+    snapshot.forEach(doc => {
+      const data = doc.data() as Transaction;
+      // recalculateDailySales sums 'totalAmount'
+      totalSales += data.totalAmount || 0;
+    });
+
+    const dateStr = start.toISOString().split('T')[0];
+    const ref = doc(this.firestore, 'daily_sales', dateStr);
+
+    // safe upsert
+    await setDoc(ref, {
+      totalSales: totalSales,
+      date: start
+    }, { merge: true });
+  }
+
+  async recalculateSalesForMonth(year: number, month: number): Promise<void> {
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+    const q = query(
+      this.transactionsCollection,
+      where('date', '>=', start),
+      where('date', '<=', end)
+    );
+
+    const snapshot = await getDocs(q);
+    const salesMap = new Map<string, number>();
+
+    // Just map what we find
+    snapshot.forEach(doc => {
+      const data = doc.data() as Transaction;
+      const date = data.date instanceof Date ? data.date : (data.date as any).toDate();
+      const dateStr = date.toISOString().split('T')[0];
+      const current = salesMap.get(dateStr) || 0;
+      salesMap.set(dateStr, current + data.totalAmount);
+    });
+
+    let batch = writeBatch(this.firestore);
+    let count = 0;
+
+    for (const [dateStr, total] of salesMap) {
+      const ref = doc(this.firestore, 'daily_sales', dateStr);
+      batch.set(ref, {
+        totalSales: total,
+        date: new Date(dateStr)
+      });
+      count++;
+      if (count >= 400) {
+        await batch.commit();
+        batch = writeBatch(this.firestore);
+        count = 0;
+      }
+    }
+
+    if (count > 0) {
+      await batch.commit();
+    }
   }
 }
