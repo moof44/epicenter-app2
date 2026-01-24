@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { Firestore, collection, collectionData, query, where, orderBy, addDoc, doc, updateDoc, Timestamp, getDocs, limit, startAfter } from '@angular/fire/firestore';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AttendanceRecord } from '../models/attendance.model';
 import { Member } from '../models/member.model';
@@ -143,6 +143,13 @@ export class AttendanceService {
             if (occupied.includes(lockerNumber)) {
                 throw new Error(`Locker ${lockerNumber} (${member.gender}) is already occupied.`);
             }
+        }
+
+        // Check for existing active check-in
+        const activeCheckIns = await firstValueFrom(this.getActiveCheckIns());
+        const alreadyCheckedIn = activeCheckIns.some((record: AttendanceRecord) => record.memberId === member.id);
+        if (alreadyCheckedIn) {
+            throw new Error(`Member ${member.name} is already checked in.`);
         }
 
         const now = new Date();

@@ -8,6 +8,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
@@ -21,7 +23,9 @@ import { AuthService } from '../../../../core/services/auth.service';
         MatButtonModule,
         MatFormFieldModule,
         MatProgressSpinnerModule,
-        MatSnackBarModule
+        MatSnackBarModule,
+        MatIconModule,
+        MatCheckboxModule
     ],
     templateUrl: './login.component.html',
     styleUrls: ['./login.component.scss'],
@@ -34,11 +38,18 @@ export class LoginComponent {
     private snackBar = inject(MatSnackBar);
 
     isLoading = signal(false);
+    hidePassword = signal(true);
 
     loginForm: FormGroup = this.fb.group({
         email: ['', [Validators.required, Validators.email]],
-        password: ['', [Validators.required]]
+        password: ['', [Validators.required]],
+        rememberMe: [false]
     });
+
+    togglePasswordVisibility(event: MouseEvent) {
+        event.stopPropagation();
+        this.hidePassword.update(value => !value);
+    }
 
     onSubmit() {
         if (this.loginForm.invalid) {
@@ -46,9 +57,9 @@ export class LoginComponent {
         }
 
         this.isLoading.set(true);
-        const { email, password } = this.loginForm.value;
+        const { email, password, rememberMe } = this.loginForm.value;
 
-        this.authService.login(email, password).subscribe({
+        this.authService.login(email, password, rememberMe).subscribe({
             next: () => {
                 this.isLoading.set(false);
                 this.router.navigate(['/']); // Navigate to dashboard/home
