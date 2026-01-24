@@ -3,6 +3,10 @@
   <button mat-raised-button color="primary" (click)="openShiftModal()">
     <mat-icon>settings</mat-icon> Shift Control
   </button>
+  <button mat-stroked-button (click)="recalculateShift()" matTooltip="Recalculate Shift Totals"
+    [disabled]="isSubmitting" style="margin-left: 8px;">
+    <mat-icon>sync</mat-icon> Recalculate
+  </button>
 </div>
 
 <ng-container *ngIf="currentShift$ | async as shift; else noShift">

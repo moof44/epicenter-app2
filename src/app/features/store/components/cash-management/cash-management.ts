@@ -143,4 +143,29 @@ export class CashManagement implements OnInit {
     if (!timestamp) return new Date();
     return timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
   }
+
+  async recalculateShift(): Promise<void> {
+    const shift = await this.cashRegisterService.currentShift$.pipe().toPromise(); // Get current value safely or use behaviorsubject value
+    // better:
+    const currentShift = this.cashRegisterService['currentShift'].getValue(); // Accessing private subject? No, it exposes it as observable usually.
+    // The service has `getCurrentShiftId()`
+    const shiftId = this.cashRegisterService.getCurrentShiftId();
+
+    if (!shiftId) {
+      this.snackBar.open('No active shift to recalculate', 'Close', { duration: 3000 });
+      return;
+    }
+
+    if (confirm('Are you sure you want to recalculate shift totals? This will update the summary based on all transactions.')) {
+      this.isSubmitting = true;
+      try {
+        const result = await this.cashRegisterService.recalculateShiftTotals(shiftId);
+        this.snackBar.open(`Shift totals recalculated. Adjustment: ₱${result.salesDiff.toFixed(2)}`, 'Close', { duration: 4000 });
+      } catch (error: any) {
+        this.snackBar.open('Recalculation failed: ' + error.message, 'Close', { duration: 3000 });
+      } finally {
+        this.isSubmitting = false;
+      }
+    }
+  }
 }

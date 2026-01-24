@@ -36,7 +36,13 @@
 
   <mat-dialog-content>
     <div class="summary-section">
-      <h3>Shift Summary</h3>
+      <div class="summary-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Shift Summary</h3>
+        <button mat-icon-button color="primary" (click)="recalculate()" matTooltip="Recalculate Shift Totals"
+          [disabled]="isLoading">
+          <mat-icon>sync</mat-icon>
+        </button>
+      </div>
 
       <div class="summary-row">
         <span>Opening Balance</span>
