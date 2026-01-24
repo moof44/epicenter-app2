@@ -267,18 +267,41 @@
 }
 
 .method-badge {
-    padding: 2px 8px;
-    border-radius: 4px;
-    background-color: #e0e0e0;
-    font-size: 0.85em;
-    font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: #e0e0e0;
+  font-size: 0.85em;
+  font-weight: 500;
 }
 
 .method-badge.gcash {
-    background-color: #007bff;
-    color: white;
+  background-color: #007bff;
+  color: white;
 }
 
 .text-muted {
-    color: #999;
+  color: #999;
+}
+
+.products-cell {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #555;
+}
+
+/* Animations */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
 }
