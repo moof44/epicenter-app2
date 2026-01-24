@@ -32,6 +32,12 @@
         <mat-divider *ngIf="authService.hasAnyRole(['ADMIN'])"></mat-divider>
         <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN'])">Admin</div>
 
+        <a mat-list-item routerLink="/reports" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
+          <mat-icon matListItemIcon>insights</mat-icon>
+          <span matListItemTitle>Reports Dashboard</span>
+        </a>
+
         <a mat-list-item routerLink="/users" routerLinkActive="active"
           (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
           <mat-icon matListItemIcon>badge</mat-icon>

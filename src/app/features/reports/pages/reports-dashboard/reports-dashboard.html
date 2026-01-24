@@ -1,0 +1,49 @@
+<div class="reports-container">
+    <div class="header-actions">
+        <h1>Reports & Analytics</h1>
+
+        <div class="filters">
+            <mat-form-field appearance="outline" class="dense-form-field">
+                <mat-label>Date Range</mat-label>
+                <mat-date-range-input [formGroup]="range" [rangePicker]="picker">
+                    <input matStartDate formControlName="start" placeholder="Start date">
+                    <input matEndDate formControlName="end" placeholder="End date">
+                </mat-date-range-input>
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-date-range-picker #picker></mat-date-range-picker>
+            </mat-form-field>
+
+            <button mat-flat-button color="primary" (click)="refreshCharts()">
+                <mat-icon>refresh</mat-icon>
+                Generate
+            </button>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- 1. Volume Analysis -->
+        <div class="grid-item volume-section">
+            <app-volume-chart [data]="volumeData" [peakHours]="peakHours"></app-volume-chart>
+        </div>
+
+        <!-- 2. Sales Performance -->
+        <div class="grid-item sales-section">
+            <app-sales-performance [data]="salesData" [monthlyQuota]="monthlyQuota"></app-sales-performance>
+        </div>
+
+        <!-- 3. Product Breakdown -->
+        <div class="grid-item breakdown-section">
+            <app-product-breakdown [data]="productData"></app-product-breakdown>
+        </div>
+
+        <!-- 4. Staff Performance -->
+        <div class="grid-item staff-section">
+            <app-staff-sales [data]="staffData"></app-staff-sales>
+        </div>
+
+        <!-- 5. Member Attendance -->
+        <div class="grid-item member-section">
+            <app-member-attendance [data]="memberData"></app-member-attendance>
+        </div>
+    </div>
+</div>
