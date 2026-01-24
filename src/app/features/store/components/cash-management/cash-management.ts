@@ -145,10 +145,6 @@ export class CashManagement implements OnInit {
   }
 
   async recalculateShift(): Promise<void> {
-    const shift = await this.cashRegisterService.currentShift$.pipe().toPromise(); // Get current value safely or use behaviorsubject value
-    // better:
-    const currentShift = this.cashRegisterService['currentShift'].getValue(); // Accessing private subject? No, it exposes it as observable usually.
-    // The service has `getCurrentShiftId()`
     const shiftId = this.cashRegisterService.getCurrentShiftId();
 
     if (!shiftId) {
