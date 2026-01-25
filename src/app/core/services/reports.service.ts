@@ -21,24 +21,29 @@ export class ReportsService {
 
         const records = await this.attendanceService.getAttendanceRange(startStr, endStr);
 
-        // Group by Day
+        // Group by Day (Unique visits per member)
         const dailyCounts = new Map<string, number>();
-        // Group by Time of Day (Hour) to find peaks
+        const dailyVisitors = new Set<string>(); // key: date_memberId
+
+        // Group by Time of Day (Hour) to find peaks (Total foot traffic)
         const hourlyCounts = new Map<string, number>(); // "08:00", "09:00" etc
 
         records.forEach(record => {
-            // Daily
+            // Daily Volume (Unique Visits)
             const day = record.date;
-            dailyCounts.set(day, (dailyCounts.get(day) || 0) + 1);
+            const visitorKey = `${day}_${record.memberId}`;
 
-            // Hourly
+            if (!dailyVisitors.has(visitorKey)) {
+                dailyVisitors.add(visitorKey);
+                dailyCounts.set(day, (dailyCounts.get(day) || 0) + 1);
+            }
+
+            // Hourly (Total Traffic - keep all check-ins)
             if (record.checkInTime) {
                 let date: Date;
                 if (record.checkInTime.toDate) {
                     date = record.checkInTime.toDate();
                 } else {
-                    // Fallback if it's already a date or number? 
-                    // Usually Firestore timestamps have toDate()
                     date = new Date(record.checkInTime.seconds * 1000);
                 }
 
@@ -117,13 +122,13 @@ export class ReportsService {
         return {
             dailySales: Array.from(salesPerDay.entries()).map(([date, total]) => ({ date, total })).sort((a, b) => a.date.localeCompare(b.date)),
             topSpenders: Array.from(salesPerPerson.values()).sort((a, b) => b.total - a.total).slice(0, 10),
-            topProducts: Array.from(productSales.values()).sort((a, b) => b.quantity - a.quantity).slice(0, 10),
+            topProducts: Array.from(productSales.values()).sort((a, b) => b.quantity - a.quantity),
             staffPerformance: Array.from(staffPerformance.entries()).map(([name, total]) => ({ name, total })).sort((a, b) => b.total - a.total)
         };
     }
 
     /**
-     * 5. Member's Attendance
+     * 5. Member's Attendance (Top Gym Goers)
      */
     async getTopAttendees(startDate: Date, endDate: Date) {
         const startStr = startDate.toISOString().split('T')[0];
@@ -131,12 +136,21 @@ export class ReportsService {
 
         const records = await this.attendanceService.getAttendanceRange(startStr, endStr);
 
+        // Count unique days visited per member
         const memberCounts = new Map<string, { name: string, count: number, lastVisit: any }>();
+        const dailyVisits = new Set<string>(); // key: date_memberId
 
         records.forEach(r => {
+            const visitKey = `${r.date}_${r.memberId}`;
             const entry = memberCounts.get(r.memberId) || { name: r.memberName, count: 0, lastVisit: null };
-            entry.count++;
-            // Keep latest visit
+
+            // Only increment count if this is the first time we see this member TODAY
+            if (!dailyVisits.has(visitKey)) {
+                dailyVisits.add(visitKey);
+                entry.count++;
+            }
+
+            // Always update last visit timestamp to the latest check-in
             if (!entry.lastVisit || (r.checkInTime.seconds > entry.lastVisit.seconds)) {
                 entry.lastVisit = r.checkInTime;
             }

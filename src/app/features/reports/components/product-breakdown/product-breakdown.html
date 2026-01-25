@@ -1,6 +1,14 @@
 <div class="chart-wrapper">
+    <div class="chart-actions" style="display: flex; justify-content: flex-end; margin-bottom: 10px; gap: 8px;">
+        <button mat-stroked-button [class.active-metric]="metric === 'revenue'" (click)="setMetric('revenue')">
+            <mat-icon>attach_money</mat-icon> Sales
+        </button>
+        <button mat-stroked-button [class.active-metric]="metric === 'quantity'" (click)="setMetric('quantity')">
+            <mat-icon>shopping_cart</mat-icon> Quantity
+        </button>
+    </div>
     <div class="chart-container">
         <apx-chart [series]="chartOptions.series!" [chart]="chartOptions.chart!" [labels]="chartOptions.labels!"
-            [legend]="chartOptions.legend!" [title]="chartOptions.title!"></apx-chart>
+            [legend]="chartOptions.legend!" [title]="chartOptions.title!" [tooltip]="chartOptions.tooltip!"></apx-chart>
     </div>
 </div>
