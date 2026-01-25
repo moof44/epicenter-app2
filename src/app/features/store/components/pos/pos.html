@@ -65,6 +65,11 @@
               </mat-chip-option>
             </mat-chip-listbox>
 
+            <button mat-raised-button color="primary" (click)="openCatalog()" class="catalog-btn"
+              style="margin-right: 1rem;">
+              <mat-icon>menu_book</mat-icon> Catalog
+            </button>
+
             <button mat-raised-button color="accent" matStepperNext [disabled]="!(cart$ | async)?.length"
               class="review-btn-desktop">
               Review Cart ({{ (cart$ | async)?.length || 0 }}) <mat-icon>shopping_cart_checkout</mat-icon>

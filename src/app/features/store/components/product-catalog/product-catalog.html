@@ -1,0 +1,69 @@
+<div class="catalog-container" [style.background-image]="getBackgroundImage()">
+    <div class="overlay"></div>
+
+    <div class="content" [@fadeInOut]>
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-text">Epicenter Fitness Gym</div>
+            <button mat-icon-button class="close-btn" (click)="close()">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+
+        <!-- CATEGORIES VIEW -->
+        <div *ngIf="viewMode() === 'CATEGORIES'" class="categories-grid" [@staggerList]>
+            <div class="category-card" *ngFor="let cat of categories" (click)="selectCategory(cat.id)"
+                (keyup.enter)="selectCategory(cat.id)" tabindex="0" role="button">
+                <div class="cat-bg" [style.background-image]="'url(' + cat.image + ')'"></div>
+                <div class="cat-overlay">
+                    <span class="category-label">{{ cat.label }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUCT LIST VIEW -->
+        <div *ngIf="viewMode() === 'PRODUCT_LIST'" class="product-list-container" [@fadeInOut]>
+            <div class="list-header">
+                <button mat-button color="accent" (click)="goBack()">
+                    <mat-icon>arrow_back</mat-icon> Back to Categories
+                </button>
+                <h1 class="category-title">{{ selectedCategory() === 'All' ? 'All Items' : selectedCategory() }}</h1>
+            </div>
+
+            <div class="products-grid" [@staggerList]>
+                <!-- Safe to use filteredProducts() if I fix the TS file logic, otherwise iterate over products() | async and filter in pipe, but computed is cleaner. Filter logic will be in TS. -->
+                <div class="product-card" *ngFor="let product of filteredProducts()" (click)="selectProduct(product)"
+                    (keyup.enter)="selectProduct(product)" tabindex="0" role="button">
+                    <div class="prod-name">{{ product.name }}</div>
+                    <div class="prod-type" style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.5rem">
+                        {{ product.category }}
+                    </div>
+                    <div class="prod-price">₱{{ product.price | number:'1.2-2' }}</div>
+                </div>
+
+                <div *ngIf="filteredProducts().length === 0" class="no-products">
+                    <p>No products found in this category.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUCT DETAIL VIEW -->
+        <div *ngIf="viewMode() === 'PRODUCT_DETAIL'" class="product-detail-container" [@fadeInOut]>
+            <button mat-button color="accent" (click)="goBack()" style="align-self: flex-start; margin-bottom: 2rem;">
+                <mat-icon>arrow_back</mat-icon> Back
+            </button>
+
+            <div *ngIf="selectedProduct() as product">
+                <h1 class="detail-name">{{ product.name }}</h1>
+                <p class="detail-desc">{{ product.description || 'No description available for this product.' }}</p>
+                <div class="detail-price">₱{{ product.price | number:'1.2-2' }}</div>
+
+                <button mat-raised-button class="buy-btn" (click)="addToOrder(product)">
+                    <mat-icon style="margin-right: 10px;">shopping_cart</mat-icon>
+                    ADD TO ORDER
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>

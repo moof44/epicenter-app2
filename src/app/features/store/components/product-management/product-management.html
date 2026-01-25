@@ -15,63 +15,6 @@
   <mat-tab label="Internal Consumables"></mat-tab>
 </mat-tab-group>
 
-<!-- Product Form -->
-<div class="form-card mat-elevation-z2" *ngIf="showForm()" [@fadeIn]>
-  <h2>
-    {{
-    editingProduct
-    ? 'Edit Product'
-    : 'Add New ' + (currentFilter() === 'RETAIL' ? 'Retail' : 'Consumable') + ' Item'
-    }}
-  </h2>
-  <form (ngSubmit)="saveProduct()" class="product-form">
-    <mat-form-field appearance="outline">
-      <mat-label>Product Name</mat-label>
-      <input matInput [(ngModel)]="formData.name" name="name" required />
-    </mat-form-field>
-
-    <!-- Category (Only for Retail usually, but keep for all as organization?) -->
-    <mat-form-field appearance="outline" *ngIf="currentFilter() === 'RETAIL'">
-      <mat-label>Category</mat-label>
-      <mat-select [(ngModel)]="formData.category" name="category" required>
-        <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <!-- Price (Only Retail) -->
-    <mat-form-field appearance="outline" *ngIf="currentFilter() === 'RETAIL'">
-      <mat-label>Price</mat-label>
-      <input matInput type="number" [(ngModel)]="formData.price" name="price" required min="0" />
-      <span matTextPrefix>₱&nbsp;</span>
-    </mat-form-field>
-
-    <!-- Stock is modified via Receive Stock only -->
-
-    <!-- New Fields -->
-    <mat-form-field appearance="outline">
-      <mat-label>Min Stock Level</mat-label>
-      <input matInput type="number" [(ngModel)]="formData.minStockLevel" name="minStockLevel" required min="0" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Unit (e.g. Bottle, Roll)</mat-label>
-      <input matInput [(ngModel)]="formData.unit" name="unit" required placeholder="e.g. Bottle" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Image URL (optional)</mat-label>
-      <input matInput [(ngModel)]="formData.imageUrl" name="imageUrl" />
-    </mat-form-field>
-
-    <div class="form-actions">
-      <button mat-button type="button" (click)="closeForm()">Cancel</button>
-      <button mat-raised-button color="primary" type="submit">
-        {{ editingProduct ? 'Update' : 'Add' }} Product
-      </button>
-    </div>
-  </form>
-</div>
-
 <!-- Products Table -->
 <div class="mat-elevation-z2 table-container" [@fadeIn]>
   <table mat-table [dataSource]="dataSource" class="full-width-table mobile-card-table"
@@ -146,14 +89,6 @@
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
   </table>
-
-  <ng-template #emptyState>
-    <div class="empty-state">
-      <mat-icon class="empty-icon">inventory_2</mat-icon>
-      <p>No products found.</p>
-      <button mat-stroked-button color="primary" (click)="openAddForm()">Add First Product</button>
-    </div>
-  </ng-template>
 
   <ng-template #emptyState>
     <div class="empty-state">

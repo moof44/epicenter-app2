@@ -356,7 +356,9 @@ export class StoreService {
         // We need to access that productsMap here or check the cart item if we carry the category (we don't atm).
         // Best way: use the productsMap populated earlier.
         const product = productsMap.get(item.productId);
-        return product?.category === 'Membership';
+        // "Membership" category removed. "Monthly Rental" is now under "Training".
+        // Check for specific "Rental" keyword to trigger membership availability.
+        return product?.category === 'Training' && product?.name.toLowerCase().includes('rental');
       });
 
       if (membershipItem) {
@@ -372,10 +374,11 @@ export class StoreService {
         }
       }
 
-      // Check for 'Training' type
+      // Check for 'Training' type (Personal Training)
       const trainingItem = cartItems.find(item => {
         const product = productsMap.get(item.productId);
-        return product?.category === 'Training';
+        return product?.category === 'Training' &&
+          (product?.name.toLowerCase().includes('personal') || product?.name.toLowerCase().includes('session'));
       });
 
       if (trainingItem) {
