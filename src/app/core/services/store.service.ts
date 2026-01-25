@@ -292,6 +292,11 @@ export class StoreService {
     if (shiftId) {
       const shiftRef = doc(this.firestore, 'shifts', shiftId);
 
+      // Create concise product summary: "Protein (x2), Water"
+      const productSummary = cartItems.map(item =>
+        item.quantity > 1 ? `${item.productName} (x${item.quantity})` : item.productName
+      ).join(', ');
+
       const cashTx = {
         type: 'Sale',
         amount: total,
@@ -299,7 +304,8 @@ export class StoreService {
         performedBy: 'System',
         relatedTransactionId: transactionRef.id,
         paymentMethod: paymentMethod,
-        timestamp: timestamp
+        timestamp: timestamp,
+        productsSummary: productSummary
       };
 
       const shiftUpdates: any = {

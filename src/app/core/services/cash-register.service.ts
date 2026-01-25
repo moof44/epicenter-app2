@@ -11,6 +11,7 @@ import {
   orderBy,
   limit,
   getDocs,
+  getDoc,
   startAfter,
   arrayUnion,
   increment
@@ -280,7 +281,34 @@ export class CashRegisterService {
     let totalCashSales = 0;
     let totalGcashSales = 0;
 
-    for (const tx of shiftData.transactions) {
+    const updatedTransactions = [...shiftData.transactions];
+    let hasUpdates = false;
+
+    for (let i = 0; i < updatedTransactions.length; i++) {
+      const tx = updatedTransactions[i];
+
+      // Backfill Check: If Sale and missing products summary
+      if (tx.type === 'Sale' && !tx.productsSummary && tx.relatedTransactionId) {
+        try {
+          const txRef = doc(this.firestore, 'transactions', tx.relatedTransactionId);
+          const txSnap = await getDoc(txRef);
+          if (txSnap.exists()) {
+            const fullTx = txSnap.data() as any; // Cast to avoid full interface dependency cycle if any
+            if (fullTx.items && Array.isArray(fullTx.items)) {
+              const summary = fullTx.items.map((item: any) =>
+                item.quantity > 1 ? `${item.productName} (x${item.quantity})` : item.productName
+              ).join(', ');
+
+              // Update the transaction object in the array
+              updatedTransactions[i] = { ...tx, productsSummary: summary };
+              hasUpdates = true;
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to backfill transaction', tx.relatedTransactionId, err);
+        }
+      }
+
       switch (tx.type) {
         case 'Sale':
           totalRevenue += tx.amount;
@@ -306,7 +334,7 @@ export class CashRegisterService {
     const expectedClosingBalance = shiftData.openingBalance + totalCashSales + totalFloatIn - totalExpenses - totalFloatOut;
     const diff = totalSales - (shiftData.totalSales || 0);
 
-    await updateDoc(shiftRef, {
+    const updateData: any = {
       totalSales,
       totalRevenue,
       totalExpenses,
@@ -315,7 +343,13 @@ export class CashRegisterService {
       totalCashSales,
       totalGcashSales,
       expectedClosingBalance
-    });
+    };
+
+    if (hasUpdates) {
+      updateData.transactions = updatedTransactions;
+    }
+
+    await updateDoc(shiftRef, updateData);
 
     // Refresh if it's the current shift
     if (this.currentShift.getValue()?.id === shiftId) {

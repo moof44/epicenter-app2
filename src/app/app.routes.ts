@@ -64,6 +64,12 @@ export const routes: Routes = [
         data: { animation: 'ListPage', roles: ['ADMIN'] }
     },
     {
+        path: 'reports',
+        loadComponent: () => import('./features/reports/pages/reports-dashboard/reports-dashboard').then(m => m.ReportsDashboardComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'DashboardPage', roles: ['ADMIN', 'MANAGER'] }
+    },
+    {
         path: 'settings',
         loadComponent: () => import('./features/settings/components/general-settings/general-settings').then(m => m.GeneralSettingsComponent),
         canActivate: [authGuard, roleGuard],

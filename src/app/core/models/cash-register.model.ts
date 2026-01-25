@@ -9,6 +9,7 @@ export interface CashTransaction {
   performedBy: string;
   relatedTransactionId?: string; // Links to POS transaction for Sales
   paymentMethod?: 'CASH' | 'GCASH';
+  productsSummary?: string; // Comma separated list of products for quick reference
 }
 
 export type ShiftStatus = 'OPEN' | 'CLOSED';

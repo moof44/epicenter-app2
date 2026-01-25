@@ -67,6 +67,29 @@ export class AttendanceService {
     }
 
     /**
+     * Get attendance history for a date range.
+     * @param startDate Format YYYY-MM-DD
+     * @param endDate Format YYYY-MM-DD
+     */
+    async getAttendanceRange(startDate: string, endDate: string): Promise<AttendanceRecord[]> {
+        const q = query(
+            this.attendanceCollection,
+            where('date', '>=', startDate),
+            where('date', '<=', endDate)
+        );
+
+        const snapshot = await getDocs(q);
+        const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
+
+        // Sort by check-in time descending
+        return records.sort((a, b) => {
+            const timeA = a.checkInTime?.seconds || 0;
+            const timeB = b.checkInTime?.seconds || 0;
+            return timeB - timeA;
+        });
+    }
+
+    /**
      * Get all records for a specific member (for charts/profile).
      */
     /**
