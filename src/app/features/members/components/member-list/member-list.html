@@ -1,8 +1,13 @@
 <div class="page-header">
     <h1>Members</h1>
-    <a mat-raised-button color="primary" routerLink="/members/add">
-        <mat-icon>add</mat-icon> Add Member
-    </a>
+    <div class="action-buttons">
+        <button mat-stroked-button color="warn" (click)="openDuplicateResolver()">
+            <mat-icon>merge_type</mat-icon> Resolve Duplicates
+        </button>
+        <a mat-raised-button color="primary" routerLink="/members/add">
+            <mat-icon>add</mat-icon> Add Member
+        </a>
+    </div>
 </div>
 
 <div class="filters-container">

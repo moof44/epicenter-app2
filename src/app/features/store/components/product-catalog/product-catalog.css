@@ -149,6 +149,9 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1.5rem;
+    /* Flex for scrolling */
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding-right: 1rem;
     padding-bottom: 2rem;
@@ -278,5 +281,11 @@
 
     .products-grid {
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+        /* Reduce gap */
+        padding-right: 0;
+        /* Remove side spacing */
+        padding-bottom: 8rem;
+        /* More bottom space */
     }
 }
