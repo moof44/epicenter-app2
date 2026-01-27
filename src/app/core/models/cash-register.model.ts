@@ -10,6 +10,8 @@ export interface CashTransaction {
   relatedTransactionId?: string; // Links to POS transaction for Sales
   paymentMethod?: 'CASH' | 'GCASH';
   productsSummary?: string; // Comma separated list of products for quick reference
+  voided?: boolean;
+  memberName?: string; // For Sales: Who bought it
 }
 
 export type ShiftStatus = 'OPEN' | 'CLOSED';

@@ -287,6 +287,11 @@ export class CashRegisterService {
     for (let i = 0; i < updatedTransactions.length; i++) {
       const tx = updatedTransactions[i];
 
+      // Skip voided transactions
+      if ((tx as any).voided) {
+        continue;
+      }
+
       // Backfill Check: If Sale and missing products summary
       if (tx.type === 'Sale' && !tx.productsSummary && tx.relatedTransactionId) {
         try {
@@ -389,5 +394,89 @@ export class CashRegisterService {
   getTodayTransactions(): CashTransaction[] {
     const shift = this.currentShift.getValue();
     return shift?.transactions ?? [];
+  }
+
+  // Void a transaction within a shift (Open or Closed - for correction)
+  async voidTransactionInShift(relatedTransactionId: string, txDate: Date): Promise<void> {
+    // Find shift that covers this time
+    // Simplify: Order by startTime desc, startAt(txDate). 
+    // The shift started closest to txDate (before it) is likely the one.
+
+    // Note: Firestore comparisons on dates work well.
+    // Finding shift with startTime <= txDate.
+    const q = query(
+      this.shiftsCollection,
+      where('startTime', '<=', txDate),
+      orderBy('startTime', 'desc'),
+      limit(1)
+    );
+
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      console.warn('No shift found covering this transaction date.');
+      // Fallback: If no shift found (maybe legacy data), just warn.
+      return;
+    }
+
+    const shiftDoc = snapshot.docs[0];
+    const shiftData = shiftDoc.data() as ShiftSession;
+
+    // Find the tx in array
+    const transactions = shiftData.transactions || [];
+    const txIndex = transactions.findIndex(t => t.relatedTransactionId === relatedTransactionId);
+
+    if (txIndex === -1) {
+      console.warn('Shift found but transaction not in list.');
+      // It's possible the transaction was a pure Inventory Log update or something? 
+      // Or maybe shift logic was different back then. Safe to ignore/warn.
+      return;
+    }
+
+    const tx = transactions[txIndex];
+    if ((tx as any).voided) {
+      // Already voided, do nothing.
+      return;
+    }
+
+    // Update the array item
+    const updatedTx = { ...tx, voided: true };
+    const newTransactions = [...transactions];
+    newTransactions[txIndex] = updatedTx;
+
+    // Decrement totals
+    const updates: any = {
+      transactions: newTransactions
+    };
+
+    const amount = tx.amount;
+
+    if (tx.type === 'Sale') {
+      updates.totalRevenue = increment(-amount);
+      updates.totalSales = increment(-amount);
+
+      if (tx.paymentMethod === 'GCASH') {
+        updates.totalGcashSales = increment(-amount);
+      } else {
+        updates.totalCashSales = increment(-amount);
+        updates.expectedClosingBalance = increment(-amount);
+      }
+    } else if (tx.type === 'Float_In') {
+      updates.totalFloatIn = increment(-amount);
+      updates.expectedClosingBalance = increment(-amount);
+    } else if (tx.type === 'Expense') { // Expenses reduce expected balance, so voiding ADDS it back
+      updates.totalExpenses = increment(-amount);
+      updates.expectedClosingBalance = increment(amount);
+    } else if (tx.type === 'Float_Out') {
+      updates.totalFloatOut = increment(-amount);
+      updates.expectedClosingBalance = increment(amount);
+    }
+
+    const docRef = doc(this.firestore, 'shifts', shiftDoc.id);
+    await updateDoc(docRef, updates);
+
+    // Refresh if current
+    if (this.currentShift.getValue()?.id === shiftDoc.id) {
+      await this.refreshShift();
+    }
   }
 }

@@ -13,6 +13,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
+import { StoreService } from '../../../../core/services/store.service';
 import { CashTransactionType } from '../../../../core/models/cash-register.model';
 import { ShiftControlModal } from '../shift-control-modal/shift-control-modal';
 import { fadeIn } from '../../../../core/animations/animations';
@@ -32,13 +33,14 @@ import { TUTORIALS } from '../../../../core/constants/tutorials';
 })
 export class CashManagement implements OnInit {
   private cashRegisterService = inject(CashRegisterService);
+  private storeService = inject(StoreService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private authService = inject(AuthService);
   private tutorialService = inject(TutorialService);
 
   currentShift$ = this.cashRegisterService.currentShift$;
-  displayedColumns = ['timestamp', 'type', 'products', 'paymentMethod', 'reason', 'amount'];
+  displayedColumns = ['timestamp', 'type', 'products', 'performer', 'paymentMethod', 'reason', 'amount', 'actions'];
 
   // Form state
   showForm = false;
@@ -162,6 +164,39 @@ export class CashManagement implements OnInit {
       } finally {
         this.isSubmitting = false;
       }
+    }
+  }
+
+  async voidTransaction(tx: any): Promise<void> {
+    if (!tx.relatedTransactionId) {
+      this.snackBar.open('Only POS transactions can be voided via this method.', 'Close', { duration: 3000 });
+      return;
+    }
+    if (tx.voided) {
+      this.snackBar.open('Transaction is already voided.', 'Close');
+      return;
+    }
+
+    const reason = prompt('Please enter a reason for voiding this transaction:');
+    if (reason === null) return; // Cancelled
+    if (!reason.trim()) {
+      this.snackBar.open('Void reason is required.', 'Close');
+      return;
+    }
+
+    if (!confirm('Are you sure? This will revert inventory and sales figures.')) return;
+
+    this.isSubmitting = true;
+    try {
+      await this.storeService.voidTransaction(tx.relatedTransactionId, reason);
+      this.snackBar.open('Transaction voided successfully.', 'Close', { duration: 3000 });
+      // The storeService calls cashRegister to update shift, but we might need to refresh local view if not auto-updated?
+      // CashRegisterService calls refreshShift() which updates currentShift$, so UI should react auto.
+    } catch (err: any) {
+      console.error(err);
+      this.snackBar.open('Void failed: ' + err.message, 'Close', { duration: 5000 });
+    } finally {
+      this.isSubmitting = false;
     }
   }
 }

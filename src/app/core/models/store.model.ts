@@ -45,6 +45,11 @@ export interface Transaction {
   changeDue?: number | null;
   memberId?: string | null;
   memberName?: string;
+  // Void Status
+  status?: 'COMPLETED' | 'VOID';
+  voidedBy?: string;
+  voidReason?: string;
+  voidedAt?: any;
 }
 
 export interface InventoryLog {

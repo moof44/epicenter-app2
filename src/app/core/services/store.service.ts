@@ -305,7 +305,8 @@ export class StoreService {
         relatedTransactionId: transactionRef.id,
         paymentMethod: paymentMethod,
         timestamp: timestamp,
-        productsSummary: productSummary
+        productsSummary: productSummary,
+        memberName: memberName || 'Walk-in'
       };
 
       const shiftUpdates: any = {
@@ -591,6 +592,8 @@ export class StoreService {
         let todayRevenue = 0;
 
         transactions.forEach(tx => {
+          if (tx.status === 'VOID') return;
+
           const txDate = tx.date instanceof Date ? tx.date : (tx.date as any).toDate();
           totalRevenue += tx.totalAmount;
 
@@ -630,6 +633,97 @@ export class StoreService {
         };
       })
     );
+  }
+
+
+
+  // Void a transaction (Admin/Manager Action)
+  async voidTransaction(transactionId: string, reason: string): Promise<void> {
+    const staff = this.authService.userProfile();
+    if (!staff) throw new Error('Authentication required');
+
+    // 1. Fetch Transaction
+    const txRef = doc(this.firestore, 'transactions', transactionId);
+    const txSnap = await getDoc(txRef);
+    if (!txSnap.exists()) throw new Error('Transaction not found');
+
+    const txData = { id: txSnap.id, ...txSnap.data() } as Transaction;
+
+    if (txData.status === 'VOID') {
+      throw new Error('Transaction is already voided');
+    }
+
+    const batch = writeBatch(this.firestore);
+    const now = new Date();
+
+    // 2. Revert Inventory
+    // We need to fetch product info (name) for logs, but we can reuse info from items if needed.
+    // However, to log 'previousStock', we need current stock.
+    const productIds = [...new Set(txData.items.map(i => i.productId))];
+    const productsMap = new Map<string, Product>();
+
+    // Fetch products
+    for (const pid of productIds) {
+      const pSnap = await getDoc(doc(this.firestore, 'products', pid));
+      if (pSnap.exists()) {
+        productsMap.set(pid, { id: pid, ...pSnap.data() } as Product);
+      }
+    }
+
+    for (const item of txData.items) {
+      const product = productsMap.get(item.productId);
+      if (!product) continue; // Product might be deleted, skip stock return? Or just log it.
+
+      const productRef = doc(this.firestore, 'products', item.productId);
+
+      // Increment stock back (Revert deduction)
+      batch.update(productRef, { stock: increment(item.quantity) });
+
+      // Create Inventory Log (VOID_RETURN)
+      const logRef = doc(this.inventoryLogsCollection);
+      const log: InventoryLog = {
+        productId: item.productId,
+        productName: product.name,
+        type: 'AUDIT_ADJUSTMENT', // closest map for "Return"
+        changeAmount: item.quantity,
+        previousStock: product.stock,
+        newStock: product.stock + item.quantity,
+        timestamp: now,
+        performedBy: 'VOID_SYSTEM',
+        staffId: staff.uid,
+        staffName: staff.displayName,
+        notes: `Voided Transaction: ${transactionId} (${reason})`
+      };
+      batch.set(logRef, log);
+    }
+
+    // 3. Mark Transaction as Void
+    batch.update(txRef, {
+      status: 'VOID',
+      voidedBy: staff.displayName || staff.uid,
+      voidReason: reason,
+      voidedAt: now
+    });
+
+    // 4. Update Daily Sales
+    const txDate = txData.date instanceof Date ? txData.date : (txData.date as any).toDate();
+    const dateStr = txDate.toISOString().split('T')[0];
+    const dfsRef = doc(this.firestore, 'daily_sales', dateStr);
+    batch.update(dfsRef, {
+      totalSales: increment(-txData.totalAmount)
+    });
+
+    // Commit the batch
+    await batch.commit();
+
+    // 5. Update Shift (Separate operation)
+    const cashRegisterService = this.injector.get(CashRegisterService);
+    try {
+      await cashRegisterService.voidTransactionInShift(transactionId, txDate);
+    } catch (e) {
+      console.error('Failed to void transaction in shift:', e);
+      // Non-blocking, but should be noted.
+    }
   }
 
   /**
@@ -691,6 +785,8 @@ export class StoreService {
 
     allTransactions.forEach(docSnap => {
       const data = docSnap.data() as Transaction;
+      if (data.status === 'VOID') return;
+
       const date = data.date instanceof Date ? data.date : (data.date as any).toDate();
       const dateStr = date.toISOString().split('T')[0];
       const current = salesMap.get(dateStr) || 0;
@@ -738,6 +834,8 @@ export class StoreService {
 
     snapshot.forEach(doc => {
       const data = doc.data() as Transaction;
+      if (data.status === 'VOID') return;
+
       // recalculateDailySales sums 'totalAmount'
       totalSales += data.totalAmount || 0;
     });
@@ -768,6 +866,8 @@ export class StoreService {
     // Just map what we find
     snapshot.forEach(doc => {
       const data = doc.data() as Transaction;
+      if (data.status === 'VOID') return;
+
       const date = data.date instanceof Date ? data.date : (data.date as any).toDate();
       const dateStr = date.toISOString().split('T')[0];
       const current = salesMap.get(dateStr) || 0;
