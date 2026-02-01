@@ -8,6 +8,12 @@
                 <h3>General Metrics</h3>
                 <div class="form-grid">
                     <mat-form-field appearance="outline">
+                        <mat-label>Date</mat-label>
+                        <input matInput [matDatepicker]="picker" formControlName="date">
+                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                        <mat-datepicker #picker></mat-datepicker>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
                         <mat-label>Height (cm)</mat-label>
                         <input matInput type="number" formControlName="height" step="0.1">
                     </mat-form-field>
