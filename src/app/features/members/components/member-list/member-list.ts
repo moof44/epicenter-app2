@@ -18,6 +18,8 @@ import { Observable } from 'rxjs';
 import { fadeIn, staggerList } from '../../../../core/animations/animations';
 import { TutorialService } from '../../../../core/services/tutorial.service';
 import { TUTORIALS } from '../../../../core/constants/tutorials';
+import { MatDialog } from '@angular/material/dialog';
+import { MemberDuplicateResolver } from '../member-duplicate-resolver/member-duplicate-resolver';
 
 @Component({
   selector: 'app-member-list',
@@ -35,6 +37,7 @@ export class MemberList implements AfterViewInit, OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private tutorialService = inject(TutorialService);
+  private dialog = inject(MatDialog);
 
   dataSource = new MatTableDataSource<Member>([]);
   displayedColumns: string[] = ['name', 'remarks', 'membershipStatus', 'membershipExpiration', 'actions'];
@@ -55,6 +58,15 @@ export class MemberList implements AfterViewInit, OnInit {
     setTimeout(() => {
       this.tutorialService.startTutorial(TUTORIALS['MEMBERS_LIST'].id);
     }, 1000);
+  }
+
+  openDuplicateResolver() {
+    this.dialog.open(MemberDuplicateResolver, {
+      width: '800px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      autoFocus: false
+    });
   }
 
   setupFilterPredicate() {

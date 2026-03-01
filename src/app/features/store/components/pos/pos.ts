@@ -30,6 +30,7 @@ import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { ViewChild } from '@angular/core';
 
 import { PreventDoubleClickDirective } from '../../../../shared/directives/prevent-double-click.directive';
+import { ProductCatalogComponent } from '../product-catalog/product-catalog';
 
 @Component({
   selector: 'app-pos',
@@ -64,7 +65,7 @@ export class POS implements OnInit {
   isShiftOpen$ = this.cashRegisterService.currentShift$.pipe(map(s => s?.status === 'OPEN'));
 
   selectedCategory = signal<ProductCategory | 'All'>('All');
-  categories: (ProductCategory | 'All')[] = ['All', 'Supplement', 'Drink', 'Merch', 'Fitness', 'Membership', 'Training'];
+  categories: (ProductCategory | 'All')[] = ['All', 'Training', 'Supplements', 'Drinks', 'Boxing'];
   isProcessing = signal(false);
   cartExpanded = signal(false);
 
@@ -247,14 +248,23 @@ export class POS implements OnInit {
 
   getCategoryIcon(category: ProductCategory): string {
     const icons: Record<ProductCategory, string> = {
-      'Supplement': 'medication',
-      'Drink': 'local_drink',
-      'Merch': 'checkroom',
-      'Fitness': 'fitness_center',
-      'Membership': 'card_membership',
+      'Supplements': 'medication',
+      'Drinks': 'local_drink',
+      'Boxing': 'sports_mma',
       'Training': 'sports_martial_arts'
     };
-    return icons[category];
+    return icons[category] || 'inventory_2';
+  }
+
+  openCatalog(): void {
+    this.dialog.open(ProductCatalogComponent, {
+      maxWidth: '100vw',
+      width: '100vw',
+      height: '100vh',
+      hasBackdrop: false,
+      panelClass: 'full-screen-modal',
+      autoFocus: false
+    });
   }
 
   trackProduct(index: number, product: Product): string {

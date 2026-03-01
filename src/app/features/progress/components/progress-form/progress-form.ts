@@ -9,13 +9,16 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { fadeIn } from '../../../../core/animations/animations';
 
 @Component({
   selector: 'app-progress-form',
   imports: [
     CommonModule, ReactiveFormsModule, RouterLink, MatInputModule,
-    MatButtonModule, MatCardModule, MatProgressSpinnerModule
+    MatButtonModule, MatCardModule, MatProgressSpinnerModule,
+    MatDatepickerModule, MatNativeDateModule
   ],
   templateUrl: './progress-form.html',
   styleUrl: './progress-form.css',
@@ -33,6 +36,7 @@ export class ProgressForm implements OnInit {
 
   constructor() {
     this.form = this.fb.group({
+      date: [new Date(), [Validators.required]],
       height: ['', [Validators.required, Validators.min(0)]],
       weight: ['', [Validators.required, Validators.min(0)]],
       bodyFat: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
@@ -63,7 +67,7 @@ export class ProgressForm implements OnInit {
     this.loading = true;
     const data: Measurement = {
       ...this.form.value,
-      date: new Date()
+      // date is already in form.value 
     };
 
     try {

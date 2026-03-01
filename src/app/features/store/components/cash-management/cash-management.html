@@ -129,6 +129,14 @@
         </td>
       </ng-container>
 
+      <ng-container matColumnDef="performer">
+        <th mat-header-cell *matHeaderCellDef>Member / User</th>
+        <td mat-cell *matCellDef="let tx">
+          <span *ngIf="tx.type === 'Sale'" class="member-name">{{ tx.memberName || 'Walk-in' }}</span>
+          <span *ngIf="tx.type !== 'Sale'" class="staff-name">{{ tx.performedBy }}</span>
+        </td>
+      </ng-container>
+
       <ng-container matColumnDef="paymentMethod">
         <th mat-header-cell *matHeaderCellDef>Method</th>
         <td mat-cell *matCellDef="let tx">
@@ -152,8 +160,19 @@
         </td>
       </ng-container>
 
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let tx">
+          <button mat-icon-button color="warn" *ngIf="tx.relatedTransactionId && !tx.voided"
+            (click)="voidTransaction(tx)" matTooltip="Void Transaction">
+            <mat-icon>block</mat-icon>
+          </button>
+          <span *ngIf="tx.voided" class="void-badge">VOIDED</span>
+        </td>
+      </ng-container>
+
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.voided-row]="row.voided"></tr>
     </table>
 
     <div *ngIf="shift.transactions.length === 0" class="empty-state">

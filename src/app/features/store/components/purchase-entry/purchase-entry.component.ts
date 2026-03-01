@@ -34,6 +34,11 @@ import { Router } from '@angular/router';
         </mat-form-field>
 
         <mat-form-field appearance="outline">
+          <mat-label>Description</mat-label>
+          <textarea matInput formControlName="description" rows="2"></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
           <mat-label>Type</mat-label>
           <mat-select formControlName="type">
             <mat-option value="RETAIL">Retail</mat-option>
@@ -74,12 +79,13 @@ export class ProductCreationDialog {
   private dialogRef = inject(MatDialogRef<ProductCreationDialog>);
   private storeService = inject(StoreService);
 
-  categories: ProductCategory[] = ['Supplement', 'Drink', 'Merch'];
-  
+  categories: ProductCategory[] = ['Training', 'Supplements', 'Drinks', 'Boxing'];
+
   productForm = this.fb.group({
     name: ['', Validators.required],
+    description: [''],
     type: ['RETAIL' as ProductType, Validators.required],
-    category: ['Supplement' as ProductCategory, Validators.required],
+    category: ['Supplements' as ProductCategory, Validators.required],
     price: [0, [Validators.required, Validators.min(0)]],
     unit: ['Item', Validators.required],
     stock: [0], // Initial stock 0, will be added via purchase
@@ -94,7 +100,7 @@ export class ProductCreationDialog {
       // addProduct returns docRef or similar? StoreService.addProduct returns Promise<any> (addDoc result)
       // I need the ID of the created product.
       // Let's assume storeService.addProduct returns the DocumentReference
-      this.dialogRef.close(res); 
+      this.dialogRef.close(res);
     } catch (err) {
       console.error(err);
     }
@@ -168,7 +174,7 @@ export class PurchaseEntryComponent implements OnInit {
         itemGroup.patchValue({ productName: p.name }, { emitEvent: false });
         // Optionally suggest lastCostPrice if we had it?
         if (p.lastCostPrice) {
-           itemGroup.patchValue({ unitCost: p.lastCostPrice }, { emitEvent: false });
+          itemGroup.patchValue({ unitCost: p.lastCostPrice }, { emitEvent: false });
         }
       }
     });
@@ -189,7 +195,7 @@ export class PurchaseEntryComponent implements OnInit {
     });
   }
 
-  onProductSelected(index: number, productId: string) {
+  onProductSelected(_index: number, _productId: string) {
     // Handled by valueChanges mainly, but double check here if needed
   }
 
@@ -203,13 +209,13 @@ export class PurchaseEntryComponent implements OnInit {
         // If StoreService.addProduct returns DocumentReference, it has .id
         const newId = result.id;
         if (newId) {
-            // Need to reload products or wait for subscription update? 
-            // Subscription should be live if it's Firestore... 
-            // But to be safe and fast, let's wait a tick or just set the ID.
-            // Assuming subscription updates quickly.
-            // We can set the value after a short delay or find it in allProducts if observable fired
-            // For now, let's just set the ID and hope the list updates.
-            this.items.at(index).patchValue({ productId: newId });
+          // Need to reload products or wait for subscription update? 
+          // Subscription should be live if it's Firestore... 
+          // But to be safe and fast, let's wait a tick or just set the ID.
+          // Assuming subscription updates quickly.
+          // We can set the value after a short delay or find it in allProducts if observable fired
+          // For now, let's just set the ID and hope the list updates.
+          this.items.at(index).patchValue({ productId: newId });
         }
       }
     });
@@ -228,7 +234,7 @@ export class PurchaseEntryComponent implements OnInit {
 
     try {
       const formVal = this.purchaseForm.getRawValue();
-      
+
       const order = {
         supplierName: formVal.supplierName,
         date: formVal.date,
@@ -244,7 +250,7 @@ export class PurchaseEntryComponent implements OnInit {
       };
 
       await this.purchaseService.recordPurchase(order);
-      
+
       this.snackBar.open('Purchase recorded successfully', 'Close', { duration: 3000 });
       this.router.navigate(['/store/purchases']); // Redirect to history (Phase 4)
       // Or just reset
