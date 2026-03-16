@@ -24,50 +24,8 @@ import { Router } from '@angular/router';
   selector: 'app-product-creation-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatDialogModule],
-  template: `
-    <h2 mat-dialog-title>Create New Product</h2>
-    <mat-dialog-content>
-      <form [formGroup]="productForm" class="dialog-content">
-        <mat-form-field appearance="outline">
-          <mat-label>Name</mat-label>
-          <input matInput formControlName="name">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Type</mat-label>
-          <mat-select formControlName="type">
-            <mat-option value="RETAIL">Retail</mat-option>
-            <mat-option value="CONSUMABLE">Consumable</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Category</mat-label>
-          <mat-select formControlName="category">
-            <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Selling Price</mat-label>
-          <span matTextPrefix>$&nbsp;</span>
-          <input matInput type="number" formControlName="price">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Unit</mat-label>
-          <input matInput formControlName="unit" placeholder="e.g. Item, Bottle">
-        </mat-form-field>
-      </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancel</button>
-      <button mat-raised-button color="primary" [disabled]="productForm.invalid" (click)="save()">Create</button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    .dialog-content { display: flex; flex-direction: column; gap: 12px; min-width: 300px; padding-top: 10px; }
-  `]
+  templateUrl: './product-creation-dialog.html',
+  styleUrl: './product-creation-dialog.css'
 })
 export class ProductCreationDialog {
   private fb = inject(FormBuilder);
@@ -181,14 +139,13 @@ export class PurchaseEntryComponent implements OnInit {
   }
 
   loadProducts() {
-    this.storeService.getProducts().subscribe(products => {
+    this.storeService.products$.subscribe(products => {
       this.allProducts = products;
       this.retailProducts = products.filter(p => (!p.type || p.type === 'RETAIL'));
       this.consumableProducts = products.filter(p => p.type === 'CONSUMABLE');
       this.productsLoaded = true;
     });
   }
-
   onProductSelected(index: number, productId: string) {
     // Handled by valueChanges mainly, but double check here if needed
   }

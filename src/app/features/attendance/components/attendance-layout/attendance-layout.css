@@ -1,0 +1,21 @@
+.page-container { 
+  /* Removing padding and max-width to match Members layout */
+}
+.header { margin-bottom: var(--spacing-md); }
+.tab-content { padding-top: var(--spacing-xl); }
+.tab-icon { margin-right: 8px; }
+
+/* Mobile Override for Tab Labels */
+@media (max-width: 480px) {
+    ::ng-deep .mat-mdc-tab-labels {
+         justify-content: space-between !important; 
+    }
+    ::ng-deep .mat-mdc-tab {
+        flex-grow: 1;
+        padding: 0 12px !important;
+        min-width: auto !important;
+    }
+    ::ng-deep .mdc-tab__text-label {
+        font-size: 0.85rem !important;
+    }
+}

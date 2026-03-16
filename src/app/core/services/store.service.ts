@@ -17,15 +17,12 @@ import {
   documentId,
   getDocs,
   getDoc,
-  startAfter,
-  QueryDocumentSnapshot,
-  DocumentData,
   sum,
   getAggregateFromServer,
   arrayUnion,
   setDoc
 } from '@angular/fire/firestore';
-import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
+import { Observable, BehaviorSubject, Subject, map, combineLatest, shareReplay, firstValueFrom } from 'rxjs';
 import { Product, CartItem, Transaction, ProductSalesData, InventoryLog, DailySales } from '../models/store.model';
 import { CashRegisterService } from './cash-register.service';
 import { AuthService } from './auth.service';
@@ -71,25 +68,14 @@ export class StoreService {
   private saleCompleted = new Subject<SaleCompletedEvent>();
   saleCompleted$ = this.saleCompleted.asObservable();
 
-  // Products
-  getProducts(limitCount = 100): Observable<Product[]> {
-    const q = query(this.productsCollection, orderBy('name'), limit(limitCount));
-    return collectionData(q, { idField: 'id' }) as Observable<Product[]>;
-  }
-
-  async getProductsPage(limitCount = 50, lastDoc?: QueryDocumentSnapshot<DocumentData>): Promise<{ products: Product[], lastDoc: QueryDocumentSnapshot<DocumentData> | null }> {
-    let q = query(this.productsCollection, orderBy('name'), limit(limitCount));
-
-    if (lastDoc) {
-      q = query(q, startAfter(lastDoc));
-    }
-
-    const snapshot = await getDocs(q);
-    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-    const lastDocument = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
-
-    return { products, lastDoc: lastDocument };
-  }
+  // Products Stream (Cached explicitly as requested)
+  public products$: Observable<Product[]> = collectionData(
+    query(this.productsCollection, orderBy('name')),
+    { idField: 'id' }
+  ).pipe(
+    map(docs => docs as Product[]),
+    shareReplay(1)
+  );
 
   getProduct(id: string): Observable<Product> {
     const docRef = doc(this.firestore, 'products', id);
@@ -217,14 +203,13 @@ export class StoreService {
     const productsMap = new Map<string, Product>();
 
     const chunkedIds = [];
-    for (let i = 0; i < productIds.length; i += 10) {
-      chunkedIds.push(productIds.slice(i, i + 10));
-    }
-
-    for (const chunk of chunkedIds) {
-      const q = query(this.productsCollection, where(documentId(), 'in', chunk));
-      const snapshot = await getDocs(q);
-      snapshot.forEach(doc => productsMap.set(doc.id, { id: doc.id, ...doc.data() } as Product));
+    // We already have the live products cached in memory
+    const currentProducts = await firstValueFrom(this.products$);
+    for (const pid of productIds) {
+      const found = currentProducts.find(p => p.id === pid);
+      if (found) {
+        productsMap.set(pid, found);
+      }
     }
 
     // Deduct stock and Create Logs
@@ -573,7 +558,7 @@ export class StoreService {
 
     return combineLatest([
       this.getTransactions({ limit: 1000 }), // Monthly analytics needs more transactions
-      this.getProducts()
+      this.products$
     ]).pipe(
       map(([transactions]) => {
         const salesMap = new Map<string, ProductSalesData>();

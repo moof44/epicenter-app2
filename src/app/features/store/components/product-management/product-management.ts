@@ -42,7 +42,7 @@ export class ProductManagement implements AfterViewInit {
   categories: ProductCategory[] = ['Supplement', 'Drink', 'Merch', 'Fitness', 'Membership', 'Training'];
 
   // Data State - Reactive
-  products$ = this.storeService.getProducts();
+  products$ = this.storeService.products$;
   products = toSignal(this.products$, { initialValue: [] as Product[] });
 
   // UI State - Signals

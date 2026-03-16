@@ -28,45 +28,8 @@ export interface WalkInDialogResult {
     MatButtonToggleModule, MatInputModule, MatFormFieldModule,
     PreventDoubleClickDirective
   ],
-  template: `
-    <h2 mat-dialog-title>Subscription Alert</h2>
-    <mat-dialog-content>
-      <p>
-        <strong>{{data.member.name}}</strong> 
-        <span *ngIf="data.isExpired">has an expired subscription (Enc: {{data.member.membershipExpiration?.toDate() | date}}).</span>
-        <span *ngIf="!data.isExpired">does not have an active subscription.</span>
-      </p>
-      
-      <div class="payment-section">
-        <p><strong>Payment Method (for Walk-in):</strong></p>
-        <mat-button-toggle-group [(ngModel)]="paymentMethod" name="paymentMethod" aria-label="Payment Method">
-          <mat-button-toggle value="CASH">Cash</mat-button-toggle>
-          <mat-button-toggle value="GCASH">GCash</mat-button-toggle>
-        </mat-button-toggle-group>
-
-        <mat-form-field appearance="outline" class="full-width" *ngIf="paymentMethod === 'GCASH'">
-          <mat-label>Reference Number</mat-label>
-          <input matInput [(ngModel)]="referenceNumber" required placeholder="Ref No.">
-        </mat-form-field>
-      </div>
-
-      <p class="note">"Yes" will create a Walk-in transaction. "No" will just check them in.</p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="onAction('cancel')">Cancel</button>
-      <button mat-stroked-button color="warn" (click)="onAction('check-in')">No (Check-in Only)</button>
-      <button mat-raised-button color="primary" appPreventDoubleClick (throttledClick)="onAction('walk-in')"
-        [disabled]="paymentMethod === 'GCASH' && !referenceNumber">
-        Yes (Walk-in Transaction)
-      </button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    .note { font-size: 0.9em; color: #666; margin-top: 10px; }
-    .payment-section { margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
-    .full-width { width: 100%; margin-top: 10px; }
-    mat-button-toggle-group { margin-bottom: 5px; }
-  `]
+  templateUrl: './walk-in-dialog.html',
+  styleUrl: './walk-in-dialog.css'
 })
 export class WalkInDialog {
   dialogRef = inject(MatDialogRef<WalkInDialog>);

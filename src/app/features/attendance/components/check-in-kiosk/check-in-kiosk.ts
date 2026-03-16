@@ -36,112 +36,9 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
     PreventDoubleClickDirective
   ],
   /* v8 ignore start */
-  template: `
-    <div class="kiosk-container">
-      
-      <!-- Register Closed Warning -->
-      <mat-card class="warning-card" *ngIf="(isShiftOpen$ | async) === false" [@fadeIn]>
-        <mat-icon color="warn">warning</mat-icon>
-        <span>Register is closed. Please open a shift in Store to proceed.</span>
-      </mat-card>
-
-      <mat-card class="search-card" [class.mobile-hidden]="!!selectedMember">
-        <div class="card-header">
-            <h2>Check In</h2>
-            <button mat-stroked-button color="primary" (click)="goToaddMember()">
-                <mat-icon>person_add</mat-icon> Add Member
-            </button>
-        </div>
-        <mat-form-field class="full-width" appearance="outline">
-          <mat-label>Search Member</mat-label>
-          <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" [disabled]="(isShiftOpen$ | async) === false" #searchInput>
-          <mat-icon matSuffix>search</mat-icon>
-          <mat-hint>Name not found? Click <strong>Add Member</strong> above.</mat-hint>
-          <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onMemberSelected($event)">
-            <mat-option *ngFor="let member of filteredMembers$ | async" [value]="member">
-              {{member.name}} ({{member.membershipStatus}})
-            </mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
-      </mat-card>
-
-      <div *ngIf="selectedMember" class="locker-selection" [@fadeIn]>
-        <div class="mobile-visible" style="text-align: left; margin-bottom: 16px;">
-            <button mat-button color="primary" (click)="reset()">
-                <mat-icon>arrow_back</mat-icon> Back to Search
-            </button>
-        </div>
-        <h3>Welcome, {{selectedMember.name}}!</h3>
-        <p>Select a locker (optional) or just Check In.</p>
-        
-        <div class="locker-grid">
-           <button *ngFor="let num of lockerNumbers" 
-                   mat-fab 
-                   [class.occupied]="isLockerOccupied(num)"
-                   [class.selected]="selectedLocker === num"
-                   [disabled]="isLockerOccupied(num) || (isShiftOpen$ | async) === false"
-                   (click)="selectLocker(num)"
-                   color="primary">
-             {{num}}
-           </button>
-        </div>
-
-        <div class="actions">
-            <button mat-raised-button color="primary" appPreventDoubleClick (throttledClick)="confirmCheckIn()" class="check-in-btn" 
-                    [disabled]="isSubmitting || (isShiftOpen$ | async) === false">
-                <span *ngIf="!isSubmitting">CHECK IN <span *ngIf="selectedLocker">(Locker {{selectedLocker}})</span></span>
-                <span *ngIf="isSubmitting">Checking In...</span>
-            </button>
-            <button mat-button (click)="cancel()" [disabled]="isSubmitting">Cancel</button>
-        </div>
-      </div>
-    </div>
-  `,
+  templateUrl: './check-in-kiosk.html',
   /* v8 ignore end */
-  styles: [`
-    .kiosk-container { max-width: 600px; margin: 0 auto; text-align: center; padding: var(--spacing-md); }
-    .search-card { padding: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .warning-card { 
-      background-color: #fef2f2 !important; 
-      color: #b91c1c !important; 
-      margin-bottom: var(--spacing-lg); 
-      padding: var(--spacing-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .full-width { width: 100%; }
-    .locker-selection { 
-      /* Removed CSS animation */ 
-    }
-    .locker-grid { 
-        display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); 
-        gap: var(--spacing-md); 
-        margin: var(--spacing-xl) 0;
-        justify-items: center;
-    }
-    .actions { display: flex; flex-direction: column; gap: var(--spacing-md); }
-    .check-in-btn { padding: var(--spacing-lg); font-size: 1.2rem; }
-    .occupied { background-color: #e2e8f0 !important; color: #94a3b8 !important; }
-    .selected { background-color: #4ade80 !important; color: #000 !important; transform: scale(1.1); }
-
-    @media (max-width: 480px) {
-        .card-header { flex-direction: column; gap: 12px; align-items: stretch; }
-        .card-header h2 { margin: 0; text-align: center; }
-        .search-card { padding: 16px; margin-bottom: 20px; }
-        .kiosk-container { padding: 8px; }
-        .locker-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 16px 0; }
-        .check-in-btn { padding: 16px; font-size: 1.1rem; }
-        
-        /* Wizard Mode: Hide Search when Member Selected */
-        .mobile-hidden { display: none !important; }
-        .mobile-visible { display: block !important; }
-    }
-    .mobile-visible { display: none; } /* Default hidden on desktop */
-  `],
+  styleUrl: './check-in-kiosk.css',
   animations: [fadeIn]
 })
 export class CheckInKiosk implements OnInit {
@@ -277,7 +174,7 @@ export class CheckInKiosk implements OnInit {
           // But we proceed directly to check-in or pay flow
 
           if (updateResult.action === 'pay-and-check-in') {
-            const products = await firstValueFrom(this.storeService.getProducts());
+            const products = await firstValueFrom(this.storeService.products$);
             // Try to find "Monthly", "Membership", or similar
             const membershipProduct = products.find(p =>
               p.name.toLowerCase().includes('monthly') ||
@@ -331,7 +228,7 @@ export class CheckInKiosk implements OnInit {
         }
 
         if (result.action === 'walk-in') {
-          const products = await firstValueFrom(this.storeService.getProducts());
+          const products = await firstValueFrom(this.storeService.products$);
           const walkInProduct = products.find(p => p.name.toLowerCase().includes('walk-in'));
 
           if (!walkInProduct) {

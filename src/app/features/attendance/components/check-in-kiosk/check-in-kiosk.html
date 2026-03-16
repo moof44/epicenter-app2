@@ -1,0 +1,59 @@
+<div class="kiosk-container">
+  
+  <!-- Register Closed Warning -->
+  <mat-card class="warning-card" *ngIf="(isShiftOpen$ | async) === false" [@fadeIn]>
+    <mat-icon color="warn">warning</mat-icon>
+    <span>Register is closed. Please open a shift in Store to proceed.</span>
+  </mat-card>
+
+  <mat-card class="search-card" [class.mobile-hidden]="!!selectedMember">
+    <div class="card-header">
+        <h2>Check In</h2>
+        <button mat-stroked-button color="primary" (click)="goToaddMember()">
+            <mat-icon>person_add</mat-icon> Add Member
+        </button>
+    </div>
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Search Member</mat-label>
+      <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" [disabled]="(isShiftOpen$ | async) === false" #searchInput>
+      <mat-icon matSuffix>search</mat-icon>
+      <mat-hint>Name not found? Click <strong>Add Member</strong> above.</mat-hint>
+      <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onMemberSelected($event)">
+        <mat-option *ngFor="let member of filteredMembers$ | async" [value]="member">
+          {{member.name}} ({{member.membershipStatus}})
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+  </mat-card>
+
+  <div *ngIf="selectedMember" class="locker-selection" [@fadeIn]>
+    <div class="mobile-visible" style="text-align: left; margin-bottom: 16px;">
+        <button mat-button color="primary" (click)="reset()">
+            <mat-icon>arrow_back</mat-icon> Back to Search
+        </button>
+    </div>
+    <h3>Welcome, {{selectedMember.name}}!</h3>
+    <p>Select a locker (optional) or just Check In.</p>
+    
+    <div class="locker-grid">
+       <button *ngFor="let num of lockerNumbers" 
+               mat-fab 
+               [class.occupied]="isLockerOccupied(num)"
+               [class.selected]="selectedLocker === num"
+               [disabled]="isLockerOccupied(num) || (isShiftOpen$ | async) === false"
+               (click)="selectLocker(num)"
+               color="primary">
+         {{num}}
+       </button>
+    </div>
+
+    <div class="actions">
+        <button mat-raised-button color="primary" appPreventDoubleClick (throttledClick)="confirmCheckIn()" class="check-in-btn" 
+                [disabled]="isSubmitting || (isShiftOpen$ | async) === false">
+            <span *ngIf="!isSubmitting">CHECK IN <span *ngIf="selectedLocker">(Locker {{selectedLocker}})</span></span>
+            <span *ngIf="isSubmitting">Checking In...</span>
+        </button>
+        <button mat-button (click)="cancel()" [disabled]="isSubmitting">Cancel</button>
+    </div>
+  </div>
+</div>

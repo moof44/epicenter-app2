@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { take } from 'rxjs';
 import { MemberService } from '../../../../core/services/member.service';
 import { Member } from '../../../../core/models/member.model';
 
@@ -63,7 +64,7 @@ export class MemberForm implements OnInit {
 
   async loadMember(id: string) {
     this.loading = true;
-    this.memberService.getMember(id).subscribe(member => {
+    this.memberService.getMember(id).pipe(take(1)).subscribe(member => {
       // Convert timestamps to Date objects if needed for form
       const data = { ...member };
       if (data.birthday && data.birthday.seconds) {

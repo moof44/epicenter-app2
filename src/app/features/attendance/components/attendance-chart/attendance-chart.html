@@ -1,0 +1,15 @@
+<div class="chart-container">
+   <h3>Attendance Consistency</h3>
+   <div class="calendar-grid">
+      <div *ngFor="let day of calendarDays" 
+           class="day-box" 
+           [class.present]="day.present"
+           [title]="day.date | date">
+           <span class="day-number">{{day.date | date:'d'}}</span>
+      </div>
+   </div>
+   <div class="legend">
+      <span class="dot present"></span> Present
+      <span class="dot"></span> Absent
+   </div>
+</div>

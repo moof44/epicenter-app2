@@ -1,0 +1,21 @@
+.page-container { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.title-group h1 { margin: 0; font-size: 24px; color: #1f2937; }
+.helper-text { margin: 4px 0 0; color: #6b7280; font-size: 14px; }
+
+.filters-row { display: flex; align-items: center; gap: 24px; margin-bottom: 24px; flex-wrap: wrap; }
+.user-select { min-width: 250px; }
+.month-selector { display: flex; align-items: center; gap: 12px; background: white; padding: 4px 16px; border-radius: 24px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.month-display { font-weight: 500; min-width: 140px; text-align: center; font-size: 16px; }
+
+.table-card { overflow: hidden; }
+.sales-table { width: 100%; }
+.text-right { text-align: right; }
+.fw-500 { font-weight: 500; }
+.item-list { color: #4b5563; font-size: 0.9em; }
+
+.table-footer { display: flex; justify-content: flex-end; align-items: center; gap: 16px; padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; }
+.total-label { font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.total-value { font-size: 20px; font-weight: 700; color: #059669; }
+
+.loading-shade { display: flex; justify-content: center; padding: 48px; }

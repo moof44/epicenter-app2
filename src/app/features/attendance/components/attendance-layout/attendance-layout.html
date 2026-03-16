@@ -1,0 +1,42 @@
+<div class="page-container" [@fadeIn]>
+  <div class="header">
+    <h1>Attendance Management</h1>
+  </div>
+  
+  <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+    <mat-tab>
+        <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">check_circle</mat-icon>
+            Check-in
+        </ng-template>
+      <div class="tab-content">
+         <app-check-in-kiosk></app-check-in-kiosk>
+         
+         <!-- Static Reminder -->
+         <div class="checkout-reminder" style="max-width: 600px; margin: 16px auto; padding: 12px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span class="material-icons" style="font-size: 20px;">info</span>
+            <strong>REMINDER:</strong> Don't forget to Check Out members when they leave!
+         </div>
+
+      </div>
+    </mat-tab>
+    <mat-tab>
+        <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">group</mat-icon>
+            Active
+        </ng-template>
+       <div class="tab-content">
+         <app-active-sessions></app-active-sessions>
+       </div>
+    </mat-tab>
+     <mat-tab>
+        <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">history</mat-icon>
+            History
+        </ng-template>
+       <div class="tab-content">
+         <app-attendance-history></app-attendance-history>
+       </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

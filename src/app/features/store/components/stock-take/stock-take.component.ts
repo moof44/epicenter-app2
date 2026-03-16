@@ -38,7 +38,7 @@ export class StockTakeComponent implements OnInit {
   isLoading = true; // Start loading
 
   ngOnInit() {
-    this.storeService.getProducts().subscribe({
+    this.storeService.products$.subscribe({
       next: (products) => {
         this.dataSource.data = products;
         this.isLoading = false;

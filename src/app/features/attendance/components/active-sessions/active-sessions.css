@@ -1,0 +1,58 @@
+.container { position: relative; min-height: 200px; }
+
+/* Desktop Styles */
+.table-container { 
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); 
+    border-radius: 8px; 
+    overflow: hidden; 
+    overflow-x: auto; 
+}
+.full-width-table { width: 100%; min-width: 500px; background: white; }
+
+/* Shared Styles */
+.name { font-weight: 500; font-size: 1rem; }
+.gender-badge { font-size: 0.8em; color: gray; }
+.locker-badge { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+.empty-state { padding: var(--spacing-xl); text-align: center; color: gray; background: white; border-radius: 8px; margin-top: 16px; }
+.expired { color: #ef4444; font-weight: bold; }
+.overdue-row { background-color: #fff3cd !important; }
+.overdue-card { border-left: 4px solid #d97706 !important; background-color: #fffbef; }
+.overdue-icon { color: #d97706; margin-left: 8px; vertical-align: middle; font-size: 18px; width: 18px; height: 18px; }
+.warn-icon { color: #f59e0b; }
+
+.overdue-label {
+    display: inline-flex;
+    align-items: center;
+    background-color: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fdba74;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+}
+.overdue-icon-small { font-size: 14px; width: 14px; height: 14px; margin-right: 4px; vertical-align: middle; }
+
+/* Mobile Styles */
+.mobile-view { display: none; }
+.session-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
+}
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.member-info { display: flex; flex-direction: column; }
+.card-details { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.detail-row { display: flex; align-items: center; color: #64748b; font-size: 0.95rem; }
+.detail-row .icon { font-size: 18px; width: 18px; height: 18px; margin-right: 8px; color: #94a3b8; }
+.full-width-btn { width: 100%; padding: 24px 0; font-size: 1.1rem; }
+.remarks-text { color: #b45309; font-size: 0.9em; }
+
+@media (max-width: 768px) {
+    .desktop-view { display: none; }
+    .mobile-view { display: block; }
+}

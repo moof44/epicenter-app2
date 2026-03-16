@@ -50,7 +50,7 @@ export class POS implements OnInit {
 
   private cashRegisterService = inject(CashRegisterService);
 
-  products$: Observable<Product[]> = this.storeService.getProducts().pipe(
+  products$: Observable<Product[]> = this.storeService.products$.pipe(
     map(products => products.filter(p => p.type !== 'CONSUMABLE'))
   );
   cart$: Observable<CartItem[]> = this.storeService.cart$;
