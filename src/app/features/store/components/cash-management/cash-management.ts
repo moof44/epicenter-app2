@@ -17,8 +17,6 @@ import { StoreService } from '../../../../core/services/store.service';
 import { CashTransactionType } from '../../../../core/models/cash-register.model';
 import { ShiftControlModal } from '../shift-control-modal/shift-control-modal';
 import { fadeIn } from '../../../../core/animations/animations';
-import { TutorialService } from '../../../../core/services/tutorial.service';
-import { TUTORIALS } from '../../../../core/constants/tutorials';
 
 @Component({
   selector: 'app-cash-management',
@@ -31,13 +29,12 @@ import { TUTORIALS } from '../../../../core/constants/tutorials';
   styleUrl: './cash-management.css',
   animations: [fadeIn]
 })
-export class CashManagement implements OnInit {
+export class CashManagement {
   private cashRegisterService = inject(CashRegisterService);
   private storeService = inject(StoreService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private authService = inject(AuthService);
-  private tutorialService = inject(TutorialService);
 
   currentShift$ = this.cashRegisterService.currentShift$;
   displayedColumns = ['timestamp', 'type', 'products', 'performer', 'paymentMethod', 'reason', 'amount', 'actions'];
@@ -48,12 +45,6 @@ export class CashManagement implements OnInit {
   formAmount = 0;
   formReason = '';
   isSubmitting = false;
-
-  ngOnInit(): void {
-    setTimeout(() => {
-      this.tutorialService.startTutorial(TUTORIALS['SHIFT_MGMT'].id);
-    }, 1000);
-  }
 
   openForm(type: 'expense' | 'floatIn' | 'floatOut'): void {
     this.formType = type;

@@ -23,8 +23,6 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CheckoutDialog, CheckoutDialogResult } from './checkout-dialog/checkout-dialog';
 import { PriceOverrideDialog, PriceOverrideDialogResult } from './price-override-dialog/price-override-dialog';
 import { getRandomCommendation } from '../../../../core/constants/commendations';
-import { TutorialService } from '../../../../core/services/tutorial.service';
-import { TUTORIALS } from '../../../../core/constants/tutorials';
 
 import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { ViewChild } from '@angular/core';
@@ -45,7 +43,7 @@ import { ProductCatalogComponent } from '../product-catalog/product-catalog';
   animations: [fadeIn],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class POS implements OnInit {
+export class POS {
   @ViewChild('stepper') stepper!: MatStepper;
 
   private storeService = inject(StoreService);
@@ -53,7 +51,7 @@ export class POS implements OnInit {
   private dialog = inject(MatDialog);
   private authService = inject(AuthService);
   private memberService = inject(MemberService);
-  private tutorialService = inject(TutorialService);
+
 
   private cashRegisterService = inject(CashRegisterService);
 
@@ -68,12 +66,6 @@ export class POS implements OnInit {
   categories: (ProductCategory | 'All')[] = ['All', 'Training', 'Supplements', 'Drinks', 'Boxing'];
   isProcessing = signal(false);
   cartExpanded = signal(false);
-
-  ngOnInit(): void {
-    setTimeout(() => {
-      this.tutorialService.startTutorial(TUTORIALS['POS'].id);
-    }, 1000);
-  }
 
   toggleCart(): void {
     this.cartExpanded.update(v => !v);

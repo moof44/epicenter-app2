@@ -13,9 +13,6 @@ import { ShiftStatusWidget } from './features/store/components/shift-status-widg
 import { AuthService } from './core/services/auth.service';
 import { QuotaStatusWidget } from './core/components/quota-status-widget/quota-status-widget';
 import { StaffRemindersComponent } from './core/components/staff-reminders/staff-reminders';
-import { TutorialService } from './core/services/tutorial.service';
-import { TUTORIALS } from './core/constants/tutorials';
-import { TutorialWizardComponent } from './shared/components/tutorial-wizard/tutorial-wizard.component';
 
 @Component({
   selector: 'app-root',
@@ -25,8 +22,7 @@ import { TutorialWizardComponent } from './shared/components/tutorial-wizard/tut
     MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule, MatDividerModule,
     ShiftStatusWidget,
     QuotaStatusWidget,
-    StaffRemindersComponent,
-    TutorialWizardComponent
+    StaffRemindersComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -38,7 +34,6 @@ export class App implements OnDestroy {
   private _mobileQueryListener: () => void;
 
   readonly authService = inject(AuthService);
-  private tutorialService = inject(TutorialService);
 
   constructor() {
     const changeDetectorRef = inject(ChangeDetectorRef);
@@ -48,18 +43,7 @@ export class App implements OnDestroy {
     this._mobileQueryListener = () => changeDetectorRef.detectChanges();
     this.mobileQuery.addListener(this._mobileQueryListener);
 
-    // Register Tutorials
-    Object.values(TUTORIALS).forEach(t => this.tutorialService.registerTutorial(t));
 
-    // Trigger Intro Tutorial on Login
-    this.authService.user$.subscribe(user => {
-      if (user) {
-        // timeout to ensure view is ready or just nice UX
-        setTimeout(() => {
-          this.tutorialService.startTutorial(TUTORIALS['INTRO_SHIFT'].id);
-        }, 2000);
-      }
-    });
   }
 
   ngOnDestroy(): void {
