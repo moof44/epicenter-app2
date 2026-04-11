@@ -60,19 +60,16 @@ export class ReportStateService {
                     limit: 100
                 });
 
-                const totalPromise = this.storeService.getSalesTotal({
-                    startDate,
-                    endDate,
-                    staffId: userId
-                });
-
                 const txPromise = firstValueFrom(transactions$.pipe(take(1)));
 
-                Promise.all([txPromise, totalPromise]).then(([txs, total]) => {
-                    const transactions = txs.map(tx => ({
-                        ...tx,
-                        date: tx.date instanceof Date ? tx.date : (tx.date as any).toDate()
-                    }));
+                txPromise.then(txs => {
+                    const transactions = txs
+                        .filter(tx => tx.status !== 'VOID')
+                        .map(tx => ({
+                            ...tx,
+                            date: tx.date instanceof Date ? tx.date : (tx.date as any).toDate()
+                        }));
+                    const total = transactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
                     observer.next({ transactions, total });
                     observer.complete();
                 }).catch(err => observer.error(err));

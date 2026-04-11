@@ -16,8 +16,8 @@ export class ReportsService {
      * 1. Volume or number of gym goers every day with time peak highlight
      */
     async getVolumeAnalytics(startDate: Date, endDate: Date) {
-        const startStr = startDate.toISOString().split('T')[0];
-        const endStr = endDate.toISOString().split('T')[0];
+        const startStr = toLocalDateStr(startDate);
+        const endStr = toLocalDateStr(endDate);
 
         const records = await this.attendanceService.getAttendanceRange(startStr, endStr);
 
@@ -92,6 +92,8 @@ export class ReportsService {
         const staffPerformance = new Map<string, number>();
 
         transactions.forEach(tx => {
+            if (tx.status === 'VOID') return;
+
             // Date
             const date = tx.date instanceof Date ? tx.date : (tx.date as any).toDate();
             const dateStr = toLocalDateStr(date);
@@ -131,8 +133,8 @@ export class ReportsService {
      * 5. Member's Attendance (Top Gym Goers)
      */
     async getTopAttendees(startDate: Date, endDate: Date) {
-        const startStr = startDate.toISOString().split('T')[0];
-        const endStr = endDate.toISOString().split('T')[0];
+        const startStr = toLocalDateStr(startDate);
+        const endStr = toLocalDateStr(endDate);
 
         const records = await this.attendanceService.getAttendanceRange(startStr, endStr);
 

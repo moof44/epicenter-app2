@@ -206,7 +206,7 @@ export class StoreService {
   async checkout(customItems?: CartItem[], performedBy = 'SYSTEM_POS', paymentMethod: 'CASH' | 'GCASH' = 'CASH', referenceNumber?: string, amountTendered?: number, changeDue?: number, memberId?: string | null, memberName?: string): Promise<string> {
     // Enforce Open Register
     const cashRegisterService = this.injector.get(CashRegisterService);
-    
+
     const valid = await cashRegisterService.ensureValidShiftForTransaction();
     if (!valid) {
       throw new Error('Transaction blocked: Register is closed. Please open a shift.');
@@ -747,7 +747,7 @@ export class StoreService {
 
     // 5. Refresh Shift UI asynchronously (non-blocking server commit)
     if (shiftDataUpdates && cashRegisterService.getCurrentShiftId() === shiftDataUpdates.shiftRef.id) {
-       cashRegisterService.refreshShift();
+      cashRegisterService.refreshShift();
     }
   }
 

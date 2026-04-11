@@ -8,6 +8,8 @@ import { SettingsService } from '../../services/settings.service';
 import { AuthService } from '../../services/auth.service';
 import { ReportStateService } from '../../services/report.state.service';
 
+import { toLocalDateStr } from '../../services/store.service';
+
 @Component({
     selector: 'app-quota-status-widget',
     standalone: true,
@@ -38,16 +40,12 @@ export class QuotaStatusWidget {
     monthlyQuota = computed(() => this.settings().monthlyQuota || 0);
     monthlyRevenue = computed(() => this.report().total || 0);
     todayRevenue = computed(() => {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const localTodayStr = `${year}-${month}-${day}`;
+        const localTodayStr = toLocalDateStr(new Date());
 
         const days = this.report().days || [];
         const todayItem = days.find(d => {
             try {
-                return d.date.toISOString().split('T')[0] === localTodayStr;
+                return toLocalDateStr(d.date) === localTodayStr;
             } catch {
                 return false;
             }
