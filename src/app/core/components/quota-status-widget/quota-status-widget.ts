@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { StoreService } from '../../services/store.service';
 import { SettingsService } from '../../services/settings.service';
 import { AuthService } from '../../services/auth.service';
+import { ReportStateService } from '../../services/report.state.service';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -16,27 +16,38 @@ import { map } from 'rxjs/operators';
     styleUrl: './quota-status-widget.css'
 })
 export class QuotaStatusWidget {
-    private storeService = inject(StoreService);
     private settingsService = inject(SettingsService);
     private authService = inject(AuthService);
+    private reportStateService = inject(ReportStateService);
 
-    analytics$ = this.storeService.getSalesAnalytics();
+    private currentDate = new Date();
+    
+    // Connect to the exact same cache as the Monthly Sales Report page
+    report$ = this.reportStateService.getMonthlyReport(this.currentDate.getFullYear(), this.currentDate.getMonth());
     settings$ = this.settingsService.getSettings();
 
-    analytics = toSignal(this.analytics$, {
-        initialValue: {
-            monthlyRevenue: 0,
-            todayRevenue: 0,
-            totalRevenue: 0,
-            topSelling: [],
-            lowPerformance: []
-        }
-    });
+    report = toSignal(this.report$, { initialValue: { days: [], total: 0 } });
     settings = toSignal(this.settings$, { initialValue: { monthlyQuota: 0 } });
 
     monthlyQuota = computed(() => this.settings().monthlyQuota || 0);
-    monthlyRevenue = computed(() => this.analytics().monthlyRevenue || 0);
-    todayRevenue = computed(() => this.analytics()?.todayRevenue || 0);
+    monthlyRevenue = computed(() => this.report().total || 0);
+    todayRevenue = computed(() => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const localTodayStr = `${year}-${month}-${day}`;
+
+        const days = this.report().days || [];
+        const todayItem = days.find(d => {
+            try {
+                return d.date.toISOString().split('T')[0] === localTodayStr;
+            } catch {
+                return false;
+            }
+        });
+        return todayItem ? todayItem.totalSales : 0;
+    });
 
     // Visibility Logic
     isWidgetVisible = computed(() => {

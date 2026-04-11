@@ -713,16 +713,24 @@ export class StoreService {
       totalSales: increment(-txData.totalAmount)
     });
 
-    // Commit the batch
+    // 4.5 ATOMIC SHIFT FIX calculation PRE-FETCH
+    const cashRegisterService = this.injector.get(CashRegisterService);
+    let shiftDataUpdates = null;
+    try {
+      shiftDataUpdates = await cashRegisterService.getVoidTransactionShiftUpdates(transactionId, txDate);
+      if (shiftDataUpdates) {
+        batch.update(shiftDataUpdates.shiftRef, shiftDataUpdates.updates);
+      }
+    } catch (e) {
+      console.error('Failed to pre-fetch shift updates for voiding:', e);
+    }
+
+    // Commit the batch securely ALL AT ONCE!
     await batch.commit();
 
-    // 5. Update Shift (Separate operation)
-    const cashRegisterService = this.injector.get(CashRegisterService);
-    try {
-      await cashRegisterService.voidTransactionInShift(transactionId, txDate);
-    } catch (e) {
-      console.error('Failed to void transaction in shift:', e);
-      // Non-blocking, but should be noted.
+    // 5. Refresh Shift UI asynchronously (non-blocking server commit)
+    if (shiftDataUpdates && cashRegisterService.getCurrentShiftId() === shiftDataUpdates.shiftRef.id) {
+       cashRegisterService.refreshShift();
     }
   }
 

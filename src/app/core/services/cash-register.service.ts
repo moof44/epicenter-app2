@@ -418,6 +418,61 @@ export class CashRegisterService {
     return shift?.transactions ?? [];
   }
 
+  // Pre-calculate shift updates for an atomic batched void operation
+  async getVoidTransactionShiftUpdates(relatedTransactionId: string, txDate: Date): Promise<{ shiftRef: any, updates: any } | null> {
+    const q = query(
+      this.shiftsCollection,
+      where('startTime', '<=', txDate),
+      orderBy('startTime', 'desc'),
+      limit(1)
+    );
+
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return null;
+
+    const shiftDoc = snapshot.docs[0];
+    const shiftData = shiftDoc.data() as ShiftSession;
+
+    const transactions = shiftData.transactions || [];
+    const txIndex = transactions.findIndex(t => t.relatedTransactionId === relatedTransactionId);
+
+    if (txIndex === -1) return null;
+
+    const tx = transactions[txIndex];
+    if ((tx as any).voided) return null;
+
+    const updatedTx = { ...tx, voided: true };
+    const newTransactions = [...transactions];
+    newTransactions[txIndex] = updatedTx;
+
+    const updates: any = { transactions: newTransactions };
+    const amount = tx.amount;
+
+    if (tx.type === 'Sale') {
+      updates.totalRevenue = increment(-amount);
+      updates.totalSales = increment(-amount);
+
+      if (tx.paymentMethod === 'GCASH') {
+        updates.totalGcashSales = increment(-amount);
+      } else {
+        updates.totalCashSales = increment(-amount);
+        updates.expectedClosingBalance = increment(-amount);
+      }
+    } else if (tx.type === 'Float_In') {
+      updates.totalFloatIn = increment(-amount);
+      updates.expectedClosingBalance = increment(-amount);
+    } else if (tx.type === 'Expense') { 
+      updates.totalExpenses = increment(-amount);
+      updates.expectedClosingBalance = increment(amount);
+    } else if (tx.type === 'Float_Out') {
+      updates.totalFloatOut = increment(-amount);
+      updates.expectedClosingBalance = increment(amount);
+    }
+
+    const shiftRef = doc(this.firestore, 'shifts', shiftDoc.id);
+    return { shiftRef, updates };
+  }
+
   // Void a transaction within a shift (Open or Closed - for correction)
   async voidTransactionInShift(relatedTransactionId: string, txDate: Date): Promise<void> {
     // Find shift that covers this time
