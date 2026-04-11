@@ -4,7 +4,7 @@ import { Firestore, doc, docData } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { from, Observable, of } from 'rxjs';
-import { tap, switchMap, shareReplay } from 'rxjs/operators';
+import { tap, switchMap, shareReplay, distinctUntilChanged, map } from 'rxjs/operators';
 import { User as AppUser } from '../models/user.model';
 
 @Injectable({
@@ -62,18 +62,28 @@ export class AuthService {
 
     constructor() {
         // Global Listener for Emergency Logout
-        docData(doc(this.firestore, 'system/settings')).subscribe((settings: any) => {
-            if (settings && settings.minAuthTimestamp) {
-                this.auth.currentUser?.getIdTokenResult(true).then(idTokenResult => {
-                    const authTime = new Date(idTokenResult.authTime).getTime();
-                    const minAuthTime = settings.minAuthTimestamp.toMillis ? settings.minAuthTimestamp.toMillis() : new Date(settings.minAuthTimestamp).getTime(); // Handle Firestore Timestamp
+        // Only react when minAuthTimestamp actually changes (not on every Firestore snapshot re-emit).
+        // Use getIdTokenResult(false) to read the cached token instead of forcing a network refresh,
+        // which previously caused a feedback loop: listener emit → token refresh → Firestore reconnect → re-emit.
+        docData(doc(this.firestore, 'system/settings')).pipe(
+            map((settings: any) => {
+                if (!settings?.minAuthTimestamp) return null;
+                return settings.minAuthTimestamp.toMillis
+                    ? settings.minAuthTimestamp.toMillis()
+                    : new Date(settings.minAuthTimestamp).getTime();
+            }),
+            distinctUntilChanged()
+        ).subscribe((minAuthTime: number | null) => {
+            if (!minAuthTime) return;
 
-                    if (authTime < minAuthTime) {
-                        console.warn('Force Logout triggered by Admin.');
-                        this.logout().subscribe();
-                    }
-                });
-            }
+            this.auth.currentUser?.getIdTokenResult(false).then(idTokenResult => {
+                const authTime = new Date(idTokenResult.authTime).getTime();
+
+                if (authTime < minAuthTime) {
+                    console.warn('Force Logout triggered by Admin.');
+                    this.logout().subscribe();
+                }
+            });
         });
     }
 }

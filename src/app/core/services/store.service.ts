@@ -312,7 +312,7 @@ export class StoreService {
         type: 'Sale',
         amount: total,
         reason: `POS Sale #${transactionRef.id.slice(0, 8)}`,
-        performedBy: 'System',
+        performedBy: staff?.displayName || performedBy,
         relatedTransactionId: transactionRef.id,
         paymentMethod: paymentMethod,
         timestamp: timestamp,
