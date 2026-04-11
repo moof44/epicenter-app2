@@ -8,7 +8,7 @@ import { SettingsService } from '../../services/settings.service';
 import { AuthService } from '../../services/auth.service';
 import { ReportStateService } from '../../services/report.state.service';
 
-import { toLocalDateStr } from '../../services/store.service';
+import { toLocalDateStr } from '../../utils/date.utils';
 
 @Component({
     selector: 'app-quota-status-widget',

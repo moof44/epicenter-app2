@@ -3,13 +3,9 @@ import {
   Firestore,
   collection,
   collectionData,
-  addDoc,
   doc,
-  updateDoc,
-  deleteDoc,
   query,
   orderBy,
-  docData,
   writeBatch,
   increment,
   limit,
@@ -17,13 +13,12 @@ import {
   documentId,
   getDocs,
   getDoc,
-  startAfter,
   QueryDocumentSnapshot,
   DocumentData,
   sum,
   getAggregateFromServer,
   arrayUnion,
-  setDoc
+  setDoc,
 } from '@angular/fire/firestore';
 import { Observable, Subject, map, combineLatest } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
@@ -33,13 +28,10 @@ import { AuthService } from './auth.service';
 import { MemberService } from './member.service';
 import { CartStore } from '../store/cart.store';
 
-/** Converts a Date to a local YYYY-MM-DD string (timezone-safe). */
-export function toLocalDateStr(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+import { toLocalDateStr } from '../utils/date.utils';
+
+/** @deprecated Import from '../utils/date.utils' instead */
+export { toLocalDateStr } from '../utils/date.utils';
 
 export interface SaleCompletedEvent {
   transactionId: string;
@@ -47,6 +39,9 @@ export interface SaleCompletedEvent {
   timestamp: Date;
   paymentMethod: 'CASH' | 'GCASH';
 }
+
+import { InventoryService } from './inventory.service';
+import { ProductService } from './product.service';
 
 @Injectable({
   providedIn: 'root'
@@ -79,49 +74,42 @@ export class StoreService {
   /** @deprecated Use CartStore directly */
   cart$ = toObservable(this.cartStore.items);
 
+  private productService = inject(ProductService);
+  private inventoryService = inject(InventoryService);
+
   // Sale completed event for cash register integration
   private saleCompleted = new Subject<SaleCompletedEvent>();
   saleCompleted$ = this.saleCompleted.asObservable();
 
-  // Products
+  // Products — delegated to ProductService
+  /** @deprecated Use ProductService directly */
   getProducts(limitCount = 100): Observable<Product[]> {
-    const q = query(this.productsCollection, orderBy('name'), limit(limitCount));
-    return collectionData(q, { idField: 'id' }) as Observable<Product[]>;
+    return this.productService.getProducts(limitCount);
   }
 
+  /** @deprecated Use ProductService directly */
   async getProductsPage(limitCount = 50, lastDoc?: QueryDocumentSnapshot<DocumentData>): Promise<{ products: Product[], lastDoc: QueryDocumentSnapshot<DocumentData> | null }> {
-    let q = query(this.productsCollection, orderBy('name'), limit(limitCount));
-
-    if (lastDoc) {
-      q = query(q, startAfter(lastDoc));
-    }
-
-    const snapshot = await getDocs(q);
-    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-    const lastDocument = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
-
-    return { products, lastDoc: lastDocument };
+    return this.productService.getProductsPage(limitCount, lastDoc);
   }
 
+  /** @deprecated Use ProductService directly */
   getProduct(id: string): Observable<Product> {
-    const docRef = doc(this.firestore, 'products', id);
-    return docData(docRef, { idField: 'id' }) as Observable<Product>;
+    return this.productService.getProduct(id);
   }
 
+  /** @deprecated Use ProductService directly */
   addProduct(product: Omit<Product, 'id'>): Promise<any> {
-    const trace = this._currentUserSnapshot;
-    return addDoc(this.productsCollection, { ...product, lastModifiedBy: trace });
+    return this.productService.addProduct(product);
   }
 
+  /** @deprecated Use ProductService directly */
   updateProduct(id: string, data: Partial<Product>): Promise<void> {
-    const docRef = doc(this.firestore, 'products', id);
-    const trace = this._currentUserSnapshot;
-    return updateDoc(docRef, { ...data, lastModifiedBy: trace });
+    return this.productService.updateProduct(id, data);
   }
 
+  /** @deprecated Use ProductService directly */
   deleteProduct(id: string): Promise<void> {
-    const docRef = doc(this.firestore, 'products', id);
-    return deleteDoc(docRef);
+    return this.productService.deleteProduct(id);
   }
 
 
@@ -360,111 +348,21 @@ export class StoreService {
     return transactionRef.id;
   }
 
-  // Inventory Management (Gym Inventory System)
-
+  // Inventory Management — delegated to InventoryService
+  /** @deprecated Use InventoryService directly */
   async logConsumption(productId: string, amount: number, notes?: string): Promise<void> {
-    if (amount <= 0) return;
-
-    // Fetch current product for snapshot
-    const productDocRef = doc(this.firestore, 'products', productId);
-    const productSnapshot = await getDoc(productDocRef);
-    if (!productSnapshot.exists()) throw new Error('Product not found');
-    const product = { id: productSnapshot.id, ...productSnapshot.data() } as Product;
-
-    const batch = writeBatch(this.firestore);
-    const productRef = doc(this.firestore, 'products', productId);
-
-    const previousStock = product.stock;
-    const newStock = previousStock - amount;
-
-    // Decrement stock
-    batch.update(productRef, { stock: increment(-amount) });
-
-    // Log Movement
-    const logRef = doc(this.inventoryLogsCollection);
-    const staff = this.authService.userProfile();
-    const log: InventoryLog = {
-      productId,
-      productName: product.name,
-      type: 'INTERNAL_USE',
-      changeAmount: -amount,
-      previousStock: previousStock,
-      newStock: newStock,
-      timestamp: new Date(),
-      performedBy: 'STAFF',
-      staffId: staff?.uid,
-      staffName: staff?.displayName,
-      notes
-    };
-    batch.set(logRef, log);
-
-    await batch.commit();
+    return this.inventoryService.logConsumption(productId, amount, notes);
   }
 
+  /** @deprecated Use InventoryService directly */
   async reconcileInventory(auditData: { productId: string; physicalCount: number }[]): Promise<void> {
-    const batch = writeBatch(this.firestore);
-    const timestamp = new Date();
-
-    // 1. Fetch current product states in batches (to avoid N+1 reads)
-    const productIds = auditData.map(d => d.productId);
-    const chunkSize = 10;
-    const productsMap = new Map<string, Product>();
-
-    for (let i = 0; i < productIds.length; i += chunkSize) {
-      const chunk = productIds.slice(i, i + chunkSize);
-      const q = query(this.productsCollection, where(documentId(), 'in', chunk));
-      const snapshot = await getDocs(q);
-
-      snapshot.forEach(docSnap => {
-        productsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as Product);
-      });
-    }
-
-    // 2. Compare and update
-    for (const data of auditData) {
-      const product = productsMap.get(data.productId);
-
-      if (!product) continue;
-
-      const systemStock = product.stock || 0;
-      const difference = this.calculateStockVariance(systemStock, data.physicalCount);
-
-      if (difference !== 0) {
-        const productRef = doc(this.firestore, 'products', data.productId);
-
-        // Update stock to match physical count
-        batch.update(productRef, { stock: increment(difference) });
-
-        // Log Movement
-        const logRef = doc(this.inventoryLogsCollection);
-        const staff = this.authService.userProfile();
-        const log: InventoryLog = {
-          productId: data.productId,
-          productName: product.name,
-          type: 'AUDIT_ADJUSTMENT',
-          changeAmount: difference,
-          previousStock: systemStock,
-          newStock: data.physicalCount,
-          timestamp: timestamp,
-          performedBy: 'STAFF_AUDIT',
-          staffId: staff?.uid,
-          staffName: staff?.displayName,
-          notes: `Stock Take: System ${systemStock} -> Physical ${data.physicalCount}`
-        };
-        batch.set(logRef, log);
-      }
-    }
-
-    await batch.commit();
+    return this.inventoryService.reconcileInventory(auditData);
   }
 
-  // Helper for Inventory Variance
+  /** @deprecated Use InventoryService directly */
   calculateStockVariance(currentStock: number, physicalCount: number): number {
-    return physicalCount - currentStock;
+    return this.inventoryService.calculateStockVariance(currentStock, physicalCount);
   }
-
-  // New Method for Receiving Stock (if not already present, I'll add it or ensure used appropriately)
-  // ...
 
   // Transactions
   getTransactions(constraints: {
