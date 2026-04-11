@@ -201,20 +201,28 @@ export class CheckInKiosk implements OnInit {
   }
 
   async confirmCheckIn() {
+    // BUG #3 FIX: Set isSubmitting BEFORE any async work to prevent duplicate check-ins
+    // from rapid double-taps. Without this, two concurrent executions could both pass
+    // the async validator and write two attendance records to Firestore.
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+
     if (!this.cashRegisterService.isShiftOpen()) {
       this.snackBar.open('Register is closed. Please open a shift first.', 'Close', { duration: 3000 });
+      this.isSubmitting = false;
       return;
     }
 
-    if (!this.selectedMember) return;
-    this.isSubmitting = true;
+    const valid = await this.cashRegisterService.ensureValidShiftForTransaction();
+    if (!valid) { this.isSubmitting = false; return; }
+
+    if (!this.selectedMember) { this.isSubmitting = false; return; }
+
     try {
       const member = this.selectedMember;
       const isExpired = this.memberService.isMembershipExpired(member);
       const hasActiveSubscription = member.membershipStatus === 'Active' && !!member.membershipExpiration && !isExpired;
       const hasLocker = !!this.selectedLocker;
-
-
 
       // 0. Remarks Check
       if (member.remarks) {
@@ -355,6 +363,9 @@ export class CheckInKiosk implements OnInit {
       await this.doCheckIn(member);
 
     } catch (error: any) {
+      // BUG #6 FIX: Also suppress 'SILENT' — thrown when shift is null in addCashTransaction.
+      // Without this, a narrow race condition could show a raw 'SILENT' text snackbar.
+      if (error.message === 'STALE_SHIFT' || error.message === 'SILENT') return;
       this.snackBar.open(error.message, 'Close', { duration: 3000 });
     } finally {
       this.isSubmitting = false;

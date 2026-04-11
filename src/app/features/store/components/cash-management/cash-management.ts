@@ -86,6 +86,13 @@ export class CashManagement {
       this.snackBar.open('Transaction recorded', 'Close', { duration: 3000 });
       this.closeForm();
     } catch (err: any) {
+      // BUG #5 FIX: Close the form when STALE_SHIFT or SILENT is caught.
+      // Without this, the expense/float form stays open and populated behind the modal,
+      // causing a confusing re-submission loop while the StaleShiftDialog is visible.
+      if (err.message === 'STALE_SHIFT' || err.message === 'SILENT') {
+        this.closeForm();
+        return;
+      }
       this.snackBar.open(err.message || 'Failed to record transaction', 'Close', { duration: 3000 });
     } finally {
       this.isSubmitting = false;

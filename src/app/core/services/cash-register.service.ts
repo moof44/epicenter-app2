@@ -1,4 +1,6 @@
 import { Injectable, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { StaleShiftDialog } from '../../shared/components/stale-shift-dialog/stale-shift-dialog';
 import {
   Firestore,
   collection,
@@ -32,13 +34,56 @@ export class CashRegisterService {
   private firestore = inject(Firestore);
   private storeService = inject(StoreService);
   private shiftsCollection = collection(this.firestore, 'shifts');
+  private dialog = inject(MatDialog);
 
   // Current shift state
   private currentShift = new BehaviorSubject<ShiftSession | null>(null);
   currentShift$ = this.currentShift.asObservable();
 
+  // Guard: prevents multiple StaleShiftDialogs from stacking
+  private isStaleDialogOpen = false;
+
   constructor() {
     this.refreshShift();
+  }
+
+  // Pre-validate a shift before any cash operations
+  async ensureValidShiftForTransaction(): Promise<boolean> {
+    const shift = this.currentShift.getValue();
+    if (!shift || shift.status !== 'OPEN') {
+      // Return false safely. Basic logic usually catches this and throws its own "Register closed" logic.
+      return false;
+    }
+
+    // BUG #1 FIX: Safely handle both Firestore Timestamp and plain JS Date.
+    // When a shift is first opened, startTime is a JS Date (in-memory).
+    // After refreshShift() reads from Firestore, it becomes a Firestore Timestamp with .toDate().
+    // Calling .toDate() on a plain Date crashes with: TypeError: shift.startTime.toDate is not a function
+    const rawStart = shift.startTime;
+    const startDate: Date = rawStart?.toDate ? rawStart.toDate() : new Date(rawStart);
+    const shiftDate = startDate.toLocaleDateString('en-CA');
+    const today = new Date().toLocaleDateString('en-CA');
+
+    if (shiftDate !== today) {
+      // BUG #4 FIX: Prevent multiple StaleShiftDialogs from stacking.
+      // This service is a singleton (providedIn: 'root'), so this flag protects
+      // all callers (POS, Kiosk, Cash Management) simultaneously.
+      if (!this.isStaleDialogOpen) {
+        this.isStaleDialogOpen = true;
+        const dialogRef = this.dialog.open(StaleShiftDialog, {
+          data: { shiftDate },
+          disableClose: true,
+          width: '450px'
+        });
+        dialogRef.afterClosed().subscribe(() => {
+          this.isStaleDialogOpen = false;
+        });
+      }
+      // Throw a specific error code to intercept and silence in UI
+      throw new Error('STALE_SHIFT');
+    }
+
+    return true;
   }
 
 
@@ -134,6 +179,11 @@ export class CashRegisterService {
 
   // Add a cash transaction to current shift
   async addCashTransaction(transaction: Omit<CashTransaction, 'id' | 'timestamp'>): Promise<void> {
+    const valid = await this.ensureValidShiftForTransaction();
+    if (!valid) {
+        throw new Error('SILENT');
+    }
+
     const shift = this.currentShift.getValue();
     if (!shift?.id || shift.status !== 'OPEN') {
       throw new Error('No open shift. Please open a shift first.');

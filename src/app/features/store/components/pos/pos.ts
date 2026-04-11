@@ -187,6 +187,9 @@ export class POS {
       return;
     }
 
+    const valid = await this.cashRegisterService.ensureValidShiftForTransaction();
+    if (!valid) return;
+
     this.isCheckoutPending = true;
 
     try {
@@ -225,6 +228,11 @@ export class POS {
       // Reset flow after sale
       this.resetStepper();
     } catch (error: any) {
+      // BUG #6 FIX: Also suppress 'SILENT' for defensive robustness.
+      // STALE_SHIFT: thrown when shift date != today (modal handles UX).
+      // SILENT: thrown when shift is null in addCashTransaction (should never reach here via POS,
+      //         but suppressed for safety against any race condition during app initialization).
+      if (error.message === 'STALE_SHIFT' || error.message === 'SILENT') return;
       this.snackBar.open(error.message || 'Checkout failed', 'Close', { duration: 3000 });
     } finally {
       this.isProcessing.set(false);
