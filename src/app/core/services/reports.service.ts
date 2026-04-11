@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { StoreService } from './store.service';
+import { StoreService, toLocalDateStr } from './store.service';
 import { AttendanceService } from './attendance.service';
 import { firstValueFrom } from 'rxjs';
 import { AttendanceRecord } from '../models/attendance.model';
@@ -94,7 +94,7 @@ export class ReportsService {
         transactions.forEach(tx => {
             // Date
             const date = tx.date instanceof Date ? tx.date : (tx.date as any).toDate();
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = toLocalDateStr(date);
             salesPerDay.set(dateStr, (salesPerDay.get(dateStr) || 0) + tx.totalAmount);
 
             // Person

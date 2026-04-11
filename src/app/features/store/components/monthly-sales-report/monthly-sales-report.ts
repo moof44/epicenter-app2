@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { switchMap, map } from 'rxjs/operators';
+import { Subject, startWith, switchMap, combineLatest } from 'rxjs';
 import { StoreService } from '../../../../core/services/store.service';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { fadeIn } from '../../../../core/animations/animations';
@@ -43,9 +43,15 @@ export class MonthlySalesReport {
     viewMonth = computed(() => this.currentDate().getMonth());
     viewYear = computed(() => this.currentDate().getFullYear());
 
+    // Refresh trigger for post-recalculation reloads
+    private refreshTrigger = new Subject<void>();
+
     // Data Loading
-    report$ = toObservable(this.currentDate).pipe(
-        switchMap(date => this.reportStateService.getMonthlyReport(date.getFullYear(), date.getMonth()))
+    report$ = combineLatest([
+        toObservable(this.currentDate),
+        this.refreshTrigger.pipe(startWith(undefined))
+    ]).pipe(
+        switchMap(([date]) => this.reportStateService.getMonthlyReport(date.getFullYear(), date.getMonth()))
     );
     report = toSignal(this.report$);
 
@@ -117,28 +123,18 @@ export class MonthlySalesReport {
     async recalculateMonth() {
         if (confirm(`Recalculate sales for ${this.getMonthName(this.viewMonth())} ${this.viewYear()}?`)) {
             await this.storeService.recalculateSalesForMonth(this.viewYear(), this.viewMonth());
-            this.reportStateService.clearCache();
-            this.forceReload();
+            this.reportStateService.invalidateMonthlyReport(this.viewYear(), this.viewMonth());
+            this.refreshTrigger.next();
             alert('Month recalculated.');
         }
     }
 
     async recalculateDay(daySales: any) {
-        // daily_sales collection uses date object.
-        // The daySales object in the table comes from the report state service `DailySales` interface.
-        // It has `date: Date`.
         if (confirm(`Recalculate sales for ${this.getDayName(daySales.date)} ${daySales.date.toLocaleDateString()}?`)) {
             await this.storeService.recalculateSalesForDay(daySales.date);
-            this.reportStateService.clearCache();
-            this.forceReload();
+            this.reportStateService.invalidateMonthlyReport(this.viewYear(), this.viewMonth());
+            this.refreshTrigger.next();
         }
-    }
-
-    private forceReload() {
-        const current = this.currentDate();
-        // Trigger signal update
-        this.currentDate.set(new Date(current.getTime() + 1));
-        setTimeout(() => this.currentDate.set(current), 0);
     }
 
     // Deprecate or remove old refreshData if it was doing full db recalc
@@ -152,7 +148,7 @@ export class MonthlySalesReport {
         if (confirm('Recalculate ENTIRE historical database? This will be slow.')) {
             await this.storeService.recalculateDailySales();
             this.reportStateService.clearCache();
-            this.forceReload();
+            this.refreshTrigger.next();
             alert('Full database refreshed.');
         }
     }

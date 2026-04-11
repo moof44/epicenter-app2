@@ -31,6 +31,14 @@ import { CashRegisterService } from './cash-register.service';
 import { AuthService } from './auth.service';
 import { MemberService } from './member.service';
 
+/** Converts a Date to a local YYYY-MM-DD string (timezone-safe). */
+export function toLocalDateStr(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export interface SaleCompletedEvent {
   transactionId: string;
   amount: number;
@@ -264,6 +272,7 @@ export class StoreService {
     const transaction: Omit<Transaction, 'id'> = {
       date: timestamp,
       totalAmount: total,
+      status: 'COMPLETED',
       items: cartItems,
       staffId: staff?.uid || null,
       staffName: staff?.displayName || null,
@@ -278,7 +287,7 @@ export class StoreService {
     batch.set(transactionRef, transaction);
 
     // 3. Update Daily Sales (Denormalization)
-    const dateStr = timestamp.toISOString().split('T')[0]; // YYYY-MM-DD
+    const dateStr = toLocalDateStr(timestamp); // YYYY-MM-DD (local timezone)
     const dfsRef = doc(this.firestore, 'daily_sales', dateStr);
     batch.set(dfsRef, {
       date: timestamp,
@@ -708,12 +717,18 @@ export class StoreService {
     });
 
     // 4. Update Daily Sales
+    // Use the same local-date key derivation as checkout().
+    // For transactions created before the timezone migration, the daily_sales doc
+    // may still be keyed by UTC date. We decrement the local-keyed doc; the migration
+    // (migrateDailySalesToLocalDateKeys) will reconcile any orphaned UTC-keyed docs.
     const txDate = txData.date instanceof Date ? txData.date : (txData.date as any).toDate();
-    const dateStr = txDate.toISOString().split('T')[0];
+    const dateStr = toLocalDateStr(txDate);
     const dfsRef = doc(this.firestore, 'daily_sales', dateStr);
-    batch.update(dfsRef, {
+
+    // Use set+merge instead of update to avoid failure if the doc doesn't exist yet
+    batch.set(dfsRef, {
       totalSales: increment(-txData.totalAmount)
-    });
+    }, { merge: true });
 
     // 4.5 ATOMIC SHIFT FIX calculation PRE-FETCH
     const cashRegisterService = this.injector.get(CashRegisterService);
@@ -747,8 +762,8 @@ export class StoreService {
     // We can query by ID range since IDs are YYYY-MM-DD
     // But easier to query by 'date' field if we saved it as timestamp (which we did in checkout cleanup)
     // Actually, querying by ID string range is very efficient too.
-    const startId = startDate.toISOString().split('T')[0];
-    const endId = endDate.toISOString().split('T')[0];
+    const startId = toLocalDateStr(startDate);
+    const endId = toLocalDateStr(endDate);
 
     const q = query(dailySalesCol,
       where(documentId(), '>=', startId),
@@ -765,7 +780,7 @@ export class StoreService {
         const daysInMonth = endDate.getDate();
         for (let i = 1; i <= daysInMonth; i++) {
           const d = new Date(year, month, i);
-          const k = d.toISOString().split('T')[0];
+          const k = toLocalDateStr(d);
           dailyMap.set(k, 0);
         }
 
@@ -798,7 +813,7 @@ export class StoreService {
       if (data.status === 'VOID') return;
 
       const date = data.date instanceof Date ? data.date : (data.date as any).toDate();
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = toLocalDateStr(date);
       const current = salesMap.get(dateStr) || 0;
       salesMap.set(dateStr, current + data.totalAmount);
     });
@@ -811,7 +826,7 @@ export class StoreService {
       // We can use set with date field for future flexibilty
       batch.set(ref, {
         totalSales: total,
-        date: new Date(dateStr) // Approximate timestamp for the day
+        date: new Date(dateStr + 'T00:00:00') // Local midnight
       });
       count++;
       // Batches have limit of 500
@@ -850,7 +865,7 @@ export class StoreService {
       totalSales += data.totalAmount || 0;
     });
 
-    const dateStr = start.toISOString().split('T')[0];
+    const dateStr = toLocalDateStr(start);
     const ref = doc(this.firestore, 'daily_sales', dateStr);
 
     // safe upsert
@@ -879,7 +894,7 @@ export class StoreService {
       if (data.status === 'VOID') return;
 
       const date = data.date instanceof Date ? data.date : (data.date as any).toDate();
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = toLocalDateStr(date);
       const current = salesMap.get(dateStr) || 0;
       salesMap.set(dateStr, current + data.totalAmount);
     });
@@ -891,7 +906,7 @@ export class StoreService {
       const ref = doc(this.firestore, 'daily_sales', dateStr);
       batch.set(ref, {
         totalSales: total,
-        date: new Date(dateStr)
+        date: new Date(dateStr + 'T00:00:00') // Local midnight
       });
       count++;
       if (count >= 400) {
@@ -904,5 +919,33 @@ export class StoreService {
     if (count > 0) {
       await batch.commit();
     }
+  }
+
+  /**
+   * MIGRATION: Deletes all daily_sales docs and rebuilds them using local-date keys.
+   * Run once after deploying the timezone fix to convert UTC-keyed docs to local-keyed docs.
+   */
+  async migrateDailySalesToLocalDateKeys(): Promise<void> {
+    // Step 1: Delete ALL existing daily_sales docs
+    const dailySalesCol = collection(this.firestore, 'daily_sales');
+    const allDocs = await getDocs(dailySalesCol);
+    let deleteBatch = writeBatch(this.firestore);
+    let deleteCount = 0;
+
+    allDocs.forEach(docSnap => {
+      deleteBatch.delete(docSnap.ref);
+      deleteCount++;
+      if (deleteCount >= 400) {
+        deleteBatch.commit();
+        deleteBatch = writeBatch(this.firestore);
+        deleteCount = 0;
+      }
+    });
+    if (deleteCount > 0) {
+      await deleteBatch.commit();
+    }
+
+    // Step 2: Rebuild from transactions using local-date logic
+    await this.recalculateDailySales();
   }
 }
