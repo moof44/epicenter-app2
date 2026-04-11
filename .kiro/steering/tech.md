@@ -3,6 +3,7 @@
 ## Frontend
 - Angular 21 (standalone components, signals, `inject()` pattern)
 - Angular Material 21 + Angular CDK (UI components, layout, dialogs, snackbars)
+- @ngrx/signals (SignalStore for client-side state management)
 - TypeScript 5.9
 - RxJS 7.8 (services and guards use Observables; components increasingly use signals)
 - ApexCharts via ng-apexcharts (charting in reports/analytics)

@@ -25,11 +25,13 @@ import {
   arrayUnion,
   setDoc
 } from '@angular/fire/firestore';
-import { Observable, BehaviorSubject, Subject, map, combineLatest } from 'rxjs';
+import { Observable, Subject, map, combineLatest } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { Product, CartItem, Transaction, ProductSalesData, InventoryLog, DailySales } from '../models/store.model';
 import { CashRegisterService } from './cash-register.service';
 import { AuthService } from './auth.service';
 import { MemberService } from './member.service';
+import { CartStore } from '../store/cart.store';
 
 /** Converts a Date to a local YYYY-MM-DD string (timezone-safe). */
 export function toLocalDateStr(date: Date): string {
@@ -71,9 +73,11 @@ export class StoreService {
     };
   }
 
-  // Cart state
-  private cartItems = new BehaviorSubject<CartItem[]>([]);
-  cart$ = this.cartItems.asObservable();
+  private cartStore = inject(CartStore);
+
+  // Cart state — delegated to CartStore
+  /** @deprecated Use CartStore directly */
+  cart$ = toObservable(this.cartStore.items);
 
   // Sale completed event for cash register integration
   private saleCompleted = new Subject<SaleCompletedEvent>();
@@ -121,84 +125,35 @@ export class StoreService {
   }
 
 
-  // Cart Management
+  // Cart Management — delegated to CartStore
+  /** @deprecated Use CartStore.addItem() directly */
   addToCart(product: Product, quantity = 1): void {
-    if (!product.id || product.stock < quantity) return;
-
-    const currentCart = this.cartItems.getValue();
-    const existingIndex = currentCart.findIndex(item => item.productId === product.id);
-
-    if (existingIndex >= 0) {
-      const updated = [...currentCart];
-      const newQty = updated[existingIndex].quantity + quantity;
-      updated[existingIndex] = {
-        ...updated[existingIndex],
-        quantity: newQty,
-        // Preserve price override if exists, otherwise use current product price? 
-        // Logic: If already in cart, keep existing price strategy.
-        subtotal: newQty * updated[existingIndex].price
-      };
-      this.cartItems.next(updated);
-    } else {
-      this.cartItems.next([
-        ...currentCart,
-        {
-          productId: product.id,
-          productName: product.name,
-          price: product.price,
-          originalPrice: product.price, // Initialize original price
-          isPriceOverridden: false,
-          quantity,
-          subtotal: quantity * product.price
-        }
-      ]);
-    }
+    this.cartStore.addItem(product, quantity);
   }
 
+  /** @deprecated Use CartStore.updateQuantity() directly */
   updateCartItemQuantity(productId: string, quantity: number): void {
-    const currentCart = this.cartItems.getValue();
-    if (quantity <= 0) {
-      this.removeFromCart(productId);
-      return;
-    }
-    const updated = currentCart.map(item =>
-      item.productId === productId
-        ? { ...item, quantity, subtotal: quantity * item.price }
-        : item
-    );
-    this.cartItems.next(updated);
+    this.cartStore.updateQuantity(productId, quantity);
   }
 
+  /** @deprecated Use CartStore.updatePrice() directly */
   updateCartItemPrice(productId: string, newPrice: number, reason: string): void {
-    const currentCart = this.cartItems.getValue();
-    const updated = currentCart.map(item => {
-      if (item.productId === productId) {
-        return {
-          ...item,
-          price: newPrice,
-          isPriceOverridden: newPrice !== item.originalPrice,
-          overrideReason: reason,
-          subtotal: item.quantity * newPrice
-        };
-      }
-      return item;
-    });
-    this.cartItems.next(updated);
+    this.cartStore.updatePrice(productId, newPrice, reason);
   }
 
+  /** @deprecated Use CartStore.removeItem() directly */
   removeFromCart(productId: string): void {
-    const currentCart = this.cartItems.getValue();
-    this.cartItems.next(currentCart.filter(item => item.productId !== productId));
+    this.cartStore.removeItem(productId);
   }
 
+  /** @deprecated Use CartStore.clear() directly */
   clearCart(): void {
-    this.cartItems.next([]);
+    this.cartStore.clear();
   }
 
+  /** @deprecated Use CartStore.total() directly */
   getCartTotal(): Observable<number> {
-    return this.cart$.pipe(
-      map(items => items.reduce((sum, item) => sum + item.subtotal, 0))
-    );
+    return toObservable(this.cartStore.total);
   }
 
 
@@ -213,7 +168,7 @@ export class StoreService {
     }
 
     const isCustomTransaction = !!customItems;
-    const cartItems = customItems || this.cartItems.getValue();
+    const cartItems = customItems || this.cartStore.items();
 
     if (cartItems.length === 0) throw new Error('Cart is empty');
 
