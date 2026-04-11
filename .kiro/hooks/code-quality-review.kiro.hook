@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Code Quality Review",
+  "description": "Analyzes modified source code files for potential improvements including code smells, design patterns, and best practices. Generates suggestions for improving readability, maintainability, and performance while preserving existing functionality.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.ts",
+      "*.html",
+      "*.css"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze the modified file for potential code quality improvements. Focus on:\n\n1. Code smells (long methods, duplicated logic, magic numbers, deep nesting)\n2. Design pattern opportunities (better use of Angular signals, standalone component patterns, inject() usage)\n3. Best practices (proper typing, null safety, Observable/signal hygiene, separation of concerns)\n4. Readability (naming clarity, function length, comment quality)\n5. Maintainability (single responsibility, coupling, cohesion)\n6. Performance (unnecessary re-renders, missing trackBy, unsubscribed Observables, inefficient Firestore queries)\n\nProvide concise, actionable suggestions. Do not rewrite the entire file — just highlight specific areas and recommend targeted improvements. Maintain existing functionality."
+  }
+}
