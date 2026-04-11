@@ -216,7 +216,11 @@ export class CheckInKiosk implements OnInit {
     const valid = await this.cashRegisterService.ensureValidShiftForTransaction();
     if (!valid) { this.isSubmitting = false; return; }
 
-    if (!this.selectedMember) { this.isSubmitting = false; return; }
+    if (!this.selectedMember?.id) {
+      this.snackBar.open('Invalid member data. Please re-select.', 'Close', { duration: 3000 });
+      this.isSubmitting = false;
+      return;
+    }
 
     try {
       const member = this.selectedMember;
@@ -272,15 +276,6 @@ export class CheckInKiosk implements OnInit {
 
           // Update Member Subscription
           const newExpiration = Timestamp.fromDate(updateResult.subscriptionDate);
-          await this.memberService.updateMember(member.id!, {
-            membershipExpiration: newExpiration,
-            membershipStatus: 'Active'
-          });
-
-          // Update local member object for subsequent checks
-          member.membershipExpiration = newExpiration;
-          // Re-evaluate active status (it's active now)
-          // But we proceed directly to check-in or pay flow
 
           if (updateResult.action === 'pay-and-check-in') {
             const products = await firstValueFrom(this.storeService.getProducts());
@@ -295,6 +290,7 @@ export class CheckInKiosk implements OnInit {
               throw new Error('Membership product not found (search "Monthly" or "Membership"). Cannot process payment.');
             }
 
+            // PAYMENT FIRST — if this fails, member subscription is NOT updated
             await this.storeService.checkout([{
               productId: membershipProduct.id!,
               productName: membershipProduct.name,
@@ -305,8 +301,22 @@ export class CheckInKiosk implements OnInit {
               subtotal: membershipProduct.price
             }], 'ATTENDANCE_SUBSCRIPTION_UPDATE', updateResult.paymentMethod, updateResult.referenceNumber, undefined, undefined, member.id, member.name);
 
+            // THEN update subscription — payment already succeeded
+            await this.memberService.updateMember(member.id!, {
+              membershipExpiration: newExpiration,
+              membershipStatus: 'Active'
+            });
+            member.membershipExpiration = newExpiration;
+
             this.snackBar.open('Subscription updated & Payment processed.', undefined, { duration: 2000 });
           } else {
+            // "check-in-only" — no payment, just update subscription
+            await this.memberService.updateMember(member.id!, {
+              membershipExpiration: newExpiration,
+              membershipStatus: 'Active'
+            });
+            member.membershipExpiration = newExpiration;
+
             this.snackBar.open('Subscription updated.', undefined, { duration: 2000 });
           }
 
