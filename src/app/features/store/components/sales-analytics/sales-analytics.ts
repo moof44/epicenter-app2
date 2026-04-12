@@ -4,7 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { StoreService } from '../../../../core/services/store.service';
+import { TransactionService } from '../../../../core/services/transaction.service';
 import { ProductSalesData } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
 import { SettingsService } from '../../../../core/services/settings.service';
@@ -21,10 +21,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SalesAnalytics {
-  private storeService = inject(StoreService);
+  private transactionService = inject(TransactionService);
   private settingsService = inject(SettingsService);
 
-  analytics$ = this.storeService.getSalesAnalytics();
+  analytics$ = this.transactionService.getSalesAnalytics();
   settings$ = this.settingsService.getSettings();
   settings = toSignal(this.settings$, { initialValue: { monthlyQuota: 0 } });
 

@@ -14,7 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { StoreService } from '../../../../core/services/store.service';
+import { CheckoutService } from '../../../../core/services/checkout.service';
 import { ProductService } from '../../../../core/services/product.service';
 import { CartStore } from '../../../../core/store/cart.store';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -50,7 +50,7 @@ import { ProductCatalogComponent } from '../product-catalog/product-catalog';
 export class POS {
   @ViewChild('stepper') stepper!: MatStepper;
 
-  private storeService = inject(StoreService);
+  private checkoutService = inject(CheckoutService);
   private productService = inject(ProductService);
   private cartStore = inject(CartStore);
   private snackBar = inject(MatSnackBar);
@@ -217,7 +217,7 @@ export class POS {
       // isCheckoutPending stays true while processing
 
       const currentMember = this.selectedMember();
-      const transactionId = await this.storeService.checkout(
+      const transactionId = await this.checkoutService.checkout(
         undefined,
         this.authService.userProfile()?.displayName || this.authService.userProfile()?.email || 'Unknown Staff',
         result.paymentMethod,

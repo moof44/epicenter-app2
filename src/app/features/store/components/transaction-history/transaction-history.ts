@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
-import { StoreService } from '../../../../core/services/store.service';
+import { TransactionService } from '../../../../core/services/transaction.service';
 import { Transaction } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
 
@@ -28,7 +28,7 @@ import { Observable, firstValueFrom } from 'rxjs';
   animations: [fadeIn]
 })
 export class TransactionHistory implements AfterViewInit, OnInit {
-  private storeService = inject(StoreService);
+  private transactionService = inject(TransactionService);
 
   dataSource = new MatTableDataSource<Transaction>([]);
   displayedColumns = ['date', 'items', 'paymentMethod', 'totalAmount'];
@@ -59,7 +59,7 @@ export class TransactionHistory implements AfterViewInit, OnInit {
     filters.limit = 50;
 
     // Use snapshot to prevent real-time updates disrupting UI (e.g. closing expansion panels)
-    const transactions = await firstValueFrom(this.storeService.getTransactions(filters));
+    const transactions = await firstValueFrom(this.transactionService.getTransactions(filters));
     this.dataSource.data = transactions;
   }
 

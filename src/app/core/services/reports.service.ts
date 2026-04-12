@@ -1,16 +1,14 @@
 import { Injectable, inject } from '@angular/core';
-import { StoreService } from './store.service';
+import { TransactionService } from './transaction.service';
 import { toLocalDateStr } from '../utils/date.utils';
 import { AttendanceService } from './attendance.service';
 import { firstValueFrom } from 'rxjs';
-import { AttendanceRecord } from '../models/attendance.model';
-import { Transaction } from '../models/store.model';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ReportsService {
-    private storeService = inject(StoreService);
+    private transactionService = inject(TransactionService);
     private attendanceService = inject(AttendanceService);
 
     /**
@@ -74,7 +72,7 @@ export class ReportsService {
      */
     async getSalesAnalytics(startDate: Date, endDate: Date) {
         // We can use getTransactions from store service
-        const transactions = await firstValueFrom(this.storeService.getTransactions({
+        const transactions = await firstValueFrom(this.transactionService.getTransactions({
             startDate,
             endDate,
             limit: 2000 // Reasonable limit for a report range

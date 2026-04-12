@@ -13,7 +13,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
-import { StoreService } from '../../../../core/services/store.service';
+import { TransactionService } from '../../../../core/services/transaction.service';
 import { CashTransactionType } from '../../../../core/models/cash-register.model';
 import { ShiftControlModal } from '../shift-control-modal/shift-control-modal';
 import { fadeIn } from '../../../../core/animations/animations';
@@ -31,7 +31,7 @@ import { fadeIn } from '../../../../core/animations/animations';
 })
 export class CashManagement {
   private cashRegisterService = inject(CashRegisterService);
-  private storeService = inject(StoreService);
+  private transactionService = inject(TransactionService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private authService = inject(AuthService);
@@ -186,7 +186,7 @@ export class CashManagement {
 
     this.isSubmitting = true;
     try {
-      await this.storeService.voidTransaction(tx.relatedTransactionId, reason);
+      await this.transactionService.voidTransaction(tx.relatedTransactionId, reason);
       this.snackBar.open('Transaction voided successfully.', 'Close', { duration: 3000 });
       // The storeService calls cashRegister to update shift, but we might need to refresh local view if not auto-updated?
       // CashRegisterService calls refreshShift() which updates currentShift$, so UI should react auto.

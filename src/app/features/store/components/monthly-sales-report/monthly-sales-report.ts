@@ -9,7 +9,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Subject, startWith, switchMap, combineLatest } from 'rxjs';
-import { StoreService } from '../../../../core/services/store.service';
+import { DailySalesService } from '../../../../core/services/daily-sales.service';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { fadeIn } from '../../../../core/animations/animations';
 
@@ -32,7 +32,7 @@ import { ReportStateService } from '../../../../core/services/report.state.servi
     animations: [fadeIn]
 })
 export class MonthlySalesReport {
-    private storeService = inject(StoreService);
+    private dailySalesService = inject(DailySalesService);
     private reportStateService = inject(ReportStateService);
     private settingsService = inject(SettingsService);
 
@@ -122,7 +122,7 @@ export class MonthlySalesReport {
 
     async recalculateMonth() {
         if (confirm(`Recalculate sales for ${this.getMonthName(this.viewMonth())} ${this.viewYear()}?`)) {
-            await this.storeService.recalculateSalesForMonth(this.viewYear(), this.viewMonth());
+            await this.dailySalesService.recalculateSalesForMonth(this.viewYear(), this.viewMonth());
             this.reportStateService.invalidateMonthlyReport(this.viewYear(), this.viewMonth());
             this.refreshTrigger.next();
             alert('Month recalculated.');
@@ -131,22 +131,15 @@ export class MonthlySalesReport {
 
     async recalculateDay(daySales: any) {
         if (confirm(`Recalculate sales for ${this.getDayName(daySales.date)} ${daySales.date.toLocaleDateString()}?`)) {
-            await this.storeService.recalculateSalesForDay(daySales.date);
+            await this.dailySalesService.recalculateSalesForDay(daySales.date);
             this.reportStateService.invalidateMonthlyReport(this.viewYear(), this.viewMonth());
             this.refreshTrigger.next();
         }
     }
 
-    // Deprecate or remove old refreshData if it was doing full db recalc
-    // refreshData() { ... } -> Keeping as "Recalculate Everything" or removing? 
-    // The previous code had `refreshData` calling `recalculateDailySales` (FULL DB).
-    // I will rename it to `recalculateAll` or keep it as a separate option.
-    // The user asked for "per day and per month". 
-    // I'll keep the old one as a "Nuclear Option" but maybe move it or rename it.
-    // Use the name `recalculateAll` explicitly.
     async recalculateAll() {
         if (confirm('Recalculate ENTIRE historical database? This will be slow.')) {
-            await this.storeService.recalculateDailySales();
+            await this.dailySalesService.recalculateDailySales();
             this.reportStateService.clearCache();
             this.refreshTrigger.next();
             alert('Full database refreshed.');

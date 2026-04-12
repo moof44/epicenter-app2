@@ -1,13 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, firstValueFrom, take, shareReplay } from 'rxjs';
-import { StoreService } from './store.service';
+import { TransactionService } from './transaction.service';
+import { DailySalesService } from './daily-sales.service';
 import { DailySales, Transaction } from '../models/store.model';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ReportStateService {
-    private storeService = inject(StoreService);
+    private transactionService = inject(TransactionService);
+    private dailySalesService = inject(DailySalesService);
 
     // Observable caches — shared live Firestore listeners via shareReplay
     private monthlyObservableCache = new Map<string, Observable<{ days: DailySales[], total: number }>>();
@@ -22,7 +24,7 @@ export class ReportStateService {
         const key = `${year}-${month}`;
 
         if (!this.monthlyObservableCache.has(key)) {
-            const live$ = this.storeService.getMonthlySalesReport(year, month).pipe(
+            const live$ = this.dailySalesService.getMonthlySalesReport(year, month).pipe(
                 shareReplay({ bufferSize: 1, refCount: true })
             );
             this.monthlyObservableCache.set(key, live$);
@@ -53,7 +55,7 @@ export class ReportStateService {
             const endDate = new Date(year, month + 1, 0, 23, 59, 59);
 
             const live$ = new Observable<{ transactions: Transaction[], total: number }>(observer => {
-                const transactions$ = this.storeService.getTransactions({
+                const transactions$ = this.transactionService.getTransactions({
                     startDate,
                     endDate,
                     staffId: userId,

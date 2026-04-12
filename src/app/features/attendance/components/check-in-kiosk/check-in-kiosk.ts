@@ -17,7 +17,7 @@ import { AttendanceService } from '../../../../core/services/attendance.service'
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { fadeIn } from '../../../../core/animations/animations';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { StoreService } from '../../../../core/services/store.service';
+import { CheckoutService } from '../../../../core/services/checkout.service';
 import { ProductService } from '../../../../core/services/product.service';
 import { WalkInDialog, WalkInDialogResult } from '../walk-in-dialog/walk-in-dialog';
 import { LockerRestrictionDialog } from '../locker-restriction-dialog/locker-restriction-dialog';
@@ -146,7 +146,7 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
 export class CheckInKiosk implements OnInit {
   private memberService = inject(MemberService);
   private attendanceService = inject(AttendanceService);
-  private storeService = inject(StoreService);
+  private checkoutService = inject(CheckoutService);
   private productService = inject(ProductService);
   private cashRegisterService = inject(CashRegisterService); // Inject CashRegisterService
   private snackBar = inject(MatSnackBar);
@@ -293,7 +293,7 @@ export class CheckInKiosk implements OnInit {
             }
 
             // PAYMENT FIRST — if this fails, member subscription is NOT updated
-            await this.storeService.checkout([{
+            await this.checkoutService.checkout([{
               productId: membershipProduct.id!,
               productName: membershipProduct.name,
               price: membershipProduct.price,
@@ -356,7 +356,7 @@ export class CheckInKiosk implements OnInit {
             throw new Error('Walk-in product not found. Please contact admin.');
           }
 
-          await this.storeService.checkout([{
+          await this.checkoutService.checkout([{
             productId: walkInProduct.id!,
             productName: walkInProduct.name,
             price: walkInProduct.price,

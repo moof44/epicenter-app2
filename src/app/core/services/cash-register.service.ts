@@ -25,14 +25,12 @@ import {
   ShiftSession,
   ShiftSummary
 } from '../models/cash-register.model';
-import { StoreService } from './store.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CashRegisterService {
   private firestore = inject(Firestore);
-  private storeService = inject(StoreService);
   private shiftsCollection = collection(this.firestore, 'shifts');
   private dialog = inject(MatDialog);
 
