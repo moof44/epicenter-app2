@@ -14,7 +14,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { StoreService } from '../../../../core/services/store.service';
+import { ProductService } from '../../../../core/services/product.service';
+import { InventoryService } from '../../../../core/services/inventory.service';
 import { Product, ProductCategory, ProductType } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
 import { ProductFormDialog } from './product-form-dialog/product-form-dialog';
@@ -32,7 +33,8 @@ import { ProductFormDialog } from './product-form-dialog/product-form-dialog';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductManagement implements AfterViewInit {
-  private storeService = inject(StoreService);
+  private productService = inject(ProductService);
+  private inventoryService = inject(InventoryService);
   private snackBar = inject(MatSnackBar);
   private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
@@ -42,7 +44,7 @@ export class ProductManagement implements AfterViewInit {
   categories: ProductCategory[] = ['Training', 'Supplements', 'Drinks', 'Boxing'];
 
   // Data State - Reactive
-  products$ = this.storeService.getProducts();
+  products$ = this.productService.getProducts();
   products = toSignal(this.products$, { initialValue: [] as Product[] });
 
   // UI State - Signals
@@ -100,7 +102,7 @@ export class ProductManagement implements AfterViewInit {
   async deleteProduct(product: Product): Promise<void> {
     if (!product.id || !confirm(`Delete "${product.name}"?`)) return;
     try {
-      await this.storeService.deleteProduct(product.id);
+      await this.productService.deleteProduct(product.id);
       this.snackBar.open('Product deleted', 'Close', { duration: 3000 });
     } catch {
       this.snackBar.open('Error deleting product', 'Close', { duration: 3000 });
@@ -112,7 +114,7 @@ export class ProductManagement implements AfterViewInit {
   async quickConsume(product: Product): Promise<void> {
     if (!product.id) return;
     try {
-      await this.storeService.logConsumption(product.id, 1, 'Quick Consume Button');
+      await this.inventoryService.logConsumption(product.id, 1, 'Quick Consume Button');
       this.snackBar.open(`Consumed 1 ${product.unit || 'unit'} of ${product.name}`, 'Close', { duration: 2000 });
     } catch (err) {
       console.error(err);

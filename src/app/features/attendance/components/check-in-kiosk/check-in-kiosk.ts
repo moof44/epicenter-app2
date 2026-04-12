@@ -18,6 +18,7 @@ import { CashRegisterService } from '../../../../core/services/cash-register.ser
 import { fadeIn } from '../../../../core/animations/animations';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { StoreService } from '../../../../core/services/store.service';
+import { ProductService } from '../../../../core/services/product.service';
 import { WalkInDialog, WalkInDialogResult } from '../walk-in-dialog/walk-in-dialog';
 import { LockerRestrictionDialog } from '../locker-restriction-dialog/locker-restriction-dialog';
 import { SubscriptionUpdateDialog, SubscriptionUpdateResult } from '../subscription-update-dialog/subscription-update-dialog';
@@ -146,6 +147,7 @@ export class CheckInKiosk implements OnInit {
   private memberService = inject(MemberService);
   private attendanceService = inject(AttendanceService);
   private storeService = inject(StoreService);
+  private productService = inject(ProductService);
   private cashRegisterService = inject(CashRegisterService); // Inject CashRegisterService
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
@@ -278,7 +280,7 @@ export class CheckInKiosk implements OnInit {
           const newExpiration = Timestamp.fromDate(updateResult.subscriptionDate);
 
           if (updateResult.action === 'pay-and-check-in') {
-            const products = await firstValueFrom(this.storeService.getProducts());
+            const products = await firstValueFrom(this.productService.getProducts());
             // Try to find "Monthly", "Membership", or similar
             const membershipProduct = products.find(p =>
               p.name.toLowerCase().includes('monthly') ||
@@ -347,7 +349,7 @@ export class CheckInKiosk implements OnInit {
         }
 
         if (result.action === 'walk-in') {
-          const products = await firstValueFrom(this.storeService.getProducts());
+          const products = await firstValueFrom(this.productService.getProducts());
           const walkInProduct = products.find(p => p.name.toLowerCase().includes('walk-in'));
 
           if (!walkInProduct) {

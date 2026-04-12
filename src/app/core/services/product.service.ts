@@ -16,7 +16,7 @@ import {
     QueryDocumentSnapshot,
     DocumentData,
 } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 import { Product } from '../models/store.model';
 import { AuthService } from './auth.service';
 
@@ -38,9 +38,38 @@ export class ProductService {
         };
     }
 
+    /**
+     * Shared, cached real-time product stream.
+     *
+     * Uses shareReplay(1) so all subscribers (POS, ProductCatalog, ProductManagement,
+     * StockTake, PurchaseEntry, etc.) share a SINGLE Firestore onSnapshot listener
+     * instead of each creating their own. This is critical for billing:
+     * - Without this: N components × 100 docs = N × 100 reads on every product change.
+     * - With this: 1 listener × 100 docs = 100 reads on every product change, regardless
+     *   of how many components are subscribed.
+     *
+     * refCount: false keeps the listener alive between route navigations so
+     * re-subscribing components get the cached result instantly (0 additional reads).
+     */
+    private readonly products$ = (() => {
+        const q = query(this.productsCollection, orderBy('name'), limit(100));
+        return (collectionData(q, { idField: 'id' }) as Observable<Product[]>).pipe(
+            shareReplay({ bufferSize: 1, refCount: false })
+        );
+    })();
+
+    /**
+     * Returns the shared real-time product stream.
+     * All callers using the default limit share one Firestore listener.
+     * Pass a custom limitCount only for special admin/reporting use cases.
+     */
     getProducts(limitCount = 100): Observable<Product[]> {
-        const q = query(this.productsCollection, orderBy('name'), limit(limitCount));
-        return collectionData(q, { idField: 'id' }) as Observable<Product[]>;
+        // If caller needs a non-default limit, create a separate (non-cached) stream.
+        if (limitCount !== 100) {
+            const q = query(this.productsCollection, orderBy('name'), limit(limitCount));
+            return collectionData(q, { idField: 'id' }) as Observable<Product[]>;
+        }
+        return this.products$;
     }
 
     async getProductsPage(

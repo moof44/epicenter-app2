@@ -1,7 +1,9 @@
-import { Component, inject, ChangeDetectionStrategy, signal, OnInit } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -13,6 +15,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { StoreService } from '../../../../core/services/store.service';
+import { ProductService } from '../../../../core/services/product.service';
+import { CartStore } from '../../../../core/store/cart.store';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { MemberService } from '../../../../core/services/member.service';
@@ -36,7 +40,7 @@ import { ProductCatalogComponent } from '../product-catalog/product-catalog';
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatCardModule,
     MatBadgeModule, MatDividerModule, MatSnackBarModule, MatChipsModule,
     MatInputModule, MatFormFieldModule, MatDialogModule, MatAutocompleteModule,
-    ReactiveFormsModule, MatStepperModule, PreventDoubleClickDirective
+    ReactiveFormsModule, MatStepperModule, PreventDoubleClickDirective, MatTooltipModule
   ],
   templateUrl: './pos.html',
   styleUrl: './pos.css',
@@ -47,6 +51,8 @@ export class POS {
   @ViewChild('stepper') stepper!: MatStepper;
 
   private storeService = inject(StoreService);
+  private productService = inject(ProductService);
+  private cartStore = inject(CartStore);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private authService = inject(AuthService);
@@ -55,11 +61,11 @@ export class POS {
 
   private cashRegisterService = inject(CashRegisterService);
 
-  products$: Observable<Product[]> = this.storeService.getProducts().pipe(
+  products$: Observable<Product[]> = this.productService.getProducts().pipe(
     map(products => products.filter(p => p.type !== 'CONSUMABLE'))
   );
-  cart$: Observable<CartItem[]> = this.storeService.cart$;
-  cartTotal$: Observable<number> = this.storeService.getCartTotal();
+  cart$: Observable<CartItem[]> = toObservable(this.cartStore.items);
+  cartTotal$: Observable<number> = toObservable(this.cartStore.total);
   isShiftOpen$ = this.cashRegisterService.currentShift$.pipe(map(s => s?.status === 'OPEN'));
 
   selectedCategory = signal<ProductCategory | 'All'>('All');
@@ -81,7 +87,7 @@ export class POS {
       this.snackBar.open('Product out of stock', 'Close', { duration: 2000 });
       return;
     }
-    this.storeService.addToCart(product);
+    this.cartStore.addItem(product);
     this.snackBar.open(`${product.name} added to cart`, 'Close', { duration: 1500 });
   }
 
@@ -91,7 +97,7 @@ export class POS {
       return;
     }
     const newQty = item.quantity + change;
-    this.storeService.updateCartItemQuantity(item.productId, newQty);
+    this.cartStore.updateQuantity(item.productId, newQty);
   }
 
   removeItem(productId: string): void {
@@ -99,7 +105,7 @@ export class POS {
       this.snackBar.open('Register is closed.', 'Close', { duration: 3000 });
       return;
     }
-    this.storeService.removeFromCart(productId);
+    this.cartStore.removeItem(productId);
   }
 
   clearCart(): void {
@@ -107,7 +113,7 @@ export class POS {
       this.snackBar.open('Register is closed.', 'Close', { duration: 3000 });
       return;
     }
-    this.storeService.clearCart();
+    this.cartStore.clear();
   }
 
   async openPriceOverrideDialog(item: CartItem): Promise<void> {
@@ -125,7 +131,7 @@ export class POS {
     const result = await firstValueFrom(dialogRef.afterClosed()) as PriceOverrideDialogResult;
 
     if (result) {
-      this.storeService.updateCartItemPrice(item.productId, result.newPrice, result.reason);
+      this.cartStore.updatePrice(item.productId, result.newPrice, result.reason);
       this.snackBar.open('Price updated', 'Close', { duration: 2000 });
     }
   }

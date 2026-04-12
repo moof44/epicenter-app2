@@ -501,49 +501,59 @@ transactions ──ref──> daily_sales (via date key)
 
 ### 3.4 StoreService (`core/services/store.service.ts`)
 
-**Purpose:** The largest service — handles products, cart, POS checkout, inventory management, transactions, analytics, and daily sales denormalization.
+> ⚠️ **DEPRECATED FACADE** — Undergoing phased extraction (see `docs/store-service-refactor-plan.md`). All methods are being moved to focused single-responsibility services. StoreService currently holds deprecated wrapper methods delegating to the new services. It will be removed in Phase 7.
+
+**Purpose:** Legacy facade. Thin wrappers around ProductService, InventoryService, CartStore. Still owns: `checkout()`, `voidTransaction()`, `getTransactions()`, `getSalesAnalytics()`, `getMonthlySalesReport()`, and all daily sales admin utilities.
+
+**Extraction Status:**
+- **Phase 1 (Done):** `toLocalDateStr` → `date.utils.ts`
+- **Phase 2 (Done):** `getProducts`, `addProduct`, `updateProduct`, `deleteProduct` → `ProductService`; `addToCart`, `removeFromCart`, `clearCart`, `updateCartItemQuantity`, `updateCartItemPrice`, `cart$`, `getCartTotal` → `CartStore`; `logConsumption`, `reconcileInventory` delegation → `InventoryService`
+- **Phase 3-7:** Pending
+
+**Dependencies:** Firestore, AuthService, MemberService, CashRegisterService (via Injector), ProductService, InventoryService, CartStore
+
+---
+
+### 3.4a ProductService (`core/services/product.service.ts`) ✅ NEW
+
+**Purpose:** All product CRUD operations against the `products` Firestore collection.
 
 **Key Behaviors:**
+- `getProducts(limitCount?)` — real-time Observable ordered by name with limit (default 100)
+- `getProductsPage(limitCount, lastDoc?)` — cursor-based pagination
+- `getProduct(id)` — single product Observable
+- `addProduct(product)` — with audit trail (`lastModifiedBy`)
+- `updateProduct(id, data)` — with audit trail
+- `deleteProduct(id)` — hard delete
 
-**Products:**
-- `getProducts()` / `getProductsPage()` — product listing with pagination
-- `addProduct()` / `updateProduct()` / `deleteProduct()` — CRUD with audit trail
+**Dependencies:** Firestore, AuthService
 
-**Cart:**
-- `cart$` — BehaviorSubject-backed Observable of cart items
-- `addToCart()`, `updateCartItemQuantity()`, `updateCartItemPrice()`, `removeFromCart()`, `clearCart()`
-- `getCartTotal()` — computed Observable
+---
 
-**Checkout (Atomic):**
-- `checkout()` — the core POS operation. Performs a single `writeBatch` that:
-  1. Fetches current product states for stock snapshots
-  2. Decrements product stock via `increment(-qty)`
-  3. Creates `InventoryLog` entries (type: SALE)
-  4. Creates a `Transaction` document
-  5. Updates `daily_sales` denormalized document
-  6. Updates the current shift's embedded transactions array and totals
-  7. After commit: refreshes shift state, emits `saleCompleted$` event
-  8. Auto-renews membership/training if applicable products are purchased
+### 3.4b InventoryService (`core/services/inventory.service.ts`) ✅ NEW
 
-**Inventory:**
-- `logConsumption()` — deducts stock for internal use (consumables)
-- `reconcileInventory()` — stock take: compares physical counts to system, adjusts with audit logs
+**Purpose:** Stock mutation operations (consumption and audit reconciliation).
 
-**Void:**
-- `voidTransaction()` — atomic batch: reverts stock, marks transaction as VOID, decrements daily_sales, updates shift
+**Key Behaviors:**
+- `logConsumption(productId, amount, notes?)` — atomic batch: decrements product stock + writes `InventoryLog` (type: INTERNAL_USE)
+- `reconcileInventory(auditData[])` — stock take: compares physical counts to system stock, applies variance adjustments in batch with AUDIT_ADJUSTMENT logs
+- `calculateStockVariance(currentStock, physicalCount)` — pure calculation utility
 
-**Analytics:**
-- `getSalesAnalytics()` — combines transactions and products for top-selling, revenue metrics
-- `getTransactions()` — filtered/paginated transaction queries
-- `getSalesTotal()` — server-side aggregation using `getAggregateFromServer`
-- `getMonthlySalesReport()` — reads from `daily_sales` collection for efficient monthly views
+**Dependencies:** Firestore, AuthService
 
-**Admin Utilities:**
-- `recalculateDailySales()` — full rebuild of daily_sales from transactions
-- `recalculateSalesForDay()` / `recalculateSalesForMonth()` — targeted recalculation
-- `migrateDailySalesToLocalDateKeys()` — one-time migration for timezone fix
+---
 
-**Dependencies:** Firestore, AuthService, MemberService, CashRegisterService (via Injector to avoid circular DI)
+### 3.4c CartStore (`core/store/cart.store.ts`) ✅ NEW (NgRx Signals Store)
+
+**Purpose:** Client-side cart state management using `@ngrx/signals` signal store.
+
+**Key Behaviors:**
+- State: `items: CartItem[]`
+- Computed signals: `total`, `itemCount`, `isEmpty`
+- Methods: `addItem(product, qty?)`, `updateQuantity(productId, qty)`, `updatePrice(productId, newPrice, reason)`, `removeItem(productId)`, `clear()`
+- `providedIn: 'root'` — singleton, shared across POS and ProductCatalog
+
+**Dependencies:** `@ngrx/signals`
 
 ---
 
@@ -728,7 +738,7 @@ features/attendance/
     │       Children: CheckInKiosk, ActiveSessions, AttendanceHistory
     ├── check-in-kiosk/
     │   └── CheckInKiosk
-    │       Services: MemberService, AttendanceService, StoreService, CashRegisterService
+    │       Services: MemberService, AttendanceService, StoreService (checkout only), ProductService, CashRegisterService
     │       Models: Member, AttendanceRecord
     │       Dialogs: WalkInDialog, LockerRestrictionDialog, SubscriptionUpdateDialog, RemarksDialog
     ├── active-sessions/
@@ -812,7 +822,7 @@ features/store/
 └── components/
     ├── pos/
     │   └── POS
-    │       Services: StoreService, AuthService, CashRegisterService, MemberService
+    │       Services: StoreService (checkout only), ProductService, CartStore, AuthService, CashRegisterService, MemberService
     │       Models: Product, CartItem
     │       Children: CheckoutDialog, PriceOverrideDialog, ProductCatalogComponent
     │       Directives: PreventDoubleClickDirective
@@ -822,11 +832,14 @@ features/store/
     │   └── PriceOverrideDialog
     ├── product-catalog/
     │   └── ProductCatalogComponent (full-screen dialog)
+    │       Services: ProductService, CartStore
     ├── product-management/
     │   └── ProductManagement
+    │       Services: ProductService, InventoryService
     │       Children: ProductFormDialog
     ├── product-management/product-form-dialog/
     │   └── ProductFormDialog
+    │       Services: ProductService
     ├── cash-management/
     │   └── CashManagement
     │       Services: CashRegisterService, StoreService, AuthService
@@ -844,11 +857,11 @@ features/store/
     │       Services: StoreService
     ├── stock-take/
     │   └── StockTakeComponent
-    │       Services: StoreService
+    │       Services: ProductService, InventoryService
     ├── purchase-entry/
     │   └── PurchaseEntryComponent
-    │       Services: StoreService, PurchaseService
-    │       Children: ProductCreationDialog (inline)
+    │       Services: ProductService, PurchaseService
+    │       Children: ProductCreationDialog (inline, uses ProductService)
     ├── purchase-history/
     │   └── PurchaseHistoryComponent
     ├── inventory-history/
@@ -997,6 +1010,7 @@ All guards use the functional `CanActivateFn` pattern (no class-based guards).
 
 **`date.utils.ts`:**
 - `getLocalDateString(date)` — returns `YYYY-MM-DD` string in local timezone
+- `toLocalDateStr(date)` — timezone-safe `YYYY-MM-DD` string (moved from StoreService in Phase 1 refactor). Re-exported from StoreService for backward compat until Phase 7.
 
 **`cash-register.utils.ts`:**
 - `calculateVariance(shift)` — actual - expected closing balance

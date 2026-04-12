@@ -5,7 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogRef } from '@angular/material/dialog';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
-import { StoreService } from '../../../../core/services/store.service';
+import { ProductService } from '../../../../core/services/product.service';
+import { CartStore } from '../../../../core/store/cart.store';
 import { Product, ProductCategory } from '../../../../core/models/store.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -42,7 +43,8 @@ type ViewMode = 'CATEGORIES' | 'PRODUCT_LIST' | 'PRODUCT_DETAIL';
 })
 export class ProductCatalogComponent {
     private dialogRef = inject(MatDialogRef<ProductCatalogComponent>);
-    private storeService = inject(StoreService);
+    private productService = inject(ProductService);
+    private cartStore = inject(CartStore);
     private snackBar = inject(MatSnackBar);
 
     // State
@@ -51,7 +53,7 @@ export class ProductCatalogComponent {
     selectedProduct = signal<Product | null>(null);
 
     // Data
-    products$ = this.storeService.getProducts();
+    products$ = this.productService.getProducts();
     products = toSignal(this.products$, { initialValue: [] as Product[] });
 
     // Computed
@@ -100,7 +102,7 @@ export class ProductCatalogComponent {
     }
 
     addToOrder(product: Product) {
-        this.storeService.addToCart(product);
+        this.cartStore.addItem(product);
         this.snackBar.open(`${product.name} added to cart`, 'Close', { duration: 2000 });
         this.dialogRef.close(true); // Return true to indicate purchase/action
     }

@@ -1,6 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -11,7 +12,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { StoreService } from '../../../../core/services/store.service';
+import { ProductService } from '../../../../core/services/product.service';
 import { PurchaseService } from '../../../../core/services/purchase.service';
 import { Product, ProductCategory, ProductType } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
@@ -77,7 +78,7 @@ import { Router } from '@angular/router';
 export class ProductCreationDialog {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<ProductCreationDialog>);
-  private storeService = inject(StoreService);
+  private productService = inject(ProductService);
 
   categories: ProductCategory[] = ['Training', 'Supplements', 'Drinks', 'Boxing'];
 
@@ -96,7 +97,7 @@ export class ProductCreationDialog {
     if (this.productForm.invalid) return;
     try {
       const productData = this.productForm.value as any; // Cast to avoid strict type issues with partial
-      const res = await this.storeService.addProduct(productData);
+      const res = await this.productService.addProduct(productData);
       // addProduct returns docRef or similar? StoreService.addProduct returns Promise<any> (addDoc result)
       // I need the ID of the created product.
       // Let's assume storeService.addProduct returns the DocumentReference
@@ -124,11 +125,12 @@ export class ProductCreationDialog {
 })
 export class PurchaseEntryComponent implements OnInit {
   private fb = inject(FormBuilder);
-  private storeService = inject(StoreService);
+  private productService = inject(ProductService);
   private purchaseService = inject(PurchaseService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   purchaseForm!: FormGroup;
   retailProducts: Product[] = [];
@@ -187,7 +189,7 @@ export class PurchaseEntryComponent implements OnInit {
   }
 
   loadProducts() {
-    this.storeService.getProducts().subscribe(products => {
+    this.productService.getProducts().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(products => {
       this.allProducts = products;
       this.retailProducts = products.filter(p => (!p.type || p.type === 'RETAIL'));
       this.consumableProducts = products.filter(p => p.type === 'CONSUMABLE');

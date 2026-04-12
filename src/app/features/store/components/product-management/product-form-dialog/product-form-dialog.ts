@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
-import { StoreService } from '../../../../../core/services/store.service';
+import { ProductService } from '../../../../../core/services/product.service';
 import { Product, ProductCategory, ProductType } from '../../../../../core/models/store.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -111,7 +111,7 @@ export interface ProductFormDialogData {
 })
 export class ProductFormDialog {
   private fb = inject(FormBuilder);
-  private storeService = inject(StoreService);
+  private productService = inject(ProductService);
   private snackBar = inject(MatSnackBar);
   public dialogRef = inject(MatDialogRef<ProductFormDialog>);
 
@@ -161,10 +161,10 @@ export class ProductFormDialog {
 
     try {
       if (this.isEditing && this.data.product?.id) {
-        await this.storeService.updateProduct(this.data.product.id, formValue);
+        await this.productService.updateProduct(this.data.product.id, formValue);
         this.snackBar.open('Product updated successfully', 'Close', { duration: 3000 });
       } else {
-        await this.storeService.addProduct(formValue);
+        await this.productService.addProduct(formValue);
         this.snackBar.open('Product created successfully', 'Close', { duration: 3000 });
       }
       this.dialogRef.close(true);

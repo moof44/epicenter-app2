@@ -1,4 +1,6 @@
 <div class="pos-container">
+
+  <!-- Closed‑register warning shown on both layouts -->
   <div class="banner-container" *ngIf="!(isShiftOpen$ | async)">
     <div class="warning-banner">
       <mat-icon>lock</mat-icon>
@@ -6,6 +8,152 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════
+       DESKTOP LAYOUT  (≥ 960 px) — two‑column POS
+       Hidden on tablet/mobile via CSS media query
+       ═══════════════════════════════════════════════════════ -->
+  <div class="pos-desktop-layout" *ngIf="products$ | async as products">
+
+    <!-- ── Left column: member search + product grid ── -->
+    <div class="desktop-products-col">
+
+      <!-- Member search bar -->
+      <div class="desktop-member-bar">
+        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+          <mat-label>Search Member (optional)</mat-label>
+          <mat-icon matPrefix>person_search</mat-icon>
+          <input type="text" matInput [formControl]="memberControl"
+                 [matAutocomplete]="desktopAuto"
+                 placeholder="Type name to attach member…">
+          <button *ngIf="selectedMember()" matSuffix mat-icon-button (click)="clearMember()" matTooltip="Clear">
+            <mat-icon>close</mat-icon>
+          </button>
+          <mat-autocomplete #desktopAuto="matAutocomplete" [displayWith]="displayMember"
+                            (optionSelected)="selectMember($event.option.value)">
+            <mat-option *ngFor="let m of members$ | async" [value]="m">{{ m.name }}</mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+
+        <!-- Selected member chip -->
+        <div class="selected-member-chip" *ngIf="selectedMember()">
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ selectedMember()?.name }}</span>
+        </div>
+      </div>
+
+      <!-- Category filter & catalog button -->
+      <div class="products-header">
+        <mat-chip-listbox [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)"
+                          class="category-filter">
+          <mat-chip-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-chip-option>
+        </mat-chip-listbox>
+
+        <button mat-stroked-button color="primary" (click)="openCatalog()" class="catalog-btn">
+          <mat-icon>menu_book</mat-icon> Catalog
+        </button>
+      </div>
+
+      <!-- Product grid -->
+      <div class="products-grid-container">
+        <div class="products-grid">
+          <mat-card *ngFor="let product of filterProducts(products); trackBy: trackProduct"
+                    class="product-card"
+                    [class.out-of-stock]="product.stock <= 0"
+                    [class.disabled-state]="!(isShiftOpen$ | async)"
+                    (click)="addToCart(product)" [@fadeIn]>
+            <div class="product-image">
+              <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
+              <mat-icon *ngIf="!product.imageUrl" class="placeholder-icon">
+                {{ getCategoryIcon(product.category) }}
+              </mat-icon>
+            </div>
+            <mat-card-content>
+              <p class="product-name">{{ product.name }}</p>
+              <p class="product-price">₱{{ product.price | number:'1.2-2' }}</p>
+              <p class="product-stock" [class.low]="product.stock < 10">Stock: {{ product.stock }}</p>
+            </mat-card-content>
+          </mat-card>
+
+          <div *ngIf="filterProducts(products).length === 0" class="empty-state">
+            <mat-icon>inventory_2</mat-icon>
+            <p>No products in this category</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Right column: cart panel ── -->
+    <div class="desktop-cart-col">
+      <div class="cart-header">
+        <h2>
+          <mat-icon>shopping_cart</mat-icon>
+          Cart
+          <span *ngIf="(cart$ | async)?.length" style="font-size:13px;color:#888;font-weight:400;">
+            ({{ (cart$ | async)?.length }} item{{ (cart$ | async)?.length === 1 ? '' : 's' }})
+          </span>
+        </h2>
+        <button mat-icon-button color="warn" (click)="clearCart()"
+                [disabled]="!(cart$ | async)?.length" matTooltip="Clear cart">
+          <mat-icon>delete_sweep</mat-icon>
+        </button>
+      </div>
+
+      <div class="cart-items" *ngIf="cart$ | async as cartItems">
+        <!-- Empty state -->
+        <div class="empty-cart" *ngIf="cartItems.length === 0">
+          <mat-icon>remove_shopping_cart</mat-icon>
+          <p>Cart is empty.<br><small>Tap a product to add it.</small></p>
+        </div>
+
+        <!-- Cart rows -->
+        <div *ngFor="let item of cartItems" class="cart-item" [@fadeIn]>
+          <div class="item-info">
+            <span class="item-name">{{ item.productName }}</span>
+            <div class="price-container">
+              <span class="original-price" *ngIf="item.isPriceOverridden">₱{{ item.originalPrice | number:'1.2-2' }}</span>
+              <span class="item-price" [class.overridden]="item.isPriceOverridden">₱{{ item.price | number:'1.2-2' }}</span>
+              <button mat-icon-button class="edit-price-btn" (click)="openPriceOverrideDialog(item)" matTooltip="Edit price">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="item-controls">
+            <button mat-icon-button class="mini-btn" (click)="updateQuantity(item, -1)">
+              <mat-icon>remove</mat-icon>
+            </button>
+            <span class="quantity">{{ item.quantity }}</span>
+            <button mat-icon-button class="mini-btn" (click)="updateQuantity(item, 1)">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" class="mini-btn" (click)="removeItem(item.productId)">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <div class="item-subtotal">₱{{ item.subtotal | number:'1.2-2' }}</div>
+        </div>
+      </div>
+
+      <div class="cart-footer">
+        <div class="cart-total">
+          <span>Total Due</span>
+          <span class="total-amount">₱{{ (cartTotal$ | async) | number:'1.2-2' }}</span>
+        </div>
+        <button mat-raised-button color="primary" class="checkout-btn" appPreventDoubleClick
+                (throttledClick)="checkout()"
+                [disabled]="isProcessing() || !(cart$ | async)?.length || !(isShiftOpen$ | async)">
+          <mat-icon>payments</mat-icon>
+          {{ isProcessing() ? 'Processing…' : 'Pay Now' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       MOBILE / TABLET LAYOUT — stepper flow
+       Shown on screens < 960 px via CSS media query
+       ═══════════════════════════════════════════════════════ -->
   <mat-stepper #stepper class="pos-stepper" [linear]="false" animationDuration="200">
 
     <!-- STEP 1: Identification -->
@@ -14,16 +162,16 @@
         <h2>Who is buying?</h2>
         <p class="step-helper">Select a member to track this sale, or proceed as a guest.</p>
 
-        <div class="member-selection-card mat-elevation-z2">
-          <mat-form-field appearance="outline" class="search-field full-width">
+        <div class="member-selection-card">
+          <mat-form-field appearance="outline" class="full-width">
             <mat-label>Search Member</mat-label>
             <mat-icon matPrefix>person_search</mat-icon>
-            <input type="text" matInput [formControl]="memberControl" [matAutocomplete]="auto"
+            <input type="text" matInput [formControl]="memberControl" [matAutocomplete]="mobileAuto"
               placeholder="Start typing name..." (keyup.enter)="onMemberSelected()">
             <button *ngIf="selectedMember()" matSuffix mat-icon-button (click)="clearMember()">
               <mat-icon>close</mat-icon>
             </button>
-            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayMember"
+            <mat-autocomplete #mobileAuto="matAutocomplete" [displayWith]="displayMember"
               (optionSelected)="selectMember($event.option.value)">
               <mat-option *ngFor="let member of members$ | async" [value]="member">
                 {{ member.name }}
@@ -60,9 +208,7 @@
           <div class="products-header">
             <mat-chip-listbox [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)"
               class="category-filter">
-              <mat-chip-option *ngFor="let cat of categories" [value]="cat">
-                {{ cat === 'All' ? 'All' : cat }}
-              </mat-chip-option>
+              <mat-chip-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-chip-option>
             </mat-chip-listbox>
 
             <button mat-raised-button color="primary" (click)="openCatalog()" class="catalog-btn"
@@ -77,9 +223,9 @@
           </div>
 
           <!-- Product Grid -->
-          <div class="products-grid-container" *ngIf="products$ | async as products">
-            <div class="products-grid">
-              <mat-card *ngFor="let product of filterProducts(products); trackBy: trackProduct" class="product-card"
+          <div class="products-grid-container">
+            <div class="products-grid" *ngIf="products$ | async as stepProducts">
+              <mat-card *ngFor="let product of filterProducts(stepProducts); trackBy: trackProduct" class="product-card"
                 [class.out-of-stock]="product.stock <= 0" [class.disabled-state]="!(isShiftOpen$ | async)"
                 (click)="addToCart(product)" [@fadeIn]>
                 <div class="product-image">
@@ -89,14 +235,12 @@
                   </mat-icon>
                 </div>
                 <mat-card-content>
-                  <h3 class="product-name">{{ product.name }}</h3>
+                  <p class="product-name">{{ product.name }}</p>
                   <p class="product-price">₱{{ product.price | number:'1.2-2' }}</p>
-                  <p class="product-stock" [class.low]="product.stock < 10">
-                    Stock: {{ product.stock }}
-                  </p>
+                  <p class="product-stock" [class.low]="product.stock < 10">Stock: {{ product.stock }}</p>
                 </mat-card-content>
               </mat-card>
-              <div *ngIf="filterProducts(products).length === 0" class="empty-state">
+              <div *ngIf="filterProducts(stepProducts).length === 0" class="empty-state">
                 <mat-icon>inventory_2</mat-icon>
                 <p>No products in this category</p>
               </div>
@@ -159,7 +303,7 @@
             </div>
           </div>
 
-          <div class="checkout-footer mat-elevation-z8">
+          <div class="checkout-footer">
             <div class="totals-row">
               <span>Total Due:</span>
               <span class="grand-total">₱{{ (cartTotal$ | async) | number:'1.2-2' }}</span>
@@ -180,4 +324,5 @@
     </mat-step>
 
   </mat-stepper>
+
 </div>

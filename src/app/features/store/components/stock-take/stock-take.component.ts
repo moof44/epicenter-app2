@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -8,9 +8,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { StoreService } from '../../../../core/services/store.service';
+import { ProductService } from '../../../../core/services/product.service';
+import { InventoryService } from '../../../../core/services/inventory.service';
 import { Product } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
@@ -27,9 +29,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   animations: [fadeIn]
 })
 export class StockTakeComponent implements OnInit {
-  private storeService = inject(StoreService);
+  private productService = inject(ProductService);
+  private inventoryService = inject(InventoryService);
   private snackBar = inject(MatSnackBar);
   private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
   dataSource = new MatTableDataSource<Product>([]);
   displayedColumns = ['name', 'systemStock', 'physicalCount', 'variance'];
@@ -38,7 +42,7 @@ export class StockTakeComponent implements OnInit {
   isLoading = true; // Start loading
 
   ngOnInit() {
-    this.storeService.getProducts().subscribe({
+    this.productService.getProducts().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (products) => {
         this.dataSource.data = products;
         this.isLoading = false;
@@ -92,7 +96,7 @@ export class StockTakeComponent implements OnInit {
     if (!confirm(`Submit inventory adjustments for ${auditData.length} items? This will update stock levels.`)) return;
 
     try {
-      await this.storeService.reconcileInventory(auditData);
+      await this.inventoryService.reconcileInventory(auditData);
       this.snackBar.open('Inventory reconciliation complete', 'Close', { duration: 3000 });
       this.auditValues = {}; // Reset form
       // Note: Data source updates automatically via subscription
