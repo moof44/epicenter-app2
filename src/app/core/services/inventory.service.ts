@@ -72,7 +72,8 @@ export class InventoryService {
     async reconcileInventory(
         auditData: { productId: string; physicalCount: number }[]
     ): Promise<void> {
-        const batch = writeBatch(this.firestore);
+        let batch = writeBatch(this.firestore);
+        let batchCount = 0;
         const timestamp = new Date();
 
         const productIds = auditData.map((d) => d.productId);
@@ -124,10 +125,19 @@ export class InventoryService {
                     notes: `Stock Take: System ${systemStock} -> Physical ${data.physicalCount}`,
                 };
                 batch.set(logRef, log);
+                batchCount += 2; // update + set = 2 operations
+
+                if (batchCount >= 400) {
+                    await batch.commit();
+                    batch = writeBatch(this.firestore);
+                    batchCount = 0;
+                }
             }
         }
 
-        await batch.commit();
+        if (batchCount > 0) {
+            await batch.commit();
+        }
     }
 
     calculateStockVariance(

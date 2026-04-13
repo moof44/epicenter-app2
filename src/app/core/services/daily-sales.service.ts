@@ -183,15 +183,15 @@ export class DailySalesService {
         let deleteBatch = writeBatch(this.firestore);
         let deleteCount = 0;
 
-        allDocs.forEach(docSnap => {
+        for (const docSnap of allDocs.docs) {
             deleteBatch.delete(docSnap.ref);
             deleteCount++;
             if (deleteCount >= 400) {
-                deleteBatch.commit();
+                await deleteBatch.commit();
                 deleteBatch = writeBatch(this.firestore);
                 deleteCount = 0;
             }
-        });
+        }
         if (deleteCount > 0) {
             await deleteBatch.commit();
         }

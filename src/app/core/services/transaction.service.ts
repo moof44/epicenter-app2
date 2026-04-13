@@ -10,14 +10,15 @@ import {
     increment,
     limit,
     where,
+    documentId,
     getDoc,
+    getDocs,
     sum,
     getAggregateFromServer,
 } from '@angular/fire/firestore';
-import { Observable, combineLatest, map } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { Product, Transaction, ProductSalesData, InventoryLog } from '../models/store.model';
 import { AuthService } from './auth.service';
-import { ProductService } from './product.service';
 import { CashRegisterService } from './cash-register.service';
 import { toLocalDateStr } from '../utils/date.utils';
 
@@ -28,7 +29,6 @@ export class TransactionService {
     private firestore = inject(Firestore);
     private injector = inject(Injector);
     private authService = inject(AuthService);
-    private productService = inject(ProductService);
     private transactionsCollection = collection(this.firestore, 'transactions');
     private inventoryLogsCollection = collection(this.firestore, 'inventory_logs');
 
@@ -106,11 +106,10 @@ export class TransactionService {
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
-        return combineLatest([
-            this.getTransactions({ limit: 1000 }),
-            this.productService.getProducts(),
-        ]).pipe(
-            map(([transactions]) => {
+        // getTransactions returns a real-time listener. combineLatest ensures
+        // the analytics re-emit whenever the transaction list updates.
+        return this.getTransactions({ limit: 1000 }).pipe(
+            map(transactions => {
                 const salesMap = new Map<string, ProductSalesData>();
                 let totalRevenue = 0;
                 let monthlyRevenue = 0;
@@ -184,11 +183,19 @@ export class TransactionService {
         const productIds = [...new Set(txData.items.map(i => i.productId))];
         const productsMap = new Map<string, Product>();
 
-        for (const pid of productIds) {
-            const pSnap = await getDoc(doc(this.firestore, 'products', pid));
-            if (pSnap.exists()) {
-                productsMap.set(pid, { id: pid, ...pSnap.data() } as Product);
-            }
+        const chunkedIds: string[][] = [];
+        for (let i = 0; i < productIds.length; i += 10) {
+            chunkedIds.push(productIds.slice(i, i + 10));
+        }
+        for (const chunk of chunkedIds) {
+            const q = query(
+                collection(this.firestore, 'products'),
+                where(documentId(), 'in', chunk)
+            );
+            const snapshot = await getDocs(q);
+            snapshot.forEach(d =>
+                productsMap.set(d.id, { id: d.id, ...d.data() } as Product)
+            );
         }
 
         for (const item of txData.items) {
