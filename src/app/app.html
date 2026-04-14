@@ -44,6 +44,12 @@
           <span matListItemTitle>Reports Dashboard</span>
         </a>
 
+        <a mat-list-item routerLink="/audit-log" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
+          <mat-icon matListItemIcon>manage_search</mat-icon>
+          <span matListItemTitle>Audit Log</span>
+        </a>
+
         <a mat-list-item routerLink="/users" routerLinkActive="active"
           (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
           <mat-icon matListItemIcon>badge</mat-icon>
