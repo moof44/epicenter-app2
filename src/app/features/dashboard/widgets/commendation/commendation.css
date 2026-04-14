@@ -1,0 +1,36 @@
+.commendation-card {
+    background: linear-gradient(135deg, #e8eaf6 0%, #f3e5f5 100%);
+    border-radius: 8px;
+    padding: 32px 24px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.commendation-text {
+    margin: 0;
+    font-size: 16px;
+    font-style: italic;
+    line-height: 1.6;
+    text-align: center;
+    color: var(--mat-sys-on-surface, #1f2937);
+    max-width: 600px;
+}
+
+@media (max-width: 1199px) {
+    .commendation-text {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 599px) {
+    .commendation-card {
+        padding: 20px 16px;
+        min-height: 64px;
+    }
+
+    .commendation-text {
+        font-size: 14px;
+    }
+}

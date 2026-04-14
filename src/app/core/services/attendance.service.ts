@@ -221,4 +221,19 @@ export class AttendanceService {
         });
         this._refreshHistory$.next(); // Trigger refresh
     }
+
+    /**
+     * Get check-ins performed by a specific staff member on a given date.
+     */
+    async getCheckInsByStaff(staffUid: string, dateStr: string, limitCount = 20): Promise<AttendanceRecord[]> {
+        const q = query(
+            this.attendanceCollection,
+            where('checkedInBy.uid', '==', staffUid),
+            where('date', '==', dateStr),
+            orderBy('checkInTime', 'desc'),
+            limit(limitCount)
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceRecord));
+    }
 }

@@ -1,0 +1,29 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line large"></div>
+        <div class="skeleton-line medium"></div>
+    </div>
+} @else if (isEmpty()) {
+    <div class="product-card empty-state">
+        <mat-icon class="empty-icon">emoji_events</mat-icon>
+        <span class="empty-text">Your bestseller will appear after your first sale</span>
+    </div>
+} @else {
+    <div class="product-card" (click)="navigateToStats()" (keydown.enter)="navigateToStats()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon">emoji_events</mat-icon>
+            <span class="card-title">Your Bestseller</span>
+        </div>
+
+        @if (topProduct(); as product) {
+            <div class="product-name">{{ product.name }}</div>
+            <div class="product-quantity">{{ product.quantity }} sold this month</div>
+            <div class="product-revenue">₱{{ product.revenue | number:'1.2-2' }} earned</div>
+        }
+
+        @if (runnerUp(); as runner) {
+            <div class="runner-up">Runner-up: {{ runner.name }} ({{ runner.quantity }})</div>
+        }
+    </div>
+}

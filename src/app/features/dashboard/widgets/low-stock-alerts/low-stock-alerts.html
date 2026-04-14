@@ -1,0 +1,46 @@
+<div class="stock-card" [class.has-alerts]="hasAlerts()" [class.has-critical]="hasCritical()"
+     (click)="navigateToManage()" (keydown.enter)="navigateToManage()" tabindex="0" role="button">
+
+    @if (isHealthy()) {
+        <div class="healthy-state">
+            <mat-icon class="healthy-icon">check_circle</mat-icon>
+            <span class="healthy-text">All products are well stocked</span>
+        </div>
+    } @else if (hasAlerts()) {
+        <div class="card-header">
+            <mat-icon class="card-icon">inventory_2</mat-icon>
+            <span class="card-title">Stock Alerts</span>
+        </div>
+
+        <div class="alert-count" [class.critical]="hasCritical()">
+            @if (hasCritical()) {
+                {{ criticalCount() }} out of stock!
+            } @else {
+                {{ count() }} {{ count() === 1 ? 'product needs' : 'products need' }} restocking
+            }
+        </div>
+
+        <div class="product-list">
+            @for (product of displayProducts(); track product.name) {
+                <div class="product-item" [class.critical]="product.stock <= 0">
+                    • {{ product.name }} — {{ product.stock }} left
+                    @if (product.minStockLevel) {
+                        <span class="min-level">(min: {{ product.minStockLevel }})</span>
+                    }
+                    @if (product.stock <= 0) {
+                        ⚠️
+                    }
+                </div>
+            }
+            @if (extraCount() > 0) {
+                <div class="extra-count">+{{ extraCount() }} more</div>
+            }
+        </div>
+    } @else {
+        <!-- Products still loading or empty catalog -->
+        <div class="healthy-state">
+            <mat-icon class="card-icon">inventory_2</mat-icon>
+            <span class="card-title">Stock Alerts</span>
+        </div>
+    }
+</div>

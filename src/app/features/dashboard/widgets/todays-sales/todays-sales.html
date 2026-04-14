@@ -1,0 +1,32 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line large"></div>
+        <div class="skeleton-line medium"></div>
+    </div>
+} @else if (isEmpty()) {
+    <div class="sales-card empty-state" (click)="navigateToHistory()" (keydown.enter)="navigateToHistory()" tabindex="0" role="button">
+        <mat-icon class="empty-icon">point_of_sale</mat-icon>
+        <span class="empty-text">Ready to make your first sale today?</span>
+        <span class="empty-subtext">Head to the POS to get started</span>
+    </div>
+} @else {
+    <div class="sales-card" (click)="navigateToHistory()" (keydown.enter)="navigateToHistory()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon">point_of_sale</mat-icon>
+            <span class="card-title">Your Sales Today</span>
+        </div>
+
+        <div class="primary-amount">₱{{ todayTotal() | number:'1.2-2' }}</div>
+
+        @if (showAverage()) {
+            <div class="average-line">₱{{ averageTicket() | number:'1.2-2' }} avg per sale</div>
+        }
+
+        @if (comparisonText()) {
+            <div class="comparison-line" [class.up]="comparisonDirection() === 'up'" [class.down]="comparisonDirection() === 'down'">
+                {{ comparisonText() }}
+            </div>
+        }
+    </div>
+}

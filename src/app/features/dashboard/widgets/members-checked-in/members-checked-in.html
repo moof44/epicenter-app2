@@ -1,0 +1,36 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line large"></div>
+        <div class="skeleton-line medium"></div>
+    </div>
+} @else if (isEmpty()) {
+    <div class="checkin-card empty-state" (click)="navigateToAttendance()" (keydown.enter)="navigateToAttendance()" tabindex="0" role="button">
+        <mat-icon class="empty-icon">how_to_reg</mat-icon>
+        <span class="empty-text">No check-ins yet today</span>
+        <span class="empty-subtext">Head to Attendance to welcome your first member</span>
+    </div>
+} @else {
+    <div class="checkin-card" (click)="navigateToAttendance()" (keydown.enter)="navigateToAttendance()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon">waving_hand</mat-icon>
+            <span class="card-title">Members You Welcomed</span>
+        </div>
+
+        <div class="count-row">
+            <span class="count-number">{{ isApproximate() ? '20+' : count() }}</span>
+            <span class="count-label">{{ count() === 1 ? 'member' : 'members' }}</span>
+        </div>
+
+        <div class="names-line">
+            {{ displayNames().join(', ') }}
+            @if (extraCount() > 0) {
+                <span class="extra-count">+{{ extraCount() }} more</span>
+            }
+        </div>
+
+        @if (latestTimeText()) {
+            <div class="latest-line">Latest: {{ latestTimeText() }}</div>
+        }
+    </div>
+}

@@ -1,0 +1,164 @@
+.progress-card {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    min-height: 200px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.progress-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-self: flex-start;
+}
+
+.card-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--mat-sys-primary, #3f51b5);
+    opacity: 0.7;
+}
+
+.card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--mat-sys-on-surface-variant, #6b7280);
+}
+
+/* Ring */
+.ring-container {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin-bottom: 16px;
+}
+
+.progress-ring {
+    width: 100%;
+    height: 100%;
+}
+
+.progress-arc {
+    transition: stroke-dashoffset 0.8s ease-out;
+}
+
+.ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.ring-pct {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--mat-sys-on-surface, #1f2937);
+}
+
+.ring-label {
+    font-size: 12px;
+    color: var(--mat-sys-on-surface-variant, #9e9e9e);
+}
+
+/* Text below ring */
+.contribution-line {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--mat-sys-on-surface, #1f2937);
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.contribution-line.muted {
+    color: var(--mat-sys-on-surface-variant, #9e9e9e);
+    font-weight: 400;
+}
+
+.daily-target {
+    font-size: 13px;
+    color: var(--mat-sys-on-surface-variant, #6b7280);
+    text-align: center;
+}
+
+.daily-target.met {
+    color: #4caf50;
+    font-weight: 500;
+}
+
+/* Skeleton */
+.skeleton-card {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    min-height: 200px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.skeleton-ring {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line {
+    height: 16px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line.medium { width: 60%; }
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Mobile */
+@media (max-width: 599px) {
+    .progress-card {
+        padding: 16px;
+        min-height: 180px;
+    }
+
+    .ring-container {
+        width: 120px;
+        height: 120px;
+    }
+
+    .ring-pct {
+        font-size: 24px;
+    }
+
+    .contribution-line {
+        font-size: 13px;
+    }
+
+    .skeleton-ring {
+        width: 120px;
+        height: 120px;
+    }
+}

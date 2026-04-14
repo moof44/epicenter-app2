@@ -1,0 +1,62 @@
+<div class="dashboard-container" [@fadeIn]>
+    <!-- Greeting -->
+    <div class="greeting-header">
+        <h1 class="greeting-text">{{ greeting() }}</h1>
+        <p class="greeting-date">{{ todayDate() }}</p>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+
+        <!-- Row 1: Hero cards (Sales + Progress Ring + Badges) -->
+        @if (hasSalesRole()) {
+            <div class="widget-slot">
+                <app-todays-sales></app-todays-sales>
+            </div>
+            <div class="widget-slot">
+                <app-monthly-progress></app-monthly-progress>
+            </div>
+        }
+
+        <!-- Badge Row (spans full width) -->
+        @if (hasSalesRole()) {
+            <div class="widget-slot full-width">
+                <app-badge-row></app-badge-row>
+            </div>
+        }
+
+        <!-- Row 2: Comparisons (Week + Month + Top Product) -->
+        @if (hasSalesRole()) {
+            <div class="widget-slot">
+                <app-week-trend></app-week-trend>
+            </div>
+            <div class="widget-slot">
+                <app-vs-last-month></app-vs-last-month>
+            </div>
+            <div class="widget-slot">
+                <app-top-product></app-top-product>
+            </div>
+        }
+
+        <!-- Row 3: People + Commendation -->
+        <div class="widget-slot">
+            <app-members-checked-in></app-members-checked-in>
+        </div>
+        <div class="widget-slot commendation-slot">
+            <app-commendation></app-commendation>
+        </div>
+
+        <!-- Low Stock (ADMIN/MANAGER only) -->
+        @if (hasInventoryRole()) {
+            <div class="widget-slot full-width">
+                <app-low-stock-alerts></app-low-stock-alerts>
+            </div>
+        }
+
+        <!-- Activity Feed (full width) -->
+        <div class="widget-slot full-width">
+            <app-activity-feed></app-activity-feed>
+        </div>
+
+    </div>
+</div>

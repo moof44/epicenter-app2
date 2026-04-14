@@ -1,0 +1,25 @@
+<div class="badge-row">
+    @if (isFirstToOpen()) {
+        <div class="badge-pill first-to-open">
+            🏅 First to Open
+        </div>
+    }
+
+    @if (isShiftOpen()) {
+        <div class="badge-pill shift-open" [class.long-shift]="isLongShift()"
+             (click)="openShiftModal()" (keydown.enter)="openShiftModal()" tabindex="0" role="button">
+            <span class="status-dot" [class.warning]="isLongShift()"></span>
+            @if (isLongShift()) {
+                ⏰ Shift open for {{ durationText() }} — consider closing
+            } @else {
+                Shift Open · {{ durationText() }} · {{ openedBy() }} · ₱{{ expectedBalance() | number:'1.2-2' }}
+            }
+        </div>
+    } @else {
+        <div class="badge-pill shift-closed"
+             (click)="openShiftModal()" (keydown.enter)="openShiftModal()" tabindex="0" role="button">
+            <span class="status-dot closed"></span>
+            Register Closed — Open a shift to start
+        </div>
+    }
+</div>

@@ -9,7 +9,13 @@ import { adminGuard } from './core/guards/admin.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
-    { path: '', redirectTo: '/members', pathMatch: 'full' },
+    { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+    {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard').then(m => m.DashboardComponent),
+        canActivate: [authGuard],
+        data: { animation: 'DashboardPage' }
+    },
     {
         path: 'login',
         loadComponent: () => import('./features/auth/components/login/login.component').then(m => m.LoginComponent),
