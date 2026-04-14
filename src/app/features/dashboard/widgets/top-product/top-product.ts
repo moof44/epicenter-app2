@@ -89,6 +89,10 @@ export class TopProductWidget {
     }
 
     navigateToStats(): void {
-        this.router.navigate(['/store/stats']);
+        if (this.authService.hasAnyRole(['ADMIN'])) {
+            this.router.navigate(['/store/stats']);
+        } else {
+            this.router.navigate(['/store/history']);
+        }
     }
 }

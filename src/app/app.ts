@@ -13,6 +13,7 @@ import { ShiftStatusWidget } from './features/store/components/shift-status-widg
 import { AuthService } from './core/services/auth.service';
 import { QuotaStatusWidget } from './core/components/quota-status-widget/quota-status-widget';
 import { StaffRemindersComponent } from './core/components/staff-reminders/staff-reminders';
+import { IdleRedirectService } from './core/services/idle-redirect.service';
 
 @Component({
   selector: 'app-root',
@@ -34,6 +35,7 @@ export class App implements OnDestroy {
   private _mobileQueryListener: () => void;
 
   readonly authService = inject(AuthService);
+  private idleRedirectService = inject(IdleRedirectService);
 
   constructor() {
     const changeDetectorRef = inject(ChangeDetectorRef);
@@ -42,6 +44,8 @@ export class App implements OnDestroy {
     this.mobileQuery = media.matchMedia('(max-width: 1200px)');
     this._mobileQueryListener = () => changeDetectorRef.detectChanges();
     this.mobileQuery.addListener(this._mobileQueryListener);
+
+    this.idleRedirectService.init();
 
 
   }

@@ -123,6 +123,11 @@ export class MonthlyProgressWidget {
     }
 
     navigateToMonthlySales(): void {
-        this.router.navigate(['/store/monthly-sales']);
+        // STAFF can't access /store/monthly-sales — navigate to transaction history instead
+        if (this.authService.hasAnyRole(['ADMIN'])) {
+            this.router.navigate(['/store/monthly-sales']);
+        } else {
+            this.router.navigate(['/store/history']);
+        }
     }
 }

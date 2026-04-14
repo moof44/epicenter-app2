@@ -110,6 +110,10 @@ export class VsLastMonthWidget {
     }
 
     navigateToMonthlySales(): void {
-        this.router.navigate(['/store/monthly-sales']);
+        if (this.authService.hasAnyRole(['ADMIN'])) {
+            this.router.navigate(['/store/monthly-sales']);
+        } else {
+            this.router.navigate(['/store/history']);
+        }
     }
 }
