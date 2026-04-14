@@ -1,11 +1,11 @@
-import { Component, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
+import { Component, ChangeDetectorRef, OnDestroy, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { slideInOut } from './core/animations/animations';
@@ -34,6 +34,8 @@ export class App implements OnDestroy {
   mobileQuery: MediaQueryList;
   private _mobileQueryListener: () => void;
 
+  @ViewChild('snav') sidenav!: MatSidenav;
+
   readonly authService = inject(AuthService);
   private idleRedirectService = inject(IdleRedirectService);
 
@@ -59,6 +61,8 @@ export class App implements OnDestroy {
   }
 
   logout() {
+    // Close sidenav immediately to prevent it from staying visible on the login page
+    this.sidenav?.close();
     this.authService.logout().subscribe();
   }
 }
