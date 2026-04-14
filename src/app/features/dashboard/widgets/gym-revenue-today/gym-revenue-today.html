@@ -1,0 +1,22 @@
+@if (!isLoaded()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line large"></div>
+        <div class="skeleton-line medium"></div>
+    </div>
+} @else if (isEmpty()) {
+    <div class="revenue-card empty-state" (click)="navigateToMonthlySales()" (keydown.enter)="navigateToMonthlySales()" tabindex="0" role="button">
+        <mat-icon class="empty-icon">storefront</mat-icon>
+        <span class="empty-text">No gym sales yet today</span>
+        <span class="empty-subtext">Revenue will appear as sales come in</span>
+    </div>
+} @else {
+    <div class="revenue-card" (click)="navigateToMonthlySales()" (keydown.enter)="navigateToMonthlySales()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon">storefront</mat-icon>
+            <span class="card-title">Gym Revenue Today</span>
+        </div>
+        <div class="primary-amount">₱{{ todayRevenue() | number:'1.2-2' }}</div>
+        <div class="monthly-context">This month: ₱{{ monthlyTotal() | number:'1.2-2' }}</div>
+    </div>
+}

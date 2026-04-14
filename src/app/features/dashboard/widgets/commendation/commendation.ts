@@ -2,6 +2,7 @@ import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth.service';
 import { getDailyCommendation } from '../../../../core/constants/dashboard-commendations';
+import { getDailyManagerCommendation } from '../../../../core/constants/manager-commendations';
 
 @Component({
     selector: 'app-commendation',
@@ -22,6 +23,7 @@ export class CommendationWidget {
 
     constructor() {
         const uid = this.authService.userProfile()?.uid || 'anonymous';
-        this.message.set(getDailyCommendation(uid));
+        const isManager = this.authService.hasAnyRole(['ADMIN', 'MANAGER']);
+        this.message.set(isManager ? getDailyManagerCommendation(uid) : getDailyCommendation(uid));
     }
 }

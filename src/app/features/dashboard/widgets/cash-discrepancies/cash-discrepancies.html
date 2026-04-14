@@ -1,0 +1,36 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        @for (i of [1, 2]; track i) {
+            <div class="skeleton-row"></div>
+        }
+    </div>
+} @else if (isClean()) {
+    <div class="disc-card clean-state">
+        <mat-icon class="clean-icon">verified</mat-icon>
+        <span class="clean-text">All shifts balanced</span>
+    </div>
+} @else {
+    <div class="disc-card has-alerts" (click)="navigateToShiftReports()" (keydown.enter)="navigateToShiftReports()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon warn">account_balance_wallet</mat-icon>
+            <span class="card-title">Cash Discrepancies</span>
+            <span class="disc-count">{{ discrepancies().length }}</span>
+        </div>
+
+        @for (d of discrepancies(); track d.date) {
+            <div class="disc-row">
+                <div class="disc-main">
+                    <span class="disc-amount" [class.shortage]="d.type === 'shortage'" [class.overage]="d.type === 'overage'">
+                        {{ d.type === 'shortage' ? '−' : '+' }}₱{{ (d.discrepancy < 0 ? -d.discrepancy : d.discrepancy) | number:'1.2-2' }}
+                    </span>
+                    <span class="disc-type">{{ d.type === 'shortage' ? 'Shortage' : 'Overage' }}</span>
+                </div>
+                <div class="disc-meta">
+                    <span class="disc-by">Closed by {{ d.closedBy }}</span>
+                    <span class="disc-time">{{ getRelativeTime(d.date) }}</span>
+                </div>
+            </div>
+        }
+    </div>
+}

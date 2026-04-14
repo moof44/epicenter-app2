@@ -106,3 +106,32 @@
         min-height: 100px;
     }
 }
+
+/* My Performance Collapsible Panel */
+.my-performance-panel {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 8px !important;
+}
+
+.panel-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    color: var(--mat-sys-primary);
+    opacity: 0.7;
+}
+
+.my-performance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding-top: 8px;
+}
+
+@media (max-width: 599px) {
+    .my-performance-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}

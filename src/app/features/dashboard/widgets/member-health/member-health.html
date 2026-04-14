@@ -1,0 +1,58 @@
+@if (!isLoaded()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-grid">
+            @for (i of [1, 2, 3, 4]; track i) {
+                <div class="skeleton-stat"></div>
+            }
+        </div>
+    </div>
+} @else {
+    <div class="health-card" (click)="navigateToMembers()" (keydown.enter)="navigateToMembers()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon">people</mat-icon>
+            <span class="card-title">Member Health</span>
+        </div>
+
+        <div class="stats-grid">
+            <!-- Active Members -->
+            <div class="stat-item">
+                <span class="stat-value active">{{ activeCount() }}</span>
+                <span class="stat-label">Active</span>
+            </div>
+
+            <!-- Today's Check-ins -->
+            <div class="stat-item">
+                <span class="stat-value">{{ todayCheckIns() }}</span>
+                <span class="stat-label">Checked in today</span>
+            </div>
+
+            <!-- New This Month -->
+            <div class="stat-item">
+                <span class="stat-value new">{{ newThisMonth() }}</span>
+                <span class="stat-label">New this month</span>
+            </div>
+
+            <!-- Expiring This Week -->
+            <div class="stat-item" [class.alert]="expiringCount() > 0">
+                <span class="stat-value">{{ expiringCount() }}</span>
+                <span class="stat-label">Expiring this week</span>
+            </div>
+        </div>
+
+        @if (expiringCount() > 0) {
+            <div class="expiring-section">
+                <div class="expiring-label">
+                    <mat-icon class="expiring-icon">schedule</mat-icon>
+                    Expiring soon:
+                </div>
+                <div class="expiring-names">
+                    {{ expiringNames().join(', ') }}
+                    @if (expiringExtra() > 0) {
+                        <span class="extra-count">+{{ expiringExtra() }} more</span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

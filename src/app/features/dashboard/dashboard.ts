@@ -1,5 +1,7 @@
 import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 import { fadeIn } from '../../core/animations/animations';
 import { TodaysSalesWidget } from './widgets/todays-sales/todays-sales';
@@ -13,14 +15,27 @@ import { BadgeRowWidget } from './widgets/badge-row/badge-row';
 import { LowStockAlertsWidget } from './widgets/low-stock-alerts/low-stock-alerts';
 import { ActivityFeedWidget } from './widgets/activity-feed/activity-feed';
 import { PersonalBestsWidget } from './widgets/personal-bests/personal-bests';
+import { GymRevenueTodayWidget } from './widgets/gym-revenue-today/gym-revenue-today';
+import { MembersInGymWidget } from './widgets/members-in-gym/members-in-gym';
+import { StaffLeaderboardWidget } from './widgets/staff-leaderboard/staff-leaderboard';
+import { MemberHealthWidget } from './widgets/member-health/member-health';
+import { SalesSparklineWidget } from './widgets/sales-sparkline/sales-sparkline';
+import { PaymentSplitWidget } from './widgets/payment-split/payment-split';
+import { PeakHoursWidget } from './widgets/peak-hours/peak-hours';
+import { RecentVoidsWidget } from './widgets/recent-voids/recent-voids';
+import { CashDiscrepanciesWidget } from './widgets/cash-discrepancies/cash-discrepancies';
 
 @Component({
     selector: 'app-dashboard',
     standalone: true,
     imports: [
-        CommonModule, TodaysSalesWidget, CommendationWidget, MembersCheckedInWidget,
+        CommonModule, MatExpansionModule, MatIconModule,
+        TodaysSalesWidget, CommendationWidget, MembersCheckedInWidget,
         MonthlyProgressWidget, WeekTrendWidget, VsLastMonthWidget, TopProductWidget,
-        BadgeRowWidget, LowStockAlertsWidget, ActivityFeedWidget, PersonalBestsWidget
+        BadgeRowWidget, LowStockAlertsWidget, ActivityFeedWidget, PersonalBestsWidget,
+        GymRevenueTodayWidget, MembersInGymWidget, StaffLeaderboardWidget,
+        MemberHealthWidget, SalesSparklineWidget, PaymentSplitWidget, PeakHoursWidget,
+        RecentVoidsWidget, CashDiscrepanciesWidget
     ],
     templateUrl: './dashboard.html',
     styleUrl: './dashboard.css',
@@ -56,6 +71,20 @@ export class DashboardComponent {
     );
 
     // Role checks for conditional widget rendering
+    isManagerView = computed(() =>
+        this.authService.hasAnyRole(['ADMIN', 'MANAGER']) &&
+        !this.isStaffOnlyView()
+    );
+
+    private isStaffOnlyView = computed(() => {
+        const user = this.authService.userProfile();
+        if (!user?.roles) return false;
+        // Staff-only: has STAFF but NOT ADMIN or MANAGER
+        return user.roles.includes('STAFF') &&
+            !user.roles.includes('ADMIN') &&
+            !user.roles.includes('MANAGER');
+    });
+
     hasSalesRole = computed(() =>
         this.authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])
     );

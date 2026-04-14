@@ -1,0 +1,21 @@
+@if (!isLoaded()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-chart"></div>
+    </div>
+} @else {
+    <div class="sparkline-card" (click)="navigateToReports()" (keydown.enter)="navigateToReports()" tabindex="0" role="button">
+        <div class="card-header">
+            <span class="card-title">Daily Sales This Month</span>
+            <span class="card-total">₱{{ monthlyTotal() | number:'1.2-2' }}</span>
+        </div>
+        <apx-chart
+            [series]="chartSeries()"
+            [chart]="chartOptions()"
+            [stroke]="strokeOptions"
+            [tooltip]="tooltipOptions"
+            [grid]="gridOptions"
+            [yaxis]="yaxisOptions"
+        ></apx-chart>
+    </div>
+}
