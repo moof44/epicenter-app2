@@ -12,6 +12,7 @@ import { TopProductWidget } from './widgets/top-product/top-product';
 import { BadgeRowWidget } from './widgets/badge-row/badge-row';
 import { LowStockAlertsWidget } from './widgets/low-stock-alerts/low-stock-alerts';
 import { ActivityFeedWidget } from './widgets/activity-feed/activity-feed';
+import { PersonalBestsWidget } from './widgets/personal-bests/personal-bests';
 
 @Component({
     selector: 'app-dashboard',
@@ -19,7 +20,7 @@ import { ActivityFeedWidget } from './widgets/activity-feed/activity-feed';
     imports: [
         CommonModule, TodaysSalesWidget, CommendationWidget, MembersCheckedInWidget,
         MonthlyProgressWidget, WeekTrendWidget, VsLastMonthWidget, TopProductWidget,
-        BadgeRowWidget, LowStockAlertsWidget, ActivityFeedWidget
+        BadgeRowWidget, LowStockAlertsWidget, ActivityFeedWidget, PersonalBestsWidget
     ],
     templateUrl: './dashboard.html',
     styleUrl: './dashboard.css',

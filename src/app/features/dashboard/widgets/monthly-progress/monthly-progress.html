@@ -27,7 +27,7 @@
             <div class="ring-text">
                 <span class="ring-pct">{{ gymProgress() | number:'1.0-0' }}%</span>
                 @if (isQuotaConfigured()) {
-                    <span class="ring-label">of ₱{{ quota() | number:'1.0-0' }}</span>
+                    <span class="ring-label">of ₱{{ effectiveTarget() | number:'1.0-0' }}</span>
                 } @else {
                     <span class="ring-label">No target set</span>
                 }
@@ -35,7 +35,12 @@
         </div>
 
         @if (isQuotaConfigured()) {
-            @if (staffTotal() > 0) {
+            @if (hasPersonalTarget()) {
+                <div class="contribution-line">₱{{ staffTotal() | number:'1.2-2' }} earned this month</div>
+                @if (quota() > 0) {
+                    <div class="gym-context">Gym: ₱{{ gymTotal() | number:'1.0-0' }} / ₱{{ quota() | number:'1.0-0' }}</div>
+                }
+            } @else if (staffTotal() > 0) {
                 <div class="contribution-line">
                     You contributed ₱{{ staffTotal() | number:'1.2-2' }} ({{ staffContributionPct() | number:'1.0-0' }}%)
                 </div>

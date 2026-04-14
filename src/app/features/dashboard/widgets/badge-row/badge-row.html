@@ -1,4 +1,13 @@
 <div class="badge-row">
+    @if (streakLoaded()) {
+        <div class="badge-pill streak" [class.inactive]="streakLevel() === 'inactive'">
+            {{ flameEmoji() }} {{ streakText() }}
+            @if (streak() >= 30) {
+                ⭐
+            }
+        </div>
+    }
+
     @if (isFirstToOpen()) {
         <div class="badge-pill first-to-open">
             🏅 First to Open

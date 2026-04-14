@@ -6,6 +6,8 @@ import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { StaffActivityService } from '../../../../core/services/staff-activity.service';
+import { DashboardCacheService } from '../../services/dashboard-cache.service';
 import { ShiftControlModal } from '../../../store/components/shift-control-modal/shift-control-modal';
 
 @Component({
@@ -19,11 +21,15 @@ import { ShiftControlModal } from '../../../store/components/shift-control-modal
 export class BadgeRowWidget {
     private cashRegisterService = inject(CashRegisterService);
     private authService = inject(AuthService);
+    private staffActivityService = inject(StaffActivityService);
+    private cacheService = inject(DashboardCacheService);
     private dialog = inject(MatDialog);
     private destroyRef = inject(DestroyRef);
 
     shift = toSignal(this.cashRegisterService.currentShift$, { initialValue: null });
     durationText = signal('');
+    streak = signal(0);
+    streakLoaded = signal(false);
 
     isShiftOpen = computed(() => this.shift()?.status === 'OPEN');
 
@@ -43,9 +49,54 @@ export class BadgeRowWidget {
         return (Date.now() - start.getTime()) > 10 * 3600000; // 10 hours
     });
 
+    streakText = computed(() => {
+        const s = this.streak();
+        if (s === 0) return 'Start your streak today';
+        return `${s} day streak`;
+    });
+
+    streakLevel = computed(() => {
+        const s = this.streak();
+        if (s >= 30) return 'legendary';
+        if (s >= 14) return 'strong';
+        if (s >= 7) return 'growing';
+        if (s > 0) return 'active';
+        return 'inactive';
+    });
+
+    flameEmoji = computed(() => {
+        const s = this.streak();
+        if (s >= 14) return '🔥🔥🔥';
+        if (s >= 7) return '🔥🔥';
+        return '🔥';
+    });
+
     constructor() {
         this.updateDuration();
+        this.loadStreak();
         interval(60_000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.updateDuration());
+    }
+
+    private async loadStreak(): Promise<void> {
+        const uid = this.authService.userProfile()?.uid;
+        if (!uid) { this.streakLoaded.set(true); return; }
+
+        const cached = this.cacheService.get<number>('streak');
+        if (cached !== null) {
+            this.streak.set(cached);
+            this.streakLoaded.set(true);
+            return;
+        }
+
+        try {
+            const s = await this.staffActivityService.getStreak(uid);
+            this.streak.set(s);
+            this.cacheService.set('streak', s);
+        } catch (err) {
+            console.warn('Failed to load streak:', err);
+        } finally {
+            this.streakLoaded.set(true);
+        }
     }
 
     private updateDuration(): void {

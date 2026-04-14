@@ -31,6 +31,10 @@ export class MonthlyProgressWidget {
     private year = this.now.getFullYear();
     private month = this.now.getMonth();
 
+    // Personal target from user profile (0 = not set)
+    personalTarget = computed(() => this.authService.userProfile()?.monthlyTarget || 0);
+    hasPersonalTarget = computed(() => this.personalTarget() > 0);
+
     // Gym total from existing cache
     private report = toSignal(
         this.reportStateService.getMonthlyReport(this.year, this.month).pipe(map(r => r.total)),
@@ -46,9 +50,13 @@ export class MonthlyProgressWidget {
     gymTotal = computed(() => this.report());
     quota = computed(() => this.settings());
 
+    // Effective target: personal if set, otherwise gym quota
+    effectiveTarget = computed(() => this.hasPersonalTarget() ? this.personalTarget() : this.quota());
+    effectiveTotal = computed(() => this.hasPersonalTarget() ? this.staffTotal() : this.gymTotal());
+
     gymProgress = computed(() => {
-        const q = this.quota();
-        return q > 0 ? Math.min((this.gymTotal() / q) * 100, 100) : 0;
+        const q = this.effectiveTarget();
+        return q > 0 ? Math.min((this.effectiveTotal() / q) * 100, 100) : 0;
     });
 
     staffContributionPct = computed(() => {
@@ -62,17 +70,17 @@ export class MonthlyProgressWidget {
     });
 
     dailyTarget = computed(() => {
-        const remaining = Math.max(this.quota() - this.gymTotal(), 0);
+        const remaining = Math.max(this.effectiveTarget() - this.effectiveTotal(), 0);
         const days = this.remainingDays();
         return days > 0 ? remaining / days : 0;
     });
 
     isQuotaMet = computed(() => this.gymProgress() >= 100);
-    isQuotaConfigured = computed(() => this.quota() > 0);
+    isQuotaConfigured = computed(() => this.effectiveTarget() > 0);
 
     ringColor = computed(() => {
         const pct = this.gymProgress();
-        if (this.quota() === 0) return '#e0e0e0';
+        if (this.effectiveTarget() === 0) return '#e0e0e0';
         if (pct >= 100) return '#4caf50';
         if (pct >= 75) return '#ffeb3b';
         if (pct >= 50) return '#ff9800';

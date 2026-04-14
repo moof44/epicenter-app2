@@ -15,6 +15,7 @@ export interface User {
     phone?: string;
     address?: string;
     isActive?: boolean;
+    monthlyTarget?: number; // Per-staff monthly sales target (₱)
 }
 
 export interface CreateUserDto {
