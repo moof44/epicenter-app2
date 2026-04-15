@@ -52,6 +52,12 @@ export const routes: Routes = [
         data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
     },
     {
+        path: 'members/:id/progress/edit/:entryId',
+        component: ProgressForm,
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
+    },
+    {
         path: 'attendance',
         loadComponent: () => import('./features/attendance/components/attendance-layout/attendance-layout').then(m => m.AttendanceLayout),
         canActivate: [authGuard, roleGuard],

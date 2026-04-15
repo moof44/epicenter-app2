@@ -151,3 +151,19 @@
 .diff-small.neutral {
     color: var(--text-secondary);
 }
+
+/* Actions column styling */
+.mat-column-actions {
+    position: sticky;
+    right: 0;
+    background: var(--mat-sys-surface-container, #ffffff);
+    z-index: 1;
+    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.05);
+    width: 100px;
+    flex: 0 0 100px;
+}
+
+button[mat-icon-button] {
+    min-width: 44px;
+    min-height: 44px;
+}
