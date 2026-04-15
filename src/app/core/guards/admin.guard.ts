@@ -8,6 +8,13 @@ export const adminGuard: CanActivateFn = (_route, _state) => {
     const router = inject(Router);
     const snackBar = inject(MatSnackBar);
 
+    const user = authService.userProfile();
+
+    // Block deactivated users
+    if (user && user.isActive === false) {
+        return router.createUrlTree(['/login']);
+    }
+
     // Check if the user is an admin using the computed signal
     if (authService.isAdmin()) {
         return true;

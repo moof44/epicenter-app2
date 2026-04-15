@@ -65,9 +65,10 @@ export class LoginComponent {
                 this.router.navigate(['/']); // Navigate to dashboard/home
             },
             error: (err: any) => {
-                console.error('Login error', err);
                 let message = 'Login failed. Please try again.';
-                if (err.code === 'auth/invalid-credential') { // Modern firebase error
+                if (err.code === 'auth/user-disabled') {
+                    message = 'Your account has been deactivated. Contact an administrator.';
+                } else if (err.code === 'auth/invalid-credential') { // Modern firebase error
                     message = 'Invalid email or password.';
                 } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
                     message = 'Invalid email or password.';

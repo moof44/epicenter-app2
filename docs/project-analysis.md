@@ -450,14 +450,16 @@ transactions ──ref──> daily_sales (via date key)
 
 **Key Behaviors:**
 - Wraps Firebase Auth state into an Observable pipeline: `authState` → Firestore profile fetch → `shareReplay(1)`
+- **Active Staff Protection**: Real-time monitor in the constructor that watches the `isActive` field. If it flips to `false`, it triggers a forced `logout()` with a deactivation snackbar.
+- **Stability Guarantee**: The `user$` stream is intentionally NOT nulled for inactive users to prevent crashing the 20+ services that depend on a non-null `userProfile()` signal mid-operation. Session termination is handled via the separate side-effect.
 - Exposes `userProfile` as a Signal (via `toSignal`) for template consumption
 - Computed signals: `isLoggedIn`, `isAdmin`
 - `hasAnyRole(roles)` — checks if current user has at least one of the specified roles
-- `login(email, password, rememberMe)` — sets persistence (local vs session) then signs in
+- `login(email, password, rememberMe)` — sets persistence (local vs session) then signs in. Specifically handles `auth/user-disabled` error for deactivated accounts.
 - `logout()` — signs out and navigates to `/login`
 - Emergency logout listener in constructor: watches `system/settings.minAuthTimestamp` and force-logs out if the user's auth time is older than the threshold
 
-**Dependencies:** Firebase Auth, Firestore, Router
+**Dependencies:** Firebase Auth, Firestore, Router, MatSnackBar
 
 ---
 
@@ -998,11 +1000,11 @@ Used across most feature components for page transitions and list rendering.
 
 | Guard | Type | Logic |
 |-------|------|-------|
-| `authGuard` | `CanActivateFn` | Checks Firebase Auth state. Redirects to `/login` if not authenticated. |
-| `roleGuard` | `CanActivateFn` | Reads `route.data['roles']`, checks against user's Firestore profile roles. Shows snackbar on denial. Redirects to `/`. |
-| `adminGuard` | `CanActivateFn` | Synchronous check via `authService.isAdmin()` signal. Shows snackbar on denial. |
+| `authGuard` | `CanActivateFn` | Checks `AuthService.user$` (Firestore profile). Redirects to `/login` if not authenticated or if `isActive === false`. |
+| `roleGuard` | `CanActivateFn` | Validates `isActive !== false`, then checks `route.data['roles']` against user profile. Shows snackbar on denial. Redirects to `/`. |
+| `adminGuard` | `CanActivateFn` | Synchronous check via `authService.userProfile()` signal. Validates `isActive !== false` and `isAdmin()`. Shows snackbar on denial. |
 
-All guards use the functional `CanActivateFn` pattern (no class-based guards).
+All guards use the functional `CanActivateFn` pattern. They have been hardened to provide **Zero-Latency Enforcement** by explicitly checking the `isActive` flag in the Firestore profile, preventing deactivated users from navigating even if their Auth session is still technically valid.
 
 ---
 

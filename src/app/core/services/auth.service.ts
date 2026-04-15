@@ -2,6 +2,7 @@ import { Injectable, inject, computed } from '@angular/core';
 import { Auth, signInWithEmailAndPassword, signOut, authState, setPersistence, browserLocalPersistence, browserSessionPersistence } from '@angular/fire/auth';
 import { Firestore, doc, docData } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { from, Observable, of } from 'rxjs';
 import { tap, switchMap, shareReplay, distinctUntilChanged, map } from 'rxjs/operators';
@@ -14,6 +15,7 @@ export class AuthService {
     private auth = inject(Auth);
     private firestore = inject(Firestore);
     private router = inject(Router);
+    private snackBar = inject(MatSnackBar);
 
     // Observable pipeline: Auth User -> Firestore Profile
     user$ = authState(this.auth).pipe(
@@ -80,10 +82,25 @@ export class AuthService {
                 const authTime = new Date(idTokenResult.authTime).getTime();
 
                 if (authTime < minAuthTime) {
-                    console.warn('Force Logout triggered by Admin.');
                     this.logout().subscribe();
                 }
             });
+        });
+
+        // Active Status Protection — force logout when isActive flips to false
+        this.user$.pipe(
+            map((profile: any) => profile?.isActive),
+            distinctUntilChanged()
+        ).subscribe((isActive: boolean | undefined) => {
+            // Only react to explicit false (not undefined/null from logout or legacy users)
+            if (isActive === false && this.auth.currentUser) {
+                this.snackBar.open(
+                    'Your account has been deactivated. Contact an administrator.',
+                    'Close',
+                    { duration: 8000, panelClass: ['error-snackbar'] }
+                );
+                this.logout().subscribe();
+            }
         });
     }
 }
