@@ -1,12 +1,14 @@
 
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Observable, combineLatest, map } from 'rxjs';
 import { MemberService } from '../../../../core/services/member.service';
 import { ProgressService } from '../../../../core/services/progress.service';
@@ -14,24 +16,25 @@ import { Member } from '../../../../core/models/member.model';
 import { Measurement } from '../../../../core/models/measurement.model';
 import { fadeIn, staggerList } from '../../../../core/animations/animations';
 import { AttendanceCalendarComponent } from '../attendance-calendar/attendance-calendar';
-import { TutorialService } from '../../../../core/services/tutorial.service';
-import { TUTORIALS } from '../../../../core/constants/tutorials';
 
 @Component({
   selector: 'app-progress-dashboard',
   imports: [
     CommonModule, RouterLink, MatCardModule, MatTableModule,
-    MatButtonModule, MatIconModule, MatProgressSpinnerModule, AttendanceCalendarComponent
+    MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatTooltipModule,
+    MatSnackBarModule, AttendanceCalendarComponent
   ],
   templateUrl: './progress-dashboard.html',
   styleUrl: './progress-dashboard.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn, staggerList]
 })
 export class ProgressDashboard implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private memberService = inject(MemberService);
   private progressService = inject(ProgressService);
-  private tutorialService = inject(TutorialService);
+  private snackBar = inject(MatSnackBar);
 
   member$: Observable<Member | undefined> | undefined;
   measurements$: Observable<Measurement[]> | undefined;
@@ -48,7 +51,8 @@ export class ProgressDashboard implements OnInit {
     'sinistralFatFull', 'muscleFull',
     'subcutaneousFatArms', 'muscleArms',
     'subcutaneousFatTrunk', 'muscleTrunk',
-    'subcutaneousFatLegs', 'muscleLegs'
+    'subcutaneousFatLegs', 'muscleLegs',
+    'actions'
   ];
 
   ngOnInit() {
@@ -86,10 +90,6 @@ export class ProgressDashboard implements OnInit {
         };
       })
     );
-
-    setTimeout(() => {
-      this.tutorialService.startTutorial(TUTORIALS['MEMBER_PROGRESS'].id);
-    }, 1000);
   }
 
   formatDiff(val: number): string {
@@ -115,6 +115,31 @@ export class ProgressDashboard implements OnInit {
     } else {
       // Muscle, Metabolism
       return val > 0 ? 'good' : 'bad';
+    }
+  }
+
+  editEntry(measurement: Measurement): void {
+    if (!this.memberId || !measurement.id) return;
+    this.router.navigate(['/members', this.memberId, 'progress', 'edit', measurement.id]);
+  }
+
+  async deleteEntry(measurement: Measurement): Promise<void> {
+    if (!this.memberId || !measurement.id) return;
+
+    try {
+      const deletedDocId = await this.progressService.softDeleteEntry(this.memberId, measurement.id);
+
+      const snackRef = this.snackBar.open('Entry deleted', 'Undo', { duration: 5000 });
+      snackRef.onAction().subscribe(async () => {
+        try {
+          await this.progressService.restoreEntry(deletedDocId);
+          this.snackBar.open('Entry restored', 'Close', { duration: 2000 });
+        } catch (err: any) {
+          this.snackBar.open('Restore failed: ' + err.message, 'Close', { duration: 3000 });
+        }
+      });
+    } catch (err: any) {
+      this.snackBar.open('Delete failed: ' + err.message, 'Close', { duration: 3000 });
     }
   }
 }

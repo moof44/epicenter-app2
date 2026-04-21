@@ -1,0 +1,171 @@
+<div class="dashboard-container" [@fadeIn]>
+    <!-- Greeting -->
+    <div class="greeting-header">
+        <h1 class="greeting-text">{{ greeting() }}</h1>
+        <p class="greeting-date">{{ todayDate() }}</p>
+    </div>
+
+    @if (isManagerView()) {
+        <!-- ==================== MANAGER / ADMIN DASHBOARD ==================== -->
+        <div class="dashboard-grid">
+
+            <!-- Row 1: Business Pulse (Hero) -->
+            <div class="widget-slot">
+                <app-gym-revenue-today></app-gym-revenue-today>
+            </div>
+            <div class="widget-slot">
+                <app-monthly-progress></app-monthly-progress>
+            </div>
+            <div class="widget-slot">
+                <app-members-in-gym></app-members-in-gym>
+            </div>
+
+            <!-- Badge Row (shift status) -->
+            <div class="widget-slot full-width">
+                <app-badge-row></app-badge-row>
+            </div>
+
+            <!-- Staff Leaderboard (full width) -->
+            <div class="widget-slot full-width">
+                <app-staff-leaderboard></app-staff-leaderboard>
+            </div>
+
+            <!-- Row 2: Trends -->
+            <div class="widget-slot full-width">
+                <app-sales-sparkline></app-sales-sparkline>
+            </div>
+            <div class="widget-slot">
+                <app-week-trend></app-week-trend>
+            </div>
+            <div class="widget-slot">
+                <app-vs-last-month></app-vs-last-month>
+            </div>
+            <div class="widget-slot">
+                <app-top-product></app-top-product>
+            </div>
+
+            <!-- Row 3: Payment + Peak Hours -->
+            <div class="widget-slot">
+                <app-payment-split></app-payment-split>
+            </div>
+            <div class="widget-slot">
+                <app-peak-hours></app-peak-hours>
+            </div>
+
+            <!-- Row 3: People + Commendation -->
+            <div class="widget-slot">
+                <app-members-checked-in></app-members-checked-in>
+            </div>
+            <div class="widget-slot commendation-slot">
+                <app-commendation></app-commendation>
+            </div>
+
+            <!-- Member Health (full width) -->
+            <div class="widget-slot full-width">
+                <app-member-health></app-member-health>
+            </div>
+
+            <!-- Low Stock Alerts -->
+            <div class="widget-slot full-width">
+                <app-low-stock-alerts></app-low-stock-alerts>
+            </div>
+
+            <!-- Operational Alerts Row -->
+            <div class="widget-slot">
+                <app-recent-voids></app-recent-voids>
+            </div>
+            <div class="widget-slot">
+                <app-cash-discrepancies></app-cash-discrepancies>
+            </div>
+
+            <!-- Activity Feed -->
+            <div class="widget-slot full-width">
+                <app-activity-feed></app-activity-feed>
+            </div>
+
+            <!-- My Performance (Collapsible) -->
+            <div class="widget-slot full-width">
+                <mat-expansion-panel class="my-performance-panel">
+                    <mat-expansion-panel-header>
+                        <mat-panel-title>
+                            <mat-icon class="panel-icon">person</mat-icon>
+                            My Performance
+                        </mat-panel-title>
+                        <mat-panel-description>Your personal sales, streak, and records</mat-panel-description>
+                    </mat-expansion-panel-header>
+
+                    <div class="my-performance-grid">
+                        <div class="widget-slot">
+                            <app-todays-sales></app-todays-sales>
+                        </div>
+                        <div class="widget-slot">
+                            <app-personal-bests></app-personal-bests>
+                        </div>
+                    </div>
+                </mat-expansion-panel>
+            </div>
+
+        </div>
+
+    } @else {
+        <!-- ==================== STAFF / TRAINER DASHBOARD ==================== -->
+        <div class="dashboard-grid">
+
+            <!-- Row 1: Hero cards (Sales + Progress Ring) -->
+            @if (hasSalesRole()) {
+                <div class="widget-slot">
+                    <app-todays-sales></app-todays-sales>
+                </div>
+                <div class="widget-slot">
+                    <app-monthly-progress></app-monthly-progress>
+                </div>
+            }
+
+            <!-- Badge Row -->
+            @if (hasSalesRole()) {
+                <div class="widget-slot full-width">
+                    <app-badge-row></app-badge-row>
+                </div>
+            }
+
+            <!-- Row 2: Comparisons -->
+            @if (hasSalesRole()) {
+                <div class="widget-slot">
+                    <app-week-trend></app-week-trend>
+                </div>
+                <div class="widget-slot">
+                    <app-vs-last-month></app-vs-last-month>
+                </div>
+                <div class="widget-slot">
+                    <app-top-product></app-top-product>
+                </div>
+            }
+
+            <!-- Row 3: People + Commendation -->
+            <div class="widget-slot">
+                <app-members-checked-in></app-members-checked-in>
+            </div>
+            <div class="widget-slot commendation-slot">
+                <app-commendation></app-commendation>
+            </div>
+
+            <!-- Low Stock (ADMIN/MANAGER only — won't show for STAFF) -->
+            @if (hasInventoryRole()) {
+                <div class="widget-slot full-width">
+                    <app-low-stock-alerts></app-low-stock-alerts>
+                </div>
+            }
+
+            <!-- Activity Feed -->
+            <div class="widget-slot full-width">
+                <app-activity-feed></app-activity-feed>
+            </div>
+
+            <!-- Personal Bests -->
+            <div class="widget-slot full-width">
+                <app-personal-bests></app-personal-bests>
+            </div>
+
+        </div>
+    }
+</div>

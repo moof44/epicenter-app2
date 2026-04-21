@@ -1,0 +1,36 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        @for (i of [1, 2, 3]; track i) {
+            <div class="skeleton-bar-row"></div>
+        }
+    </div>
+} @else if (isEmpty()) {
+    <div class="peak-card empty-state">
+        <mat-icon class="empty-icon">schedule</mat-icon>
+        <span class="empty-text">Peak hours will appear as members check in</span>
+    </div>
+} @else {
+    <div class="peak-card" (click)="navigateToReports()" (keydown.enter)="navigateToReports()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon">schedule</mat-icon>
+            <span class="card-title">Peak Hours Today</span>
+        </div>
+
+        @if (topHour(); as top) {
+            <div class="top-hour">Busiest: {{ top.label }} ({{ top.count }} check-ins)</div>
+        }
+
+        <div class="hours-list">
+            @for (h of displayHours(); track h.hour) {
+                <div class="hour-row">
+                    <span class="hour-label">{{ h.label }}</span>
+                    <div class="hour-bar-track">
+                        <div class="hour-bar-fill" [style.width.%]="getBarWidth(h.count)"></div>
+                    </div>
+                    <span class="hour-count">{{ h.count }}</span>
+                </div>
+            }
+        </div>
+    </div>
+}

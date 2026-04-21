@@ -1,0 +1,26 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <div class="icon-circle">
+      <mat-icon>warning</mat-icon>
+    </div>
+    <h2 mat-dialog-title>Shift Date Violation</h2>
+  </div>
+
+  <mat-dialog-content>
+    <p class="warning-text">
+        This transaction has been securely <strong>blocked</strong>.
+    </p>
+    <p class="description">
+        The currently open register shift belongs to <strong>{{ data.shiftDate }}</strong>. Because the system does not operate 24 hours, you cannot process today's operations using yesterday's shift.
+    </p>
+    
+    <div class="instruction-box">
+        <mat-icon>lightbulb</mat-icon>
+        <span><strong>Action Required:</strong> Please go to the Cash Management page, review and close the previous shift, and open a new shift for today.</span>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-raised-button color="warn" (click)="close()">Acknowledge & Close</button>
+  </mat-dialog-actions>
+</div>

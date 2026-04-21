@@ -1,4 +1,6 @@
 import { Injectable, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { StaleShiftDialog } from '../../shared/components/stale-shift-dialog/stale-shift-dialog';
 import {
   Firestore,
   collection,
@@ -23,22 +25,63 @@ import {
   ShiftSession,
   ShiftSummary
 } from '../models/cash-register.model';
-import { StoreService } from './store.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CashRegisterService {
   private firestore = inject(Firestore);
-  private storeService = inject(StoreService);
   private shiftsCollection = collection(this.firestore, 'shifts');
+  private dialog = inject(MatDialog);
 
   // Current shift state
   private currentShift = new BehaviorSubject<ShiftSession | null>(null);
   currentShift$ = this.currentShift.asObservable();
 
+  // Guard: prevents multiple StaleShiftDialogs from stacking
+  private isStaleDialogOpen = false;
+
   constructor() {
     this.refreshShift();
+  }
+
+  // Pre-validate a shift before any cash operations
+  async ensureValidShiftForTransaction(): Promise<boolean> {
+    const shift = this.currentShift.getValue();
+    if (!shift || shift.status !== 'OPEN') {
+      // Return false safely. Basic logic usually catches this and throws its own "Register closed" logic.
+      return false;
+    }
+
+    // BUG #1 FIX: Safely handle both Firestore Timestamp and plain JS Date.
+    // When a shift is first opened, startTime is a JS Date (in-memory).
+    // After refreshShift() reads from Firestore, it becomes a Firestore Timestamp with .toDate().
+    // Calling .toDate() on a plain Date crashes with: TypeError: shift.startTime.toDate is not a function
+    const rawStart = shift.startTime;
+    const startDate: Date = rawStart?.toDate ? rawStart.toDate() : new Date(rawStart);
+    const shiftDate = startDate.toLocaleDateString('en-CA');
+    const today = new Date().toLocaleDateString('en-CA');
+
+    if (shiftDate !== today) {
+      // BUG #4 FIX: Prevent multiple StaleShiftDialogs from stacking.
+      // This service is a singleton (providedIn: 'root'), so this flag protects
+      // all callers (POS, Kiosk, Cash Management) simultaneously.
+      if (!this.isStaleDialogOpen) {
+        this.isStaleDialogOpen = true;
+        const dialogRef = this.dialog.open(StaleShiftDialog, {
+          data: { shiftDate },
+          disableClose: true,
+          width: '450px'
+        });
+        dialogRef.afterClosed().subscribe(() => {
+          this.isStaleDialogOpen = false;
+        });
+      }
+      // Throw a specific error code to intercept and silence in UI
+      throw new Error('STALE_SHIFT');
+    }
+
+    return true;
   }
 
 
@@ -134,6 +177,11 @@ export class CashRegisterService {
 
   // Add a cash transaction to current shift
   async addCashTransaction(transaction: Omit<CashTransaction, 'id' | 'timestamp'>): Promise<void> {
+    const valid = await this.ensureValidShiftForTransaction();
+    if (!valid) {
+        throw new Error('SILENT');
+    }
+
     const shift = this.currentShift.getValue();
     if (!shift?.id || shift.status !== 'OPEN') {
       throw new Error('No open shift. Please open a shift first.');
@@ -416,6 +464,61 @@ export class CashRegisterService {
   getTodayTransactions(): CashTransaction[] {
     const shift = this.currentShift.getValue();
     return shift?.transactions ?? [];
+  }
+
+  // Pre-calculate shift updates for an atomic batched void operation
+  async getVoidTransactionShiftUpdates(relatedTransactionId: string, txDate: Date): Promise<{ shiftRef: any, updates: any } | null> {
+    const q = query(
+      this.shiftsCollection,
+      where('startTime', '<=', txDate),
+      orderBy('startTime', 'desc'),
+      limit(1)
+    );
+
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return null;
+
+    const shiftDoc = snapshot.docs[0];
+    const shiftData = shiftDoc.data() as ShiftSession;
+
+    const transactions = shiftData.transactions || [];
+    const txIndex = transactions.findIndex(t => t.relatedTransactionId === relatedTransactionId);
+
+    if (txIndex === -1) return null;
+
+    const tx = transactions[txIndex];
+    if ((tx as any).voided) return null;
+
+    const updatedTx = { ...tx, voided: true };
+    const newTransactions = [...transactions];
+    newTransactions[txIndex] = updatedTx;
+
+    const updates: any = { transactions: newTransactions };
+    const amount = tx.amount;
+
+    if (tx.type === 'Sale') {
+      updates.totalRevenue = increment(-amount);
+      updates.totalSales = increment(-amount);
+
+      if (tx.paymentMethod === 'GCASH') {
+        updates.totalGcashSales = increment(-amount);
+      } else {
+        updates.totalCashSales = increment(-amount);
+        updates.expectedClosingBalance = increment(-amount);
+      }
+    } else if (tx.type === 'Float_In') {
+      updates.totalFloatIn = increment(-amount);
+      updates.expectedClosingBalance = increment(-amount);
+    } else if (tx.type === 'Expense') { 
+      updates.totalExpenses = increment(-amount);
+      updates.expectedClosingBalance = increment(amount);
+    } else if (tx.type === 'Float_Out') {
+      updates.totalFloatOut = increment(-amount);
+      updates.expectedClosingBalance = increment(amount);
+    }
+
+    const shiftRef = doc(this.firestore, 'shifts', shiftDoc.id);
+    return { shiftRef, updates };
   }
 
   // Void a transaction within a shift (Open or Closed - for correction)

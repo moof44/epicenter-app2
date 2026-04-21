@@ -1,0 +1,91 @@
+.badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.badge-pill.first-to-open {
+    background: #fff8e1;
+    color: #f57f17;
+    border: 1px solid #ffe082;
+}
+
+.badge-pill.shift-open {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+    cursor: pointer;
+}
+
+.badge-pill.shift-open:hover {
+    background: #c8e6c9;
+}
+
+.badge-pill.shift-open.long-shift {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+}
+
+.badge-pill.shift-closed {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+    cursor: pointer;
+}
+
+.badge-pill.shift-closed:hover {
+    background: #ffcdd2;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4caf50;
+    flex-shrink: 0;
+}
+
+.status-dot.warning {
+    background: #ff9800;
+}
+
+.status-dot.closed {
+    background: #f44336;
+}
+
+@media (max-width: 599px) {
+    .badge-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .badge-pill {
+        min-height: 40px;
+        font-size: 14px;
+        justify-content: center;
+    }
+}
+
+.badge-pill.streak {
+    background: linear-gradient(135deg, #ff6f00, #ff8f00);
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+.badge-pill.streak.inactive {
+    background: #f5f5f5;
+    color: var(--mat-sys-on-surface-variant, #9e9e9e);
+}

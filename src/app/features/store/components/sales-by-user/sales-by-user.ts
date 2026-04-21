@@ -12,7 +12,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'; // Import toSignal
 import { switchMap, map, startWith } from 'rxjs/operators';
 import { of, combineLatest, from } from 'rxjs';
-import { StoreService } from '../../../../core/services/store.service';
 import { UserService } from '../../../../core/services/user.service'; // Import UserService
 import { fadeIn } from '../../../../core/animations/animations';
 import { FormsModule } from '@angular/forms'; // Import FormsModule
@@ -144,7 +143,6 @@ import { ReportStateService } from '../../../../core/services/report.state.servi
   animations: [fadeIn]
 })
 export class SalesByUserComponent {
-  private storeService = inject(StoreService); // Still needed? Maybe not if we remove direct calls
   private reportStateService = inject(ReportStateService);
   private userService = inject(UserService);
   private route = inject(ActivatedRoute);

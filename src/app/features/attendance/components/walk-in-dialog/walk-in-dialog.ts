@@ -31,7 +31,7 @@ export interface WalkInDialogResult {
     <mat-dialog-content>
       <p>
         <strong>{{data.member.name}}</strong> 
-        <span *ngIf="data.isExpired">has an expired subscription (Enc: {{data.member.membershipExpiration?.toDate() | date}}).</span>
+        <span *ngIf="data.isExpired">has an expired subscription (Exp: {{formatExpiration(data.member.membershipExpiration) | date}}).</span>
         <span *ngIf="!data.isExpired">does not have an active subscription.</span>
       </p>
       
@@ -72,6 +72,11 @@ export class WalkInDialog {
 
   paymentMethod: 'CASH' | 'GCASH' = 'CASH';
   referenceNumber = '';
+
+  formatExpiration(value: any): Date | null {
+    if (!value) return null;
+    return value.toDate ? value.toDate() : new Date(value);
+  }
 
   onAction(action: 'walk-in' | 'check-in' | 'cancel') {
     if (action === 'walk-in') {

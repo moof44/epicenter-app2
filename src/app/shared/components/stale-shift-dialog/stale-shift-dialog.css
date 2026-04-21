@@ -1,0 +1,95 @@
+.dialog-container {
+    padding: 16px;
+    max-width: 480px;
+}
+
+.dialog-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.icon-circle {
+    background-color: #fce4e4;
+    color: #d32f2f;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.icon-circle mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+}
+
+h2.mat-dialog-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #d32f2f;
+}
+
+.warning-text {
+    font-size: 1.1rem;
+    text-align: center;
+    color: #555;
+    margin-bottom: 16px;
+}
+
+.description {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #444;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.instruction-box {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 16px;
+    border-radius: 4px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    color: #0d47a1;
+}
+
+.instruction-box mat-icon {
+    color: #1976d2;
+}
+
+.instruction-box span {
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+mat-dialog-actions {
+    margin-top: 24px;
+    padding: 0;
+    justify-content: center;
+}
+
+/* Responsiveness */
+@media (max-width: 480px) {
+    .dialog-container {
+        padding: 8px;
+    }
+    
+    h2.mat-dialog-title {
+        font-size: 1.25rem;
+    }
+    
+    .instruction-box {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}

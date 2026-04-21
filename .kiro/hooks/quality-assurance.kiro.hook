@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "enabled": true,
+  "name": "Quality Assurance",
+  "description": "Go into QA mode to check if the created code is quality assured",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Go into Quality Assurance mode and attack, find fault, go into debug mode, negative test all the code created or modifications after completing the task before submitting that it is completed. Focus on:\n1. Happy Path if the goal is achieved\n2. Multiple case scenario or generate a test scenario for the code modification ensuring it passes\n3. Negative testing\n4. Unintended side effects\n5. Regression testing\n\nAfter testing, generate a .md file for all the test that has been done and the result. Give informative details that may help the developer for testing it."
+  }
+}

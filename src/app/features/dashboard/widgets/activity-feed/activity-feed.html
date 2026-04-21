@@ -1,0 +1,43 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        @for (i of [1,2,3]; track i) {
+            <div class="skeleton-row">
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line medium"></div>
+            </div>
+        }
+    </div>
+} @else if (isEmpty()) {
+    <div class="feed-card empty-state">
+        <mat-icon class="empty-icon">history</mat-icon>
+        <span class="empty-text">Your activity will appear here as you work</span>
+        <span class="empty-subtext">Sales and check-ins show up in real time</span>
+    </div>
+} @else {
+    <div class="feed-card">
+        <div class="card-header">
+            <mat-icon class="card-icon">history</mat-icon>
+            <span class="card-title">Recent Activity</span>
+        </div>
+
+        @for (item of activities(); track item.timestamp) {
+            <div class="activity-item" [class.voided]="item.isVoided"
+                 (click)="navigateTo(item.routerLink)" (keydown.enter)="navigateTo(item.routerLink)" tabindex="0" role="button">
+                <div class="item-main">
+                    <mat-icon class="item-icon" [class.sale]="item.type === 'sale'" [class.checkin]="item.type === 'checkin'">{{ item.icon }}</mat-icon>
+                    <span class="item-description">{{ item.description }}</span>
+                    @if (item.isVoided) {
+                        <span class="void-badge">Voided</span>
+                    }
+                </div>
+                <div class="item-meta">
+                    @if (item.amount !== null) {
+                        <span class="item-amount" [class.voided]="item.isVoided">₱{{ item.amount | number:'1.2-2' }}</span>
+                        <span class="meta-dot">·</span>
+                    }
+                    <span class="item-time">{{ item.relativeTime }}</span>
+                </div>
+            </div>
+        }
+    </div>
+}

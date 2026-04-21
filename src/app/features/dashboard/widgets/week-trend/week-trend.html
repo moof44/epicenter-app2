@@ -1,0 +1,32 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line large"></div>
+        <div class="skeleton-line medium"></div>
+    </div>
+} @else if (isEmpty()) {
+    <div class="trend-card empty-state">
+        <mat-icon class="empty-icon">show_chart</mat-icon>
+        <span class="empty-text">Your weekly trend will appear after your first sale</span>
+    </div>
+} @else {
+    <div class="trend-card" (click)="navigateToHistory()" (keydown.enter)="navigateToHistory()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon">date_range</mat-icon>
+            <span class="card-title">This Week</span>
+        </div>
+
+        <div class="primary-row">
+            <mat-icon class="trend-icon" [class.up]="direction() === 'up'" [class.down]="direction() === 'down'">{{ trendIcon() }}</mat-icon>
+            <span class="primary-amount">₱{{ thisWeekTotal() | number:'1.2-2' }}</span>
+        </div>
+
+        @if (comparisonText()) {
+            <div class="comparison-line" [class.up]="direction() === 'up'" [class.down]="direction() === 'down'">
+                {{ comparisonText() }}
+            </div>
+        }
+
+        <div class="reference-line">Last week: ₱{{ lastWeekTotal() | number:'1.2-2' }}</div>
+    </div>
+}

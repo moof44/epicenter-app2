@@ -1,0 +1,34 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        @for (i of [1, 2]; track i) {
+            <div class="skeleton-row"></div>
+        }
+    </div>
+} @else if (isClean()) {
+    <div class="voids-card clean-state">
+        <mat-icon class="clean-icon">verified</mat-icon>
+        <span class="clean-text">No recent voids</span>
+    </div>
+} @else {
+    <div class="voids-card has-alerts" (click)="navigateToHistory()" (keydown.enter)="navigateToHistory()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon warn">remove_circle</mat-icon>
+            <span class="card-title">Recent Voids</span>
+            <span class="void-count">{{ voids().length }}</span>
+        </div>
+
+        @for (v of voids(); track v.id) {
+            <div class="void-row">
+                <div class="void-main">
+                    <span class="void-amount">₱{{ v.amount | number:'1.2-2' }}</span>
+                    <span class="void-by">by {{ v.voidedBy }}</span>
+                </div>
+                <div class="void-meta">
+                    <span class="void-reason">{{ v.reason }}</span>
+                    <span class="void-time">{{ getRelativeTime(v.date) }}</span>
+                </div>
+            </div>
+        }
+    </div>
+}

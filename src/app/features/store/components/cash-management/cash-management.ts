@@ -13,12 +13,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
-import { StoreService } from '../../../../core/services/store.service';
+import { TransactionService } from '../../../../core/services/transaction.service';
 import { CashTransactionType } from '../../../../core/models/cash-register.model';
 import { ShiftControlModal } from '../shift-control-modal/shift-control-modal';
 import { fadeIn } from '../../../../core/animations/animations';
-import { TutorialService } from '../../../../core/services/tutorial.service';
-import { TUTORIALS } from '../../../../core/constants/tutorials';
 
 @Component({
   selector: 'app-cash-management',
@@ -31,13 +29,12 @@ import { TUTORIALS } from '../../../../core/constants/tutorials';
   styleUrl: './cash-management.css',
   animations: [fadeIn]
 })
-export class CashManagement implements OnInit {
+export class CashManagement {
   private cashRegisterService = inject(CashRegisterService);
-  private storeService = inject(StoreService);
+  private transactionService = inject(TransactionService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private authService = inject(AuthService);
-  private tutorialService = inject(TutorialService);
 
   currentShift$ = this.cashRegisterService.currentShift$;
   displayedColumns = ['timestamp', 'type', 'products', 'performer', 'paymentMethod', 'reason', 'amount', 'actions'];
@@ -48,12 +45,6 @@ export class CashManagement implements OnInit {
   formAmount = 0;
   formReason = '';
   isSubmitting = false;
-
-  ngOnInit(): void {
-    setTimeout(() => {
-      this.tutorialService.startTutorial(TUTORIALS['SHIFT_MGMT'].id);
-    }, 1000);
-  }
 
   openForm(type: 'expense' | 'floatIn' | 'floatOut'): void {
     this.formType = type;
@@ -95,6 +86,13 @@ export class CashManagement implements OnInit {
       this.snackBar.open('Transaction recorded', 'Close', { duration: 3000 });
       this.closeForm();
     } catch (err: any) {
+      // BUG #5 FIX: Close the form when STALE_SHIFT or SILENT is caught.
+      // Without this, the expense/float form stays open and populated behind the modal,
+      // causing a confusing re-submission loop while the StaleShiftDialog is visible.
+      if (err.message === 'STALE_SHIFT' || err.message === 'SILENT') {
+        this.closeForm();
+        return;
+      }
       this.snackBar.open(err.message || 'Failed to record transaction', 'Close', { duration: 3000 });
     } finally {
       this.isSubmitting = false;
@@ -188,7 +186,7 @@ export class CashManagement implements OnInit {
 
     this.isSubmitting = true;
     try {
-      await this.storeService.voidTransaction(tx.relatedTransactionId, reason);
+      await this.transactionService.voidTransaction(tx.relatedTransactionId, reason);
       this.snackBar.open('Transaction voided successfully.', 'Close', { duration: 3000 });
       // The storeService calls cashRegister to update shift, but we might need to refresh local view if not auto-updated?
       // CashRegisterService calls refreshShift() which updates currentShift$, so UI should react auto.

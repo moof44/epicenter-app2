@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { Firestore, collection, collectionData, query, where, orderBy, addDoc, doc, updateDoc, Timestamp, getDocs, limit, startAfter } from '@angular/fire/firestore';
-import { Observable, BehaviorSubject, firstValueFrom } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AttendanceRecord } from '../models/attendance.model';
 import { Member } from '../models/member.model';
@@ -157,6 +157,21 @@ export class AttendanceService {
     refreshHistory$ = this._refreshHistory$.asObservable();
 
     /**
+     * Check if a specific member is currently checked in.
+     * Targeted query: reads at most 1 document instead of all active check-ins.
+     */
+    async isMemberCheckedIn(memberId: string): Promise<boolean> {
+        const q = query(
+            this.attendanceCollection,
+            where('memberId', '==', memberId),
+            where('status', '==', 'Checked In'),
+            limit(1)
+        );
+        const snapshot = await getDocs(q);
+        return !snapshot.empty;
+    }
+
+    /**
      * Check In a member.
      */
     async checkIn(member: Member, lockerNumber?: number): Promise<void> {
@@ -168,9 +183,8 @@ export class AttendanceService {
             }
         }
 
-        // Check for existing active check-in
-        const activeCheckIns = await firstValueFrom(this.getActiveCheckIns());
-        const alreadyCheckedIn = activeCheckIns.some((record: AttendanceRecord) => record.memberId === member.id);
+        // Check for existing active check-in (targeted query — 1 read max)
+        const alreadyCheckedIn = await this.isMemberCheckedIn(member.id!);
         if (alreadyCheckedIn) {
             throw new Error(`Member ${member.name} is already checked in.`);
         }
@@ -206,5 +220,20 @@ export class AttendanceService {
             checkedOutBy: this._currentUserSnapshot
         });
         this._refreshHistory$.next(); // Trigger refresh
+    }
+
+    /**
+     * Get check-ins performed by a specific staff member on a given date.
+     */
+    async getCheckInsByStaff(staffUid: string, dateStr: string, limitCount = 20): Promise<AttendanceRecord[]> {
+        const q = query(
+            this.attendanceCollection,
+            where('checkedInBy.uid', '==', staffUid),
+            where('date', '==', dateStr),
+            orderBy('checkInTime', 'desc'),
+            limit(limitCount)
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceRecord));
     }
 }

@@ -1,0 +1,35 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        @for (i of [1,2,3,4]; track i) {
+            <div class="skeleton-row">
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line medium"></div>
+            </div>
+        }
+    </div>
+} @else {
+    <div class="bests-card">
+        <div class="card-header">
+            <span class="card-icon">🏆</span>
+            <span class="card-title">Personal Bests</span>
+        </div>
+
+        @for (record of records(); track record.key) {
+            <div class="record-row" [class.broken]="record.isBroken">
+                <div class="record-left">
+                    <span class="record-icon">{{ record.icon }}</span>
+                    <span class="record-label">{{ record.label }}</span>
+                </div>
+                <div class="record-right">
+                    <span class="record-value" [class.placeholder]="record.value === '—'">{{ record.value }}</span>
+                    @if (record.isBroken) {
+                        <span class="new-badge">NEW</span>
+                    }
+                </div>
+                @if (record.date) {
+                    <div class="record-date">{{ record.date }}</div>
+                }
+            </div>
+        }
+    </div>
+}

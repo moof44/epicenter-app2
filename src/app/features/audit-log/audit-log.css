@@ -1,0 +1,199 @@
+.audit-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.page-header { margin-bottom: 24px; }
+.page-header h1 { margin: 0; font-size: 24px; color: var(--mat-sys-on-surface); }
+.page-subtitle { margin: 4px 0 0; font-size: 14px; color: var(--mat-sys-on-surface-variant); }
+
+/* Filters */
+.filters-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.date-field { width: 160px; }
+.staff-field { min-width: 200px; }
+.search-btn { min-height: 48px; align-self: center; }
+
+/* Type Chips — fixed visibility */
+.type-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.type-chips button {
+    font-size: 13px;
+    border-radius: 24px;
+    color: var(--mat-sys-on-surface);
+    border-color: var(--mat-sys-outline, rgba(0, 0, 0, 0.12));
+}
+
+.type-chips button.active {
+    background: var(--mat-sys-primary);
+    color: white;
+    border-color: var(--mat-sys-primary);
+}
+
+.type-chips button:not(.active) {
+    background: var(--mat-sys-surface-container, white);
+}
+
+.type-chips button mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+}
+
+/* Loading */
+.loading-state {
+    display: flex;
+    justify-content: center;
+    padding: 48px;
+}
+
+/* Empty */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 64px 16px;
+    color: var(--mat-sys-on-surface-variant);
+    text-align: center;
+    gap: 8px;
+}
+
+.empty-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.5; }
+.empty-text { font-size: 16px; font-weight: 500; }
+.empty-subtext { font-size: 14px; }
+
+/* Timeline */
+.timeline {
+    display: flex;
+    flex-direction: column;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    position: relative;
+}
+
+.timeline-item:last-child { border-bottom: none; }
+
+/* Dot */
+.timeline-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+    background: var(--mat-sys-on-surface-variant);
+}
+
+.timeline-dot.primary { background: var(--mat-sys-primary); }
+.timeline-dot.warn { background: #ff9800; }
+.timeline-dot.accent { background: #2196f3; }
+
+/* Content */
+.timeline-content { flex: 1; min-width: 0; }
+
+.event-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.event-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.event-icon.primary { color: var(--mat-sys-primary); }
+.event-icon.warn { color: #ff9800; }
+.event-icon.accent { color: #2196f3; }
+
+.event-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--mat-sys-on-surface);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-time {
+    font-size: 12px;
+    color: var(--mat-sys-on-surface-variant);
+    flex-shrink: 0;
+}
+
+.event-detail {
+    font-size: 13px;
+    color: var(--mat-sys-on-surface-variant);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-performer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--mat-sys-on-surface-variant);
+}
+
+.performer-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* Pagination */
+.pagination-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 0 8px;
+}
+
+.page-info {
+    font-size: 14px;
+    color: var(--mat-sys-on-surface-variant);
+}
+
+/* Mobile */
+@media (max-width: 599px) {
+    .filters-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .date-field, .staff-field {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .search-btn { width: 100%; }
+
+    .type-chips button { font-size: 12px; }
+
+    .timeline-item { gap: 12px; padding: 12px 0; }
+    .event-title { font-size: 13px; }
+}

@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "enabled": true,
+  "name": "Systems Documentation Update",
+  "description": "Update the main file that fully describes the system.\n",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "After completing a task before submitting it is already completed, if there are code modifications related to the project, update the project-analysis.md file if the logic, code related concern that was changed and needing the project-analysis worthy of updating. If the changes is minor, no longer need to update but if it's something that will affect future analysis and development, then update the project-analysis.md\n\nWhen to update:\n1. Logic change\n2. Approach change\n3. Major refactor\n4. Major bug fix\n5. Change in coding standards and technology used\n\nWhen not to update:\n1. Minor changes\n2. Not worthy of mentioning like the analysis of the project will be the same"
+  }
+}

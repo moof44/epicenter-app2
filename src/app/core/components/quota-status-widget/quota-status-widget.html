@@ -1,4 +1,4 @@
-<div class="quota-widget" *ngIf="isWidgetVisible() && monthlyQuota() > 0">
+<div class="quota-widget" *ngIf="isWidgetVisible() && monthlyQuota() > 0 && isReportLoaded()">
     <!-- Monthly Status -->
     <div class="status-item monthly-status" *ngIf="isMonthlyVisible()"
         [style.background-color]="getBgColor(monthlyStatus())" [style.color]="getStatusColor(monthlyStatus())"

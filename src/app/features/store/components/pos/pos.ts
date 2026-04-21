@@ -1,7 +1,9 @@
-import { Component, inject, ChangeDetectionStrategy, signal, OnInit } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -12,7 +14,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { StoreService } from '../../../../core/services/store.service';
+import { CheckoutService } from '../../../../core/services/checkout.service';
+import { ProductService } from '../../../../core/services/product.service';
+import { CartStore } from '../../../../core/store/cart.store';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { MemberService } from '../../../../core/services/member.service';
@@ -23,8 +27,6 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CheckoutDialog, CheckoutDialogResult } from './checkout-dialog/checkout-dialog';
 import { PriceOverrideDialog, PriceOverrideDialogResult } from './price-override-dialog/price-override-dialog';
 import { getRandomCommendation } from '../../../../core/constants/commendations';
-import { TutorialService } from '../../../../core/services/tutorial.service';
-import { TUTORIALS } from '../../../../core/constants/tutorials';
 
 import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { ViewChild } from '@angular/core';
@@ -38,42 +40,38 @@ import { ProductCatalogComponent } from '../product-catalog/product-catalog';
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatCardModule,
     MatBadgeModule, MatDividerModule, MatSnackBarModule, MatChipsModule,
     MatInputModule, MatFormFieldModule, MatDialogModule, MatAutocompleteModule,
-    ReactiveFormsModule, MatStepperModule, PreventDoubleClickDirective
+    ReactiveFormsModule, MatStepperModule, PreventDoubleClickDirective, MatTooltipModule
   ],
   templateUrl: './pos.html',
   styleUrl: './pos.css',
   animations: [fadeIn],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class POS implements OnInit {
+export class POS {
   @ViewChild('stepper') stepper!: MatStepper;
 
-  private storeService = inject(StoreService);
+  private checkoutService = inject(CheckoutService);
+  private productService = inject(ProductService);
+  private cartStore = inject(CartStore);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private authService = inject(AuthService);
   private memberService = inject(MemberService);
-  private tutorialService = inject(TutorialService);
+
 
   private cashRegisterService = inject(CashRegisterService);
 
-  products$: Observable<Product[]> = this.storeService.getProducts().pipe(
+  products$: Observable<Product[]> = this.productService.getProducts().pipe(
     map(products => products.filter(p => p.type !== 'CONSUMABLE'))
   );
-  cart$: Observable<CartItem[]> = this.storeService.cart$;
-  cartTotal$: Observable<number> = this.storeService.getCartTotal();
+  cart$: Observable<CartItem[]> = toObservable(this.cartStore.items);
+  cartTotal$: Observable<number> = toObservable(this.cartStore.total);
   isShiftOpen$ = this.cashRegisterService.currentShift$.pipe(map(s => s?.status === 'OPEN'));
 
   selectedCategory = signal<ProductCategory | 'All'>('All');
   categories: (ProductCategory | 'All')[] = ['All', 'Training', 'Supplements', 'Drinks', 'Boxing'];
   isProcessing = signal(false);
   cartExpanded = signal(false);
-
-  ngOnInit(): void {
-    setTimeout(() => {
-      this.tutorialService.startTutorial(TUTORIALS['POS'].id);
-    }, 1000);
-  }
 
   toggleCart(): void {
     this.cartExpanded.update(v => !v);
@@ -89,7 +87,7 @@ export class POS implements OnInit {
       this.snackBar.open('Product out of stock', 'Close', { duration: 2000 });
       return;
     }
-    this.storeService.addToCart(product);
+    this.cartStore.addItem(product);
     this.snackBar.open(`${product.name} added to cart`, 'Close', { duration: 1500 });
   }
 
@@ -99,7 +97,7 @@ export class POS implements OnInit {
       return;
     }
     const newQty = item.quantity + change;
-    this.storeService.updateCartItemQuantity(item.productId, newQty);
+    this.cartStore.updateQuantity(item.productId, newQty);
   }
 
   removeItem(productId: string): void {
@@ -107,7 +105,7 @@ export class POS implements OnInit {
       this.snackBar.open('Register is closed.', 'Close', { duration: 3000 });
       return;
     }
-    this.storeService.removeFromCart(productId);
+    this.cartStore.removeItem(productId);
   }
 
   clearCart(): void {
@@ -115,7 +113,7 @@ export class POS implements OnInit {
       this.snackBar.open('Register is closed.', 'Close', { duration: 3000 });
       return;
     }
-    this.storeService.clearCart();
+    this.cartStore.clear();
   }
 
   async openPriceOverrideDialog(item: CartItem): Promise<void> {
@@ -133,7 +131,7 @@ export class POS implements OnInit {
     const result = await firstValueFrom(dialogRef.afterClosed()) as PriceOverrideDialogResult;
 
     if (result) {
-      this.storeService.updateCartItemPrice(item.productId, result.newPrice, result.reason);
+      this.cartStore.updatePrice(item.productId, result.newPrice, result.reason);
       this.snackBar.open('Price updated', 'Close', { duration: 2000 });
     }
   }
@@ -195,6 +193,9 @@ export class POS implements OnInit {
       return;
     }
 
+    const valid = await this.cashRegisterService.ensureValidShiftForTransaction();
+    if (!valid) return;
+
     this.isCheckoutPending = true;
 
     try {
@@ -216,7 +217,7 @@ export class POS implements OnInit {
       // isCheckoutPending stays true while processing
 
       const currentMember = this.selectedMember();
-      const transactionId = await this.storeService.checkout(
+      const transactionId = await this.checkoutService.checkout(
         undefined,
         this.authService.userProfile()?.displayName || this.authService.userProfile()?.email || 'Unknown Staff',
         result.paymentMethod,
@@ -233,6 +234,11 @@ export class POS implements OnInit {
       // Reset flow after sale
       this.resetStepper();
     } catch (error: any) {
+      // BUG #6 FIX: Also suppress 'SILENT' for defensive robustness.
+      // STALE_SHIFT: thrown when shift date != today (modal handles UX).
+      // SILENT: thrown when shift is null in addCashTransaction (should never reach here via POS,
+      //         but suppressed for safety against any race condition during app initialization).
+      if (error.message === 'STALE_SHIFT' || error.message === 'SILENT') return;
       this.snackBar.open(error.message || 'Checkout failed', 'Close', { duration: 3000 });
     } finally {
       this.isProcessing.set(false);

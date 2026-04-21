@@ -42,7 +42,7 @@ export interface SubscriptionUpdateResult {
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>New Expiration Date</mat-label>
-          <input matInput [matDatepicker]="picker" [formControl]="dateControl">
+          <input matInput [matDatepicker]="picker" [formControl]="dateControl" [min]="minDate">
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
@@ -80,6 +80,7 @@ export interface SubscriptionUpdateResult {
   `]
 })
 export class SubscriptionUpdateDialog {
+  minDate = new Date();
   dateControl = new FormControl(this.getDefaultDate(), [Validators.required]);
   dialogRef = inject(MatDialogRef<SubscriptionUpdateDialog>);
   data = inject<SubscriptionUpdateDialogData>(MAT_DIALOG_DATA);

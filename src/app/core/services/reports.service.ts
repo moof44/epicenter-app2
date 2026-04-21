@@ -1,23 +1,22 @@
 import { Injectable, inject } from '@angular/core';
-import { StoreService } from './store.service';
+import { TransactionService } from './transaction.service';
+import { toLocalDateStr } from '../utils/date.utils';
 import { AttendanceService } from './attendance.service';
 import { firstValueFrom } from 'rxjs';
-import { AttendanceRecord } from '../models/attendance.model';
-import { Transaction } from '../models/store.model';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ReportsService {
-    private storeService = inject(StoreService);
+    private transactionService = inject(TransactionService);
     private attendanceService = inject(AttendanceService);
 
     /**
      * 1. Volume or number of gym goers every day with time peak highlight
      */
     async getVolumeAnalytics(startDate: Date, endDate: Date) {
-        const startStr = startDate.toISOString().split('T')[0];
-        const endStr = endDate.toISOString().split('T')[0];
+        const startStr = toLocalDateStr(startDate);
+        const endStr = toLocalDateStr(endDate);
 
         const records = await this.attendanceService.getAttendanceRange(startStr, endStr);
 
@@ -73,7 +72,7 @@ export class ReportsService {
      */
     async getSalesAnalytics(startDate: Date, endDate: Date) {
         // We can use getTransactions from store service
-        const transactions = await firstValueFrom(this.storeService.getTransactions({
+        const transactions = await firstValueFrom(this.transactionService.getTransactions({
             startDate,
             endDate,
             limit: 2000 // Reasonable limit for a report range
@@ -92,9 +91,11 @@ export class ReportsService {
         const staffPerformance = new Map<string, number>();
 
         transactions.forEach(tx => {
+            if (tx.status === 'VOID') return;
+
             // Date
             const date = tx.date instanceof Date ? tx.date : (tx.date as any).toDate();
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = toLocalDateStr(date);
             salesPerDay.set(dateStr, (salesPerDay.get(dateStr) || 0) + tx.totalAmount);
 
             // Person
@@ -131,8 +132,8 @@ export class ReportsService {
      * 5. Member's Attendance (Top Gym Goers)
      */
     async getTopAttendees(startDate: Date, endDate: Date) {
-        const startStr = startDate.toISOString().split('T')[0];
-        const endStr = endDate.toISOString().split('T')[0];
+        const startStr = toLocalDateStr(startDate);
+        const endStr = toLocalDateStr(endDate);
 
         const records = await this.attendanceService.getAttendanceRange(startStr, endStr);
 

@@ -1,11 +1,11 @@
-import { Component, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
+import { Component, ChangeDetectorRef, OnDestroy, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { slideInOut } from './core/animations/animations';
@@ -13,9 +13,7 @@ import { ShiftStatusWidget } from './features/store/components/shift-status-widg
 import { AuthService } from './core/services/auth.service';
 import { QuotaStatusWidget } from './core/components/quota-status-widget/quota-status-widget';
 import { StaffRemindersComponent } from './core/components/staff-reminders/staff-reminders';
-import { TutorialService } from './core/services/tutorial.service';
-import { TUTORIALS } from './core/constants/tutorials';
-import { TutorialWizardComponent } from './shared/components/tutorial-wizard/tutorial-wizard.component';
+import { IdleRedirectService } from './core/services/idle-redirect.service';
 
 @Component({
   selector: 'app-root',
@@ -25,8 +23,7 @@ import { TutorialWizardComponent } from './shared/components/tutorial-wizard/tut
     MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule, MatDividerModule,
     ShiftStatusWidget,
     QuotaStatusWidget,
-    StaffRemindersComponent,
-    TutorialWizardComponent
+    StaffRemindersComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -37,8 +34,10 @@ export class App implements OnDestroy {
   mobileQuery: MediaQueryList;
   private _mobileQueryListener: () => void;
 
+  @ViewChild('snav') sidenav!: MatSidenav;
+
   readonly authService = inject(AuthService);
-  private tutorialService = inject(TutorialService);
+  private idleRedirectService = inject(IdleRedirectService);
 
   constructor() {
     const changeDetectorRef = inject(ChangeDetectorRef);
@@ -48,18 +47,9 @@ export class App implements OnDestroy {
     this._mobileQueryListener = () => changeDetectorRef.detectChanges();
     this.mobileQuery.addListener(this._mobileQueryListener);
 
-    // Register Tutorials
-    Object.values(TUTORIALS).forEach(t => this.tutorialService.registerTutorial(t));
+    this.idleRedirectService.init();
 
-    // Trigger Intro Tutorial on Login
-    this.authService.user$.subscribe(user => {
-      if (user) {
-        // timeout to ensure view is ready or just nice UX
-        setTimeout(() => {
-          this.tutorialService.startTutorial(TUTORIALS['INTRO_SHIFT'].id);
-        }, 2000);
-      }
-    });
+
   }
 
   ngOnDestroy(): void {
@@ -71,6 +61,8 @@ export class App implements OnDestroy {
   }
 
   logout() {
+    // Close sidenav immediately to prevent it from staying visible on the login page
+    this.sidenav?.close();
     this.authService.logout().subscribe();
   }
 }

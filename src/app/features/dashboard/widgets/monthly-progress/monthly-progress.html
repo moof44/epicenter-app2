@@ -1,0 +1,58 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        <div class="skeleton-ring"></div>
+        <div class="skeleton-line medium"></div>
+    </div>
+} @else {
+    <div class="progress-card" (click)="navigateToMonthlySales()" (keydown.enter)="navigateToMonthlySales()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon">donut_large</mat-icon>
+            <span class="card-title">Monthly Progress</span>
+        </div>
+
+        <div class="ring-container">
+            <svg class="progress-ring" viewBox="0 0 140 140">
+                <!-- Background track -->
+                <circle cx="70" cy="70" r="60" fill="none" stroke="#e0e0e0" stroke-width="10" />
+                <!-- Progress arc -->
+                <circle cx="70" cy="70" r="60" fill="none"
+                    [attr.stroke]="ringColor()"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    [attr.stroke-dasharray]="circumference"
+                    [attr.stroke-dashoffset]="ringOffset()"
+                    class="progress-arc"
+                    transform="rotate(-90 70 70)" />
+            </svg>
+            <div class="ring-text">
+                <span class="ring-pct">{{ gymProgress() | number:'1.0-0' }}%</span>
+                @if (isQuotaConfigured()) {
+                    <span class="ring-label">of ₱{{ effectiveTarget() | number:'1.0-0' }}</span>
+                } @else {
+                    <span class="ring-label">No target set</span>
+                }
+            </div>
+        </div>
+
+        @if (isQuotaConfigured()) {
+            @if (hasPersonalTarget()) {
+                <div class="contribution-line">₱{{ staffTotal() | number:'1.2-2' }} earned this month</div>
+                @if (quota() > 0) {
+                    <div class="gym-context">Gym: ₱{{ gymTotal() | number:'1.0-0' }} / ₱{{ quota() | number:'1.0-0' }}</div>
+                }
+            } @else if (staffTotal() > 0) {
+                <div class="contribution-line">
+                    You contributed ₱{{ staffTotal() | number:'1.2-2' }} ({{ staffContributionPct() | number:'1.0-0' }}%)
+                </div>
+            } @else if (!isLoading()) {
+                <div class="contribution-line muted">Your sales will show here as you go</div>
+            }
+
+            @if (isQuotaMet()) {
+                <div class="daily-target met">Keep the momentum going 🎉</div>
+            } @else {
+                <div class="daily-target">₱{{ dailyTarget() | number:'1.0-0' }} per day to stay on track</div>
+            }
+        }
+    </div>
+}

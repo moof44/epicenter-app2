@@ -1,0 +1,101 @@
+<div class="audit-container" [@fadeIn]>
+    <div class="page-header">
+        <h1>Audit Log</h1>
+        <p class="page-subtitle">Investigate and trace gym activity across all operations</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-row">
+        <mat-form-field appearance="outline" class="date-field">
+            <mat-label>Start Date</mat-label>
+            <input matInput [matDatepicker]="startPicker" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)">
+            <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="date-field">
+            <mat-label>End Date</mat-label>
+            <input matInput [matDatepicker]="endPicker" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)">
+            <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="staff-field">
+            <mat-label>Staff</mat-label>
+            <mat-select [ngModel]="selectedStaff()" (ngModelChange)="selectedStaff.set($event)">
+                <mat-option value="">All Staff</mat-option>
+                @for (staff of staffList(); track staff.uid) {
+                    <mat-option [value]="staff.uid">{{ staff.name }}</mat-option>
+                }
+            </mat-select>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" (click)="search()" class="search-btn">
+            <mat-icon>search</mat-icon> Search
+        </button>
+    </div>
+
+    <!-- Event Type Chips -->
+    <div class="type-chips">
+        @for (t of eventTypes; track t.key) {
+            <button mat-stroked-button
+                [class.active]="isTypeSelected(t.key)"
+                (click)="toggleType(t.key); search()">
+                <mat-icon>{{ t.icon }}</mat-icon>
+                {{ t.label }}
+            </button>
+        }
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+        <div class="loading-state">
+            <mat-spinner diameter="40"></mat-spinner>
+        </div>
+    }
+
+    <!-- Empty -->
+    @if (isEmpty()) {
+        <div class="empty-state">
+            <mat-icon class="empty-icon">search_off</mat-icon>
+            <span class="empty-text">No events found for this date range</span>
+            <span class="empty-subtext">Try adjusting your filters or date range</span>
+        </div>
+    }
+
+    <!-- Timeline -->
+    @if (!isLoading() && pagedEvents().length > 0) {
+        <div class="timeline">
+            @for (event of pagedEvents(); track event.timestamp) {
+                <div class="timeline-item" [class]="event.type">
+                    <div class="timeline-dot" [class]="event.color"></div>
+                    <div class="timeline-content">
+                        <div class="event-header">
+                            <mat-icon class="event-icon" [class]="event.color">{{ event.icon }}</mat-icon>
+                            <span class="event-title">{{ event.title }}</span>
+                            <span class="event-time">{{ getRelativeTime(event.timestamp) }}</span>
+                        </div>
+                        <div class="event-detail">{{ event.detail }}</div>
+                        <div class="event-performer">
+                            <mat-icon class="performer-icon">person</mat-icon>
+                            {{ event.performer }} · {{ formatDate(event.timestamp) }} {{ formatTime(event.timestamp) }}
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+            <div class="pagination-row">
+                <button mat-icon-button (click)="prevPage()" [disabled]="!canGoPrev()">
+                    <mat-icon>chevron_left</mat-icon>
+                </button>
+                <span class="page-info">Page {{ currentPage() + 1 }} of {{ totalPages() }} ({{ totalCount() }} events)</span>
+                <button mat-icon-button (click)="nextPage()" [disabled]="!canGoNext()">
+                    <mat-icon>chevron_right</mat-icon>
+                </button>
+            </div>
+        }
+    }
+</div>

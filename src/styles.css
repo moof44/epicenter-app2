@@ -210,3 +210,56 @@ html {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* ── POS Stepper global overrides (tablet/mobile) ─────────
+   ::ng-deep from within the component is unreliable in Angular 17+
+   because the MDC stepper uses shadow-piercing encapsulation.
+   These selectors are scoped to .pos-stepper to avoid side effects.
+   ─────────────────────────────────────────────────────────── */
+.pos-stepper.mat-stepper-horizontal {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Header row must NOT grow — only the content area grows */
+.pos-stepper .mat-horizontal-stepper-header-container {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  z-index: 10;
+  flex-shrink: 0;
+  flex-grow: 0;      /* ← critical: prevents header from gobbling all flex space */
+}
+
+.pos-stepper .mat-horizontal-content-container {
+  padding: 0 !important;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Active step fills the container */
+.pos-stepper .mat-horizontal-stepper-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Inactive steps must be hidden so they don't add to the layout height.
+   Angular Material 17 MDC stepper uses -previous and -next variants. */
+.pos-stepper .mat-horizontal-stepper-content[aria-expanded="false"],
+.pos-stepper .mat-horizontal-stepper-content-previous,
+.pos-stepper .mat-horizontal-stepper-content-next {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
+

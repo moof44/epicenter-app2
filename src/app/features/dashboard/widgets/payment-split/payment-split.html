@@ -1,0 +1,41 @@
+@if (isLoading()) {
+    <div class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-bar"></div>
+    </div>
+} @else if (isEmpty()) {
+    <div class="split-card empty-state">
+        <mat-icon class="empty-icon">payments</mat-icon>
+        <span class="empty-text">Payment data will appear after today's first sale</span>
+    </div>
+} @else {
+    <div class="split-card" (click)="navigateToReports()" (keydown.enter)="navigateToReports()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon">payments</mat-icon>
+            <span class="card-title">Payment Methods Today</span>
+        </div>
+
+        <!-- Stacked bar -->
+        <div class="split-bar">
+            @if (cashPct() > 0) {
+                <div class="bar-segment cash" [style.width.%]="cashPct()"></div>
+            }
+            @if (gcashPct() > 0) {
+                <div class="bar-segment gcash" [style.width.%]="gcashPct()"></div>
+            }
+        </div>
+
+        <div class="split-legend">
+            <div class="legend-item">
+                <span class="legend-dot cash"></span>
+                <span class="legend-label">Cash</span>
+                <span class="legend-value">₱{{ cashTotal() | number:'1.2-2' }} ({{ cashPct() | number:'1.0-0' }}%)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot gcash"></span>
+                <span class="legend-label">GCash</span>
+                <span class="legend-value">₱{{ gcashTotal() | number:'1.2-2' }} ({{ gcashPct() | number:'1.0-0' }}%)</span>
+            </div>
+        </div>
+    </div>
+}

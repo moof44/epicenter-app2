@@ -9,7 +9,13 @@ import { adminGuard } from './core/guards/admin.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
-    { path: '', redirectTo: '/members', pathMatch: 'full' },
+    { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+    {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard').then(m => m.DashboardComponent),
+        canActivate: [authGuard],
+        data: { animation: 'DashboardPage' }
+    },
     {
         path: 'login',
         loadComponent: () => import('./features/auth/components/login/login.component').then(m => m.LoginComponent),
@@ -46,6 +52,12 @@ export const routes: Routes = [
         data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
     },
     {
+        path: 'members/:id/progress/edit/:entryId',
+        component: ProgressForm,
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
+    },
+    {
         path: 'attendance',
         loadComponent: () => import('./features/attendance/components/attendance-layout/attendance-layout').then(m => m.AttendanceLayout),
         canActivate: [authGuard, roleGuard],
@@ -68,6 +80,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/reports/pages/reports-dashboard/reports-dashboard').then(m => m.ReportsDashboardComponent),
         canActivate: [authGuard, roleGuard],
         data: { animation: 'DashboardPage', roles: ['ADMIN', 'MANAGER'] }
+    },
+    {
+        path: 'audit-log',
+        loadComponent: () => import('./features/audit-log/audit-log').then(m => m.AuditLogComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'ListPage', roles: ['ADMIN'] }
     },
     {
         path: 'settings',

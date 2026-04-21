@@ -1,0 +1,24 @@
+@if (isEmpty()) {
+    <div class="gym-card empty-state" (click)="navigateToAttendance()" (keydown.enter)="navigateToAttendance()" tabindex="0" role="button">
+        <mat-icon class="empty-icon">fitness_center</mat-icon>
+        <span class="empty-text">No members in the gym</span>
+        <span class="empty-subtext">Check-ins will appear here in real time</span>
+    </div>
+} @else {
+    <div class="gym-card" (click)="navigateToAttendance()" (keydown.enter)="navigateToAttendance()" tabindex="0" role="button">
+        <div class="card-header">
+            <mat-icon class="card-icon">fitness_center</mat-icon>
+            <span class="card-title">In the Gym Now</span>
+        </div>
+        <div class="count-row">
+            <span class="count-number">{{ count() }}</span>
+            <span class="count-label">{{ count() === 1 ? 'member' : 'members' }}</span>
+        </div>
+        <div class="names-line">
+            {{ recentNames().join(', ') }}
+            @if (extraCount() > 0) {
+                <span class="extra-count">+{{ extraCount() }} more</span>
+            }
+        </div>
+    </div>
+}

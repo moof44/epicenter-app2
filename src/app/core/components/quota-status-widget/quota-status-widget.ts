@@ -1,12 +1,14 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { StoreService } from '../../services/store.service';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { BehaviorSubject, interval, filter, switchMap, map } from 'rxjs';
 import { SettingsService } from '../../services/settings.service';
 import { AuthService } from '../../services/auth.service';
-import { map } from 'rxjs/operators';
+import { ReportStateService } from '../../services/report.state.service';
+
+import { toLocalDateStr } from '../../utils/date.utils';
 
 @Component({
     selector: 'app-quota-status-widget',
@@ -16,33 +18,45 @@ import { map } from 'rxjs/operators';
     styleUrl: './quota-status-widget.css'
 })
 export class QuotaStatusWidget {
-    private storeService = inject(StoreService);
     private settingsService = inject(SettingsService);
     private authService = inject(AuthService);
+    private reportStateService = inject(ReportStateService);
+    private destroyRef = inject(DestroyRef);
 
-    analytics$ = this.storeService.getSalesAnalytics();
+    // BUG 8 fix: Drive report from a BehaviorSubject so midnight rollover can re-trigger
+    private currentDate$ = new BehaviorSubject<Date>(new Date());
+
+    report$ = this.currentDate$.pipe(
+        switchMap(date => this.reportStateService.getMonthlyReport(date.getFullYear(), date.getMonth()))
+    );
     settings$ = this.settingsService.getSettings();
 
-    analytics = toSignal(this.analytics$, {
-        initialValue: {
-            monthlyRevenue: 0,
-            todayRevenue: 0,
-            totalRevenue: 0,
-            topSelling: [],
-            lowPerformance: []
-        }
-    });
+    report = toSignal(this.report$, { initialValue: { days: [], total: 0 } });
     settings = toSignal(this.settings$, { initialValue: { monthlyQuota: 0 } });
 
+    // BUG 7 fix: Track when real data has loaded to avoid false red flash
+    isReportLoaded = toSignal(this.report$.pipe(map(() => true)), { initialValue: false });
+
     monthlyQuota = computed(() => this.settings().monthlyQuota || 0);
-    monthlyRevenue = computed(() => this.analytics().monthlyRevenue || 0);
-    todayRevenue = computed(() => this.analytics()?.todayRevenue || 0);
+    monthlyRevenue = computed(() => this.report().total || 0);
+    todayRevenue = computed(() => {
+        const localTodayStr = toLocalDateStr(new Date());
+
+        const days = this.report().days || [];
+        const todayItem = days.find(d => {
+            try {
+                return toLocalDateStr(d.date) === localTodayStr;
+            } catch {
+                return false;
+            }
+        });
+        return todayItem ? todayItem.totalSales : 0;
+    });
 
     // Visibility Logic
     isWidgetVisible = computed(() => {
         const user = this.authService.userProfile();
         const roles = user?.roles || [];
-        // Visible to everyone with a role basically
         const allowed = ['ADMIN', 'MANAGER', 'TRAINER', 'STAFF'];
         return roles.some(r => allowed.includes(r));
     });
@@ -50,7 +64,6 @@ export class QuotaStatusWidget {
     isMonthlyVisible = computed(() => {
         const user = this.authService.userProfile();
         const roles = user?.roles || [];
-        // Hidden for STAFF, visible to others
         const allowed = ['ADMIN', 'MANAGER', 'TRAINER'];
         return roles.some(r => allowed.includes(r));
     });
@@ -65,8 +78,6 @@ export class QuotaStatusWidget {
         const remainingQuota = Math.max(quota - current, 0);
         const now = new Date();
         const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        // Logic: If we are at day 10, there are 10..LastDay days remaining locally (inclusive)
-        // Actually, simpler logic: Remaining amount / Remaining days (including today)
         const remainingDays = lastDay - now.getDate() + 1;
 
         return remainingDays > 0 ? remainingQuota / remainingDays : 0;
@@ -89,23 +100,36 @@ export class QuotaStatusWidget {
     dailyStatus = computed(() => {
         const target = this.dailyTarget();
         const current = this.todayRevenue();
-        // Start of month or target met
         if (target <= 0) return 'green';
 
-        // NOTE: This logic compares "Sales Today" vs "Required Daily Average"
         const percentage = (current / target) * 100;
         if (percentage >= 100) return 'green';
         if (percentage >= 75) return 'yellow';
         if (percentage >= 50) return 'orange';
-        return 'red'; // Default to red if low
+        return 'red';
     });
+
+    constructor() {
+        // BUG 8 fix: Check every 60s if the day/month has changed
+        interval(60_000).pipe(
+            filter(() => {
+                const now = new Date();
+                const current = this.currentDate$.getValue();
+                return now.getDate() !== current.getDate()
+                    || now.getMonth() !== current.getMonth();
+            }),
+            takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() => {
+            this.currentDate$.next(new Date());
+        });
+    }
 
     getStatusColor(status: string): string {
         switch (status) {
-            case 'green': return '#4caf50'; // Green
-            case 'yellow': return '#ffeb3b'; // Yellow
-            case 'orange': return '#ff9800'; // Orange
-            case 'red': return '#f44336'; // Red
+            case 'green': return '#4caf50';
+            case 'yellow': return '#ffeb3b';
+            case 'orange': return '#ff9800';
+            case 'red': return '#f44336';
             default: return '#e0e0e0';
         }
     }
@@ -113,7 +137,7 @@ export class QuotaStatusWidget {
     getBgColor(status: string): string {
         switch (status) {
             case 'green': return '#e8f5e9';
-            case 'yellow': return '#fffde7'; // Light Yellow
+            case 'yellow': return '#fffde7';
             case 'orange': return '#fff3e0';
             case 'red': return '#ffebee';
             default: return '#f5f5f5';

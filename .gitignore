@@ -45,3 +45,5 @@ Thumbs.db
 # Firebase
 service-account.json
 promote-admin.ts
+.cline_mcp.json
+epicenter-app-firebase-adminsdk-fbsvc-3f5053314d.json
