@@ -61,7 +61,7 @@ export class RecentVoidsWidget {
                     amount: tx.totalAmount,
                     voidedBy: tx.voidedBy || 'Unknown',
                     reason: tx.voidReason || 'No reason provided',
-                    date: tx.voidedAt instanceof Date ? tx.voidedAt : tx.voidedAt?.toDate ? tx.voidedAt.toDate() : new Date(),
+                    date: tx.voidedAt instanceof Date ? tx.voidedAt : new Date(),
                 }));
 
             this.voids.set(voided);

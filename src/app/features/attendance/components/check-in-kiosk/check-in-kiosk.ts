@@ -23,7 +23,6 @@ import { WalkInDialog, WalkInDialogResult } from '../walk-in-dialog/walk-in-dial
 import { LockerRestrictionDialog } from '../locker-restriction-dialog/locker-restriction-dialog';
 import { SubscriptionUpdateDialog, SubscriptionUpdateResult } from '../subscription-update-dialog/subscription-update-dialog';
 import { firstValueFrom } from 'rxjs';
-import { Timestamp } from '@angular/fire/firestore';
 import { getRandomCommendation } from '../../../../core/constants/commendations';
 import { RemarksDialog, RemarksDialogResult } from '../../../../shared/components/remarks-dialog/remarks-dialog.component';
 
@@ -277,7 +276,7 @@ export class CheckInKiosk implements OnInit {
           }
 
           // Update Member Subscription
-          const newExpiration = Timestamp.fromDate(updateResult.subscriptionDate);
+          const newExpiration = updateResult.subscriptionDate;
 
           if (updateResult.action === 'pay-and-check-in') {
             const products = await firstValueFrom(this.productService.getProducts());
@@ -391,7 +390,7 @@ export class CheckInKiosk implements OnInit {
     // Resolve expiration for display
     let expDisplay = 'No Expiry';
     if (member.membershipExpiration) {
-      const d = member.membershipExpiration.toDate ? member.membershipExpiration.toDate() : new Date(member.membershipExpiration);
+      const d = member.membershipExpiration;
       expDisplay = d.toLocaleDateString();
       message += ` (Exp: ${expDisplay})`;
     }

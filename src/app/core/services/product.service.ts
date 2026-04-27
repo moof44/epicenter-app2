@@ -14,11 +14,11 @@ import {
     getDocs,
     startAfter,
     QueryDocumentSnapshot,
-    DocumentData,
 } from '@angular/fire/firestore';
 import { Observable, shareReplay } from 'rxjs';
 import { Product } from '../models/store.model';
 import { AuthService } from './auth.service';
+import { createConverter } from '../utils/firestore-converter.utils';
 
 @Injectable({
     providedIn: 'root',
@@ -26,7 +26,9 @@ import { AuthService } from './auth.service';
 export class ProductService {
     private firestore = inject(Firestore);
     private authService = inject(AuthService);
-    private productsCollection = collection(this.firestore, 'products');
+    private productsCollection = collection(this.firestore, 'products').withConverter(
+        createConverter<Product>()
+    );
 
     private get _currentUserSnapshot() {
         const user = this.authService.userProfile();
@@ -38,46 +40,25 @@ export class ProductService {
         };
     }
 
-    /**
-     * Shared, cached real-time product stream.
-     *
-     * Uses shareReplay(1) so all subscribers (POS, ProductCatalog, ProductManagement,
-     * StockTake, PurchaseEntry, etc.) share a SINGLE Firestore onSnapshot listener
-     * instead of each creating their own. This is critical for billing:
-     * - Without this: N components × 100 docs = N × 100 reads on every product change.
-     * - With this: 1 listener × 100 docs = 100 reads on every product change, regardless
-     *   of how many components are subscribed.
-     *
-     * refCount: false keeps the listener alive between route navigations so
-     * re-subscribing components get the cached result instantly (0 additional reads).
-     */
     private readonly products$ = (() => {
         const q = query(this.productsCollection, orderBy('name'), limit(100));
-        return (collectionData(q, { idField: 'id' }) as Observable<Product[]>).pipe(
-            shareReplay({ bufferSize: 1, refCount: false })
-        );
+        return collectionData(q).pipe(shareReplay({ bufferSize: 1, refCount: false }));
     })();
 
-    /**
-     * Returns the shared real-time product stream.
-     * All callers using the default limit share one Firestore listener.
-     * Pass a custom limitCount only for special admin/reporting use cases.
-     */
     getProducts(limitCount = 100): Observable<Product[]> {
-        // If caller needs a non-default limit, create a separate (non-cached) stream.
         if (limitCount !== 100) {
             const q = query(this.productsCollection, orderBy('name'), limit(limitCount));
-            return collectionData(q, { idField: 'id' }) as Observable<Product[]>;
+            return collectionData(q);
         }
         return this.products$;
     }
 
     async getProductsPage(
         limitCount = 50,
-        lastDoc?: QueryDocumentSnapshot<DocumentData>
+        lastDoc?: QueryDocumentSnapshot<Product>
     ): Promise<{
         products: Product[];
-        lastDoc: QueryDocumentSnapshot<DocumentData> | null;
+        lastDoc: QueryDocumentSnapshot<Product> | null;
     }> {
         let q = query(this.productsCollection, orderBy('name'), limit(limitCount));
 
@@ -86,20 +67,18 @@ export class ProductService {
         }
 
         const snapshot = await getDocs(q);
-        const products = snapshot.docs.map(
-            (d) => ({ id: d.id, ...d.data() }) as Product
-        );
+        const products = snapshot.docs.map((d) => d.data());
         const lastDocument =
-            snapshot.docs.length > 0
-                ? snapshot.docs[snapshot.docs.length - 1]
-                : null;
+            snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
 
         return { products, lastDoc: lastDocument };
     }
 
-    getProduct(id: string): Observable<Product> {
-        const docRef = doc(this.firestore, 'products', id);
-        return docData(docRef, { idField: 'id' }) as Observable<Product>;
+    getProduct(id: string): Observable<Product | undefined> {
+        const docRef = doc(this.firestore, 'products', id).withConverter(
+            createConverter<Product>()
+        );
+        return docData(docRef);
     }
 
     addProduct(product: Omit<Product, 'id'>): Promise<any> {
@@ -107,11 +86,13 @@ export class ProductService {
         return addDoc(this.productsCollection, {
             ...product,
             lastModifiedBy: trace,
-        });
+        } as Product);
     }
 
     updateProduct(id: string, data: Partial<Product>): Promise<void> {
-        const docRef = doc(this.firestore, 'products', id);
+        const docRef = doc(this.firestore, 'products', id).withConverter(
+            createConverter<Product>()
+        );
         const trace = this._currentUserSnapshot;
         return updateDoc(docRef, { ...data, lastModifiedBy: trace });
     }

@@ -1,12 +1,8 @@
-export interface AuditTrail {
-    uid: string;
-    name: string;
-    timestamp: any;
-}
+import { AuditTrace } from '../utils/firestore-converter.utils';
 
 export interface Measurement {
     id?: string;
-    date: any;
+    date: Date;
     weight: number; // kg
     bodyFat: number; // %
     visceralFat: number; // level
@@ -24,12 +20,12 @@ export interface Measurement {
     muscleTrunk: number; // %
     subcutaneousFatLegs: number; // %
     muscleLegs: number; // %
-    createdBy?: AuditTrail;
-    lastModifiedBy?: AuditTrail;
+    createdBy?: AuditTrace;
+    lastModifiedBy?: AuditTrace;
 }
 
 export interface DeletedMeasurement extends Measurement {
-    deletedBy: AuditTrail;
+    deletedBy: AuditTrace;
     deletedFrom: string;
     originalMemberId: string;
     originalDocId: string;

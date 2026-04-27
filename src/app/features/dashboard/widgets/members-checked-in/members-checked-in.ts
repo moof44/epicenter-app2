@@ -55,7 +55,7 @@ export class MembersCheckedInWidget {
 
             if (records.length > 0) {
                 const raw = records[0].checkInTime;
-                this.latestTime.set(raw?.toDate ? raw.toDate() : new Date(raw));
+                this.latestTime.set(raw instanceof Date ? raw : new Date(raw));
             }
         } catch (err) {
             // Index might not exist yet — graceful degradation

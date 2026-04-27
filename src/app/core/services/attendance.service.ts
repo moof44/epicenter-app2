@@ -1,26 +1,44 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
-import { Firestore, collection, collectionData, query, where, orderBy, addDoc, doc, updateDoc, Timestamp, getDocs, limit, startAfter } from '@angular/fire/firestore';
+import {
+    Firestore,
+    collection,
+    collectionData,
+    query,
+    where,
+    orderBy,
+    addDoc,
+    doc,
+    updateDoc,
+    Timestamp,
+    getDocs,
+    limit,
+    startAfter,
+    QueryDocumentSnapshot,
+} from '@angular/fire/firestore';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AttendanceRecord } from '../models/attendance.model';
 import { Member } from '../models/member.model';
+import { createConverter } from '../utils/firestore-converter.utils';
 
 @Injectable({
-    providedIn: 'root'
+    providedIn: 'root',
 })
 export class AttendanceService {
     private firestore: Firestore = inject(Firestore);
     private authService = inject(AuthService);
     private collectionPath = 'attendance';
-    private attendanceCollection = collection(this.firestore, this.collectionPath);
+    private attendanceCollection = collection(this.firestore, this.collectionPath).withConverter(
+        createConverter<AttendanceRecord>()
+    );
 
     private get _currentUserSnapshot() {
         const user = this.authService.userProfile();
         if (!user) throw new Error('Action requires authentication');
         return {
             uid: user.uid,
-            name: user.displayName
+            name: user.displayName,
         };
     }
 
@@ -31,46 +49,22 @@ export class AttendanceService {
         return `${year}-${month}-${day}`;
     }
 
-    /**
-     * Get all currently checked-in members.
-     */
     getActiveCheckIns(): Observable<AttendanceRecord[]> {
-        const q = query(
-            this.attendanceCollection,
-            where('status', '==', 'Checked In')
-        );
-        return collectionData(q, { idField: 'id' }).pipe(
-            map(records => (records as AttendanceRecord[]).sort((a, b) =>
-                b.checkInTime.seconds - a.checkInTime.seconds
-            ))
+        const q = query(this.attendanceCollection, where('status', '==', 'Checked In'));
+        return collectionData(q).pipe(
+            map((records) => [...records].sort((a, b) => b.checkInTime.getTime() - a.checkInTime.getTime()))
         );
     }
 
-    /**
-     * Get attendance history for a specific date.
-     * @param dateStr Format YYYY-MM-DD
-     */
-    /**
-     * Get attendance history for a specific date.
-     * @param dateStr Format YYYY-MM-DD
-     */
     async getHistoryByDate(dateStr: string): Promise<AttendanceRecord[]> {
-        const q = query(
-            this.attendanceCollection,
-            where('date', '==', dateStr)
-        );
+        const q = query(this.attendanceCollection, where('date', '==', dateStr));
 
         const snapshot = await getDocs(q);
-        const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
+        const records = snapshot.docs.map((doc) => doc.data());
 
-        return records.sort((a, b) => b.checkInTime.seconds - a.checkInTime.seconds);
+        return records.sort((a, b) => b.checkInTime.getTime() - a.checkInTime.getTime());
     }
 
-    /**
-     * Get attendance history for a date range.
-     * @param startDate Format YYYY-MM-DD
-     * @param endDate Format YYYY-MM-DD
-     */
     async getAttendanceRange(startDate: string, endDate: string): Promise<AttendanceRecord[]> {
         const q = query(
             this.attendanceCollection,
@@ -79,22 +73,15 @@ export class AttendanceService {
         );
 
         const snapshot = await getDocs(q);
-        const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
+        const records = snapshot.docs.map((doc) => doc.data());
 
-        // Sort by check-in time descending
         return records.sort((a, b) => {
-            const timeA = a.checkInTime?.seconds || 0;
-            const timeB = b.checkInTime?.seconds || 0;
+            const timeA = a.checkInTime?.getTime() || 0;
+            const timeB = b.checkInTime?.getTime() || 0;
             return timeB - timeA;
         });
     }
 
-    /**
-     * Get all records for a specific member (for charts/profile).
-     */
-    /**
-     * Get all records for a specific member (for charts/profile).
-     */
     async getMemberAttendance(memberId: string): Promise<AttendanceRecord[]> {
         const q = query(
             this.attendanceCollection,
@@ -104,13 +91,21 @@ export class AttendanceService {
         );
 
         const snapshot = await getDocs(q);
-        const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
+        const records = snapshot.docs.map((doc) => doc.data());
 
-        // Sort descending and take top 50
-        return records.sort((a, b) => b.checkInTime.seconds - a.checkInTime.seconds).slice(0, 365);
+        return records
+            .sort((a, b) => b.checkInTime.getTime() - a.checkInTime.getTime())
+            .slice(0, 365);
     }
 
-    async getMemberAttendancePage(memberId: string, limitCount = 20, lastDoc?: any): Promise<{ records: AttendanceRecord[], lastDoc: any | null }> {
+    async getMemberAttendancePage(
+        memberId: string,
+        limitCount = 20,
+        lastDoc?: QueryDocumentSnapshot<AttendanceRecord>
+    ): Promise<{
+        records: AttendanceRecord[];
+        lastDoc: QueryDocumentSnapshot<AttendanceRecord> | null;
+    }> {
         let q = query(
             this.attendanceCollection,
             where('memberId', '==', memberId),
@@ -123,15 +118,13 @@ export class AttendanceService {
         }
 
         const snapshot = await getDocs(q);
-        const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord));
-        const lastDocument = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+        const records = snapshot.docs.map((doc) => doc.data());
+        const lastDocument =
+            snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
 
         return { records, lastDoc: lastDocument };
     }
 
-    /**
-     * Retrieve currently occupied locker numbers for a specific gender.
-     */
     async getOccupiedLockers(gender: 'Male' | 'Female' | 'Other'): Promise<number[]> {
         const q = query(
             this.attendanceCollection,
@@ -141,8 +134,8 @@ export class AttendanceService {
 
         const snapshot = await getDocs(q);
         const occupied: number[] = [];
-        snapshot.forEach(doc => {
-            const data = doc.data() as AttendanceRecord;
+        snapshot.forEach((doc) => {
+            const data = doc.data();
             if (data.lockerNumber) {
                 occupied.push(data.lockerNumber);
             }
@@ -150,16 +143,9 @@ export class AttendanceService {
         return occupied;
     }
 
-    /**
-     * Check In a member.
-     */
     private _refreshHistory$ = new BehaviorSubject<void>(undefined);
     refreshHistory$ = this._refreshHistory$.asObservable();
 
-    /**
-     * Check if a specific member is currently checked in.
-     * Targeted query: reads at most 1 document instead of all active check-ins.
-     */
     async isMemberCheckedIn(memberId: string): Promise<boolean> {
         const q = query(
             this.attendanceCollection,
@@ -171,11 +157,7 @@ export class AttendanceService {
         return !snapshot.empty;
     }
 
-    /**
-     * Check In a member.
-     */
     async checkIn(member: Member, lockerNumber?: number): Promise<void> {
-        // ... existing validation ...
         if (lockerNumber) {
             const occupied = await this.getOccupiedLockers(member.gender);
             if (occupied.includes(lockerNumber)) {
@@ -183,49 +165,48 @@ export class AttendanceService {
             }
         }
 
-        // Check for existing active check-in (targeted query — 1 read max)
         const alreadyCheckedIn = await this.isMemberCheckedIn(member.id!);
         if (alreadyCheckedIn) {
             throw new Error(`Member ${member.name} is already checked in.`);
         }
 
         const now = new Date();
-        const dateStr = this.getLocalDateString(now); // YYYY-MM-DD
+        const dateStr = this.getLocalDateString(now);
 
         const record: AttendanceRecord = {
             memberId: member.id!,
             memberName: member.name,
             memberGender: member.gender,
-            checkInTime: Timestamp.fromDate(now),
+            checkInTime: now,
             lockerNumber: lockerNumber || null,
             date: dateStr,
             status: 'Checked In',
             memberExpiration: member.membershipExpiration || null,
             memberRemarks: member.remarks || null,
-            checkedInBy: this._currentUserSnapshot
+            checkedInBy: this._currentUserSnapshot,
         };
 
-        await addDoc(this.attendanceCollection, record);
-        this._refreshHistory$.next(); // Trigger refresh
+        await addDoc(this.attendanceCollection, record as AttendanceRecord);
+        this._refreshHistory$.next();
     }
 
-    /**
-     * Check Out a member.
-     */
     async checkOut(recordId: string): Promise<void> {
-        const docRef = doc(this.firestore, this.collectionPath, recordId);
+        const docRef = doc(this.firestore, this.collectionPath, recordId).withConverter(
+            createConverter<AttendanceRecord>()
+        );
         await updateDoc(docRef, {
-            checkOutTime: Timestamp.now(),
+            checkOutTime: new Date(),
             status: 'Checked Out',
-            checkedOutBy: this._currentUserSnapshot
+            checkedOutBy: this._currentUserSnapshot,
         });
-        this._refreshHistory$.next(); // Trigger refresh
+        this._refreshHistory$.next();
     }
 
-    /**
-     * Get check-ins performed by a specific staff member on a given date.
-     */
-    async getCheckInsByStaff(staffUid: string, dateStr: string, limitCount = 20): Promise<AttendanceRecord[]> {
+    async getCheckInsByStaff(
+        staffUid: string,
+        dateStr: string,
+        limitCount = 20
+    ): Promise<AttendanceRecord[]> {
         const q = query(
             this.attendanceCollection,
             where('checkedInBy.uid', '==', staffUid),
@@ -234,6 +215,6 @@ export class AttendanceService {
             limit(limitCount)
         );
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceRecord));
+        return snapshot.docs.map((d) => d.data());
     }
 }

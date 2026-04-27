@@ -1,9 +1,7 @@
+import { AuditTrace } from '../utils/firestore-converter.utils';
+
 export interface GeneralSettings {
     id?: string;
     monthlyQuota: number;
-    lastUpdated?: any;
-    updatedBy?: {
-        uid: string;
-        name: string;
-    };
+    updatedBy?: AuditTrace;
 }

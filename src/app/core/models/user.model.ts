@@ -1,7 +1,6 @@
 export interface UserProfile {
     phone?: string;
     address?: string;
-    [key: string]: any;
 }
 
 export interface User {
@@ -10,17 +9,17 @@ export interface User {
     displayName: string;
     roles: string[];
     photoURL?: string;
-    createdAt?: any; // Firestore Timestamp
-    lastLoginAt?: any;
+    createdAt?: Date;
+    lastLoginAt?: Date;
     phone?: string;
     address?: string;
     isActive?: boolean;
-    monthlyTarget?: number; // Per-staff monthly sales target (₱)
+    monthlyTarget?: number;
 }
 
 export interface CreateUserDto {
     email: string;
-    password: string; // Required for creation
+    password: string;
     displayName: string;
     roles: string[];
     profileData?: UserProfile;

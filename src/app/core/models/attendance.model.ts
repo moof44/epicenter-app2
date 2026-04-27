@@ -1,17 +1,18 @@
+import { AuditTrace } from '../utils/firestore-converter.utils';
+
 export interface AttendanceRecord {
     id?: string;
     memberId: string;
     memberName: string;
     memberGender: 'Male' | 'Female' | 'Other';
-    checkInTime: any; // Timestamp
-    checkOutTime?: any; // Timestamp
+    checkInTime: Date;
+    checkOutTime?: Date;
     lockerNumber?: number | null; // 1-12 or null
     date: string; // YYYY-MM-DD
     status: 'Checked In' | 'Checked Out';
     memberSubscription?: string | null;
-    memberExpiration?: any | null; // Timestamp or Date or string
-    checkedInBy?: { uid: string; name: string };
-
-    checkedOutBy?: { uid: string; name: string };
+    memberExpiration?: Date | null;
+    checkedInBy?: { uid: string; name: string | null };
+    checkedOutBy?: { uid: string; name: string | null };
     memberRemarks?: string | null;
 }

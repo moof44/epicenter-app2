@@ -54,7 +54,7 @@ import { MatDialog } from '@angular/material/dialog';
                 <ng-container matColumnDef="checkInTime">
                   <th mat-header-cell *matHeaderCellDef> Time In </th>
                   <td mat-cell *matCellDef="let record"> 
-                     {{ record.checkInTime.seconds * 1000 | date:'shortTime' }}
+                     {{ record.checkInTime | date:'shortTime' }}
                      <mat-icon *ngIf="isOverdue(record.checkInTime)" class="overdue-icon" matTooltip="Checked in > 3 hours. Check out?">history</mat-icon>
                   </td>
                 </ng-container>
@@ -73,7 +73,7 @@ import { MatDialog } from '@angular/material/dialog';
                   <th mat-header-cell *matHeaderCellDef> Expiration </th>
                   <td mat-cell *matCellDef="let record"> 
                      <span *ngIf="record.memberExpiration" [class.expired]="isExpired(record.memberExpiration)">
-                         {{ record.memberExpiration.seconds * 1000 | date:'shortDate' }}
+                         {{ record.memberExpiration | date:'shortDate' }}
                      </span>
                      <span *ngIf="!record.memberExpiration">-</span>
                   </td>
@@ -108,7 +108,7 @@ import { MatDialog } from '@angular/material/dialog';
                   <div class="card-details">
                       <div class="detail-row">
                           <mat-icon class="icon">schedule</mat-icon>
-                          <span>In: {{ record.checkInTime.seconds * 1000 | date:'shortTime' }}</span>
+                          <span>In: {{ record.checkInTime | date:'shortTime' }}</span>
                           <span *ngIf="isOverdue(record.checkInTime)" class="overdue-label">
                             <mat-icon class="overdue-icon-small">history</mat-icon> Overdue
                           </span>
@@ -116,7 +116,7 @@ import { MatDialog } from '@angular/material/dialog';
                       <div class="detail-row" *ngIf="record.memberExpiration">
                           <mat-icon class="icon">event</mat-icon>
                           <span [class.expired]="isExpired(record.memberExpiration)">
-                              Exp: {{ record.memberExpiration.seconds * 1000 | date:'shortDate' }}
+                              Exp: {{ record.memberExpiration | date:'shortDate' }}
                           </span>
                       </div>
                        <div class="detail-row" *ngIf="record.memberRemarks">
@@ -209,17 +209,17 @@ export class ActiveSessions {
   activeSessions$: Observable<AttendanceRecord[]> = this.attendanceService.getActiveCheckIns();
   displayedColumns: string[] = ['name', 'remarks', 'checkInTime', 'locker', 'expiration', 'actions'];
 
-  isExpired(timestamp: any): boolean {
+  isExpired(timestamp: Date | null): boolean {
     if (!timestamp) return false;
-    const exp = new Date(timestamp.seconds * 1000);
+    const exp = timestamp instanceof Date ? timestamp : new Date(timestamp);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return exp < today;
   }
 
-  isOverdue(checkInTime: any): boolean {
+  isOverdue(checkInTime: Date): boolean {
     if (!checkInTime) return false;
-    const checkIn = new Date(checkInTime.seconds * 1000);
+    const checkIn = checkInTime instanceof Date ? checkInTime : new Date(checkInTime);
     const now = new Date();
     const diffMs = now.getTime() - checkIn.getTime();
     const diffHours = diffMs / (1000 * 60 * 60);
