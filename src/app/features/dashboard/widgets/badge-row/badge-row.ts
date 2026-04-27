@@ -45,7 +45,7 @@ export class BadgeRowWidget {
     isLongShift = computed(() => {
         const s = this.shift();
         if (!s?.startTime) return false;
-        const start = s.startTime?.toDate ? s.startTime.toDate() : new Date(s.startTime);
+        const start = s.startTime instanceof Date ? s.startTime : new Date(s.startTime);
         return (Date.now() - start.getTime()) > 10 * 3600000; // 10 hours
     });
 
@@ -103,7 +103,7 @@ export class BadgeRowWidget {
         const s = this.shift();
         if (!s?.startTime) { this.durationText.set(''); return; }
 
-        const start: Date = s.startTime?.toDate ? s.startTime.toDate() : new Date(s.startTime);
+        const start: Date = s.startTime instanceof Date ? s.startTime : new Date(s.startTime);
         const ms = Date.now() - start.getTime();
         const hours = Math.floor(ms / 3600000);
         const minutes = Math.floor((ms % 3600000) / 60000);

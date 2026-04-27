@@ -52,7 +52,7 @@ export class CashDiscrepanciesWidget {
                 .filter(s => s.status === 'CLOSED' && s.discrepancy !== null && s.discrepancy !== 0)
                 .slice(0, 5)
                 .map(s => {
-                    const endTime = s.endTime?.toDate ? s.endTime.toDate() : new Date(s.endTime);
+                    const endTime = s.endTime instanceof Date ? s.endTime : new Date();
                     return {
                         closedBy: s.closedBy || 'Unknown',
                         discrepancy: s.discrepancy!,

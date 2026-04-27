@@ -64,18 +64,9 @@ export class MemberForm implements OnInit {
   async loadMember(id: string) {
     this.loading = true;
     this.memberService.getMember(id).pipe(take(1)).subscribe(member => {
-      // Convert timestamps to Date objects if needed for form
-      const data = { ...member };
-      if (data.birthday && data.birthday.seconds) {
-        data.birthday = new Date(data.birthday.seconds * 1000);
+      if (member) {
+        this.form.patchValue(member);
       }
-      if (data.membershipExpiration && data.membershipExpiration.seconds) {
-        data.membershipExpiration = new Date(data.membershipExpiration.seconds * 1000);
-      }
-      if (data.trainingExpiration && data.trainingExpiration.seconds) {
-        data.trainingExpiration = new Date(data.trainingExpiration.seconds * 1000);
-      }
-      this.form.patchValue(data);
       this.loading = false;
     });
   }

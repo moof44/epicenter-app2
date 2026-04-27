@@ -1,90 +1,88 @@
+import { AuditTrace } from '../utils/firestore-converter.utils';
+
 export type ProductCategory = 'Training' | 'Supplements' | 'Drinks' | 'Boxing';
 export type ProductType = 'RETAIL' | 'CONSUMABLE';
 export type StockMovementReason = 'SALE' | 'INTERNAL_USE' | 'RESTOCK' | 'AUDIT_ADJUSTMENT';
 
 export interface Product {
-  id?: string;
-  name: string;
-  category: ProductCategory;
-  description?: string;
-  price: number;
-  stock: number;
-  imageUrl?: string;
-  // New fields for Gym Inventory System
-  type: 'RETAIL' | 'CONSUMABLE';
-  unit: string;
-  minStockLevel: number;
-  // Cost tracking
-  // Cost tracking
-  lastCostPrice?: number;
-  averageCost?: number;
-  lastModifiedBy?: { uid: string; name: string; timestamp: any };
+    id?: string;
+    name: string;
+    category: ProductCategory;
+    description?: string;
+    price: number;
+    stock: number;
+    imageUrl?: string;
+    type: 'RETAIL' | 'CONSUMABLE';
+    unit: string;
+    minStockLevel: number;
+    lastCostPrice?: number;
+    averageCost?: number;
+    lastModifiedBy?: AuditTrace;
 }
 
 export interface CartItem {
-  productId: string;
-  productName: string;
-  price: number;
-  originalPrice: number;
-  isPriceOverridden: boolean;
-  overrideReason?: string;
-  quantity: number;
-  subtotal: number;
+    productId: string;
+    productName: string;
+    price: number;
+    originalPrice: number;
+    isPriceOverridden: boolean;
+    overrideReason?: string;
+    quantity: number;
+    subtotal: number;
 }
 
 export interface Transaction {
-  id?: string;
-  date: any; // Firestore Timestamp or Date
-  totalAmount: number;
-  items: CartItem[];
-  staffId?: string | null;
-  staffName?: string | null;
-  paymentMethod: 'CASH' | 'GCASH';
-  referenceNumber?: string | null;
-  amountTendered?: number | null;
-  changeDue?: number | null;
-  memberId?: string | null;
-  memberName?: string;
-  // Void Status
-  status?: 'COMPLETED' | 'VOID';
-  voidedBy?: string;
-  voidReason?: string;
-  voidedAt?: any;
+    id?: string;
+    date: Date;
+    totalAmount: number;
+    items: CartItem[];
+    staffId?: string | null;
+    staffName?: string | null;
+    paymentMethod: 'CASH' | 'GCASH';
+    referenceNumber?: string | null;
+    amountTendered?: number | null;
+    changeDue?: number | null;
+    memberId?: string | null;
+    memberName?: string;
+    status?: 'COMPLETED' | 'VOID';
+    voidedBy?: string;
+    voidReason?: string;
+    voidedAt?: Date;
 }
 
 export interface InventoryLog {
-  id?: string;
-  productId: string;
-  productName: string; // Snapshot
-  type: StockMovementReason;
-  changeAmount: number;
-  previousStock: number;
-  newStock: number; // Snapshot
-  timestamp: any; // Firestore Timestamp
-  performedBy: string;
-  staffId?: string | null;
-  staffName?: string | null;
-  notes?: string;
+    id?: string;
+    productId: string;
+    productName: string;
+    type: StockMovementReason;
+    changeAmount: number;
+    previousStock: number;
+    newStock: number;
+    timestamp: Date;
+    performedBy: string;
+    staffId?: string | null;
+    staffName?: string | null;
+    notes?: string;
 }
 
 export interface StockMovement {
-  id?: string;
-  productId: string;
-  changeAmount: number;
-  reason: StockMovementReason;
-  timestamp: any; // Firestore Timestamp or Date
-  performedBy?: string;
-  notes?: string;
+    id?: string;
+    productId: string;
+    changeAmount: number;
+    reason: StockMovementReason;
+    timestamp: Date;
+    performedBy?: string;
+    notes?: string;
 }
 
 export interface ProductSalesData {
-  productId: string;
-  productName: string;
-  totalQuantitySold: number;
-  totalRevenue: number;
+    productId: string;
+    productName: string;
+    totalQuantitySold: number;
+    totalRevenue: number;
 }
 
 export interface DailySales {
-  date: Date;
-  totalSales: number;
+    date: Date;
+    totalSales: number;
 }

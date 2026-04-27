@@ -21,6 +21,7 @@ import { Product, Transaction, ProductSalesData, InventoryLog } from '../models/
 import { AuthService } from './auth.service';
 import { CashRegisterService } from './cash-register.service';
 import { toLocalDateStr } from '../utils/date.utils';
+import { createConverter } from '../utils/firestore-converter.utils';
 
 @Injectable({
     providedIn: 'root',
@@ -29,8 +30,12 @@ export class TransactionService {
     private firestore = inject(Firestore);
     private injector = inject(Injector);
     private authService = inject(AuthService);
-    private transactionsCollection = collection(this.firestore, 'transactions');
-    private inventoryLogsCollection = collection(this.firestore, 'inventory_logs');
+    private transactionsCollection = collection(this.firestore, 'transactions').withConverter(
+        createConverter<Transaction>()
+    );
+    private inventoryLogsCollection = collection(this.firestore, 'inventory_logs').withConverter(
+        createConverter<InventoryLog>()
+    );
 
     getTransactions(
         constraints: {
@@ -72,7 +77,7 @@ export class TransactionService {
         queryConstraints.push(limit(limitCount));
 
         const q = query(this.transactionsCollection, ...queryConstraints);
-        return collectionData(q, { idField: 'id' }) as Observable<Transaction[]>;
+        return collectionData(q);
     }
 
     async getSalesTotal(constraints: {
@@ -106,20 +111,17 @@ export class TransactionService {
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
-        // getTransactions returns a real-time listener. combineLatest ensures
-        // the analytics re-emit whenever the transaction list updates.
         return this.getTransactions({ limit: 1000 }).pipe(
-            map(transactions => {
+            map((transactions) => {
                 const salesMap = new Map<string, ProductSalesData>();
                 let totalRevenue = 0;
                 let monthlyRevenue = 0;
                 let todayRevenue = 0;
 
-                transactions.forEach(tx => {
+                transactions.forEach((tx) => {
                     if (tx.status === 'VOID') return;
 
-                    const txDate =
-                        tx.date instanceof Date ? tx.date : (tx.date as any).toDate();
+                    const txDate = tx.date;
                     totalRevenue += tx.totalAmount;
 
                     if (txDate >= startOfMonth && txDate <= endOfMonth) {
@@ -129,7 +131,7 @@ export class TransactionService {
                         todayRevenue += tx.totalAmount;
                     }
 
-                    tx.items.forEach(item => {
+                    tx.items.forEach((item) => {
                         const existing = salesMap.get(item.productId);
                         if (existing) {
                             existing.totalQuantitySold += item.quantity;
@@ -165,12 +167,13 @@ export class TransactionService {
         const staff = this.authService.userProfile();
         if (!staff) throw new Error('Authentication required');
 
-        // 1. Fetch Transaction
-        const txRef = doc(this.firestore, 'transactions', transactionId);
+        const txRef = doc(this.firestore, 'transactions', transactionId).withConverter(
+            createConverter<Transaction>()
+        );
         const txSnap = await getDoc(txRef);
         if (!txSnap.exists()) throw new Error('Transaction not found');
 
-        const txData = { id: txSnap.id, ...txSnap.data() } as Transaction;
+        const txData = txSnap.data();
 
         if (txData.status === 'VOID') {
             throw new Error('Transaction is already voided');
@@ -179,23 +182,22 @@ export class TransactionService {
         const batch = writeBatch(this.firestore);
         const now = new Date();
 
-        // 2. Revert Inventory — fetch current stock for audit log
-        const productIds = [...new Set(txData.items.map(i => i.productId))];
+        const productIds = [...new Set(txData.items.map((i) => i.productId))];
         const productsMap = new Map<string, Product>();
 
         const chunkedIds: string[][] = [];
         for (let i = 0; i < productIds.length; i += 10) {
             chunkedIds.push(productIds.slice(i, i + 10));
         }
+
+        const productConverter = createConverter<Product>();
         for (const chunk of chunkedIds) {
             const q = query(
-                collection(this.firestore, 'products'),
+                collection(this.firestore, 'products').withConverter(productConverter),
                 where(documentId(), 'in', chunk)
             );
             const snapshot = await getDocs(q);
-            snapshot.forEach(d =>
-                productsMap.set(d.id, { id: d.id, ...d.data() } as Product)
-            );
+            snapshot.forEach((d) => productsMap.set(d.id, d.data()));
         }
 
         for (const item of txData.items) {
@@ -222,7 +224,6 @@ export class TransactionService {
             batch.set(logRef, log);
         }
 
-        // 3. Mark Transaction as VOID
         batch.update(txRef, {
             status: 'VOID',
             voidedBy: staff.displayName || staff.uid,
@@ -230,14 +231,11 @@ export class TransactionService {
             voidedAt: now,
         });
 
-        // 4. Update Daily Sales
-        const txDate =
-            txData.date instanceof Date ? txData.date : (txData.date as any).toDate();
+        const txDate = txData.date;
         const dateStr = toLocalDateStr(txDate);
         const dfsRef = doc(this.firestore, 'daily_sales', dateStr);
         batch.set(dfsRef, { totalSales: increment(-txData.totalAmount) }, { merge: true });
 
-        // 4.5 Pre-fetch shift updates atomically — uses Injector to avoid circular DI
         const cashRegisterService = this.injector.get(CashRegisterService);
         let shiftDataUpdates: { shiftRef: any; updates: any } | null = null;
         try {
@@ -252,10 +250,8 @@ export class TransactionService {
             console.error('Failed to pre-fetch shift updates for voiding:', e);
         }
 
-        // Commit everything atomically
         await batch.commit();
 
-        // 5. Refresh shift UI (non-blocking)
         if (
             shiftDataUpdates &&
             cashRegisterService.getCurrentShiftId() === shiftDataUpdates.shiftRef.id

@@ -85,7 +85,7 @@ export class ProgressForm implements OnInit {
 
       if (entry) {
         // Convert Firestore timestamp to Date if needed
-        const date = entry.date?.toDate ? entry.date.toDate() : new Date(entry.date);
+        const date = entry.date instanceof Date ? entry.date : new Date(entry.date);
         this.form.patchValue({
           date,
           height: entry.height,

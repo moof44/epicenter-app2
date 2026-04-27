@@ -39,12 +39,7 @@ export class ReportsService {
 
             // Hourly (Total Traffic - keep all check-ins)
             if (record.checkInTime) {
-                let date: Date;
-                if (record.checkInTime.toDate) {
-                    date = record.checkInTime.toDate();
-                } else {
-                    date = new Date(record.checkInTime.seconds * 1000);
-                }
+                const date = record.checkInTime instanceof Date ? record.checkInTime : new Date(record.checkInTime);
 
                 const hour = date.getHours().toString().padStart(2, '0') + ':00';
                 hourlyCounts.set(hour, (hourlyCounts.get(hour) || 0) + 1);
@@ -152,7 +147,7 @@ export class ReportsService {
             }
 
             // Always update last visit timestamp to the latest check-in
-            if (!entry.lastVisit || (r.checkInTime.seconds > entry.lastVisit.seconds)) {
+            if (!entry.lastVisit || (r.checkInTime.getTime() > entry.lastVisit.getTime())) {
                 entry.lastVisit = r.checkInTime;
             }
             memberCounts.set(r.memberId, entry);

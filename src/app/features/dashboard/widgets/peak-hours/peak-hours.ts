@@ -54,7 +54,7 @@ export class PeakHoursWidget {
             const hourlyCounts = new Map<string, number>();
             records.forEach(r => {
                 if (!r.checkInTime) return;
-                const date: Date = r.checkInTime?.toDate ? r.checkInTime.toDate() : new Date(r.checkInTime);
+                const date: Date = r.checkInTime instanceof Date ? r.checkInTime : new Date(r.checkInTime);
                 const hourKey = date.getHours().toString().padStart(2, '0') + ':00';
                 hourlyCounts.set(hourKey, (hourlyCounts.get(hourKey) || 0) + 1);
             });

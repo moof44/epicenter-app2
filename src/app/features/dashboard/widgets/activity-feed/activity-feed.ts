@@ -87,7 +87,7 @@ export class ActivityFeedWidget {
             this.transactionService.getTransactions({ staffId: uid, limit: 5 })
         );
         return txs.map(tx => {
-            const date = tx.date instanceof Date ? tx.date : tx.date?.toDate ? tx.date.toDate() : new Date(tx.date);
+            const date = tx.date instanceof Date ? tx.date : new Date(tx.date);
             const summary = tx.items
                 .map(i => i.quantity > 1 ? `${i.quantity}x ${i.productName}` : i.productName)
                 .join(', ');
@@ -107,7 +107,7 @@ export class ActivityFeedWidget {
         try {
             const records = await this.attendanceService.getCheckInsByStaff(uid, todayStr, 5);
             return records.map(r => {
-                const date = r.checkInTime?.toDate ? r.checkInTime.toDate() : new Date(r.checkInTime);
+                const date = r.checkInTime instanceof Date ? r.checkInTime : new Date(r.checkInTime);
                 return {
                     type: 'checkin' as const,
                     timestamp: date,

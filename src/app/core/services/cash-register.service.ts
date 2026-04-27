@@ -58,7 +58,7 @@ export class CashRegisterService {
     // After refreshShift() reads from Firestore, it becomes a Firestore Timestamp with .toDate().
     // Calling .toDate() on a plain Date crashes with: TypeError: shift.startTime.toDate is not a function
     const rawStart = shift.startTime;
-    const startDate: Date = rawStart?.toDate ? rawStart.toDate() : new Date(rawStart);
+    const startDate: Date = rawStart instanceof Date ? rawStart : new Date(rawStart);
     const shiftDate = startDate.toLocaleDateString('en-CA');
     const today = new Date().toLocaleDateString('en-CA');
 
@@ -179,7 +179,7 @@ export class CashRegisterService {
   async addCashTransaction(transaction: Omit<CashTransaction, 'id' | 'timestamp'>): Promise<void> {
     const valid = await this.ensureValidShiftForTransaction();
     if (!valid) {
-        throw new Error('SILENT');
+      throw new Error('SILENT');
     }
 
     const shift = this.currentShift.getValue();
@@ -509,7 +509,7 @@ export class CashRegisterService {
     } else if (tx.type === 'Float_In') {
       updates.totalFloatIn = increment(-amount);
       updates.expectedClosingBalance = increment(-amount);
-    } else if (tx.type === 'Expense') { 
+    } else if (tx.type === 'Expense') {
       updates.totalExpenses = increment(-amount);
       updates.expectedClosingBalance = increment(amount);
     } else if (tx.type === 'Float_Out') {

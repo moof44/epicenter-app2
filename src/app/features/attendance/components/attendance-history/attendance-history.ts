@@ -49,7 +49,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
                     <!-- In -->
                     <ng-container matColumnDef="checkInTime">
                     <th mat-header-cell *matHeaderCellDef> Time In </th>
-                    <td mat-cell *matCellDef="let record"> {{ record.checkInTime.seconds * 1000 | date:'shortTime' }} </td>
+                    <td mat-cell *matCellDef="let record"> {{ record.checkInTime | date:'shortTime' }} </td>
                     </ng-container>
 
                     <!-- Locker -->
@@ -66,7 +66,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
                     <th mat-header-cell *matHeaderCellDef> Expiration </th>
                     <td mat-cell *matCellDef="let record"> 
                         <span *ngIf="record.memberExpiration" [class.expired]="isExpired(record.memberExpiration)">
-                            {{ record.memberExpiration.seconds * 1000 | date:'shortDate' }}
+                            {{ record.memberExpiration | date:'shortDate' }}
                         </span>
                         <span *ngIf="!record.memberExpiration">-</span>
                     </td>
@@ -76,7 +76,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
                     <ng-container matColumnDef="checkOutTime">
                     <th mat-header-cell *matHeaderCellDef> Time Out </th>
                     <td mat-cell *matCellDef="let record"> 
-                        {{ record.checkOutTime ? (record.checkOutTime.seconds * 1000 | date:'shortTime') : '-' }} 
+                        {{ record.checkOutTime ? (record.checkOutTime | date:'shortTime') : '-' }} 
                     </td>
                     </ng-container>
 
@@ -103,11 +103,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
                         <div class="detail-grid">
                             <div class="detail-item">
                                 <span class="label">Time In</span>
-                                <span class="value">{{ record.checkInTime.seconds * 1000 | date:'shortTime' }}</span>
+                                <span class="value">{{ record.checkInTime | date:'shortTime' }}</span>
                             </div>
                             <div class="detail-item">
                                 <span class="label">Time Out</span>
-                                <span class="value">{{ record.checkOutTime ? (record.checkOutTime.seconds * 1000 | date:'shortTime') : '-' }}</span>
+                                <span class="value">{{ record.checkOutTime ? (record.checkOutTime | date:'shortTime') : '-' }}</span>
                             </div>
                             <div class="detail-item" *ngIf="record.lockerNumber">
                                 <span class="label">Locker</span>
@@ -116,7 +116,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
                             <div class="detail-item" *ngIf="record.memberExpiration">
                                 <span class="label">Expiry</span>
                                 <span class="value" [class.expired]="isExpired(record.memberExpiration)">
-                                    {{ record.memberExpiration.seconds * 1000 | date:'shortDate' }}
+                                    {{ record.memberExpiration | date:'shortDate' }}
                                 </span>
                             </div>
                         </div>
@@ -200,9 +200,9 @@ export class AttendanceHistory {
 
   displayedColumns: string[] = ['name', 'lockerNumber', 'expiration', 'checkInTime', 'checkOutTime', 'status'];
 
-  isExpired(timestamp: any): boolean {
+  isExpired(timestamp: Date | null): boolean {
     if (!timestamp) return false;
-    const exp = new Date(timestamp.seconds * 1000);
+    const exp = timestamp instanceof Date ? timestamp : new Date(timestamp);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return exp < today;
