@@ -1,13 +1,13 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "enabled": true,
   "name": "Systems Documentation Update",
-  "description": "Update the main file that fully describes the system.\n",
+  "description": "After task completion, check if any living documentation files need updating based on the code changes made.",
   "when": {
     "type": "postTaskExecution"
   },
   "then": {
     "type": "askAgent",
-    "prompt": "After completing a task before submitting it is already completed, if there are code modifications related to the project, update the project-analysis.md file if the logic, code related concern that was changed and needing the project-analysis worthy of updating. If the changes is minor, no longer need to update but if it's something that will affect future analysis and development, then update the project-analysis.md\n\nWhen to update:\n1. Logic change\n2. Approach change\n3. Major refactor\n4. Major bug fix\n5. Change in coding standards and technology used\n\nWhen not to update:\n1. Minor changes\n2. Not worthy of mentioning like the analysis of the project will be the same"
+    "prompt": "After completing a task, review the code changes made and determine if any of the following documentation files need updating. Only update files where the changes are significant enough to affect future development or analysis. Do NOT update for minor cosmetic changes.\n\nFiles to check (in priority order):\n\n1. **`.kiro/steering/database-schema.md`** — Update if:\n   - A new Firestore collection was added or removed\n   - Fields were added, removed, or renamed in any model/interface\n   - New composite indexes were added to firestore.indexes.json\n   - Relationships between collections changed\n   - New atomicity requirements (writeBatch) were introduced\n\n2. **`.kiro/steering/product.md`** — Update if:\n   - A new feature domain was added (e.g., Appointments, Calendar)\n   - Role-based access changed (new role or new permissions)\n   - Core domain descriptions need updating\n\n3. **`.kiro/steering/structure.md`** — Update if:\n   - A new feature module folder was created under features/\n   - New service, guard, model, or utility files were added to core/\n   - Routing patterns changed\n   - New conventions were established\n\n4. **`.kiro/steering/business-rules.md`** — Update if:\n   - New business rules or formulas were introduced\n   - Existing calculation logic changed\n   - New status lifecycles were added\n   - Cancellation policies, renewal logic, or financial rules changed\n\n5. **`docs/project-analysis.md`** — Update if:\n   - Major logic change or approach change\n   - Major refactor or architecture change\n   - Major bug fix that changes system behavior\n   - Change in coding standards or technology\n\nFor each file, read its current content, compare against the code changes, and update only the sections that are stale. Do not rewrite entire files — make surgical updates to the affected sections only.\n\nIf no files need updating, state that explicitly and move on."
   }
 }
