@@ -89,6 +89,7 @@ export class TransactionService {
         if (constraints.startDate) queryConstraints.push(where('date', '>=', constraints.startDate));
         if (constraints.endDate) queryConstraints.push(where('date', '<=', constraints.endDate));
         if (constraints.staffId) queryConstraints.push(where('staffId', '==', constraints.staffId));
+        queryConstraints.push(where('status', '==', 'COMPLETED'));
 
         const q = query(this.transactionsCollection, ...queryConstraints);
         const snapshot = await getAggregateFromServer(q, {
@@ -96,6 +97,32 @@ export class TransactionService {
         });
 
         return snapshot.data().totalSales;
+    }
+
+    /**
+     * One-time read of transactions (no real-time listener).
+     * Use for reports where fresh server data is required and real-time updates are not needed.
+     * Note: 'status' filter is NOT applied at the Firestore query level to avoid requiring
+     * a composite index with staffId + status + date. Filter VOID client-side instead.
+     */
+    async getTransactionsOnce(constraints: {
+        limit?: number;
+        startDate?: Date;
+        endDate?: Date;
+        staffId?: string;
+    } = {}): Promise<Transaction[]> {
+        const queryConstraints: any[] = [orderBy('date', 'desc')];
+
+        if (constraints.startDate) queryConstraints.push(where('date', '>=', constraints.startDate));
+        if (constraints.endDate) queryConstraints.push(where('date', '<=', constraints.endDate));
+        if (constraints.staffId) queryConstraints.push(where('staffId', '==', constraints.staffId));
+
+        const limitCount = constraints.limit ?? 500;
+        queryConstraints.push(limit(limitCount));
+
+        const q = query(this.transactionsCollection, ...queryConstraints);
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => doc.data());
     }
 
     getSalesAnalytics(): Observable<{
@@ -251,6 +278,13 @@ export class TransactionService {
         }
 
         await batch.commit();
+
+        // Invalidate user sales cache for the affected staff member
+        const { ReportStateService } = await import('./report.state.service');
+        const reportStateService = this.injector.get(ReportStateService);
+        if (txData.staffId) {
+            reportStateService.invalidateUserSalesReport(txData.staffId, txDate);
+        }
 
         if (
             shiftDataUpdates &&

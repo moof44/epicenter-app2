@@ -16,6 +16,7 @@ import { AuthService } from './auth.service';
 import { MemberService } from './member.service';
 import { CartStore } from '../store/cart.store';
 import { CashRegisterService } from './cash-register.service';
+import { ReportStateService } from './report.state.service';
 import { toLocalDateStr } from '../utils/date.utils';
 
 @Injectable({
@@ -27,6 +28,7 @@ export class CheckoutService {
     private authService = inject(AuthService);
     private memberService = inject(MemberService);
     private cartStore = inject(CartStore);
+    private reportStateService = inject(ReportStateService);
     private productsCollection = collection(this.firestore, 'products');
     private transactionsCollection = collection(this.firestore, 'transactions');
     private inventoryLogsCollection = collection(this.firestore, 'inventory_logs');
@@ -162,8 +164,12 @@ export class CheckoutService {
 
         await batch.commit();
 
-        // 6. Post-commit: refresh shift UI, clear cart
+        // 6. Post-commit: refresh shift UI, clear cart, invalidate sales cache
         cashRegisterService.refreshShift();
+
+        if (staff?.uid) {
+            this.reportStateService.invalidateUserSalesReport(staff.uid, timestamp);
+        }
 
         if (!isCustomTransaction) {
             this.cartStore.clear();

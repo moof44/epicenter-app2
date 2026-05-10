@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, firstValueFrom, take, shareReplay } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 import { TransactionService } from './transaction.service';
 import { DailySalesService } from './daily-sales.service';
 import { DailySales, Transaction } from '../models/store.model';
@@ -43,7 +43,10 @@ export class ReportStateService {
     }
 
     /**
-     * Get User Sales Report — shared live observable.
+     * Get User Sales Report — fresh server data on each unique month+user combination.
+     * Uses getTransactionsOnce (getDocs) for the transaction list.
+     * Total is computed from the filtered transaction list (client-side).
+     * Cache is invalidated after checkout/void operations.
      */
     getUserSalesReport(userId: string, date: Date): Observable<{ transactions: Transaction[], total: number }> {
         const year = date.getFullYear();
@@ -52,31 +55,25 @@ export class ReportStateService {
 
         if (!this.userSalesObservableCache.has(key)) {
             const startDate = new Date(year, month, 1);
-            const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+            const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
             const live$ = new Observable<{ transactions: Transaction[], total: number }>(observer => {
-                const transactions$ = this.transactionService.getTransactions({
+                this.transactionService.getTransactionsOnce({
                     startDate,
                     endDate,
                     staffId: userId,
-                    limit: 100
-                });
-
-                const txPromise = firstValueFrom(transactions$.pipe(take(1)));
-
-                txPromise.then(txs => {
-                    const transactions = txs
-                        .filter(tx => tx.status !== 'VOID')
-                        .map(tx => ({
-                            ...tx,
-                            date: tx.date instanceof Date ? tx.date : (tx.date as any).toDate()
-                        }));
+                    limit: 500
+                }).then(txs => {
+                    const transactions = txs.filter(tx => tx.status !== 'VOID');
                     const total = transactions.reduce((sum, tx) => sum + tx.totalAmount, 0);
                     observer.next({ transactions, total });
                     observer.complete();
-                }).catch(err => observer.error(err));
+                }).catch(() => {
+                    observer.next({ transactions: [], total: 0 });
+                    observer.complete();
+                });
             }).pipe(
-                shareReplay({ bufferSize: 1, refCount: true })
+                shareReplay({ bufferSize: 1, refCount: false })
             );
 
             this.userSalesObservableCache.set(key, live$);
