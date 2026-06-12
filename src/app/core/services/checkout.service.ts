@@ -13,7 +13,6 @@ import {
 } from '@angular/fire/firestore';
 import { CartItem, Transaction, InventoryLog, Product } from '../models/store.model';
 import { AuthService } from './auth.service';
-import { MemberService } from './member.service';
 import { CartStore } from '../store/cart.store';
 import { CashRegisterService } from './cash-register.service';
 import { ReportStateService } from './report.state.service';
@@ -26,7 +25,6 @@ export class CheckoutService {
     private firestore = inject(Firestore);
     private injector = inject(Injector);
     private authService = inject(AuthService);
-    private memberService = inject(MemberService);
     private cartStore = inject(CartStore);
     private reportStateService = inject(ReportStateService);
     private productsCollection = collection(this.firestore, 'products');
@@ -175,36 +173,7 @@ export class CheckoutService {
             this.cartStore.clear();
         }
 
-        // 7. Auto membership renewal (non-blocking — failure does NOT roll back committed tx)
-        if (memberId) {
-            const membershipItem = cartItems.find(item => {
-                const product = productsMap.get(item.productId);
-                return product?.category === 'Training' && product?.name.toLowerCase().includes('rental');
-            });
-            if (membershipItem) {
-                try {
-                    await this.memberService.renewMembership(memberId);
-                } catch (error) {
-                    console.error('Failed to auto-renew membership:', error);
-                }
-            }
 
-            const trainingItem = cartItems.find(item => {
-                const product = productsMap.get(item.productId);
-                return (
-                    product?.category === 'Training' &&
-                    (product?.name.toLowerCase().includes('personal') ||
-                        product?.name.toLowerCase().includes('session'))
-                );
-            });
-            if (trainingItem) {
-                try {
-                    await this.memberService.renewTraining(memberId);
-                } catch (error) {
-                    console.error('Failed to auto-renew training:', error);
-                }
-            }
-        }
 
         return transactionRef.id;
     }

@@ -8,7 +8,7 @@ export interface LockerRestrictionDialogData {
   member: Member;
 }
 
-export interface LockerRestrictionResult { action: 'check-in-no-locker' | 'update-subscription' | 'cancel' }
+export interface LockerRestrictionResult { action: 'check-in-no-locker' | 'cancel' }
 
 @Component({
   selector: 'app-locker-restriction-dialog',
@@ -20,24 +20,22 @@ export interface LockerRestrictionResult { action: 'check-in-no-locker' | 'updat
         <strong>{{data.member.name}}</strong> does not have an active subscription. 
         Lockers are reserved for active members only.
       </p>
-      <p>How would you like to proceed?</p>
+      <p>Would you like to check in without a locker instead?</p>
     </mat-dialog-content>
-    <mat-dialog-actions align="end" class="actions-column">
+    <mat-dialog-actions align="end">
       <button mat-button (click)="onAction('cancel')">Cancel</button>
-      <button mat-stroked-button (click)="onAction('check-in-no-locker')">Check-in (No Locker)</button>
-      <button mat-raised-button color="primary" (click)="onAction('update-subscription')">Update Subscription</button>
+      <button mat-raised-button color="primary" (click)="onAction('check-in-no-locker')">Check-in (No Locker)</button>
     </mat-dialog-actions>
   `,
   styles: [`
-    .actions-column { flex-direction: column; align-items: flex-end; gap: 8px; }
-    .actions-column button { margin: 0; width: 100%; max-width: 250px; }
+    mat-dialog-actions button { margin-left: 8px; }
   `]
 })
 export class LockerRestrictionDialog {
   dialogRef = inject(MatDialogRef<LockerRestrictionDialog>);
   data = inject<LockerRestrictionDialogData>(MAT_DIALOG_DATA);
 
-  onAction(action: 'check-in-no-locker' | 'update-subscription' | 'cancel') {
+  onAction(action: 'check-in-no-locker' | 'cancel') {
     this.dialogRef.close({ action });
   }
 }

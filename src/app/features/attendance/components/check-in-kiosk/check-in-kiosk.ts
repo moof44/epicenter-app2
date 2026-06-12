@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,11 +17,7 @@ import { AttendanceService } from '../../../../core/services/attendance.service'
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { fadeIn } from '../../../../core/animations/animations';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { CheckoutService } from '../../../../core/services/checkout.service';
-import { ProductService } from '../../../../core/services/product.service';
-import { WalkInDialog, WalkInDialogResult } from '../walk-in-dialog/walk-in-dialog';
 import { LockerRestrictionDialog } from '../locker-restriction-dialog/locker-restriction-dialog';
-import { SubscriptionUpdateDialog, SubscriptionUpdateResult } from '../subscription-update-dialog/subscription-update-dialog';
 import { firstValueFrom } from 'rxjs';
 import { getRandomCommendation } from '../../../../core/constants/commendations';
 import { RemarksDialog, RemarksDialogResult } from '../../../../shared/components/remarks-dialog/remarks-dialog.component';
@@ -145,8 +141,7 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
 export class CheckInKiosk implements OnInit {
   private memberService = inject(MemberService);
   private attendanceService = inject(AttendanceService);
-  private checkoutService = inject(CheckoutService);
-  private productService = inject(ProductService);
+
   private cashRegisterService = inject(CashRegisterService); // Inject CashRegisterService
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
@@ -262,115 +257,10 @@ export class CheckInKiosk implements OnInit {
 
         if (result.action === 'check-in-no-locker') {
           this.selectedLocker = null; // Clear locker selection
-          // Proceed to standard flow (will hit Step 2)
-        }
-        else if (result.action === 'update-subscription') {
-          const updateDialog = this.dialog.open(SubscriptionUpdateDialog, {
-            data: { member }
-          });
-          const updateResult = await firstValueFrom(updateDialog.afterClosed()) as SubscriptionUpdateResult;
-
-          if (!updateResult || updateResult.action === 'cancel') {
-            this.isSubmitting = false;
-            return;
-          }
-
-          // Update Member Subscription
-          const newExpiration = updateResult.subscriptionDate;
-
-          if (updateResult.action === 'pay-and-check-in') {
-            const products = await firstValueFrom(this.productService.getProducts());
-            // Try to find "Monthly", "Membership", or similar
-            const membershipProduct = products.find(p =>
-              p.name.toLowerCase().includes('monthly') ||
-              p.name.toLowerCase().includes('membership')
-            );
-
-            if (!membershipProduct) {
-              // Fallback or Warning? For now, we error to be safe.
-              throw new Error('Membership product not found (search "Monthly" or "Membership"). Cannot process payment.');
-            }
-
-            // PAYMENT FIRST — if this fails, member subscription is NOT updated
-            await this.checkoutService.checkout([{
-              productId: membershipProduct.id!,
-              productName: membershipProduct.name,
-              price: membershipProduct.price,
-              originalPrice: membershipProduct.price,
-              isPriceOverridden: false,
-              quantity: 1,
-              subtotal: membershipProduct.price
-            }], 'ATTENDANCE_SUBSCRIPTION_UPDATE', updateResult.paymentMethod, updateResult.referenceNumber, undefined, undefined, member.id, member.name);
-
-            // THEN update subscription — payment already succeeded
-            await this.memberService.updateMember(member.id!, {
-              membershipExpiration: newExpiration,
-              membershipStatus: 'Active'
-            });
-            member.membershipExpiration = newExpiration;
-
-            this.snackBar.open('Subscription updated & Payment processed.', undefined, { duration: 2000 });
-          } else {
-            // "check-in-only" — no payment, just update subscription
-            await this.memberService.updateMember(member.id!, {
-              membershipExpiration: newExpiration,
-              membershipStatus: 'Active'
-            });
-            member.membershipExpiration = newExpiration;
-
-            this.snackBar.open('Subscription updated.', undefined, { duration: 2000 });
-          }
-
-          // Proceed to Check-In (Skip Walk-in check since they are now subscribed)
-          await this.doCheckIn(member);
-          return;
         }
       }
 
-      // 2. Subscription / Walk-in Check (Only if still not actively subscribed)
-      // We re-check active status because it might have changed above? 
-      // Actually, if we updated sub above, we returned early. So we only reach here if NO sub update happened.
-      // OR if 'check-in-no-locker' was chosen.
-
-      if (!hasActiveSubscription) {
-        const dialogRef = this.dialog.open(WalkInDialog, {
-          data: {
-            member: member,
-            isExpired: !!member.membershipExpiration // Distinguish expired vs never had one
-          }
-        });
-
-        const result = await firstValueFrom(dialogRef.afterClosed()) as WalkInDialogResult;
-
-        if (!result || result.action === 'cancel') {
-          this.isSubmitting = false;
-          return;
-        }
-
-        if (result.action === 'walk-in') {
-          const products = await firstValueFrom(this.productService.getProducts());
-          const walkInProduct = products.find(p => p.name.toLowerCase().includes('walk-in'));
-
-          if (!walkInProduct) {
-            throw new Error('Walk-in product not found. Please contact admin.');
-          }
-
-          await this.checkoutService.checkout([{
-            productId: walkInProduct.id!,
-            productName: walkInProduct.name,
-            price: walkInProduct.price,
-            originalPrice: walkInProduct.price,
-            isPriceOverridden: false,
-            quantity: 1,
-            subtotal: walkInProduct.price
-          }], 'ATTENDANCE_WALK_IN', result.paymentMethod, result.referenceNumber, undefined, undefined, member.id, member.name);
-
-          this.snackBar.open('Walk-in transaction created.', undefined, { duration: 2000 });
-        }
-        // If 'check-in' (no walk-in), we just fall through to doCheckIn
-      }
-
-      // 3. Final Check-in
+      // 2. Final Check-in
       await this.doCheckIn(member);
 
     } catch (error: any) {
@@ -393,6 +283,12 @@ export class CheckInKiosk implements OnInit {
       const d = member.membershipExpiration;
       expDisplay = d.toLocaleDateString();
       message += ` (Exp: ${expDisplay})`;
+    }
+
+    const isExpired = this.memberService.isMembershipExpired(member);
+    const hasActiveSubscription = member.membershipStatus === 'Active' && !!member.membershipExpiration && !isExpired;
+    if (!hasActiveSubscription) {
+      message += `\n⚠️ Membership is expired. Please renew at the front desk.`;
     }
 
     const commendation = getRandomCommendation('CHECKIN');
