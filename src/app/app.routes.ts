@@ -93,4 +93,10 @@ export const routes: Routes = [
         canActivate: [authGuard, roleGuard],
         data: { animation: 'FormPage', roles: ['ADMIN'] }
     },
+    {
+        path: 'chat/search',
+        loadComponent: () => import('./features/chat/chat-search/chat-search.component').then(m => m.ChatSearchComponent),
+        canActivate: [authGuard],
+        data: { animation: 'ListPage' }
+    },
 ];

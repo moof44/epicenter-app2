@@ -7,6 +7,9 @@
     <span class="toolbar-spacer"></span>
     <app-quota-status-widget *ngIf="authService.isLoggedIn()"></app-quota-status-widget>
     <app-shift-status-widget *ngIf="authService.isLoggedIn()"></app-shift-status-widget>
+    <button mat-icon-button *ngIf="authService.isLoggedIn()" (click)="toggleChat()" title="Toggle Vigilance Chat">
+      <mat-icon [class.chat-active-icon]="chatService.isChatOpen()">chat</mat-icon>
+    </button>
   </mat-toolbar>
 
   <app-staff-reminders *ngIf="authService.isLoggedIn()"></app-staff-reminders>
@@ -151,11 +154,26 @@
       </mat-nav-list>
     </mat-sidenav>
 
+    <!-- Chat Drawer (Phase 1) -->
+    <mat-sidenav #chatSnav position="end" [mode]="mobileQuery.matches ? 'over' : 'side'"
+      [opened]="chatService.isChatOpen() && authService.isLoggedIn()" [fixedInViewport]="mobileQuery.matches"
+      fixedTopGap="56" (closed)="chatService.isChatOpen.set(false)">
+      <app-chat *ngIf="chatService.isChatOpen()"></app-chat>
+    </mat-sidenav>
+
     <mat-sidenav-content>
       <main class="content" [@slideInOut]="getRouteAnimation(outlet)">
         <router-outlet #outlet="outlet"></router-outlet>
       </main>
     </mat-sidenav-content>
   </mat-sidenav-container>
+
+  <!-- Floating Chat FAB Launcher -->
+  <button mat-fab color="primary" class="chat-fab-launcher" 
+          *ngIf="authService.isLoggedIn() && !chatService.isChatOpen()" 
+          (click)="toggleChat()" 
+          title="Open Vigilance Chat">
+    <mat-icon>chat</mat-icon>
+  </button>
 
 </div>

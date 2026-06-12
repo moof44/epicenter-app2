@@ -14,6 +14,8 @@ import { AuthService } from './core/services/auth.service';
 import { QuotaStatusWidget } from './core/components/quota-status-widget/quota-status-widget';
 import { StaffRemindersComponent } from './core/components/staff-reminders/staff-reminders';
 import { IdleRedirectService } from './core/services/idle-redirect.service';
+import { ChatComponent } from './features/chat/chat.component';
+import { ChatService } from './core/services/chat.service';
 
 @Component({
   selector: 'app-root',
@@ -23,7 +25,8 @@ import { IdleRedirectService } from './core/services/idle-redirect.service';
     MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule, MatDividerModule,
     ShiftStatusWidget,
     QuotaStatusWidget,
-    StaffRemindersComponent
+    StaffRemindersComponent,
+    ChatComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -37,6 +40,7 @@ export class App implements OnDestroy {
   @ViewChild('snav') sidenav!: MatSidenav;
 
   readonly authService = inject(AuthService);
+  readonly chatService = inject(ChatService);
   private idleRedirectService = inject(IdleRedirectService);
 
   constructor() {
@@ -58,6 +62,10 @@ export class App implements OnDestroy {
 
   getRouteAnimation(outlet: RouterOutlet) {
     return outlet && outlet.activatedRouteData && outlet.activatedRouteData['animation'];
+  }
+
+  toggleChat() {
+    this.chatService.isChatOpen.set(!this.chatService.isChatOpen());
   }
 
   logout() {

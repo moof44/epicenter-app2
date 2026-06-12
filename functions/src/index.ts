@@ -212,3 +212,334 @@ export const emergencyLogoutAll = functions.https.onCall(async (data: any, conte
         throw new functions.https.HttpsError('internal', 'Emergency logout failed.', error);
     }
 });
+
+/**
+ * Creates a new portal account for a member.
+ * Only callable by authenticated staff members (ADMIN, MANAGER, STAFF, TRAINER).
+ */
+export const createMemberPortalAccount = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    // 1. Security Check: Must be authenticated and have staff role
+    if (!context.auth || !context.auth.token.roles || 
+        !context.auth.token.roles.some((r: string) => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(r))) {
+        throw new functions.https.HttpsError(
+            'permission-denied',
+            'Only gym staff can create member portal accounts.'
+        );
+    }
+
+    const { memberId } = data;
+    if (!memberId) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required field: memberId.');
+    }
+
+    try {
+        const db = admin.firestore();
+
+        // 2. Fetch the member doc
+        const memberRef = db.collection('members').doc(memberId);
+        const memberSnap = await memberRef.get();
+        if (!memberSnap.exists) {
+            throw new functions.https.HttpsError('not-found', 'Member not found.');
+        }
+
+        const memberData = memberSnap.data() || {};
+        const phone = memberData.contactNumber;
+        const birthdayVal = memberData.birthday;
+
+        if (!phone) {
+            throw new functions.https.HttpsError('failed-precondition', 'Member does not have a contact number registered.');
+        }
+        if (!birthdayVal) {
+            throw new functions.https.HttpsError('failed-precondition', 'Member does not have a birthdate registered.');
+        }
+
+        // Normalize Phone Number (strip non-digits, replace starting +63 or 63 with 0)
+        let cleanPhone = phone.replace(/\D/g, '');
+        if (cleanPhone.startsWith('63')) {
+            cleanPhone = '0' + cleanPhone.substring(2);
+        } else if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
+            cleanPhone = '0' + cleanPhone;
+        }
+
+        if (cleanPhone.length !== 11) {
+            throw new functions.https.HttpsError('failed-precondition', `Invalid phone number format: "${phone}". Must be an 11-digit mobile number.`);
+        }
+
+        // Format Birthday PIN (from Firestore Date/Timestamp to MMDDYYYY string)
+        let birthdayDate: Date;
+        if (birthdayVal.toDate && typeof birthdayVal.toDate === 'function') {
+            birthdayDate = birthdayVal.toDate();
+        } else {
+            birthdayDate = new Date(birthdayVal);
+        }
+
+        if (isNaN(birthdayDate.getTime())) {
+            throw new functions.https.HttpsError('failed-precondition', 'Invalid birthdate format registered.');
+        }
+
+        const mm = String(birthdayDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(birthdayDate.getDate()).padStart(2, '0');
+        const yyyy = String(birthdayDate.getFullYear());
+        const birthdayPin = `${mm}${dd}${yyyy}`; // MMDDYYYY PIN
+
+        const email = `${cleanPhone}@epicentergym.ph`;
+
+        // Check if user already exists in Auth
+        let userRecord: admin.auth.UserRecord;
+        try {
+            userRecord = await admin.auth().getUserByEmail(email);
+            
+            // If user exists, we check if they already have portalUid set in member doc
+            const portalUid = userRecord.uid;
+            await memberRef.update({ portalUid });
+            
+            // Ensure the user's Firestore profile exists
+            const userDocRef = db.collection('users').doc(portalUid);
+            const userDocSnap = await userDocRef.get();
+            if (!userDocSnap.exists) {
+                await userDocRef.set({
+                    uid: portalUid,
+                    email,
+                    displayName: memberData.name || '',
+                    roles: ['MEMBER'],
+                    memberId,
+                    isActive: true,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            return { success: true, uid: portalUid, alreadyExisted: true };
+        } catch (authError: any) {
+            if (authError.code !== 'auth/user-not-found') {
+                throw authError;
+            }
+            
+            // Create a new Firebase Auth user
+            userRecord = await admin.auth().createUser({
+                email,
+                password: birthdayPin,
+                displayName: memberData.name || '',
+            });
+
+            const uid = userRecord.uid;
+
+            // Set MEMBER custom claim
+            await admin.auth().setCustomUserClaims(uid, { roles: ['MEMBER'] });
+
+            // Create Firestore users document
+            await db.collection('users').doc(uid).set({
+                uid,
+                email,
+                displayName: memberData.name || '',
+                roles: ['MEMBER'],
+                memberId,
+                isActive: true,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            // Backlink portalUid in members doc
+            await memberRef.update({ portalUid: uid });
+
+            return { success: true, uid };
+        }
+    } catch (error: any) {
+        console.error('Error creating member portal account:', error);
+        throw new functions.https.HttpsError('internal', error.message || 'Unable to create member portal account.', error);
+    }
+});
+
+/**
+ * Generates a short-lived custom token for auto-logging in via QR code.
+ * Only callable by authenticated staff members (ADMIN, MANAGER, STAFF, TRAINER).
+ */
+export const generatePortalLoginToken = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    // 1. Security Check: Must be authenticated and have staff role
+    if (!context.auth || !context.auth.token.roles || 
+        !context.auth.token.roles.some((r: string) => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(r))) {
+        throw new functions.https.HttpsError(
+            'permission-denied',
+            'Only gym staff can generate login tokens.'
+        );
+    }
+
+    const { memberId } = data;
+    if (!memberId) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required field: memberId.');
+    }
+
+    try {
+        const db = admin.firestore();
+
+        // Get member doc to retrieve portalUid
+        const memberSnap = await db.collection('members').doc(memberId).get();
+        if (!memberSnap.exists) {
+            throw new functions.https.HttpsError('not-found', 'Member not found.');
+        }
+
+        const memberData = memberSnap.data() || {};
+        const portalUid = memberData.portalUid;
+
+        if (!portalUid) {
+            throw new functions.https.HttpsError('failed-precondition', 'Member does not have a portal account created yet.');
+        }
+
+        // Generate Custom Login Token (JWT valid for 5 mins by default)
+        const customToken = await admin.auth().createCustomToken(portalUid);
+
+        return { success: true, token: customToken };
+    } catch (error: any) {
+        console.error('Error generating login token:', error);
+        throw new functions.https.HttpsError('internal', error.message || 'Unable to generate login token.', error);
+    }
+});
+
+/**
+ * Triggered when a new store sale transaction is completed.
+ * Writes a formatted message to the global chat room.
+ */
+export const onTransactionCreated = functions.firestore.document('/transactions/{transactionId}').onCreate(async (snapshot, context) => {
+    const transaction = snapshot.data() || {};
+    const db = admin.firestore();
+
+    const items = transaction.items || [];
+    const itemsList = items.map((item: any) => `${item.productName}${item.quantity > 1 ? ' (x' + item.quantity + ')' : ''}`).join(', ');
+
+    const content = `💰 **New Sale** by **${transaction.staffName || 'Staff'}**! Total: **$${transaction.totalAmount}** via **${transaction.paymentMethod || 'CASH'}** (Items: ${itemsList || 'None'}). Great job! 🚀`;
+
+    await db.collection('chats/global/messages').add({
+        senderId: 'system',
+        senderName: 'GymBot',
+        senderAvatar: '',
+        content,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        type: 'system',
+        metadata: {
+            transactionType: 'STORE_SALE',
+            referencedId: context.params.transactionId,
+            amount: transaction.totalAmount
+        }
+    });
+});
+
+/**
+ * Triggered when a transaction is updated (specifically voided).
+ * Writes a warning message to the global chat room.
+ */
+export const onTransactionUpdated = functions.firestore.document('/transactions/{transactionId}').onUpdate(async (change, context) => {
+    const before = change.before.data() || {};
+    const after = change.after.data() || {};
+    const db = admin.firestore();
+
+    if (before.status !== 'VOID' && after.status === 'VOID') {
+        const content = `⚠️ **Sale Voided** by **${after.voidedBy || 'Staff'}**! Sale ID: #${context.params.transactionId.slice(0, 8)}. Reason: ${after.voidReason || 'None'}`;
+        await db.collection('chats/global/messages').add({
+            senderId: 'system',
+            senderName: 'GymBot',
+            senderAvatar: '',
+            content,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            type: 'system',
+            metadata: {
+                transactionType: 'STORE_SALE_VOIDED',
+                referencedId: context.params.transactionId,
+                amount: after.totalAmount
+            }
+        });
+    }
+});
+
+/**
+ * Triggered when a shift is opened.
+ * Writes an opening log message to the global chat room.
+ */
+export const onShiftCreated = functions.firestore.document('/shifts/{shiftId}').onCreate(async (snapshot, context) => {
+    const shift = snapshot.data() || {};
+    if (shift.status === 'OPEN') {
+        const content = `🔓 **Shift Opened** by **${shift.openedBy || 'Staff'}**. Starting Float: **$${shift.openingBalance}**.`;
+        const db = admin.firestore();
+        await db.collection('chats/global/messages').add({
+            senderId: 'system',
+            senderName: 'GymBot',
+            senderAvatar: '',
+            content,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            type: 'system',
+            metadata: {
+                transactionType: 'SHIFT_OPENED',
+                referencedId: context.params.shiftId,
+                amount: shift.openingBalance
+            }
+        });
+    }
+});
+
+/**
+ * Triggered when a shift is updated.
+ * Handles shift closures and cash register movements (expenses, float additions).
+ */
+export const onShiftUpdated = functions.firestore.document('/shifts/{shiftId}').onUpdate(async (change, context) => {
+    const before = change.before.data() || {};
+    const after = change.after.data() || {};
+    const db = admin.firestore();
+
+    // 1. Shift Closing detection
+    if (before.status === 'OPEN' && after.status === 'CLOSED') {
+        const content = `🔒 **Shift Closed** by **${after.closedBy || 'Staff'}**. Expected: **$${after.expectedClosingBalance}** | Actual: **$${after.actualClosingBalance}** | Discrepancy: **$${after.discrepancy || 0}** (Sales: $${after.totalSales || 0}).`;
+        await db.collection('chats/global/messages').add({
+            senderId: 'system',
+            senderName: 'GymBot',
+            senderAvatar: '',
+            content,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            type: 'system',
+            metadata: {
+                transactionType: 'SHIFT_CLOSED',
+                referencedId: context.params.shiftId,
+                amount: after.discrepancy || 0
+            }
+        });
+    }
+
+    // 2. Cash transactions (Expense, Float In/Out) detection
+    const beforeTx = before.transactions || [];
+    const afterTx = after.transactions || [];
+
+    if (afterTx.length > beforeTx.length) {
+        const newTxs = afterTx.slice(beforeTx.length);
+        for (const tx of newTxs) {
+            // Skip 'Sale' as it is handled by the transactions trigger
+            if (tx.type === 'Sale') continue;
+
+            let prefix = '';
+            let txType: any = '';
+            if (tx.type === 'Expense') {
+                prefix = '💸 **Cash Outflow (Expense)**';
+                txType = 'CASH_EXPENSE';
+            } else if (tx.type === 'Float_In') {
+                prefix = '💵 **Cash Inflow (Float In)**';
+                txType = 'CASH_FLOAT';
+            } else if (tx.type === 'Float_Out') {
+                prefix = '💸 **Cash Outflow (Float Out)**';
+                txType = 'CASH_FLOAT';
+            }
+
+            if (prefix) {
+                const content = `${prefix} recorded by **${tx.performedBy || 'Staff'}**. Amount: **$${tx.amount}** | Reason: **${tx.reason || 'None'}**.`;
+                await db.collection('chats/global/messages').add({
+                    senderId: 'system',
+                    senderName: 'GymBot',
+                    senderAvatar: '',
+                    content,
+                    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                    type: 'system',
+                    metadata: {
+                        transactionType: txType,
+                        referencedId: context.params.shiftId,
+                        amount: tx.amount
+                    }
+                });
+            }
+        }
+    }
+});
+
