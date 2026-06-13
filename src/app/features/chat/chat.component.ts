@@ -338,9 +338,12 @@ export class ChatComponent implements OnInit {
       this.messages.set(msgs);
     });
 
-    // Fetch users list for mentions dropdown
+    // Fetch active users list for mentions dropdown (excluding current user)
     this.userService.getUsers().subscribe(users => {
-      this.allUsers.set(users || []);
+      const currentUser = (this.chatService as any).authService.userProfile();
+      const currentUid = currentUser ? currentUser.uid : '';
+      const activeStaff = (users || []).filter(u => u.isActive !== false && u.uid !== currentUid);
+      this.allUsers.set(activeStaff);
     });
   }
 
@@ -352,9 +355,13 @@ export class ChatComponent implements OnInit {
   isMentioned(msg: ChatMessage): boolean {
     if (msg.type !== 'user') return false;
     const userProfile = (this.chatService as any).authService.userProfile();
-    if (!userProfile || !userProfile.displayName) return false;
+    if (!userProfile) return false;
     if (msg.senderId === userProfile.uid) return false; // Don't highlight own messages
 
+    // Highlight if message mentions @everyone
+    if (msg.content.toLowerCase().includes('@everyone')) return true;
+
+    if (!userProfile.displayName) return false;
     const cleanedName = userProfile.displayName.replace(/\s+/g, '');
     const mentionPattern = new RegExp(`@${userProfile.displayName}|@${cleanedName}`, 'i');
     return mentionPattern.test(msg.content);
@@ -404,8 +411,21 @@ export class ChatComponent implements OnInit {
         const filtered = this.allUsers().filter(u => 
           u.displayName.toLowerCase().includes(queryText.toLowerCase())
         );
-        this.filteredUsers.set(filtered);
-        this.showAutocomplete.set(filtered.length > 0);
+        
+        const dropdownList: User[] = [];
+        // Prepend "@everyone" if matching or if search query is short/empty
+        if ('everyone'.includes(queryText.toLowerCase())) {
+          dropdownList.push({
+            uid: 'everyone',
+            email: '',
+            displayName: 'everyone',
+            roles: []
+          });
+        }
+        dropdownList.push(...filtered);
+        
+        this.filteredUsers.set(dropdownList);
+        this.showAutocomplete.set(dropdownList.length > 0);
         return;
       }
     }

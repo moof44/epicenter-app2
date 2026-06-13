@@ -179,15 +179,18 @@
       <div class="preview-body">{{ chatService.lastMessageText() }}</div>
     </div>
     
-    <button mat-fab color="primary" class="chat-fab-launcher" 
-            [class.launcher-wobble]="chatService.triggerWobble()"
-            [class.launcher-shake]="chatService.hasDirectMention()"
-            (click)="toggleChat()" 
-            [matBadge]="chatService.unreadCount() > 0 ? chatService.unreadCount() : null" 
-            matBadgeColor="warn"
-            title="Open Vigilance Chat">
-      <mat-icon>chat</mat-icon>
-    </button>
+    <div [class.launcher-shake-wrapper]="chatService.hasDirectMention()">
+      <button mat-fab color="primary" class="chat-fab-launcher" 
+              [class.has-unread]="chatService.unreadCount() > 0 && !chatService.hasDirectMention()"
+              [class.has-mention]="chatService.hasDirectMention()"
+              [class.launcher-wobble]="chatService.triggerWobble()"
+              (click)="toggleChat()" 
+              [matBadge]="chatService.unreadCount() > 0 ? chatService.unreadCount() : null" 
+              [matBadgeColor]="chatService.hasDirectMention() ? 'accent' : 'warn'"
+              title="Open Vigilance Chat">
+        <mat-icon>chat</mat-icon>
+      </button>
+    </div>
   </div>
 
 </div>

@@ -90,13 +90,24 @@ export class ChatService implements OnDestroy {
           this.unreadCount.set(count);
           
           if (newestNewMsg) {
-            // Check for direct mention
-            if (user && user.displayName) {
+            let isMention = false;
+            
+            // Check for @everyone mention
+            if (newestNewMsg.content.toLowerCase().includes('@everyone')) {
+              isMention = true;
+            }
+            // Check for direct user mention
+            else if (user && user.displayName) {
               const cleanedName = user.displayName.replace(/\s+/g, '');
               const mentionPattern = new RegExp(`@${user.displayName}|@${cleanedName}`, 'i');
               if (mentionPattern.test(newestNewMsg.content)) {
-                this.hasDirectMention.set(true);
+                isMention = true;
               }
+            }
+            
+            if (isMention) {
+              this.hasDirectMention.set(true);
+              this.playNotificationSound();
             }
             
             // Trigger temporary wobble
@@ -139,6 +150,29 @@ export class ChatService implements OnDestroy {
     if (this.messagesSub) {
       this.messagesSub.unsubscribe();
       this.messagesSub = null;
+    }
+  }
+
+  playNotificationSound() {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+      osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + 0.1); // A5
+      
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.45);
+    } catch (e) {
+      console.warn('Audio play blocked or unsupported:', e);
     }
   }
 

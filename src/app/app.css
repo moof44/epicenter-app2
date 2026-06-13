@@ -133,7 +133,36 @@ mat-sidenav[position="end"] {
 
 .chat-fab-launcher {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.chat-fab-launcher.has-unread {
   animation: intense-neon-glow 2.5s infinite ease-in-out;
+}
+
+.chat-fab-launcher.has-mention {
+  animation: intense-mention-glow 2s infinite ease-in-out;
+}
+
+.launcher-shake-wrapper {
+  display: inline-block;
+  animation: shake-effect 0.5s infinite ease-in-out;
+}
+
+/* Intense Multi-layered Gold-Red Glow & Breathing Scale for Mentions */
+@keyframes intense-mention-glow {
+  0% {
+    box-shadow: 0 0 5px #ff3d00, 0 0 12px #ffab00, 0 4px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 18px #ff3d00, 0 0 32px #ffd600, 0 0 45px #ff9100, 0 6px 14px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+  }
+  100% {
+    box-shadow: 0 0 5px #ff3d00, 0 0 12px #ffab00, 0 4px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1);
+  }
 }
 
 .chat-active-icon {
@@ -145,10 +174,7 @@ mat-sidenav[position="end"] {
   animation: wobble-effect 0.8s ease-in-out !important;
 }
 
-/* Continuous violent shake for direct mentions */
-.launcher-shake {
-  animation: shake-effect 0.5s infinite ease-in-out !important;
-}
+
 
 /* Intense Multi-layered Neon Glow & Breathing Scale */
 @keyframes intense-neon-glow {
