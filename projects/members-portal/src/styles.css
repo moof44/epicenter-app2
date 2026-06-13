@@ -1,36 +1,126 @@
-:root {
-    /* Black & Gold Theme */
-    --bg-dark: #000000;
-    --bg-surface: #121212;
-    --surface-card: #1a1a1a;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-    --primary-gold: #D4AF37;
-    --gold-dim: #997d26;
+@layer base {
+  :root {
+    /* Premium Black & Gold variables */
+    --bg-primary: #000000;
+    --bg-surface: #121212;
+    --bg-surface-alt: #1a1a1a;
+    
+    --gold-primary: #D4AF37;
+    --gold-light: #FFD700;
+    --gold-dark: #B8860B;
+    --gold-dim: rgba(212, 175, 55, 0.15);
+
     --text-primary: #FFFFFF;
     --text-secondary: #B0B0B0;
+    --text-muted: #666666;
+  }
 
-    --border-gold: rgba(212, 175, 55, 0.3);
-    --border-subtle: rgba(255, 255, 255, 0.1);
-
-    --font-heading: 'Oswald', sans-serif;
-    --font-body: 'Inter', sans-serif;
-}
-
-body {
-    background-color: var(--bg-dark);
+  /* Fluid REM typography scaling */
+  html {
+    font-size: 14px; /* Mobile root size */
+    background-color: var(--bg-primary);
     color: var(--text-primary);
-    font-family: var(--font-body);
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (min-width: 768px) {
+    html {
+      font-size: 15px; /* Tablet root size */
+    }
+  }
+
+  @media (min-width: 1200px) {
+    html {
+      font-size: 16px; /* Desktop root size */
+    }
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
     margin: 0;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Safe Area Helpers */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
 }
 
-/* Typography Utilities */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family: var(--font-heading);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+/* Custom CSS Components for Strict Uniformity */
+.card-surface {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--bg-surface-alt);
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.gold-glow {
+  box-shadow: 0 0 15px var(--gold-dim);
+}
+
+.btn-primary {
+  background: linear-gradient(to bottom, var(--gold-primary), var(--gold-dark));
+  color: #000000;
+  border: 1px solid var(--gold-light);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  height: 3rem; /* 48px min height for accessibility */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+.btn-secondary {
+  background-color: var(--bg-surface-alt);
+  color: var(--text-primary);
+  border: 1px solid var(--bg-surface-alt);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-secondary:active {
+  transform: scale(0.95);
 }

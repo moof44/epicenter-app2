@@ -13,6 +13,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { Functions, httpsCallable } from '@angular/fire/functions';
+import { QRDialog } from '../../../../shared/components/qr-dialog/qr-dialog.component';
 import { fadeIn } from '../../../../core/animations/animations';
 
 @Component({
@@ -20,7 +24,7 @@ import { fadeIn } from '../../../../core/animations/animations';
   imports: [
     CommonModule, ReactiveFormsModule, MatInputModule,
     MatSelectModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule,
-    MatDatepickerModule, MatNativeDateModule
+    MatDatepickerModule, MatNativeDateModule, MatIconModule, MatDialogModule
   ],
   templateUrl: './member-form.html',
   styleUrl: './member-form.css',
@@ -32,11 +36,15 @@ export class MemberForm implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private location = inject(Location);
+  private dialog = inject(MatDialog);
+  private functions = inject(Functions);
 
   form: FormGroup;
   isEditMode = false;
   memberId: string | null = null;
   loading = false;
+  member: Member | null = null;
+  portalLoading = false;
 
   constructor() {
     this.form = this.fb.group({
@@ -65,10 +73,54 @@ export class MemberForm implements OnInit {
     this.loading = true;
     this.memberService.getMember(id).pipe(take(1)).subscribe(member => {
       if (member) {
+        this.member = member;
         this.form.patchValue(member);
       }
       this.loading = false;
     });
+  }
+
+  async createPortalAccount() {
+    if (!this.memberId) return;
+    this.portalLoading = true;
+    try {
+      const createFn = httpsCallable(this.functions, 'createMemberPortalAccount');
+      const result: any = await createFn({ memberId: this.memberId });
+      if (result.data?.success) {
+        this.loadMember(this.memberId);
+      }
+    } catch (error: any) {
+      console.error('Failed to create portal account:', error);
+      alert(error.message || 'Error creating portal account.');
+    } finally {
+      this.portalLoading = false;
+    }
+  }
+
+  async showQR() {
+    if (!this.memberId) return;
+    this.portalLoading = true;
+    try {
+      const tokenFn = httpsCallable(this.functions, 'generatePortalLoginToken');
+      const result: any = await tokenFn({ memberId: this.memberId });
+      if (result.data?.success && result.data?.token) {
+        const token = result.data.token;
+        const loginUrl = `http://localhost:4201/login?token=${token}`;
+        
+        this.dialog.open(QRDialog, {
+          data: {
+            loginUrl,
+            memberName: this.member?.name || 'Gym Member'
+          },
+          width: '340px'
+        });
+      }
+    } catch (error: any) {
+      console.error('Failed to generate portal login token:', error);
+      alert(error.message || 'Error generating login code.');
+    } finally {
+      this.portalLoading = false;
+    }
   }
 
   cancel() {

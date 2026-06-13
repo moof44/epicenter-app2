@@ -99,4 +99,65 @@
       </form>
     </mat-card-content>
   </mat-card>
+
+  <!-- Portal Access Management Card -->
+  <mat-card *ngIf="isEditMode" class="portal-card">
+    <mat-card-header>
+      <mat-card-title>Members Portal Access</mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="portal-card-content">
+      <div class="portal-status-container">
+        
+        <!-- Status Details -->
+        <div class="status-info">
+          <div class="status-row">
+            <span class="label">Account Status:</span>
+            <span *ngIf="member?.portalUid" class="status-badge active">Active</span>
+            <span *ngIf="!member?.portalUid" class="status-badge inactive">No Account</span>
+          </div>
+          
+          <div class="status-row" *ngIf="member?.portalUid">
+            <span class="label">Portal Username:</span>
+            <span class="value font-mono">{{ member?.contactNumber }}</span>
+          </div>
+
+          <div class="status-row" *ngIf="member?.portalUid">
+            <span class="label">Temporary PIN:</span>
+            <span class="value">Member's Birthday (MMDDYYYY)</span>
+          </div>
+        </div>
+
+        <!-- Action Trigger Buttons -->
+        <div class="portal-actions">
+          <div class="flex-center" *ngIf="portalLoading">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span style="font-size: 0.85rem; color: #888;">Processing request...</span>
+          </div>
+          
+          <ng-container *ngIf="!portalLoading">
+            <button 
+              *ngIf="!member?.portalUid" 
+              mat-raised-button 
+              color="primary" 
+              type="button" 
+              (click)="createPortalAccount()"
+            >
+              <mat-icon>person_add</mat-icon> Create Portal Account
+            </button>
+
+            <button 
+              *ngIf="member?.portalUid" 
+              mat-raised-button 
+              color="accent" 
+              type="button" 
+              (click)="showQR()"
+            >
+              <mat-icon>qr_code_2</mat-icon> Show Auto-Login QR Code
+            </button>
+          </ng-container>
+        </div>
+
+      </div>
+    </mat-card-content>
+  </mat-card>
 </div>

@@ -114,8 +114,8 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class ProductCardComponent {
-    @Input() image: string = '';
-    @Input() title: string = '';
-    @Input() price: string = '';
+    @Input() image = '';
+    @Input() title = '';
+    @Input() price = '';
     @Input() features: string[] = [];
 }

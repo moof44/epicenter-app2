@@ -15,4 +15,5 @@ export interface Member {
     createdBy?: AuditTrace;
     lastModifiedBy?: AuditTrace;
     remarks?: string;
+    portalUid?: string;
 }

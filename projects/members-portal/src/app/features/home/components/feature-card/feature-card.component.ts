@@ -46,6 +46,6 @@ import { Component, Input } from '@angular/core';
   `]
 })
 export class FeatureCardComponent {
-    @Input() icon: string = '';
-    @Input() title: string = '';
+    @Input() icon = '';
+    @Input() title = '';
 }

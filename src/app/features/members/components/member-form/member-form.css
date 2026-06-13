@@ -133,3 +133,87 @@ mat-card {
 .mr-2 {
   margin-right: 0.5rem;
 }
+
+/* Portal Access Card Styling */
+.portal-card {
+  margin-top: 24px;
+  max-width: 800px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.portal-card-content {
+  padding-top: 1rem;
+}
+
+.portal-status-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1 1 300px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.status-row .label {
+  font-weight: 500;
+  color: #666;
+  width: 140px;
+}
+
+.status-row .value {
+  font-weight: 600;
+  color: #333;
+}
+
+.status-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.status-badge.active {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.status-badge.inactive {
+  background-color: #f5f5f5;
+  color: #616161;
+  border: 1px solid #e0e0e0;
+}
+
+.portal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 200px;
+}
+
+.portal-actions button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 1.5rem;
+}
