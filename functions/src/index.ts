@@ -577,7 +577,26 @@ export const onShiftUpdated = functions.firestore.document('/shifts/{shiftId}').
 export const onMemberCheckInNotification = functions.firestore.document('/attendance/{attendanceId}').onCreate(async (snapshot, context) => {
     const attendance = snapshot.data() || {};
     const memberName = attendance.memberName || 'A member';
-    
+    const db = admin.firestore();
+
+    const staffName = attendance.checkedInBy?.name;
+    const staffMention = staffName ? `@${staffName}` : 'Staff';
+
+    const content = `🔔 **Member Checked In**: **${memberName}** has checked in! ${staffMention}, please offer our products and services. 🌟`;
+
+    await db.collection('chats/global/messages').add({
+        senderId: 'system',
+        senderName: 'GymBot',
+        senderAvatar: '',
+        content,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        type: 'system',
+        metadata: {
+            transactionType: 'MEMBER_CHECK_IN',
+            referencedId: context.params.attendanceId
+        }
+    });
+
     await sendNotificationsToRoles(['ADMIN', 'MANAGER', 'STAFF'], {
         title: 'Member Checked In',
         body: `${memberName} has checked in. Ensure staff offer excellent service!`,

@@ -54,7 +54,7 @@ import { User } from '../../core/models/user.model';
           
           <!-- System Message Style -->
           <ng-container *ngIf="msg.type === 'system'">
-            <div class="system-message-card">
+            <div class="system-message-card" [class.mention-highlight]="isMentioned(msg)">
               <mat-icon class="system-icon">security</mat-icon>
               <div class="system-content">
                 <span class="system-text">{{msg.content}}</span>
@@ -353,7 +353,6 @@ export class ChatComponent implements OnInit {
   }
 
   isMentioned(msg: ChatMessage): boolean {
-    if (msg.type !== 'user') return false;
     const userProfile = (this.chatService as any).authService.userProfile();
     if (!userProfile) return false;
     if (msg.senderId === userProfile.uid) return false; // Don't highlight own messages
