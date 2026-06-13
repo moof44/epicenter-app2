@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatBadgeModule } from '@angular/material/badge';
 import { slideInOut } from './core/animations/animations';
 import { ShiftStatusWidget } from './features/store/components/shift-status-widget/shift-status-widget';
 import { AuthService } from './core/services/auth.service';
@@ -23,6 +24,7 @@ import { ChatService } from './core/services/chat.service';
   imports: [
     CommonModule, RouterOutlet, RouterLink, RouterLinkActive,
     MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule, MatDividerModule,
+    MatBadgeModule,
     ShiftStatusWidget,
     QuotaStatusWidget,
     StaffRemindersComponent,

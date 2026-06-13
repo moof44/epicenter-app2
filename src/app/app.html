@@ -7,7 +7,8 @@
     <span class="toolbar-spacer"></span>
     <app-quota-status-widget *ngIf="authService.isLoggedIn()"></app-quota-status-widget>
     <app-shift-status-widget *ngIf="authService.isLoggedIn()"></app-shift-status-widget>
-    <button mat-icon-button *ngIf="authService.isLoggedIn()" (click)="toggleChat()" title="Toggle Vigilance Chat">
+    <button mat-icon-button *ngIf="authService.isLoggedIn()" (click)="toggleChat()" title="Toggle Vigilance Chat"
+            [matBadge]="chatService.unreadCount() > 0 ? chatService.unreadCount() : null" matBadgeColor="warn">
       <mat-icon [class.chat-active-icon]="chatService.isChatOpen()">chat</mat-icon>
     </button>
   </mat-toolbar>
@@ -168,12 +169,25 @@
     </mat-sidenav-content>
   </mat-sidenav-container>
 
-  <!-- Floating Chat FAB Launcher -->
-  <button mat-fab color="primary" class="chat-fab-launcher" 
-          *ngIf="authService.isLoggedIn() && !chatService.isChatOpen()" 
-          (click)="toggleChat()" 
-          title="Open Vigilance Chat">
-    <mat-icon>chat</mat-icon>
-  </button>
+  <!-- Floating Chat FAB Launcher + Preview Banner -->
+  <div class="chat-launcher-wrapper" *ngIf="authService.isLoggedIn() && !chatService.isChatOpen()">
+    <div class="chat-preview-banner" [class.preview-active]="chatService.previewActive()">
+      <div class="preview-header">
+        <span class="preview-sender">{{ chatService.lastMessageSender() }}</span>
+        <mat-icon class="preview-close" (click)="chatService.previewActive.set(false)">close</mat-icon>
+      </div>
+      <div class="preview-body">{{ chatService.lastMessageText() }}</div>
+    </div>
+    
+    <button mat-fab color="primary" class="chat-fab-launcher" 
+            [class.launcher-wobble]="chatService.triggerWobble()"
+            [class.launcher-shake]="chatService.hasDirectMention()"
+            (click)="toggleChat()" 
+            [matBadge]="chatService.unreadCount() > 0 ? chatService.unreadCount() : null" 
+            matBadgeColor="warn"
+            title="Open Vigilance Chat">
+      <mat-icon>chat</mat-icon>
+    </button>
+  </div>
 
 </div>

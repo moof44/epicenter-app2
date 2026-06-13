@@ -8,7 +8,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
 import { ChatService } from '../../core/services/chat.service';
+import { UserService } from '../../core/services/user.service';
 import { ChatMessage } from '../../core/models/chat.model';
+import { User } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-chat',
@@ -67,7 +69,7 @@ import { ChatMessage } from '../../core/models/chat.model';
                  *ngIf="!isOwnMessage(msg)">
             <div class="bubble-container">
               <span class="sender-name" *ngIf="!isOwnMessage(msg)">{{msg.senderName}}</span>
-              <div class="bubble">
+              <div class="bubble" [class.mention-highlight]="isMentioned(msg)">
                 <p class="bubble-text">{{msg.content}}</p>
               </div>
               <span class="message-time">{{formatTime(msg.timestamp)}}</span>
@@ -76,10 +78,18 @@ import { ChatMessage } from '../../core/models/chat.model';
         </div>
       </div>
 
+      <!-- Autocomplete Dropdown -->
+      <div class="mention-autocomplete" *ngIf="showAutocomplete()">
+        <button type="button" class="autocomplete-item" *ngFor="let user of filteredUsers()" (click)="selectMention(user)">
+          <img class="autocomplete-avatar" [src]="user.photoURL || 'assets/default-avatar.png'" alt="avatar">
+          <span class="autocomplete-name">{{ user.displayName }}</span>
+        </button>
+      </div>
+
       <!-- Chat Footer -->
       <div class="chat-footer">
         <mat-form-field appearance="outline" class="message-field">
-          <input matInput placeholder="Type a message..." [(ngModel)]="messageText" (keydown.enter)="sendMessage()">
+          <input #messageInput matInput placeholder="Type a message..." [(ngModel)]="messageText" (input)="onInputChange()" (keydown.enter)="sendMessage()">
         </mat-form-field>
         <button mat-mini-fab color="primary" [disabled]="!messageText.trim()" (click)="sendMessage()" class="send-btn">
           <mat-icon>send</mat-icon>
@@ -99,6 +109,7 @@ import { ChatMessage } from '../../core/models/chat.model';
       display: flex;
       flex-direction: column;
       height: 100%;
+      position: relative;
     }
     .chat-header {
       display: flex;
@@ -250,35 +261,103 @@ import { ChatMessage } from '../../core/models/chat.model';
     .send-btn {
       flex-shrink: 0;
     }
+
+    /* Autocomplete mention dropdown */
+    .mention-autocomplete {
+      position: absolute;
+      bottom: 70px;
+      left: 16px;
+      right: 16px;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+      max-height: 160px;
+      overflow-y: auto;
+      z-index: 100;
+    }
+    .autocomplete-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+    }
+    .autocomplete-item:hover, .autocomplete-item:focus {
+      background-color: #f5f5f5;
+      outline: none;
+    }
+    .autocomplete-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: #e0e0e0;
+    }
+    .autocomplete-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #3c4043;
+    }
+
+    /* Direct mention highlight styles */
+    .mention-highlight {
+      background-color: #fffde7 !important; /* Soft yellow */
+      border: 1px solid #ffd54f !important;  /* Gold border */
+      box-shadow: 0 0 8px rgba(255, 213, 79, 0.4);
+    }
   `]
 })
 export class ChatComponent implements OnInit {
   private chatService = inject(ChatService);
+  private userService = inject(UserService);
   private router = inject(Router);
 
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
+  @ViewChild('messageInput') private messageInputEl!: ElementRef;
 
   messages = signal<ChatMessage[]>([]);
   messageText = '';
   isLoadingMore = signal(false);
   hasMoreHistory = signal(true);
 
+  // Mention autocomplete signals
+  showAutocomplete = signal(false);
+  filteredUsers = signal<User[]>([]);
+  allUsers = signal<User[]>([]);
+  mentionSearchQuery = '';
+
   ngOnInit() {
     // Stream real-time messages
     this.chatService.getRecentMessages(50).subscribe(msgs => {
-      // Sort ascending locally if the view needs standard message flow, 
-      // but since we are rendering flex-direction: column-reverse, 
-      // the container renders the first elements at the bottom.
-      // Firebase ordered by desc (newest first). 
-      // Array [newest, second newest, ..., oldest]
-      // In flex-direction: column-reverse, the first element (newest) is at the bottom, which is correct!
       this.messages.set(msgs);
+    });
+
+    // Fetch users list for mentions dropdown
+    this.userService.getUsers().subscribe(users => {
+      this.allUsers.set(users || []);
     });
   }
 
   isOwnMessage(msg: ChatMessage): boolean {
     const userProfile = (this.chatService as any).authService.userProfile();
     return userProfile && msg.senderId === userProfile.uid;
+  }
+
+  isMentioned(msg: ChatMessage): boolean {
+    if (msg.type !== 'user') return false;
+    const userProfile = (this.chatService as any).authService.userProfile();
+    if (!userProfile || !userProfile.displayName) return false;
+    if (msg.senderId === userProfile.uid) return false; // Don't highlight own messages
+
+    const cleanedName = userProfile.displayName.replace(/\s+/g, '');
+    const mentionPattern = new RegExp(`@${userProfile.displayName}|@${cleanedName}`, 'i');
+    return mentionPattern.test(msg.content);
   }
 
   formatTime(timestamp: any): string {
@@ -292,6 +371,7 @@ export class ChatComponent implements OnInit {
     try {
       await this.chatService.sendMessage(this.messageText);
       this.messageText = '';
+      this.showAutocomplete.set(false);
       this.scrollToBottom();
     } catch (err: any) {
       console.error('Failed to send message:', err);
@@ -310,19 +390,62 @@ export class ChatComponent implements OnInit {
     return item.id || index.toString();
   }
 
+  onInputChange() {
+    const text = this.messageText;
+    const selectionStart = this.messageInputEl ? this.messageInputEl.nativeElement.selectionStart : text.length;
+    
+    const textBeforeCursor = text.slice(0, selectionStart);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIndex !== -1) {
+      const queryText = textBeforeCursor.slice(lastAtIndex + 1);
+      if (!queryText.includes(' ') && queryText.length < 20) {
+        this.mentionSearchQuery = queryText;
+        const filtered = this.allUsers().filter(u => 
+          u.displayName.toLowerCase().includes(queryText.toLowerCase())
+        );
+        this.filteredUsers.set(filtered);
+        this.showAutocomplete.set(filtered.length > 0);
+        return;
+      }
+    }
+    
+    this.showAutocomplete.set(false);
+  }
+
+  selectMention(user: User) {
+    const text = this.messageText;
+    const selectionStart = this.messageInputEl ? this.messageInputEl.nativeElement.selectionStart : text.length;
+    
+    const textBeforeCursor = text.slice(0, selectionStart);
+    const textAfterCursor = text.slice(selectionStart);
+    
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    if (lastAtIndex !== -1) {
+      const cleanedName = user.displayName.replace(/\s+/g, '');
+      const newTextBeforeCursor = textBeforeCursor.slice(0, lastAtIndex) + '@' + cleanedName + ' ';
+      
+      this.messageText = newTextBeforeCursor + textAfterCursor;
+      this.showAutocomplete.set(false);
+      
+      setTimeout(() => {
+        if (this.messageInputEl) {
+          this.messageInputEl.nativeElement.focus();
+          const newCursorPos = newTextBeforeCursor.length;
+          this.messageInputEl.nativeElement.setSelectionRange(newCursorPos, newCursorPos);
+        }
+      }, 50);
+    }
+  }
+
   // Lazy load history on scroll to top
   async onScroll() {
     const element = this.scrollContainer.nativeElement;
-    // Since column-reverse is used:
-    // element.scrollTop is 0 when at the bottom (newest messages).
-    // element.scrollTop is negative on some browsers, or scrollHeight - clientHeight when scrolled up to the top.
-    // Let's check if the user scrolled to the "top" (which is oldest messages, i.e., element.scrollTop + element.clientHeight >= element.scrollHeight - 5)
     const scrolledToTop = Math.abs(element.scrollTop) + element.clientHeight >= element.scrollHeight - 10;
     
     if (scrolledToTop && !this.isLoadingMore() && this.hasMoreHistory() && this.messages().length > 0) {
       this.isLoadingMore.set(true);
       
-      // Get the timestamp of the oldest message loaded (which is the last element in our array)
       const oldestMsg = this.messages()[this.messages().length - 1];
       if (oldestMsg && oldestMsg.timestamp) {
         const oldestDate = oldestMsg.timestamp.toDate ? oldestMsg.timestamp.toDate() : new Date(oldestMsg.timestamp);
@@ -330,10 +453,9 @@ export class ChatComponent implements OnInit {
         try {
           const olderMsgs = await this.chatService.getMoreMessages(oldestDate, 50);
           if (olderMsgs.length < 50) {
-            this.hasMoreHistory.set(false); // No more older history
+            this.hasMoreHistory.set(false);
           }
           if (olderMsgs.length > 0) {
-            // Append older messages to our array
             this.messages.update(prev => [...prev, ...olderMsgs]);
           }
         } catch (err) {
@@ -349,7 +471,7 @@ export class ChatComponent implements OnInit {
       try {
         this.scrollContainer.nativeElement.scrollTop = 0;
       } catch {
-        // ignore scroll errors when element is not rendered
+        // ignore
       }
     }, 100);
   }

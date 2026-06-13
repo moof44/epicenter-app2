@@ -1,18 +1,150 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect, OnDestroy } from '@angular/core';
 import { Firestore, collection, collectionData, query, orderBy, limit, addDoc, startAfter, getDocs, Timestamp } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
 import { ChatMessage } from '../models/chat.model';
 
 @Injectable({
   providedIn: 'root'
 })
-export class ChatService {
+export class ChatService implements OnDestroy {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
   private messagesCollection = collection(this.firestore, 'chats/global/messages');
   
   isChatOpen = signal(false);
+  unreadCount = signal(0);
+  triggerWobble = signal(false);
+  hasDirectMention = signal(false);
+  lastMessageText = signal('');
+  lastMessageSender = signal('');
+  previewActive = signal(false);
+  
+  private messagesSub: Subscription | null = null;
+  private lastReadDate: Date | null = null;
+  private previewTimeout: any = null;
+
+  constructor() {
+    effect(() => {
+      const user = this.authService.userProfile();
+      const isOpen = this.isChatOpen();
+      
+      setTimeout(() => {
+        if (user) {
+          const storedKey = `chat_last_read_${user.uid}`;
+          const storedVal = localStorage.getItem(storedKey);
+          this.lastReadDate = storedVal ? new Date(storedVal) : null;
+          
+          if (isOpen) {
+            this.resetUnreadCount(user.uid);
+          }
+          this.setupMessagesListener(user.uid);
+        } else {
+          this.cleanupListener();
+          this.unreadCount.set(0);
+          this.lastReadDate = null;
+        }
+      });
+    });
+  }
+
+  private setupMessagesListener(userId: string) {
+    this.cleanupListener();
+    
+    const q = query(
+      this.messagesCollection,
+      orderBy('timestamp', 'desc'),
+      limit(50)
+    );
+    
+    this.messagesSub = (collectionData(q, { idField: 'id' }) as Observable<ChatMessage[]>).subscribe(msgs => {
+      if (this.isChatOpen()) {
+        this.resetUnreadCount(userId);
+      } else {
+        if (msgs && msgs.length > 0) {
+          const currentUserId = userId;
+          const user = this.authService.userProfile();
+          const lastRead = this.lastReadDate;
+          
+          let count = 0;
+          let newestNewMsg: ChatMessage | null = null;
+          
+          if (!lastRead) {
+            count = msgs.filter(m => m.senderId !== currentUserId).length;
+            newestNewMsg = msgs.find(m => m.senderId !== currentUserId) || null;
+          } else {
+            count = msgs.filter(m => {
+              if (m.senderId === currentUserId) return false;
+              if (!m.timestamp) return false;
+              const msgDate = m.timestamp.toDate ? m.timestamp.toDate() : new Date(m.timestamp);
+              return msgDate > lastRead;
+            }).length;
+            newestNewMsg = msgs.find(m => {
+              if (m.senderId === currentUserId) return false;
+              if (!m.timestamp) return false;
+              const msgDate = m.timestamp.toDate ? m.timestamp.toDate() : new Date(m.timestamp);
+              return msgDate > lastRead;
+            }) || null;
+          }
+          
+          this.unreadCount.set(count);
+          
+          if (newestNewMsg) {
+            // Check for direct mention
+            if (user && user.displayName) {
+              const cleanedName = user.displayName.replace(/\s+/g, '');
+              const mentionPattern = new RegExp(`@${user.displayName}|@${cleanedName}`, 'i');
+              if (mentionPattern.test(newestNewMsg.content)) {
+                this.hasDirectMention.set(true);
+              }
+            }
+            
+            // Trigger temporary wobble
+            this.triggerWobble.set(true);
+            setTimeout(() => this.triggerWobble.set(false), 1500);
+            
+            // Trigger preview bubble
+            this.lastMessageText.set(newestNewMsg.content);
+            this.lastMessageSender.set(newestNewMsg.senderName);
+            this.previewActive.set(true);
+            
+            if (this.previewTimeout) clearTimeout(this.previewTimeout);
+            this.previewTimeout = setTimeout(() => {
+              this.previewActive.set(false);
+            }, 4000);
+          }
+        } else {
+          this.unreadCount.set(0);
+        }
+      }
+    });
+  }
+
+  resetUnreadCount(userId: string) {
+    const storedKey = `chat_last_read_${userId}`;
+    const now = new Date();
+    localStorage.setItem(storedKey, now.toISOString());
+    this.lastReadDate = now;
+    this.unreadCount.set(0);
+    this.hasDirectMention.set(false);
+    this.previewActive.set(false);
+    this.triggerWobble.set(false);
+    if (this.previewTimeout) {
+      clearTimeout(this.previewTimeout);
+      this.previewTimeout = null;
+    }
+  }
+
+  private cleanupListener() {
+    if (this.messagesSub) {
+      this.messagesSub.unsubscribe();
+      this.messagesSub = null;
+    }
+  }
+
+  ngOnDestroy() {
+    this.cleanupListener();
+  }
 
   getRecentMessages(limitNum = 50): Observable<ChatMessage[]> {
     const q = query(
