@@ -597,13 +597,14 @@ export const onDailySummaryReport = functions.pubsub.schedule('0 21 * * *')
     .timeZone('Asia/Manila') // Match local timezone
     .onRun(async (context) => {
         const db = admin.firestore();
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Resolve timezone-safe local date boundary for Asia/Manila (GMT+8)
+        const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+        const todayLocalStart = new Date(`${dateStr}T00:00:00+08:00`);
         
         try {
             // 1. Query today's sales transactions
             const txsSnap = await db.collection('transactions')
-                .where('date', '>=', today)
+                .where('date', '>=', todayLocalStart)
                 .get();
             
             let totalSales = 0;
@@ -616,23 +617,21 @@ export const onDailySummaryReport = functions.pubsub.schedule('0 21 * * *')
 
             // 2. Query today's attendance count
             const attendanceSnap = await db.collection('attendance')
-                .where('checkInTime', '>=', today)
+                .where('checkInTime', '>=', todayLocalStart)
                 .get();
             const attendanceCount = attendanceSnap.size;
 
             // 3. Query today's closed shifts to calculate total discrepancy
+            // We query by date range to read only today's shifts (saves Firestore reads)
             const shiftsSnap = await db.collection('shifts')
-                .where('status', '==', 'CLOSED')
-                .get(); // query closed shifts and filter dates in memory
+                .where('endTime', '>=', todayLocalStart)
+                .get();
             
             let totalDiscrepancies = 0;
             shiftsSnap.docs.forEach(doc => {
                 const shift = doc.data();
-                if (shift.endTime) {
-                    const closedDate = shift.endTime.toDate ? shift.endTime.toDate() : new Date(shift.endTime);
-                    if (closedDate >= today) {
-                        totalDiscrepancies += shift.discrepancy || 0;
-                    }
+                if (shift.status === 'CLOSED') {
+                    totalDiscrepancies += shift.discrepancy || 0;
                 }
             });
 

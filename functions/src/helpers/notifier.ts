@@ -1,5 +1,43 @@
 import * as admin from 'firebase-admin';
 
+let cachedStaff: { id: string; roles: string[]; isActive: boolean }[] | null = null;
+let cacheExpiry = 0;
+
+/**
+ * Retrieves the list of active staff members, caching it in global memory for 5 minutes
+ * to minimize Firestore read counts on rapid sequential operations.
+ */
+async function getActiveStaff(db: admin.firestore.Firestore): Promise<{ id: string; roles: string[]; isActive: boolean }[]> {
+  const now = Date.now();
+  if (cachedStaff && now < cacheExpiry) {
+    return cachedStaff;
+  }
+
+  try {
+    const snap = await db.collection('users')
+      .where('isActive', '!=', false)
+      .get();
+
+    cachedStaff = snap.docs
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          roles: data.roles || [],
+          isActive: data.isActive !== false
+        };
+      })
+      .filter(u => u.isActive);
+
+    cacheExpiry = now + 5 * 60 * 1000; // Cache valid for 5 minutes
+    return cachedStaff;
+  } catch (error) {
+    console.error('Failed to fetch active staff for caching:', error);
+    // If query fails, return stale cache as fallback if available, else empty array
+    return cachedStaff || [];
+  }
+}
+
 export async function sendNotificationsToRoles(
   roles: string[],
   payload: { 
@@ -13,19 +51,13 @@ export async function sendNotificationsToRoles(
   const db = admin.firestore();
   
   try {
-    // 1. Fetch active users matching the roles
-    const usersSnap = await db.collection('users')
-      .where('roles', 'array-contains-any', roles)
-      .where('isActive', '!=', false) // includes undefined (default active) and explicit true
-      .get();
-
-    const userIds = usersSnap.docs
-      .filter(doc => {
-        const u = doc.data();
-        // In array-contains-any queries, double check if active
-        return u.isActive !== false;
-      })
-      .map(doc => doc.id);
+    // 1. Get active staff (using in-memory cache if warm)
+    const staffList = await getActiveStaff(db);
+    
+    // Filter staff UIDs matching target roles
+    const userIds = staffList
+      .filter(u => u.roles.some(r => roles.includes(r)))
+      .map(u => u.id);
 
     if (userIds.length === 0) {
       console.log('No active users found for roles:', roles);

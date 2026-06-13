@@ -93,6 +93,15 @@ export class NotificationService implements OnDestroy {
   }
 
   private async registerDeviceToken(userId: string, token: string) {
+    const storageKey = `fcm_registered_${userId}_${token.substring(0, 20)}`;
+    const lastWrite = localStorage.getItem(storageKey);
+    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+
+    if (lastWrite && parseInt(lastWrite, 10) > threeDaysAgo) {
+      // Skip redundant Firestore write (saves costs)
+      return;
+    }
+
     const tokenDocId = btoa(token).replace(/=/g, '').substring(0, 50); // Unique safe doc ID
     const tokenRef = doc(this.firestore, `users/${userId}/fcmTokens/${tokenDocId}`);
     
@@ -103,6 +112,8 @@ export class NotificationService implements OnDestroy {
       createdAt: Timestamp.now(),
       lastUsedAt: Timestamp.now()
     }, { merge: true });
+
+    localStorage.setItem(storageKey, Date.now().toString());
   }
 
   private getPlatform(): 'desktop' | 'android' | 'ios' {
