@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
+import { sendNotificationsToRoles } from './helpers/notifier';
 
 admin.initializeApp();
 
@@ -445,6 +446,18 @@ export const onTransactionUpdated = functions.firestore.document('/transactions/
                 amount: after.totalAmount
             }
         });
+
+        // Trigger manager/admin notifications (Phase 2)
+        await sendNotificationsToRoles(['ADMIN', 'MANAGER'], {
+            title: '⚠️ Transaction Voided',
+            body: `Sale #${context.params.transactionId.slice(0, 8)} was voided by ${after.voidedBy || 'Staff'}. Reason: ${after.voidReason || 'None'}`,
+            type: 'warning',
+            actionUrl: '/store/transactions',
+            metadata: {
+                triggeredBy: after.voidedBy,
+                itemId: context.params.transactionId
+            }
+        });
     }
 });
 
@@ -498,6 +511,20 @@ export const onShiftUpdated = functions.firestore.document('/shifts/{shiftId}').
                 amount: after.discrepancy || 0
             }
         });
+
+        // Trigger discrepancy alert notification if discrepancy exists (Phase 2)
+        if (after.discrepancy && Math.abs(after.discrepancy) > 0.01) {
+            await sendNotificationsToRoles(['ADMIN', 'MANAGER'], {
+                title: 'Shift Closed - Discrepancy Alert',
+                body: `Shift closed by ${after.closedBy || 'Staff'} with a discrepancy of $${after.discrepancy}.`,
+                type: 'alert',
+                actionUrl: '/store/shifts',
+                metadata: {
+                    triggeredBy: after.closedBy,
+                    itemId: context.params.shiftId
+                }
+            });
+        }
     }
 
     // 2. Cash transactions (Expense, Float In/Out) detection
@@ -542,4 +569,89 @@ export const onShiftUpdated = functions.firestore.document('/shifts/{shiftId}').
         }
     }
 });
+
+/**
+ * Triggered when a member registers check-in attendance.
+ * Notifies staff and managers to offer personalized greeting/assistance.
+ */
+export const onMemberCheckInNotification = functions.firestore.document('/attendance/{attendanceId}').onCreate(async (snapshot, context) => {
+    const attendance = snapshot.data() || {};
+    const memberName = attendance.memberName || 'A member';
+    
+    await sendNotificationsToRoles(['ADMIN', 'MANAGER', 'STAFF'], {
+        title: 'Member Checked In',
+        body: `${memberName} has checked in. Ensure staff offer excellent service!`,
+        type: 'info',
+        actionUrl: '/attendance',
+        metadata: {
+            itemId: attendance.memberId || ''
+        }
+    });
+});
+
+/**
+ * Scheduled nightly function (running at 9:00 PM) to aggregate the day's operations
+ * (total sales, check-ins, register discrepancies) and notify admins/managers.
+ */
+export const onDailySummaryReport = functions.pubsub.schedule('0 21 * * *')
+    .timeZone('Asia/Manila') // Match local timezone
+    .onRun(async (context) => {
+        const db = admin.firestore();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        try {
+            // 1. Query today's sales transactions
+            const txsSnap = await db.collection('transactions')
+                .where('date', '>=', today)
+                .get();
+            
+            let totalSales = 0;
+            txsSnap.docs.forEach(doc => {
+                const tx = doc.data();
+                if (tx.status !== 'VOID') {
+                    totalSales += tx.totalAmount || 0;
+                }
+            });
+
+            // 2. Query today's attendance count
+            const attendanceSnap = await db.collection('attendance')
+                .where('checkInTime', '>=', today)
+                .get();
+            const attendanceCount = attendanceSnap.size;
+
+            // 3. Query today's closed shifts to calculate total discrepancy
+            const shiftsSnap = await db.collection('shifts')
+                .where('status', '==', 'CLOSED')
+                .get(); // query closed shifts and filter dates in memory
+            
+            let totalDiscrepancies = 0;
+            shiftsSnap.docs.forEach(doc => {
+                const shift = doc.data();
+                if (shift.endTime) {
+                    const closedDate = shift.endTime.toDate ? shift.endTime.toDate() : new Date(shift.endTime);
+                    if (closedDate >= today) {
+                        totalDiscrepancies += shift.discrepancy || 0;
+                    }
+                }
+            });
+
+            // 4. Send report
+            const body = `Sales: $${totalSales.toFixed(2)} | Attendance: ${attendanceCount} check-ins | Discrepancies: $${totalDiscrepancies.toFixed(2)}`;
+            await sendNotificationsToRoles(['ADMIN', 'MANAGER'], {
+                title: '📊 Daily Gym Summary',
+                body,
+                type: 'summary',
+                actionUrl: '/reports',
+                metadata: {
+                    totalSales,
+                    attendanceCount,
+                    totalDiscrepancies
+                }
+            });
+            console.log('Daily summary successfully dispatched:', body);
+        } catch (err) {
+            console.error('Failed to compile daily operations summary:', err);
+        }
+    });
 

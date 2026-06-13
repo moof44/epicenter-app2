@@ -7,6 +7,7 @@
     <span class="toolbar-spacer"></span>
     <app-quota-status-widget *ngIf="authService.isLoggedIn()"></app-quota-status-widget>
     <app-shift-status-widget *ngIf="authService.isLoggedIn()"></app-shift-status-widget>
+    <app-notification-bell *ngIf="authService.isLoggedIn()"></app-notification-bell>
     <button mat-icon-button *ngIf="authService.isLoggedIn()" (click)="toggleChat()" title="Toggle Vigilance Chat"
             [matBadge]="chatService.unreadCount() > 0 ? chatService.unreadCount() : null" matBadgeColor="warn">
       <mat-icon [class.chat-active-icon]="chatService.isChatOpen()">chat</mat-icon>

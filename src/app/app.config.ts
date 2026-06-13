@@ -4,6 +4,7 @@ import { initializeApp, provideFirebaseApp, getApp } from '@angular/fire/app';
 import { provideFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from '@angular/fire/firestore';
 import { getFunctions, provideFunctions } from '@angular/fire/functions';
 import { getAuth, provideAuth } from '@angular/fire/auth';
+import { getMessaging, provideMessaging } from '@angular/fire/messaging';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { firebaseConfig } from './core/firebase.config';
 
@@ -19,6 +20,7 @@ export const appConfig: ApplicationConfig = {
     })),
     provideFunctions(() => getFunctions()),
     provideAuth(() => getAuth()),
+    provideMessaging(() => getMessaging()),
     provideAnimationsAsync()
   ]
 };

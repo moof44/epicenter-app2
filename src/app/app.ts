@@ -17,6 +17,8 @@ import { StaffRemindersComponent } from './core/components/staff-reminders/staff
 import { IdleRedirectService } from './core/services/idle-redirect.service';
 import { ChatComponent } from './features/chat/chat.component';
 import { ChatService } from './core/services/chat.service';
+import { NotificationBellComponent } from './shared/components/notification-bell/notification-bell.component';
+import { NotificationService } from './core/services/notification.service';
 
 @Component({
   selector: 'app-root',
@@ -28,7 +30,8 @@ import { ChatService } from './core/services/chat.service';
     ShiftStatusWidget,
     QuotaStatusWidget,
     StaffRemindersComponent,
-    ChatComponent
+    ChatComponent,
+    NotificationBellComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -43,6 +46,7 @@ export class App implements OnDestroy {
 
   readonly authService = inject(AuthService);
   readonly chatService = inject(ChatService);
+  readonly notificationService = inject(NotificationService);
   private idleRedirectService = inject(IdleRedirectService);
 
   constructor() {
