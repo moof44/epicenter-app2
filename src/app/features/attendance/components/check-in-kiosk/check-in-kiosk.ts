@@ -66,6 +66,14 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
             </button>
         </div>
         <h3>Welcome, {{selectedMember.name}}!</h3>
+        
+        <div *ngIf="getMembershipStatusDetails() as status" class="subscription-info-card" [ngClass]="status.class">
+          <mat-icon>{{status.icon}}</mat-icon>
+          <span *ngIf="status.type === 'none'">{{status.label}}</span>
+          <span *ngIf="status.type === 'expired'">{{status.label}} ({{status.date | date:'mediumDate'}})</span>
+          <span *ngIf="status.type === 'active'">{{status.label}} {{status.date | date:'mediumDate'}}</span>
+        </div>
+
         <p>Select a locker (optional) or just Check In.</p>
         
         <div class="locker-grid">
@@ -121,6 +129,33 @@ import { RemarksDialog, RemarksDialogResult } from '../../../../shared/component
     .check-in-btn { padding: var(--spacing-lg); font-size: 1.2rem; }
     .occupied { background-color: #e2e8f0 !important; color: #94a3b8 !important; }
     .selected { background-color: #4ade80 !important; color: #000 !important; transform: scale(1.1); }
+    .subscription-info-card {
+      margin: 16px auto;
+      padding: 10px 16px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      border: 1px solid transparent;
+    }
+    .subscription-info-card.active {
+      background-color: #f0fdf4;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+    .subscription-info-card.expired {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+    .subscription-info-card.no-subscription {
+      background-color: #f8fafc;
+      color: #475569;
+      border-color: #e2e8f0;
+    }
 
     @media (max-width: 480px) {
         .card-header { flex-direction: column; gap: 12px; align-items: stretch; }
@@ -181,6 +216,49 @@ export class CheckInKiosk implements OnInit {
     this.selectedLocker = null;
     if (this.selectedMember && this.selectedMember.gender) { // Check gender exists
       this.occupiedLockers = await this.attendanceService.getOccupiedLockers(this.selectedMember.gender);
+    }
+  }
+
+  getMembershipStatusDetails() {
+    if (!this.selectedMember) return null;
+
+    const exp = this.selectedMember.membershipExpiration;
+    if (!exp) {
+      return {
+        type: 'none',
+        label: 'No Monthly Subscription',
+        class: 'no-subscription',
+        icon: 'info'
+      };
+    }
+
+    let expDate: Date;
+    if (exp instanceof Date) {
+      expDate = exp;
+    } else if (exp && typeof (exp as any).toDate === 'function') {
+      expDate = (exp as any).toDate();
+    } else {
+      expDate = new Date(exp as any);
+    }
+
+    const isExpired = this.memberService.isMembershipExpired(this.selectedMember);
+
+    if (isExpired) {
+      return {
+        type: 'expired',
+        label: 'Expired',
+        date: expDate,
+        class: 'expired',
+        icon: 'error'
+      };
+    } else {
+      return {
+        type: 'active',
+        label: 'Active until',
+        date: expDate,
+        class: 'active',
+        icon: 'check_circle'
+      };
     }
   }
 
