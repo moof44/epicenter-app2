@@ -129,11 +129,13 @@ mat-sidenav[position="end"] {
   display: flex;
   align-items: center;
   gap: 12px;
+  pointer-events: none;
 }
 
 .chat-fab-launcher {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
+  pointer-events: auto;
 }
 
 .chat-fab-launcher.has-unread {
