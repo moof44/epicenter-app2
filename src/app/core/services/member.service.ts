@@ -18,7 +18,7 @@ import {
     where,
     QueryDocumentSnapshot,
 } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 import { Member } from '../models/member.model';
 import { createConverter } from '../utils/firestore-converter.utils';
 
@@ -32,6 +32,8 @@ export class MemberService {
         createConverter<Member>()
     );
 
+    private members$?: Observable<Member[]>;
+
     private get _currentUserSnapshot() {
         const user = this.authService.userProfile();
         if (!user) throw new Error('Action requires authentication');
@@ -43,8 +45,13 @@ export class MemberService {
     }
 
     getMembers(): Observable<Member[]> {
-        const q = query(this.membersCollection, orderBy('name'));
-        return collectionData(q);
+        if (!this.members$) {
+            const q = query(this.membersCollection, orderBy('name'));
+            this.members$ = collectionData(q).pipe(
+                shareReplay({ bufferSize: 1, refCount: false })
+            );
+        }
+        return this.members$;
     }
 
     async getMembersPage(

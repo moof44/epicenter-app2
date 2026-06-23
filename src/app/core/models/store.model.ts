@@ -29,6 +29,10 @@ export interface CartItem {
     overrideReason?: string;
     quantity: number;
     subtotal: number;
+    productCategory?: string;
+    discountAmount?: number;
+    appliedDiscountId?: string;
+    appliedDiscountName?: string;
 }
 
 export interface Transaction {

@@ -118,6 +118,27 @@ export class CheckoutService {
         const transactionRef = doc(this.transactionsCollection);
         batch.set(transactionRef, transaction);
 
+        // 3.5. Auto-tag member with 'FOUNDER' badge if buying eligible launch products (July 1 - August 31, 2026)
+        if (memberId) {
+            const startWindow = new Date('2026-07-01T00:00:00');
+            const endWindow = new Date('2026-08-31T23:59:59');
+            if (timestamp >= startWindow && timestamp <= endWindow) {
+                const targetProductIds = [
+                    'Qfi33eVnbxN6kIPRTGbT', // Monthly Membership
+                    'TKNm92Ekg87gub4eHCHO', // Monthly Membership (w/ coaching)
+                    'GxNrhJR5CVSpnQuy4PwN', // Personal Training (1 Month)
+                    'kA3g2qW4jS1u235leAjK'  // Personal Training (1 Month) (Group)
+                ];
+                const hasEligibleProduct = cartItems.some(item => targetProductIds.includes(item.productId));
+                if (hasEligibleProduct) {
+                    const memberRef = doc(this.firestore, 'members', memberId);
+                    batch.update(memberRef, {
+                        tags: arrayUnion('FOUNDER')
+                    });
+                }
+            }
+        }
+
         // 4. Update daily_sales (denormalized aggregate)
         const dateStr = toLocalDateStr(timestamp);
         const dfsRef = doc(this.firestore, 'daily_sales', dateStr);

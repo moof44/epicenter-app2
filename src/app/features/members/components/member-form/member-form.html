@@ -89,6 +89,17 @@
             placeholder="Ex. Forgot locker key, Needs medical clearance"></textarea>
         </mat-form-field>
 
+        <!-- Badges & Tags -->
+        <mat-form-field appearance="outline" class="full-width" *ngIf="availableBadges.length > 0">
+          <mat-label>Member Badges / Tags</mat-label>
+          <mat-select formControlName="tags" multiple>
+            <mat-option *ngFor="let badge of availableBadges" [value]="badge.id">
+              {{ badge.name }} ({{ badge.id }})
+            </mat-option>
+          </mat-select>
+          <mat-hint>Select badges to apply exclusive pricing and dashboard indicators</mat-hint>
+        </mat-form-field>
+
         <div class="actions">
           <button mat-button type="button" (click)="cancel()">Cancel</button>
           <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">

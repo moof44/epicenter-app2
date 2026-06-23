@@ -705,3 +705,41 @@ mat-card-content {
     gap: 6px;
   }
 }
+
+/* Badge Styles */
+.selected-member-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.member-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mobile-badges {
+  margin-top: 6px;
+}
+
+.badge-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  display: inline-flex;
+  align-items: center;
+}
+
+.item-override-reason {
+  font-size: 11px;
+  color: #f57c00;
+  display: block;
+  font-style: italic;
+  margin-top: 2px;
+}

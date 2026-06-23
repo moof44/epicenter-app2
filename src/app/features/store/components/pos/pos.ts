@@ -1,5 +1,5 @@
 import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,6 +20,8 @@ import { CartStore } from '../../../../core/store/cart.store';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { MemberService } from '../../../../core/services/member.service';
+import { BadgeService } from '../../../../core/services/badge.service';
+import { BadgeDefinition } from '../../../../core/models/badge.model';
 import { Product, CartItem, ProductCategory } from '../../../../core/models/store.model';
 import { Observable, map, firstValueFrom, debounceTime, switchMap, of } from 'rxjs';
 import { fadeIn } from '../../../../core/animations/animations';
@@ -57,9 +59,18 @@ export class POS {
   private dialog = inject(MatDialog);
   private authService = inject(AuthService);
   private memberService = inject(MemberService);
-
-
   private cashRegisterService = inject(CashRegisterService);
+  private badgeService = inject(BadgeService);
+
+  badgeDefinitions = toSignal(this.badgeService.getBadges().pipe(
+    map(badges => {
+      const mapping: Record<string, BadgeDefinition> = {};
+      badges.forEach(b => {
+        mapping[b.id.toUpperCase()] = b;
+      });
+      return mapping;
+    })
+  ), { initialValue: {} as Record<string, BadgeDefinition> });
 
   products$: Observable<Product[]> = this.productService.getProducts().pipe(
     map(products => products.filter(p => p.type !== 'CONSUMABLE'))
@@ -149,15 +160,18 @@ export class POS {
       );
     })
   );
-  selectedMember = signal<{ id: string | null; name: string } | null>(null);
+  selectedMember = signal<{ id: string | null; name: string; tags: string[] } | null>(null);
 
   selectMember(member: any): void {
-    this.selectedMember.set({ id: member.id, name: member.name });
+    const tags = member.tags || [];
+    this.selectedMember.set({ id: member.id, name: member.name, tags });
+    this.cartStore.setMemberTags(tags);
   }
 
   clearMember(): void {
     this.selectedMember.set(null);
     this.memberControl.setValue('');
+    this.cartStore.setMemberTags([]);
   }
 
   displayMember(member: any): string {
