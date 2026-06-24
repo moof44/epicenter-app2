@@ -18,6 +18,23 @@ import { CashRegisterService } from './cash-register.service';
 import { ReportStateService } from './report.state.service';
 import { toLocalDateStr } from '../utils/date.utils';
 
+function cleanUndefined(obj: any): any {
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(cleanUndefined);
+    }
+    const cleanObj: any = {};
+    for (const key of Object.keys(obj)) {
+        const val = obj[key];
+        if (val !== undefined) {
+            cleanObj[key] = cleanUndefined(val);
+        }
+    }
+    return cleanObj;
+}
+
 @Injectable({
     providedIn: 'root',
 })
@@ -97,7 +114,7 @@ export class CheckoutService {
                 staffId: staff?.uid,
                 staffName: staff?.displayName,
             };
-            batch.set(logRef, log);
+            batch.set(logRef, cleanUndefined(log));
         }
 
         // 3. Create transaction record
@@ -116,7 +133,7 @@ export class CheckoutService {
             memberName: memberName || 'Walk-in',
         };
         const transactionRef = doc(this.transactionsCollection);
-        batch.set(transactionRef, transaction);
+        batch.set(transactionRef, cleanUndefined(transaction));
 
         // 3.5. Auto-tag member with 'FOUNDER' badge if buying eligible launch products (July 1 - August 31, 2026)
         if (memberId) {

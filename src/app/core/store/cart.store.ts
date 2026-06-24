@@ -41,16 +41,17 @@ function recalculateItemDiscount(
             subtotal: item.quantity * result.newPrice
         };
     } else {
-        return {
+        const cleanItem = {
             ...item,
             price: item.originalPrice,
             discountAmount: 0,
-            appliedDiscountId: undefined,
-            appliedDiscountName: undefined,
             isPriceOverridden: false,
-            overrideReason: undefined,
             subtotal: item.quantity * item.originalPrice
         };
+        delete cleanItem.appliedDiscountId;
+        delete cleanItem.appliedDiscountName;
+        delete cleanItem.overrideReason;
+        return cleanItem;
     }
 }
 
@@ -140,16 +141,21 @@ export const CartStore = signalStore(
         updatePrice(productId: string, newPrice: number, reason: string): void {
             const updated = store.items().map((item) => {
                 if (item.productId === productId) {
-                    return {
+                    const cleanItem = {
                         ...item,
                         price: newPrice,
                         isPriceOverridden: newPrice !== item.originalPrice,
-                        overrideReason: reason,
                         discountAmount: 0,
-                        appliedDiscountId: undefined,
-                        appliedDiscountName: undefined,
                         subtotal: item.quantity * newPrice,
                     };
+                    if (reason) {
+                        cleanItem.overrideReason = reason;
+                    } else {
+                        delete cleanItem.overrideReason;
+                    }
+                    delete cleanItem.appliedDiscountId;
+                    delete cleanItem.appliedDiscountName;
+                    return cleanItem;
                 }
                 return item;
             });
