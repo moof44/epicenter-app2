@@ -234,6 +234,7 @@ html {
   flex-grow: 0;      /* ← critical: prevents header from gobbling all flex space */
 }
 
+.pos-stepper .mat-horizontal-stepper-wrapper,
 .pos-stepper .mat-horizontal-content-container {
   padding: 0 !important;
   flex: 1;
