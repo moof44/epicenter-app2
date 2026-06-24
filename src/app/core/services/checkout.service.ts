@@ -18,8 +18,13 @@ import { CashRegisterService } from './cash-register.service';
 import { ReportStateService } from './report.state.service';
 import { toLocalDateStr } from '../utils/date.utils';
 
-function cleanUndefined(obj: any): any {
+export function cleanUndefined(obj: any): any {
     if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+    const proto = Object.getPrototypeOf(obj);
+    const isPlain = proto === null || proto === Object.prototype;
+    if (!isPlain && !Array.isArray(obj)) {
         return obj;
     }
     if (Array.isArray(obj)) {
