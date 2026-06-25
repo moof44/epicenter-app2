@@ -1,6 +1,7 @@
 import { Component, inject, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../core/services/dashboard.service';
+import { ShareCardService } from '../core/services/share-card.service';
 import { AttendanceCalendarComponent } from '../shared/components/attendance-calendar/attendance-calendar.component';
 
 @Component({
@@ -11,9 +12,22 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
     <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in">
       
       <!-- Top Title Section -->
-      <div class="border-b border-bg-surface-alt pb-4">
-        <h1 class="text-2xl font-black font-oswald text-gold-primary tracking-wide uppercase">My Attendance Tracking</h1>
-        <p class="text-xs text-text-secondary mt-0.5">Visualize your gym visit streaks and scan check-in history</p>
+      <div class="border-b border-bg-surface-alt pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-black font-oswald text-gold-primary tracking-wide uppercase">My Attendance Tracking</h1>
+          <p class="text-xs text-text-secondary mt-0.5">Visualize your gym visit streaks and scan check-in history</p>
+        </div>
+        
+        <button 
+          (click)="openConsistencyShareModal(); $event.stopPropagation()"
+          class="w-full sm:w-auto h-10 px-5 border border-gold-primary/30 hover:border-gold-primary/60 bg-gold-primary/10 hover:bg-gold-primary/20 text-gold-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer shadow-sm animate-fade-in"
+          title="Share Consistency Card"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186l5.308-2.654m-5.308 2.654l5.308 2.654m-9.754-2.654a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm9.754-5.308a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm0 10.616a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Z" />
+          </svg>
+          <span>Share Consistency</span>
+        </button>
       </div>
 
       @if (dashboardService.loading()) {
@@ -241,6 +255,86 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
 
       }
 
+      <!-- Share Achievement Modal -->
+      @if (isShareModalOpen()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div class="bg-bg-surface border border-bg-surface-alt rounded-2xl w-full max-w-sm overflow-hidden shadow-[0_10px_30px_rgba(212,175,55,0.15)] flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-bg-surface-alt flex justify-between items-center">
+              <h3 class="font-bold font-oswald text-gold-light uppercase tracking-wider text-sm">{{ shareModalTitle() }}</h3>
+              <button 
+                (click)="closeShareModal()" 
+                class="text-text-secondary hover:text-text-primary text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 flex-1 flex flex-col items-center justify-center overflow-y-auto">
+              @if (generatingShareImage()) {
+                <!-- Loading Spinner -->
+                <div class="flex flex-col items-center justify-center py-12 gap-4">
+                  <div class="w-12 h-12 border-4 border-gold-dim border-t-gold-primary rounded-full animate-spin"></div>
+                  <span class="text-xs text-text-secondary font-medium font-mono">Forging your custom Story Card...</span>
+                </div>
+              } @else if (shareImageUrl()) {
+                <!-- Image Preview -->
+                <div class="relative w-full aspect-[9/16] max-h-[50vh] rounded-xl overflow-hidden border border-bg-surface-alt shadow-lg">
+                  <img 
+                    [src]="shareImageUrl()" 
+                    alt="Share Card Preview" 
+                    class="w-full h-full object-contain bg-[#0a0a0b]"
+                  />
+                </div>
+              } @else {
+                <!-- Error Fallback -->
+                <div class="text-center py-6 text-red-400 text-xs">
+                  ⚠️ Failed to generate card preview. Please try again.
+                </div>
+              }
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-bg-surface-alt flex flex-col gap-2 bg-bg-surface-alt/25">
+              @if (!generatingShareImage() && shareImageUrl()) {
+                <button 
+                  (click)="triggerNativeShare()"
+                  class="btn-primary w-full h-11 font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-1.5"
+                >
+                  <span>{{ canUseWebShare() ? 'Share to Stories' : 'Download Graphic' }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15" />
+                  </svg>
+                </button>
+                
+                @if (!canUseWebShare()) {
+                  <button 
+                    (click)="copyShareCaption()"
+                    class="w-full h-10 border border-bg-surface-alt hover:bg-bg-surface-alt/40 text-text-primary text-[10px] font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <span>Copy Text Caption</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-gold-primary">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.524 3h-2.997a2.25 2.25 0 0 0-2.143 1.888L7.5 9v9a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 19.5 18V9a2.25 2.25 0 0 0-1.584-2.112L15.666 3.888Z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 16.5h-3m3-3h-3" />
+                    </svg>
+                  </button>
+                }
+              }
+              
+              <button 
+                (click)="closeShareModal()"
+                class="w-full h-10 border border-transparent hover:text-text-primary text-text-secondary text-[10px] font-bold font-oswald uppercase tracking-wider rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+
+          </div>
+        </div>
+      }
+
     </div>
   `,
   styles: [`
@@ -265,6 +359,135 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
 })
 export class AttendanceComponent {
   readonly dashboardService = inject(DashboardService);
+  readonly shareCardService = inject(ShareCardService);
+
+  // Sharing Card Signals & State
+  isShareModalOpen = signal<boolean>(false);
+  generatingShareImage = signal<boolean>(false);
+  shareImageUrl = signal<string | null>(null);
+  shareBlob = signal<Blob | null>(null);
+  shareBadgeTitle = 'Consistency Calendar';
+  shareBadgeId = 'consistency-calendar';
+  shareModalTitle = signal<string>('Share Consistency');
+
+  async openConsistencyShareModal() {
+    this.shareModalTitle.set('Share Consistency');
+    this.shareBadgeTitle = 'Consistency Calendar';
+    this.shareBadgeId = 'consistency-calendar';
+    this.isShareModalOpen.set(true);
+    this.generatingShareImage.set(true);
+    this.shareImageUrl.set(null);
+    this.shareBlob.set(null);
+
+    try {
+      const blob = await this.shareCardService.generateConsistencyCard(
+        this.memberName(),
+        this.streak(),
+        this.highestTierBadge(),
+        this.attendanceDates()
+      );
+      this.shareBlob.set(blob);
+      const url = URL.createObjectURL(blob);
+      this.shareImageUrl.set(url);
+    } catch (err) {
+      console.error('Failed to generate consistency card image:', err);
+    } finally {
+      this.generatingShareImage.set(false);
+    }
+  }
+
+  closeShareModal() {
+    this.isShareModalOpen.set(false);
+    const url = this.shareImageUrl();
+    if (url) {
+      URL.revokeObjectURL(url);
+    }
+    this.shareImageUrl.set(null);
+    this.shareBlob.set(null);
+  }
+
+  canUseWebShare(): boolean {
+    return typeof navigator.share !== 'undefined' && typeof navigator.canShare !== 'undefined';
+  }
+
+  async triggerNativeShare() {
+    const blob = this.shareBlob();
+    if (!blob) return;
+
+    const isConsistency = this.shareModalTitle() === 'Share Consistency';
+    const filename = isConsistency 
+      ? `epicenter-consistency-calendar.png`
+      : `epicenter-${this.shareBadgeId}-badge.png`;
+    const titleText = isConsistency
+      ? 'Epicenter Gym Consistency Calendar'
+      : 'Epicenter Gym Achievement';
+    const textCaption = isConsistency
+      ? `Staying consistent with my workout goals at Epicenter Gym! 🔥`
+      : `Unlocking achievements at Epicenter Gym! 🔥`;
+
+    if (this.canUseWebShare()) {
+      try {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: titleText,
+            text: textCaption
+          });
+        } else {
+          this.triggerDownloadFallback();
+        }
+      } catch (err) {
+        console.error('Native share failed, using download fallback:', err);
+        this.triggerDownloadFallback();
+      }
+    } else {
+      this.triggerDownloadFallback();
+    }
+  }
+
+  triggerDownloadFallback() {
+    const url = this.shareImageUrl();
+    if (!url) return;
+    const isConsistency = this.shareModalTitle() === 'Share Consistency';
+    const filename = isConsistency
+      ? `epicenter-consistency-calendar.png`
+      : `epicenter-${this.shareBadgeId}-badge.png`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  copyShareCaption() {
+    const isConsistency = this.shareModalTitle() === 'Share Consistency';
+    const caption = isConsistency
+      ? `Staying consistent with my workout goals at Epicenter Gym! 🔥 Check out epicentergym.ph`
+      : `Just unlocked the ${this.shareBadgeTitle} badge at Epicenter Gym! 🔥 Check out epicentergym.ph`;
+      
+    navigator.clipboard.writeText(caption).then(() => {
+      alert('Caption text copied to clipboard! You can paste it when posting your graphic.');
+    }).catch(err => {
+      console.error('Failed to copy text:', err);
+    });
+  }
+
+  badgeLevel = computed(() => this.dashboardService.memberData()?.attendanceBadgeLevel || 0);
+  memberName = computed(() => this.dashboardService.memberData()?.name || 'Guest');
+  
+  highestTierBadge = computed(() => {
+    const lvl = this.badgeLevel();
+    if (lvl === 3) {
+      return { title: 'Gold Legend', icon: '👑' };
+    } else if (lvl === 2) {
+      return { title: 'Silver Consistent', icon: '🥈' };
+    } else if (lvl === 1) {
+      return { title: 'Bronze Active', icon: '🥉' };
+    }
+    return null;
+  });
 
   // Pagination Signals & Config
   currentPage = signal<number>(1);

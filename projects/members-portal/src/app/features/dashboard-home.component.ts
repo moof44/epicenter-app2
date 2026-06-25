@@ -237,15 +237,28 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
               <p class="text-xs text-text-secondary mt-0.5">Quick overview of your active check-in history</p>
             </div>
             
-            <a 
-              routerLink="/dashboard/attendance"
-              class="w-full sm:w-auto h-9 px-4 border border-gold-primary/30 hover:border-gold-primary/60 bg-gold-primary/10 hover:bg-gold-primary/20 text-gold-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
-            >
-              <span>View Detailed Logs</span>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-              </svg>
-            </a>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <button 
+                (click)="openConsistencyShareModal(); $event.stopPropagation()"
+                class="w-full sm:w-auto h-9 px-4 border border-gold-primary/30 hover:border-gold-primary/60 bg-gold-primary/10 hover:bg-gold-primary/20 text-gold-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
+                title="Share Consistency Card"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186l5.308-2.654m-5.308 2.654l5.308 2.654m-9.754-2.654a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm9.754-5.308a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm0 10.616a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Z" />
+                </svg>
+                <span>Share Consistency</span>
+              </button>
+
+              <a 
+                routerLink="/dashboard/attendance"
+                class="w-full sm:w-auto h-9 px-4 border border-bg-surface-alt hover:border-text-secondary bg-bg-surface/50 text-text-secondary hover:text-text-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
+              >
+                <span>View Detailed Logs</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+              </a>
+            </div>
           </div>
           
           <app-attendance-calendar [attendanceDates]="attendanceDates()"></app-attendance-calendar>
@@ -752,11 +765,22 @@ export class DashboardHomeComponent {
     if (!blob) return;
 
     const isShowcase = this.shareModalTitle() === 'Share Showcase';
-    const filename = isShowcase ? `epicenter-equipped-showcase.png` : `epicenter-${this.shareBadgeId}-badge.png`;
-    const titleText = isShowcase ? 'Epicenter Gym Showcase' : 'Epicenter Gym Achievement';
-    const textCaption = isShowcase 
-      ? `Check out my equipped showcase loadout at Epicenter Gym! 🔥`
-      : `Unlocking achievements at Epicenter Gym! 🔥`;
+    const isConsistency = this.shareModalTitle() === 'Share Consistency';
+    const filename = isConsistency 
+      ? `epicenter-consistency-calendar.png`
+      : isShowcase 
+        ? `epicenter-equipped-showcase.png` 
+        : `epicenter-${this.shareBadgeId}-badge.png`;
+    const titleText = isConsistency
+      ? 'Epicenter Gym Consistency Calendar'
+      : isShowcase 
+        ? 'Epicenter Gym Showcase' 
+        : 'Epicenter Gym Achievement';
+    const textCaption = isConsistency
+      ? `Staying consistent with my workout goals at Epicenter Gym! 🔥`
+      : isShowcase 
+        ? `Check out my equipped showcase loadout at Epicenter Gym! 🔥`
+        : `Unlocking achievements at Epicenter Gym! 🔥`;
 
     if (this.canUseWebShare()) {
       try {
@@ -783,7 +807,12 @@ export class DashboardHomeComponent {
     const url = this.shareImageUrl();
     if (!url) return;
     const isShowcase = this.shareModalTitle() === 'Share Showcase';
-    const filename = isShowcase ? `epicenter-equipped-showcase.png` : `epicenter-${this.shareBadgeId}-badge.png`;
+    const isConsistency = this.shareModalTitle() === 'Share Consistency';
+    const filename = isConsistency
+      ? `epicenter-consistency-calendar.png`
+      : isShowcase
+        ? `epicenter-equipped-showcase.png`
+        : `epicenter-${this.shareBadgeId}-badge.png`;
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
@@ -794,9 +823,12 @@ export class DashboardHomeComponent {
 
   copyShareCaption() {
     const isShowcase = this.shareModalTitle() === 'Share Showcase';
-    const caption = isShowcase
-      ? `Check out my equipped showcase loadout at Epicenter Gym! 🔥 Leveling up daily at epicentergym.ph`
-      : `Just unlocked the ${this.shareBadgeTitle} badge at Epicenter Gym! 🔥 Check out epicentergym.ph`;
+    const isConsistency = this.shareModalTitle() === 'Share Consistency';
+    const caption = isConsistency
+      ? `Staying consistent with my workout goals at Epicenter Gym! 🔥 Check out epicentergym.ph`
+      : isShowcase
+        ? `Check out my equipped showcase loadout at Epicenter Gym! 🔥 Leveling up daily at epicentergym.ph`
+        : `Just unlocked the ${this.shareBadgeTitle} badge at Epicenter Gym! 🔥 Check out epicentergym.ph`;
       
     navigator.clipboard.writeText(caption).then(() => {
       alert('Caption text copied to clipboard! You can paste it when posting your graphic.');
@@ -804,6 +836,44 @@ export class DashboardHomeComponent {
       console.error('Failed to copy text:', err);
     });
   }
+
+  async openConsistencyShareModal() {
+    this.shareModalTitle.set('Share Consistency');
+    this.shareBadgeTitle = 'Consistency Calendar';
+    this.shareBadgeId = 'consistency-calendar';
+    this.isShareModalOpen.set(true);
+    this.generatingShareImage.set(true);
+    this.shareImageUrl.set(null);
+    this.shareBlob.set(null);
+
+    try {
+      const blob = await this.shareCardService.generateConsistencyCard(
+        this.memberName(),
+        this.streak(),
+        this.highestTierBadge(),
+        this.attendanceDates()
+      );
+      this.shareBlob.set(blob);
+      const url = URL.createObjectURL(blob);
+      this.shareImageUrl.set(url);
+    } catch (err) {
+      console.error('Failed to generate consistency card image:', err);
+    } finally {
+      this.generatingShareImage.set(false);
+    }
+  }
+
+  highestTierBadge = computed(() => {
+    const lvl = this.badgeLevel();
+    if (lvl === 3) {
+      return { title: 'Gold Legend', icon: '👑' };
+    } else if (lvl === 2) {
+      return { title: 'Silver Consistent', icon: '🥈' };
+    } else if (lvl === 1) {
+      return { title: 'Bronze Active', icon: '🥉' };
+    }
+    return null;
+  });
 
   memberName = computed(() => this.dashboardService.memberData()?.name || 'Guest');
   memberStatus = computed(() => this.dashboardService.memberData()?.membershipStatus || 'Inactive');

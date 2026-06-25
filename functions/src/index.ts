@@ -615,26 +615,114 @@ export const onMemberCheckInNotification = functions.firestore.document('/attend
     // --- Gamified Attendance Evaluation (Non-blocking) ---
     try {
         const memberId = attendance.memberId;
-        if (memberId) {
-            const attendanceSnap = await db.collection('attendance')
-                .where('memberId', '==', memberId)
-                .get();
-            
-            const dates = attendanceSnap.docs
-                .map(doc => doc.data().date)
-                .filter(Boolean);
+        const newDateStr = attendance.date;
+        if (memberId && newDateStr) {
+            const memberRef = db.collection('members').doc(memberId);
+            const memberSnap = await memberRef.get();
+            const memberData = memberSnap.data() || {};
 
             const manilaDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Manila' });
             const manilaDate = new Date(manilaDateStr);
 
-            const result = evaluateAttendance(dates, manilaDate);
+            // 1. Calculate Incremental Streak
+            let lastCheckInDateStr = memberData.lastCheckInDate;
+            let currentStreak = memberData.attendanceStreak || 0;
 
-            await db.collection('members').doc(memberId).update({
-                attendanceBadgeLevel: result.badgeLevel,
-                attendanceStreak: result.currentStreak,
-                earnedMonthlyBadges: result.earnedMonthlyBadges
+            // Auto-heal fallback if lastCheckInDate is missing
+            if (!lastCheckInDateStr) {
+                const pastAttendance = await db.collection('attendance')
+                    .where('memberId', '==', memberId)
+                    .orderBy('checkInTime', 'desc')
+                    .limit(2)
+                    .get();
+                
+                if (pastAttendance.size > 1) {
+                    // Item 0 is the current check-in (just created), Item 1 is the previous check-in
+                    lastCheckInDateStr = pastAttendance.docs[1].data().date;
+                }
+            }
+
+            if (lastCheckInDateStr) {
+                const dNew = new Date(newDateStr);
+                const dLast = new Date(lastCheckInDateStr);
+                const diffTime = Math.abs(dNew.getTime() - dLast.getTime());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 0) {
+                    // Double check-in today: streak remains unchanged
+                } else if (diffDays === 1 || diffDays === 2) {
+                    // Next day or 1-day rest day pause: increment streak
+                    currentStreak += 1;
+                } else {
+                    // Missed more than one day: streak resets to 1
+                    currentStreak = 1;
+                }
+            } else {
+                // First check-in ever
+                currentStreak = 1;
+            }
+
+            // 2. 90-Day sliding window for active Tier Badges
+            const ninetyDaysAgo = new Date(manilaDate);
+            ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+            const attendance90Snap = await db.collection('attendance')
+                .where('memberId', '==', memberId)
+                .where('checkInTime', '>=', ninetyDaysAgo)
+                .get();
+
+            const dates90 = attendance90Snap.docs
+                .map(doc => doc.data().date)
+                .filter(Boolean);
+
+            const countVisits = (days: number): number => {
+                const limitDate = new Date(manilaDate);
+                limitDate.setDate(limitDate.getDate() - (days - 1));
+                const limitStr = limitDate.toISOString().split('T')[0];
+                return dates90.filter(d => d >= limitStr && d <= newDateStr).length;
+            };
+
+            const visits30 = countVisits(30);
+            const visits60 = countVisits(60);
+            const visits90 = countVisits(90);
+
+            let badgeLevel = 0;
+            if (visits30 >= 11) {
+                badgeLevel = 1;
+                if (visits60 >= 22) {
+                    badgeLevel = 2;
+                    if (visits90 >= 33) {
+                        badgeLevel = 3;
+                    }
+                }
+            }
+
+            // 3. Incremental Monthly Badge Check
+            const earnedMonthlyBadges = memberData.earnedMonthlyBadges || [];
+            const currentYearMonth = newDateStr.substring(0, 7);
+
+            if (!earnedMonthlyBadges.includes(currentYearMonth)) {
+                // Query only current month check-ins
+                const startOfMonth = new Date(manilaDate.getFullYear(), manilaDate.getMonth(), 1);
+                const monthSnap = await db.collection('attendance')
+                    .where('memberId', '==', memberId)
+                    .where('checkInTime', '>=', startOfMonth)
+                    .get();
+
+                if (monthSnap.size >= 4) {
+                    earnedMonthlyBadges.push(currentYearMonth);
+                }
+            }
+
+            // Update member profile
+            await memberRef.update({
+                attendanceBadgeLevel: badgeLevel,
+                attendanceStreak: currentStreak,
+                earnedMonthlyBadges: earnedMonthlyBadges,
+                lastCheckInDate: newDateStr
             });
-            console.log(`Successfully updated badges/streak for member ${memberId}: streak=${result.currentStreak}, badge=${result.badgeLevel}`);
+
+            console.log(`[Optimized] Successfully updated badges/streak for member ${memberId}: streak=${currentStreak}, badge=${badgeLevel}, lastCheckInDate=${newDateStr}`);
         }
     } catch (err) {
         console.error('Error evaluating member attendance gamification:', err);
@@ -893,24 +981,77 @@ export const processMonthlyBadgesAndRanks = functions.pubsub.schedule('5 0 1 * *
             let writeCount = 0;
             const batches: admin.firestore.WriteBatch[] = [batch];
 
+            const ninetyDaysAgo = new Date(manilaDate);
+            ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+            // Get previous month string, e.g. "2026-05" if today is June 1st
+            const prevMonthDate = new Date(manilaDate.getFullYear(), manilaDate.getMonth() - 1, 1);
+            const prevMonthStr = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+
             for (const memberDoc of membersSnap.docs) {
                 const memberId = memberDoc.id;
+                const memberData = memberDoc.data() || {};
                 
                 const attendanceSnap = await db.collection('attendance')
                     .where('memberId', '==', memberId)
+                    .where('checkInTime', '>=', ninetyDaysAgo)
                     .get();
                 
                 const dates = attendanceSnap.docs
                     .map(doc => doc.data().date)
                     .filter(Boolean);
 
-                const result = evaluateAttendance(dates, manilaDate);
+                // 1. Calculate tier level
+                const countVisitsInWindow = (days: number): number => {
+                    const limitDate = new Date(manilaDate);
+                    limitDate.setDate(limitDate.getDate() - (days - 1));
+                    const limitStr = limitDate.toISOString().split('T')[0];
+                    return dates.filter(d => d >= limitStr).length;
+                };
+
+                const visits30 = countVisitsInWindow(30);
+                const visits60 = countVisitsInWindow(60);
+                const visits90 = countVisitsInWindow(90);
+
+                let badgeLevel = 0;
+                if (visits30 >= 11) {
+                    badgeLevel = 1;
+                    if (visits60 >= 22) {
+                        badgeLevel = 2;
+                        if (visits90 >= 33) {
+                            badgeLevel = 3;
+                        }
+                    }
+                }
+
+                // 2. Check if streak is broken
+                let currentStreak = memberData.attendanceStreak || 0;
+                const lastCheckIn = memberData.lastCheckInDate;
+                if (lastCheckIn) {
+                    const dLast = new Date(lastCheckIn);
+                    const diffTime = Math.abs(manilaDate.getTime() - dLast.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays >= 3) {
+                        currentStreak = 0; // streak broke due to inactivity
+                    }
+                } else {
+                    currentStreak = 0;
+                }
+
+                // 3. Earned monthly badge check for the completed month
+                const earnedMonthlyBadges = memberData.earnedMonthlyBadges || [];
+                if (!earnedMonthlyBadges.includes(prevMonthStr)) {
+                    const prevMonthVisits = dates.filter(d => d.startsWith(prevMonthStr)).length;
+                    if (prevMonthVisits >= 4) {
+                        earnedMonthlyBadges.push(prevMonthStr);
+                    }
+                }
 
                 const currentBatch = batches[batches.length - 1];
                 currentBatch.update(db.collection('members').doc(memberId), {
-                    attendanceBadgeLevel: result.badgeLevel,
-                    attendanceStreak: result.currentStreak,
-                    earnedMonthlyBadges: result.earnedMonthlyBadges
+                    attendanceBadgeLevel: badgeLevel,
+                    attendanceStreak: currentStreak,
+                    earnedMonthlyBadges: earnedMonthlyBadges
                 });
 
                 writeCount++;
@@ -967,11 +1108,18 @@ export const retroactivelyProcessAllBadges = functions.https.onCall(async (data:
 
             const result = evaluateAttendance(dates, manilaDate);
 
+            let lastCheckInDate = '';
+            if (dates.length > 0) {
+                const sortedDates = [...dates].sort();
+                lastCheckInDate = sortedDates[sortedDates.length - 1];
+            }
+
             const currentBatch = batches[batches.length - 1];
             currentBatch.update(db.collection('members').doc(memberId), {
                 attendanceBadgeLevel: result.badgeLevel,
                 attendanceStreak: result.currentStreak,
-                earnedMonthlyBadges: result.earnedMonthlyBadges
+                earnedMonthlyBadges: result.earnedMonthlyBadges,
+                lastCheckInDate: lastCheckInDate || null
             });
 
             writeCount++;

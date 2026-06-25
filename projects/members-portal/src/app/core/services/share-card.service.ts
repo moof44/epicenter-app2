@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { getDayStatusesForRange, formatLocalDate } from '../utils/attendance-evaluator';
 
 @Injectable({
   providedIn: 'root'
@@ -476,5 +477,503 @@ export class ShareCardService {
     try {
       (ctx as any).letterSpacing = '0px';
     } catch (e) {}
+  }
+
+  /**
+   * Generates a 9:16 PNG Blob of a consistency check-in calendar card.
+   */
+  generateConsistencyCard(
+    memberName: string,
+    streak: number,
+    highestBadge: { title: string; icon: string } | null,
+    attendanceDates: string[]
+  ): Promise<Blob> {
+    return new Promise(async (resolve, reject) => {
+      const width = 1080;
+      const height = 1920;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        reject(new Error('Could not create Canvas 2D context.'));
+        return;
+      }
+
+      try {
+        // Load official logo image asynchronously
+        const logoImg = await this.loadImage('assets/logo.png');
+
+        // Ensure fonts are loaded
+        await document.fonts.ready;
+
+        this.drawConsistencyCard(ctx, width, height, memberName, streak, highestBadge, attendanceDates, logoImg);
+
+        // Convert to Blob
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to generate Canvas blob.'));
+            }
+          },
+          'image/png',
+          1.0
+        );
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  /**
+   * Renders the visual elements of the consistency card.
+   */
+  private drawConsistencyCard(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    memberName: string,
+    streak: number,
+    highestBadge: { title: string; icon: string } | null,
+    attendanceDates: string[],
+    logoImg: HTMLImageElement | null
+  ) {
+    // 1. Dark Charcoal Background
+    ctx.fillStyle = '#0a0a0b';
+    ctx.fillRect(0, 0, width, height);
+
+    // 2. Outer Border (Sleek Gold Outline)
+    ctx.lineWidth = 16;
+    ctx.strokeStyle = '#d4af37';
+    ctx.strokeRect(40, 40, width - 80, height - 80);
+
+    // 3. Radial Gradient Backdrop Glow
+    const glowX = width / 2;
+    const glowY = height / 2 + 50;
+    const innerRadius = 50;
+    const outerRadius = 600;
+    const gradient = ctx.createRadialGradient(glowX, glowY, innerRadius, glowX, glowY, outerRadius);
+    gradient.addColorStop(0, 'rgba(212, 175, 55, 0.08)');
+    gradient.addColorStop(1, 'rgba(10, 10, 11, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(48, 48, width - 96, height - 96);
+
+    // 4. Header - Brand Logo
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (logoImg) {
+      const logoWidth = 130;
+      const logoHeight = (logoImg.height / logoImg.width) * logoWidth;
+      ctx.shadowColor = 'rgba(212, 175, 55, 0.3)';
+      ctx.shadowBlur = 20;
+      ctx.drawImage(logoImg, width / 2 - logoWidth / 2, 110, logoWidth, logoHeight);
+      ctx.shadowBlur = 0;
+    } else {
+      const logoX = width / 2;
+      const logoY = 180;
+      const logoR = 45;
+      ctx.beginPath();
+      ctx.arc(logoX, logoY, logoR, 0, 2 * Math.PI);
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.fillStyle = '#d4af37';
+      ctx.font = '900 36px "Oswald", sans-serif';
+      ctx.fillText('EF', logoX, logoY + 2);
+    }
+
+    // Logo text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 48px "Oswald", sans-serif';
+    try {
+      (ctx as any).letterSpacing = '6px';
+    } catch (e) {}
+    ctx.fillText('EPICENTER PORTAL', width / 2, 285);
+    try {
+      (ctx as any).letterSpacing = '0px';
+    } catch (e) {}
+
+    ctx.fillStyle = '#a0a0ab';
+    ctx.font = 'bold 20px "Inter", sans-serif';
+    ctx.fillText('FITNESS • PERFORMANCE • COMMUNITY', width / 2, 330);
+
+    // 5. Highest Attendance Badge Display
+    const socketX = width / 2;
+    const socketY = 490;
+    const socketR = 80;
+
+    if (highestBadge) {
+      // Draw Unlocked Badge Frame
+      this.drawBadgeSocket(ctx, socketX, socketY, socketR, highestBadge.icon, 75);
+      
+      // Draw Title Pill
+      this.drawBadgePill(ctx, socketX, socketY + socketR + 25, highestBadge.title);
+
+      // Subtitle
+      ctx.fillStyle = '#a0a0ab';
+      ctx.font = '900 16px "Oswald", sans-serif';
+      try {
+        (ctx as any).letterSpacing = '2px';
+      } catch (e) {}
+      ctx.fillText('HIGHEST ATTENDANCE RANK', width / 2, socketY + socketR + 68);
+      try {
+        (ctx as any).letterSpacing = '0px';
+      } catch (e) {}
+    } else {
+      // Draw Placeholder Recruit Frame (Muted Gray Theme)
+      ctx.shadowColor = 'rgba(102, 102, 102, 0.2)';
+      ctx.shadowBlur = 20;
+
+      ctx.beginPath();
+      ctx.arc(socketX, socketY, socketR, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(15, 15, 17, 0.95)';
+      ctx.fill();
+      ctx.strokeStyle = '#4b5563'; // gray border
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+
+      // Draw Recruit Icon
+      ctx.font = '70px "Inter", "Apple Color Emoji", "Segoe UI Emoji"';
+      ctx.fillStyle = '#4b5563';
+      ctx.fillText('🏋️', socketX, socketY + 5);
+
+      // Draw Pill for Recruit
+      this.drawBadgePillCustom(ctx, socketX, socketY + socketR + 25, 'ACTIVE RECRUIT', 'rgba(75, 85, 99, 0.15)', 'rgba(75, 85, 99, 0.5)');
+
+      // Subtitle
+      ctx.fillStyle = '#666666';
+      ctx.font = '900 16px "Oswald", sans-serif';
+      try {
+        (ctx as any).letterSpacing = '1px';
+      } catch (e) {}
+      ctx.fillText('ATTENDANCE LEVEL 0', width / 2, socketY + socketR + 68);
+      try {
+        (ctx as any).letterSpacing = '0px';
+      } catch (e) {}
+    }
+
+    // 6. Generate Month Check-In Calendar Days
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    const monthNames = [
+      'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+      'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+    ];
+    const monthTitle = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startOffset = firstDay.getDay();
+
+    const days = [];
+
+    // Fill offsets from previous month
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = startOffset - 1; i >= 0; i--) {
+      const prevDate = new Date(year, month - 1, prevMonthLastDay - i);
+      days.push({
+        dayNumber: prevDate.getDate(),
+        isCurrentMonth: false,
+        status: 'None',
+        dateStr: formatLocalDate(prevDate)
+      });
+    }
+
+    // Load actual statuses
+    const startStr = formatLocalDate(firstDay);
+    const endStr = formatLocalDate(lastDay);
+    const statuses = getDayStatusesForRange(attendanceDates, startStr, endStr);
+    const statusMap = new Map(statuses.map(s => [s.dateStr, s.status]));
+    const todayStr = formatLocalDate(now);
+
+    // Fill current month
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      const currentDate = new Date(year, month, i);
+      const dateStr = formatLocalDate(currentDate);
+
+      let status = 'None';
+      if (dateStr > todayStr) {
+        status = 'Future';
+      } else {
+        status = statusMap.get(dateStr) || 'Absent';
+      }
+
+      days.push({
+        dayNumber: i,
+        isCurrentMonth: true,
+        status,
+        dateStr
+      });
+    }
+
+    // Pad next month offsets to complete row
+    const endOffset = (7 - (days.length % 7)) % 7;
+    for (let i = 1; i <= endOffset; i++) {
+      const nextDate = new Date(year, month + 1, i);
+      days.push({
+        dayNumber: i,
+        isCurrentMonth: false,
+        status: 'None',
+        dateStr: formatLocalDate(nextDate)
+      });
+    }
+
+    const rowsCount = days.length / 7;
+    const cellSize = 84;
+    const cellGap = 14;
+    const gridWidth = 7 * cellSize + 6 * cellGap; // 672px
+    const startX = width / 2 - gridWidth / 2; // 204px
+    const startY = 810;
+
+    // A. Month Title Header
+    ctx.fillStyle = '#d4af37';
+    ctx.font = '900 40px "Oswald", sans-serif';
+    try {
+      (ctx as any).letterSpacing = '2px';
+    } catch (e) {}
+    ctx.fillText(monthTitle, width / 2, 715);
+    try {
+      (ctx as any).letterSpacing = '0px';
+    } catch (e) {}
+
+    // B. Weekdays Row
+    const weekLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    ctx.fillStyle = '#a0a0ab';
+    ctx.font = '900 20px "Oswald", sans-serif';
+    for (let i = 0; i < 7; i++) {
+      const labelX = startX + i * (cellSize + cellGap) + cellSize / 2;
+      ctx.fillText(weekLabels[i], labelX, 765);
+    }
+
+    // C. Draw Calendar Grid Days
+    for (let idx = 0; idx < days.length; idx++) {
+      const day = days[idx];
+      const col = idx % 7;
+      const row = Math.floor(idx / 7);
+
+      const cellX = startX + col * (cellSize + cellGap);
+      const cellY = startY + row * (cellSize + cellGap);
+
+      // Draw rounded background block
+      this.drawRoundedRect(ctx, cellX, cellY, cellSize, cellSize, 12);
+
+      let cellFill = '#121214';
+      let cellStroke = 'rgba(255, 255, 255, 0.04)';
+      let textFill = 'rgba(255, 255, 255, 0.08)';
+      let hasIcon = false;
+      let iconEmoji = '';
+      let iconSize = 28;
+
+      if (day.isCurrentMonth) {
+        if (day.status === 'Future') {
+          cellFill = '#121214';
+          cellStroke = 'rgba(255, 255, 255, 0.08)';
+          textFill = 'rgba(255, 255, 255, 0.25)';
+        } else if (day.status === 'Present') {
+          cellFill = '#d4af37';
+          cellStroke = '#d4af37';
+          textFill = '#000000';
+          hasIcon = true;
+          iconEmoji = '🏋️';
+        } else if (day.status === 'Rest') {
+          cellFill = 'rgba(71, 85, 105, 0.25)';
+          cellStroke = 'rgba(71, 85, 105, 0.45)';
+          textFill = '#94a3b8';
+          hasIcon = true;
+          iconEmoji = '🛌';
+        } else if (day.status === 'Absent') {
+          cellFill = 'rgba(239, 68, 68, 0.15)';
+          cellStroke = 'rgba(239, 68, 68, 0.35)';
+          textFill = '#f87171';
+          hasIcon = true;
+          iconEmoji = '❌';
+          iconSize = 22;
+        }
+      }
+
+      // Draw cell fill & stroke
+      ctx.fillStyle = cellFill;
+      ctx.fill();
+      ctx.strokeStyle = cellStroke;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw day number in top-left corner
+      ctx.fillStyle = textFill;
+      ctx.font = '900 16px "Oswald", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(day.dayNumber.toString(), cellX + 8, cellY + 8);
+
+      // Draw centered status icon
+      if (hasIcon) {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${iconSize}px "Inter", "Apple Color Emoji", "Segoe UI Emoji"`;
+        ctx.fillText(iconEmoji, cellX + cellSize / 2, cellY + cellSize / 2 + 5);
+      }
+    }
+
+    // 7. Consistency Motivation Quote Section (Dynamic positioning)
+    const gridHeight = rowsCount * cellSize + (rowsCount - 1) * cellGap;
+    const quoteY = startY + gridHeight + 35;
+
+    // Quote Border Accents
+    ctx.beginPath();
+    ctx.moveTo(width / 2 - 80, quoteY);
+    ctx.lineTo(width / 2 + 80, quoteY);
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#d4af37';
+    ctx.font = 'italic 900 28px "Oswald", sans-serif';
+    ctx.fillText('“ SUCCESS IS NOT ABOUT GREATNESS. ”', width / 2, quoteY + 45);
+    ctx.fillText('“ IT’S ABOUT CONSISTENCY. ”', width / 2, quoteY + 85);
+
+    ctx.beginPath();
+    ctx.moveTo(width / 2 - 80, quoteY + 130);
+    ctx.lineTo(width / 2 + 80, quoteY + 130);
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 8. Member Profile Info & Active Streak
+    const profileY = quoteY + 195;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 56px "Oswald", sans-serif';
+    ctx.fillText(memberName.toUpperCase(), width / 2, profileY);
+
+    if (streak > 0) {
+      const streakText = `🔥  ${streak}-DAY CONSISTENCY STREAK`;
+      ctx.font = '900 38px "Oswald", sans-serif';
+      const textWidth = ctx.measureText(streakText).width;
+
+      const capWidth = textWidth + 80;
+      const capHeight = 80;
+      const capX = (width - capWidth) / 2;
+      const capY = profileY + 50;
+      const capR = 40;
+
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(capX, capY, capWidth, capHeight, capR);
+      } else {
+        ctx.rect(capX, capY, capWidth, capHeight);
+      }
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#f87171';
+      ctx.fillText(streakText, width / 2, capY + capHeight / 2 + 2);
+    } else {
+      ctx.fillStyle = '#a0a0ab';
+      ctx.font = 'bold 24px "Inter", sans-serif';
+      ctx.fillText('CRUSHING GYM GOALS DAILY', width / 2, profileY + 80);
+    }
+
+    // 9. Branded Footer
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.font = 'bold 24px "Inter", sans-serif';
+    try {
+      (ctx as any).letterSpacing = '1px';
+    } catch (e) {}
+    ctx.fillText('PROUD MEMBER OF EPICENTER FITNESS', width / 2, height - 150);
+    try {
+      (ctx as any).letterSpacing = '0px';
+    } catch (e) {}
+
+    ctx.fillStyle = '#d4af37';
+    ctx.font = '900 28px "Oswald", sans-serif';
+    try {
+      (ctx as any).letterSpacing = '2px';
+    } catch (e) {}
+    ctx.fillText('EPICENTERGYM.PH', width / 2, height - 100);
+    try {
+      (ctx as any).letterSpacing = '0px';
+    } catch (e) {}
+  }
+
+  /**
+   * Helper to draw custom colored pills.
+   */
+  private drawBadgePillCustom(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    title: string,
+    bgFill: string,
+    borderStroke: string
+  ) {
+    ctx.font = '900 18px "Oswald", sans-serif';
+    try {
+      (ctx as any).letterSpacing = '1px';
+    } catch (e) {}
+    const textWidth = ctx.measureText(title.toUpperCase()).width;
+    try {
+      (ctx as any).letterSpacing = '0px';
+    } catch (e) {}
+
+    const padX = 20;
+    const pillWidth = textWidth + padX * 2;
+    const pillHeight = 36;
+    const pillX = x - pillWidth / 2;
+    const pillY = y - pillHeight / 2;
+    const pillR = 18;
+
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(pillX, pillY, pillWidth, pillHeight, pillR);
+    } else {
+      ctx.rect(pillX, pillY, pillWidth, pillHeight);
+    }
+    ctx.fillStyle = bgFill;
+    ctx.fill();
+    ctx.strokeStyle = borderStroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 18px "Oswald", sans-serif';
+    ctx.fillText(title.toUpperCase(), x, y + 1);
+  }
+
+  /**
+   * Custom rounded rectangle drawer helper.
+   */
+  private drawRoundedRect(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+  ) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
   }
 }

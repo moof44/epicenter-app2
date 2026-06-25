@@ -208,15 +208,111 @@ import { DashboardService } from '../core/services/dashboard.service';
                 </tr>
               </thead>
               <tbody class="divide-y divide-bg-surface-alt/40 font-medium">
-                @for (entry of dashboardService.measurements(); track entry.id) {
+                @for (entry of dashboardService.measurements(); track entry.id; let idx = $index) {
                   <tr class="hover:bg-bg-surface-alt/20 transition-colors">
                     <td class="py-3 px-4 font-bold text-text-primary">{{ formatDateFull(entry.date) }}</td>
-                    <td class="py-3 px-4 text-gold-light">{{ entry.weight.toFixed(1) }} kg</td>
-                    <td class="py-3 px-4">{{ entry.bodyFat.toFixed(1) }}%</td>
-                    <td class="py-3 px-4">{{ entry.muscleMass.toFixed(1) }}%</td>
-                    <td class="py-3 px-4 text-text-secondary">{{ entry.bmi.toFixed(1) }}</td>
-                    <td class="py-3 px-4 text-text-secondary">{{ entry.metabolism }} kcal</td>
-                    <td class="py-3 px-4 text-text-secondary">{{ entry.bodyAge }} Years</td>
+                    
+                    <!-- Weight -->
+                    <td class="py-3 px-4">
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-gold-light font-bold">{{ entry.weight.toFixed(1) }} kg</span>
+                        @if (getDiff(entry, 'weight', dashboardService.measurements()[idx + 1]); as diff) {
+                          <span 
+                            [class.text-emerald-400]="diff.type === 'improve'"
+                            [class.text-red-400]="diff.type === 'worse'"
+                            [class.text-text-muted]="diff.type === 'neutral'"
+                            class="text-[9px] font-bold"
+                          >
+                            {{ diff.text }}
+                          </span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- Body Fat -->
+                    <td class="py-3 px-4">
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-text-primary">{{ entry.bodyFat.toFixed(1) }}%</span>
+                        @if (getDiff(entry, 'bodyFat', dashboardService.measurements()[idx + 1]); as diff) {
+                          <span 
+                            [class.text-emerald-400]="diff.type === 'improve'"
+                            [class.text-red-400]="diff.type === 'worse'"
+                            [class.text-text-muted]="diff.type === 'neutral'"
+                            class="text-[9px] font-bold"
+                          >
+                            {{ diff.text }}
+                          </span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- Muscle Mass -->
+                    <td class="py-3 px-4">
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-text-primary">{{ entry.muscleMass.toFixed(1) }}%</span>
+                        @if (getDiff(entry, 'muscleMass', dashboardService.measurements()[idx + 1]); as diff) {
+                          <span 
+                            [class.text-emerald-400]="diff.type === 'improve'"
+                            [class.text-red-400]="diff.type === 'worse'"
+                            [class.text-text-muted]="diff.type === 'neutral'"
+                            class="text-[9px] font-bold"
+                          >
+                            {{ diff.text }}
+                          </span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- BMI -->
+                    <td class="py-3 px-4">
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-text-secondary">{{ entry.bmi.toFixed(1) }}</span>
+                        @if (getDiff(entry, 'bmi', dashboardService.measurements()[idx + 1]); as diff) {
+                          <span 
+                            [class.text-emerald-400]="diff.type === 'improve'"
+                            [class.text-red-400]="diff.type === 'worse'"
+                            [class.text-text-muted]="diff.type === 'neutral'"
+                            class="text-[9px] font-bold"
+                          >
+                            {{ diff.text }}
+                          </span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- Metabolism -->
+                    <td class="py-3 px-4">
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-text-secondary">{{ entry.metabolism }} kcal</span>
+                        @if (getDiff(entry, 'metabolism', dashboardService.measurements()[idx + 1]); as diff) {
+                          <span 
+                            [class.text-emerald-400]="diff.type === 'improve'"
+                            [class.text-red-400]="diff.type === 'worse'"
+                            [class.text-text-muted]="diff.type === 'neutral'"
+                            class="text-[9px] font-bold"
+                          >
+                            {{ diff.text }}
+                          </span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- Body Age -->
+                    <td class="py-3 px-4">
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-text-secondary">{{ entry.bodyAge }} Years</span>
+                        @if (getDiff(entry, 'bodyAge', dashboardService.measurements()[idx + 1]); as diff) {
+                          <span 
+                            [class.text-emerald-400]="diff.type === 'improve'"
+                            [class.text-red-400]="diff.type === 'worse'"
+                            [class.text-text-muted]="diff.type === 'neutral'"
+                            class="text-[9px] font-bold"
+                          >
+                            {{ diff.text }}
+                          </span>
+                        }
+                      </div>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -353,5 +449,45 @@ export class ProgressComponent {
   formatDateFull(d: Date): string {
     if (!d) return '';
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  getDiff(entry: any, field: string, prevEntry: any): { text: string, type: 'improve' | 'worse' | 'neutral' } | null {
+    if (!prevEntry) return null;
+    
+    const currVal = Number(entry[field]);
+    const prevVal = Number(prevEntry[field]);
+    
+    if (isNaN(currVal) || isNaN(prevVal)) return null;
+    
+    const delta = currVal - prevVal;
+    if (Math.abs(delta) < 0.05) return null; // no significant change
+    
+    let type: 'improve' | 'worse' | 'neutral' = 'neutral';
+    
+    if (field === 'bodyFat') {
+      type = delta < 0 ? 'improve' : 'worse';
+    } else if (field === 'muscleMass') {
+      type = delta > 0 ? 'improve' : 'worse';
+    } else if (field === 'bodyAge') {
+      type = delta < 0 ? 'improve' : 'worse';
+    } else if (field === 'bmi') {
+      type = delta < 0 ? 'improve' : 'worse';
+    } else if (field === 'metabolism') {
+      type = delta > 0 ? 'improve' : 'worse';
+    } else {
+      type = 'neutral';
+    }
+    
+    const formattedDelta = (field === 'bodyAge' || field === 'metabolism') 
+      ? Math.abs(delta).toFixed(0) 
+      : Math.abs(delta).toFixed(1);
+      
+    const unit = field === 'weight' ? ' kg' : (field === 'bodyFat' || field === 'muscleMass' ? '%' : (field === 'metabolism' ? ' kcal' : (field === 'bodyAge' ? ' Yrs' : '')));
+    const arrow = delta > 0 ? '↑' : '↓';
+    
+    return {
+      text: `${arrow} ${formattedDelta}${unit}`,
+      type
+    };
   }
 }
