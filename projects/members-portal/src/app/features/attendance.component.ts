@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../core/services/dashboard.service';
 import { AttendanceCalendarComponent } from '../shared/components/attendance-calendar/attendance-calendar.component';
@@ -142,7 +142,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
                 </tr>
               </thead>
               <tbody class="divide-y divide-bg-surface-alt/40 font-medium">
-                @for (record of dashboardService.attendanceRecords(); track record.id) {
+                @for (record of paginatedRecords(); track record.id) {
                   <tr class="hover:bg-bg-surface-alt/20 transition-colors">
                     <!-- Date Column -->
                     <td class="py-3 px-4 font-bold text-text-primary">
@@ -185,6 +185,58 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
               </tbody>
             </table>
           </div>
+
+          <!-- Premium Pagination Controls -->
+          @if (totalPages() > 1) {
+            <div class="flex flex-col sm:flex-row items-center justify-between border-t border-bg-surface-alt/60 pt-4 mt-2 gap-3">
+              <span class="text-[10px] text-text-secondary font-bold font-mono text-center sm:text-left">
+                Page {{ currentPage() }} of {{ totalPages() }} (Showing {{ paginatedRecords().length }} of {{ totalVisits() }} logs)
+              </span>
+              
+              <div class="flex items-center gap-1.5 justify-center">
+                <!-- Previous Button -->
+                <button 
+                  (click)="prevPage()"
+                  [disabled]="currentPage() === 1"
+                  class="p-2 border border-bg-surface-alt hover:border-gold-primary/30 bg-bg-surface-alt/20 hover:bg-bg-surface-alt text-text-primary disabled:opacity-40 disabled:pointer-events-none rounded-xl transition-all cursor-pointer flex items-center justify-center min-w-[36px] h-9 active:scale-95"
+                  title="Previous Page"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-gold-primary">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                  </svg>
+                </button>
+
+                <!-- Page Numbers -->
+                @for (p of pageNumbers(); track p) {
+                  <button
+                    (click)="setPage(p)"
+                    [class.border-gold-primary]="currentPage() === p"
+                    [class.bg-gold-primary]="currentPage() === p"
+                    [class.text-bg-surface]="currentPage() === p"
+                    [class.font-black]="currentPage() === p"
+                    [class.bg-bg-surface-alt/20]="currentPage() !== p"
+                    [class.hover:bg-bg-surface-alt]="currentPage() !== p"
+                    [class.border-bg-surface-alt]="currentPage() !== p"
+                    class="w-9 h-9 border text-xs rounded-xl font-bold font-mono transition-all cursor-pointer flex items-center justify-center active:scale-95"
+                  >
+                    {{ p }}
+                  </button>
+                }
+
+                <!-- Next Button -->
+                <button 
+                  (click)="nextPage()"
+                  [disabled]="currentPage() === totalPages()"
+                  class="p-2 border border-bg-surface-alt hover:border-gold-primary/30 bg-bg-surface-alt/20 hover:bg-bg-surface-alt text-text-primary disabled:opacity-40 disabled:pointer-events-none rounded-xl transition-all cursor-pointer flex items-center justify-center min-w-[36px] h-9 active:scale-95"
+                  title="Next Page"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-gold-primary">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          }
         </div>
 
       }
@@ -214,10 +266,65 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
 export class AttendanceComponent {
   readonly dashboardService = inject(DashboardService);
 
+  // Pagination Signals & Config
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+
+  constructor() {
+    // Reset page to 1 whenever attendance records refresh
+    effect(() => {
+      this.dashboardService.attendanceRecords();
+      this.currentPage.set(1);
+    }, { allowSignalWrites: true });
+  }
+
   streak = computed(() => this.dashboardService.checkInStreak());
   monthVisits = computed(() => this.dashboardService.visitsThisMonth());
   totalVisits = computed(() => this.dashboardService.attendanceRecords().length);
   attendanceDates = computed(() => this.dashboardService.attendanceRecords().map(r => r.date).filter(Boolean));
+
+  totalPages = computed(() => Math.ceil(this.totalVisits() / this.pageSize()));
+
+  paginatedRecords = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.dashboardService.attendanceRecords().slice(start, end);
+  });
+
+  pageNumbers = computed(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const visibleCount = 5;
+    
+    let start = Math.max(1, current - Math.floor(visibleCount / 2));
+    let end = Math.min(total, start + visibleCount - 1);
+    
+    if (end - start + 1 < visibleCount) {
+      start = Math.max(1, end - visibleCount + 1);
+    }
+    
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  });
+
+  prevPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
+    }
+  }
+
+  setPage(p: number) {
+    this.currentPage.set(p);
+  }
 
   readonly past90Days = computed(() => {
     const records = this.dashboardService.attendanceRecords();
