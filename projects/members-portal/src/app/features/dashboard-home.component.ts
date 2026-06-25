@@ -63,10 +63,24 @@ import { ReferralCardComponent } from '../shared/components/referral-card/referr
           </div>
 
           <!-- Equipped Gear Showcase Sockets -->
-          <div class="flex flex-col gap-2 bg-bg-surface-alt/45 border border-bg-surface-alt/45 p-3 rounded-xl min-w-[260px] self-start lg:self-center">
-            <div class="flex items-center justify-between">
+          <div class="flex flex-col gap-2 bg-bg-surface-alt/45 border border-bg-surface-alt/45 p-3 rounded-xl min-w-[280px] self-start lg:self-center">
+            <div class="flex items-center justify-between gap-4">
               <span class="text-[9px] text-gold-light font-bold uppercase tracking-wider">Equipped Showcase</span>
-              <span class="text-[8px] text-text-muted">Tap to unequip</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                @if (equippedBadges().length > 0) {
+                  <button 
+                    (click)="openShowcaseShareModal(); $event.stopPropagation()"
+                    class="text-[8.5px] text-gold-primary hover:text-gold-light font-bold uppercase tracking-wider bg-gold-primary/10 hover:bg-gold-primary/20 border border-gold-primary/30 px-1.5 py-0.5 rounded transition-all cursor-pointer flex items-center gap-0.5 shadow-sm active:scale-95 shrink-0"
+                    title="Share Showcase Card"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-2.5 h-2.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186l5.308-2.654m-5.308 2.654l5.308 2.654m-9.754-2.654a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm9.754-5.308a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm0 10.616a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Z" />
+                    </svg>
+                    Share
+                  </button>
+                }
+                <span class="text-[8px] text-text-muted">Tap to unequip</span>
+              </div>
             </div>
             
             <div class="flex gap-3 justify-around mt-1">
@@ -537,7 +551,7 @@ import { ReferralCardComponent } from '../shared/components/referral-card/referr
               
               <!-- Modal Header -->
               <div class="p-4 border-b border-bg-surface-alt flex justify-between items-center">
-                <h3 class="font-bold font-oswald text-gold-light uppercase tracking-wider text-sm">Share Achievement</h3>
+                <h3 class="font-bold font-oswald text-gold-light uppercase tracking-wider text-sm">{{ shareModalTitle() }}</h3>
                 <button 
                   (click)="closeShareModal()" 
                   class="text-text-secondary hover:text-text-primary text-lg"
@@ -635,8 +649,10 @@ export class DashboardHomeComponent {
   shareBlob = signal<Blob | null>(null);
   shareBadgeTitle = '';
   shareBadgeId = '';
+  shareModalTitle = signal<string>('Share Achievement');
 
   async openShareModal(badge: any) {
+    this.shareModalTitle.set('Share Achievement');
     this.shareBadgeTitle = badge.title;
     this.shareBadgeId = badge.id;
     this.isShareModalOpen.set(true);
@@ -647,9 +663,7 @@ export class DashboardHomeComponent {
     try {
       const blob = await this.shareCardService.generateShareCard(
         this.memberName(),
-        badge.title,
-        badge.icon,
-        badge.requirement,
+        [badge],
         this.streak()
       );
       this.shareBlob.set(blob);
@@ -657,6 +671,40 @@ export class DashboardHomeComponent {
       this.shareImageUrl.set(url);
     } catch (err) {
       console.error('Failed to generate share card image:', err);
+    } finally {
+      this.generatingShareImage.set(false);
+    }
+  }
+
+  async openShowcaseShareModal() {
+    const equipped = this.equippedBadges().map(id => {
+      return this.badgesWithProgress().find(b => b.id === id);
+    }).filter(Boolean) as any[];
+
+    if (equipped.length === 0) {
+      alert('Equip at least one badge to share your showcase!');
+      return;
+    }
+
+    this.shareModalTitle.set('Share Showcase');
+    this.shareBadgeTitle = equipped.length === 1 ? equipped[0].title : `${equipped.length} Badges`;
+    this.shareBadgeId = equipped.map(b => b.id).join('-');
+    this.isShareModalOpen.set(true);
+    this.generatingShareImage.set(true);
+    this.shareImageUrl.set(null);
+    this.shareBlob.set(null);
+
+    try {
+      const blob = await this.shareCardService.generateShareCard(
+        this.memberName(),
+        equipped,
+        this.streak()
+      );
+      this.shareBlob.set(blob);
+      const url = URL.createObjectURL(blob);
+      this.shareImageUrl.set(url);
+    } catch (err) {
+      console.error('Failed to generate showcase share card image:', err);
     } finally {
       this.generatingShareImage.set(false);
     }
@@ -680,14 +728,21 @@ export class DashboardHomeComponent {
     const blob = this.shareBlob();
     if (!blob) return;
 
+    const isShowcase = this.shareModalTitle() === 'Share Showcase';
+    const filename = isShowcase ? `epicenter-equipped-showcase.png` : `epicenter-${this.shareBadgeId}-badge.png`;
+    const titleText = isShowcase ? 'Epicenter Gym Showcase' : 'Epicenter Gym Achievement';
+    const textCaption = isShowcase 
+      ? `Check out my equipped showcase loadout at Epicenter Gym! 🔥`
+      : `Unlocking achievements at Epicenter Gym! 🔥`;
+
     if (this.canUseWebShare()) {
       try {
-        const file = new File([blob], `epicenter-${this.shareBadgeId}-badge.png`, { type: 'image/png' });
+        const file = new File([blob], filename, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: 'Epicenter Gym Achievement',
-            text: `Unlocking achievements at Epicenter Gym! 🔥`
+            title: titleText,
+            text: textCaption
           });
         } else {
           this.triggerDownloadFallback();
@@ -704,16 +759,22 @@ export class DashboardHomeComponent {
   triggerDownloadFallback() {
     const url = this.shareImageUrl();
     if (!url) return;
+    const isShowcase = this.shareModalTitle() === 'Share Showcase';
+    const filename = isShowcase ? `epicenter-equipped-showcase.png` : `epicenter-${this.shareBadgeId}-badge.png`;
     const a = document.createElement('a');
     a.href = url;
-    a.download = `epicenter-${this.shareBadgeId}-badge.png`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   }
 
   copyShareCaption() {
-    const caption = `Just unlocked the ${this.shareBadgeTitle} badge at Epicenter Gym! 🔥 Check out epicentergym.ph`;
+    const isShowcase = this.shareModalTitle() === 'Share Showcase';
+    const caption = isShowcase
+      ? `Check out my equipped showcase loadout at Epicenter Gym! 🔥 Leveling up daily at epicentergym.ph`
+      : `Just unlocked the ${this.shareBadgeTitle} badge at Epicenter Gym! 🔥 Check out epicentergym.ph`;
+      
     navigator.clipboard.writeText(caption).then(() => {
       alert('Caption text copied to clipboard! You can paste it when posting your graphic.');
     }).catch(err => {
