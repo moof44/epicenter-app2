@@ -16,4 +16,5 @@ export interface Member {
     lastModifiedBy?: AuditTrace;
     remarks?: string;
     portalUid?: string;
+    portalStatus?: 'Active' | 'Inactive';
 }

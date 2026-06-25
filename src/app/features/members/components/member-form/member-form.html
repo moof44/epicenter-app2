@@ -112,8 +112,13 @@
         <div class="status-info">
           <div class="status-row">
             <span class="label">Account Status:</span>
-            <span *ngIf="member?.portalUid" class="status-badge active">Active</span>
-            <span *ngIf="!member?.portalUid" class="status-badge inactive">No Account</span>
+            <ng-container *ngIf="member?.portalUid; else noAccount">
+              <span *ngIf="member?.portalStatus === 'Active' || !member?.portalStatus" class="status-badge active">Active</span>
+              <span *ngIf="member?.portalStatus === 'Inactive'" class="status-badge inactive">Deactivated</span>
+            </ng-container>
+            <ng-template #noAccount>
+              <span class="status-badge inactive">No Account</span>
+            </ng-template>
           </div>
           
           <div class="status-row" *ngIf="member?.portalUid">
@@ -146,13 +151,43 @@
             </button>
 
             <button 
-              *ngIf="member?.portalUid" 
+              *ngIf="member?.portalUid && (member?.portalStatus === 'Active' || !member?.portalStatus)" 
+              mat-raised-button 
+              color="warn" 
+              type="button" 
+              (click)="deactivatePortalAccount()"
+            >
+              <mat-icon>block</mat-icon> Deactivate
+            </button>
+
+            <button 
+              *ngIf="member?.portalUid && member?.portalStatus === 'Inactive'" 
+              mat-raised-button 
+              color="primary" 
+              type="button" 
+              (click)="reactivatePortalAccount()"
+            >
+              <mat-icon>check_circle</mat-icon> Reactivate
+            </button>
+
+            <button 
+              *ngIf="member?.portalUid"
+              mat-stroked-button 
+              color="accent"
+              type="button" 
+              (click)="resetPortalAccount()"
+            >
+              <mat-icon>lock_reset</mat-icon> Reset Password
+            </button>
+
+            <button 
+              *ngIf="member?.portalUid"
               mat-raised-button 
               color="accent" 
               type="button" 
               (click)="showQR()"
             >
-              <mat-icon>qr_code_2</mat-icon> Show Auto-Login QR Code
+              <mat-icon>qr_code_2</mat-icon> QR Login
             </button>
           </ng-container>
         </div>

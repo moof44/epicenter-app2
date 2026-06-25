@@ -4,46 +4,11 @@ import { Component, Input } from '@angular/core';
     selector: 'app-feature-card',
     standalone: true,
     template: `
-    <div class="feature-card">
-      <i class="material-icons feature-icon">{{ icon }}</i>
-      <h3 class="feature-title">{{ title }}</h3>
+    <div class="card-surface h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(212,175,55,0.2)] border border-bg-surface-alt hover:border-gold-primary/50 group min-h-[160px]">
+      <i class="material-icons text-5xl text-gold-primary mb-4 group-hover:scale-110 transition-transform duration-300">{{ icon }}</i>
+      <h3 class="text-lg font-oswald font-medium text-text-primary m-0 uppercase tracking-wider group-hover:text-gold-light transition-colors">{{ title }}</h3>
     </div>
-  `,
-    styles: [`
-    .feature-card {
-      background: var(--surface-card);
-      border: 1px solid var(--border-gold);
-      border-radius: 8px;
-      padding: 1.5rem;
-      text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .feature-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.2);
-    }
-
-    .feature-icon {
-      font-size: 3rem;
-      color: var(--primary-gold);
-      margin-bottom: 1rem;
-    }
-
-    .feature-title {
-      font-size: 1.1rem;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin: 0;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-  `]
+  `
 })
 export class FeatureCardComponent {
     @Input() icon = '';

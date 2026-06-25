@@ -266,7 +266,7 @@ export const createMemberPortalAccount = functions.https.onCall(async (data: any
             throw new functions.https.HttpsError('failed-precondition', `Invalid phone number format: "${phone}". Must be an 11-digit mobile number.`);
         }
 
-        // Format Birthday PIN (from Firestore Date/Timestamp to MMDDYYYY string)
+        // Format Birthday PIN (from Firestore Date/Timestamp to MMDDYYYY string in GMT+8)
         let birthdayDate: Date;
         if (birthdayVal.toDate && typeof birthdayVal.toDate === 'function') {
             birthdayDate = birthdayVal.toDate();
@@ -278,9 +278,13 @@ export const createMemberPortalAccount = functions.https.onCall(async (data: any
             throw new functions.https.HttpsError('failed-precondition', 'Invalid birthdate format registered.');
         }
 
-        const mm = String(birthdayDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(birthdayDate.getDate()).padStart(2, '0');
-        const yyyy = String(birthdayDate.getFullYear());
+        // Adjust to GMT+8 (Philippines timezone) to prevent UTC date shift
+        const phOffset = 8 * 60 * 60 * 1000; 
+        const localDate = new Date(birthdayDate.getTime() + phOffset);
+
+        const mm = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(localDate.getUTCDate()).padStart(2, '0');
+        const yyyy = String(localDate.getUTCFullYear());
         const birthdayPin = `${mm}${dd}${yyyy}`; // MMDDYYYY PIN
 
         const email = `${cleanPhone}@epicentergym.ph`;
@@ -292,7 +296,7 @@ export const createMemberPortalAccount = functions.https.onCall(async (data: any
             
             // If user exists, we check if they already have portalUid set in member doc
             const portalUid = userRecord.uid;
-            await memberRef.update({ portalUid });
+            await memberRef.update({ portalUid, portalStatus: 'Active' });
             
             // Ensure the user's Firestore profile exists
             const userDocRef = db.collection('users').doc(portalUid);
@@ -339,7 +343,7 @@ export const createMemberPortalAccount = functions.https.onCall(async (data: any
             });
 
             // Backlink portalUid in members doc
-            await memberRef.update({ portalUid: uid });
+            await memberRef.update({ portalUid: uid, portalStatus: 'Active' });
 
             return { success: true, uid };
         }
@@ -672,4 +676,174 @@ export const onDailySummaryReport = functions.pubsub.schedule('0 21 * * *')
             console.error('Failed to compile daily operations summary:', err);
         }
     });
+
+
+/**
+ * Deactivates a member's portal account.
+ * Only callable by authenticated staff members (ADMIN, MANAGER, STAFF, TRAINER).
+ */
+export const deactivateMemberPortalAccount = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    // 1. Security Check: Must be authenticated and have staff role
+    if (!context.auth || !context.auth.token.roles || 
+        !context.auth.token.roles.some((r: string) => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(r))) {
+        throw new functions.https.HttpsError(
+            'permission-denied',
+            'Only gym staff can manage member portal accounts.'
+        );
+    }
+
+    const { memberId } = data;
+    if (!memberId) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required field: memberId.');
+    }
+
+    try {
+        const db = admin.firestore();
+
+        // 2. Fetch the member doc
+        const memberRef = db.collection('members').doc(memberId);
+        const memberSnap = await memberRef.get();
+        if (!memberSnap.exists) {
+            throw new functions.https.HttpsError('not-found', 'Member not found.');
+        }
+
+        const memberData = memberSnap.data() || {};
+        const portalUid = memberData.portalUid;
+        if (!portalUid) {
+            throw new functions.https.HttpsError('failed-precondition', 'Member does not have a portal account.');
+        }
+
+        // Update member doc
+        await memberRef.update({ portalStatus: 'Inactive' });
+
+        // Update user doc
+        await db.collection('users').doc(portalUid).update({ isActive: false });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Error deactivating member portal account:', error);
+        throw new functions.https.HttpsError('internal', error.message || 'Unable to deactivate member portal account.', error);
+    }
+});
+
+/**
+ * Reactivates a member's portal account.
+ * Only callable by authenticated staff members (ADMIN, MANAGER, STAFF, TRAINER).
+ */
+export const reactivateMemberPortalAccount = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    // 1. Security Check
+    if (!context.auth || !context.auth.token.roles || 
+        !context.auth.token.roles.some((r: string) => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(r))) {
+        throw new functions.https.HttpsError(
+            'permission-denied',
+            'Only gym staff can manage member portal accounts.'
+        );
+    }
+
+    const { memberId } = data;
+    if (!memberId) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required field: memberId.');
+    }
+
+    try {
+        const db = admin.firestore();
+
+        // 2. Fetch the member doc
+        const memberRef = db.collection('members').doc(memberId);
+        const memberSnap = await memberRef.get();
+        if (!memberSnap.exists) {
+            throw new functions.https.HttpsError('not-found', 'Member not found.');
+        }
+
+        const memberData = memberSnap.data() || {};
+        const portalUid = memberData.portalUid;
+        if (!portalUid) {
+            throw new functions.https.HttpsError('failed-precondition', 'Member does not have a portal account.');
+        }
+
+        // Update member doc
+        await memberRef.update({ portalStatus: 'Active' });
+
+        // Update user doc
+        await db.collection('users').doc(portalUid).update({ isActive: true });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Error reactivating member portal account:', error);
+        throw new functions.https.HttpsError('internal', error.message || 'Unable to reactivate member portal account.', error);
+    }
+});
+
+/**
+ * Resets a member's portal account password to their default temporary birthday PIN (MMDDYYYY).
+ * Only callable by authenticated staff members (ADMIN, MANAGER, STAFF, TRAINER).
+ */
+export const resetMemberPortalAccount = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    // 1. Security Check
+    if (!context.auth || !context.auth.token.roles || 
+        !context.auth.token.roles.some((r: string) => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(r))) {
+        throw new functions.https.HttpsError(
+            'permission-denied',
+            'Only gym staff can reset member portal accounts.'
+        );
+    }
+
+    const { memberId } = data;
+    if (!memberId) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required field: memberId.');
+    }
+
+    try {
+        const db = admin.firestore();
+
+        // 2. Fetch the member doc
+        const memberRef = db.collection('members').doc(memberId);
+        const memberSnap = await memberRef.get();
+        if (!memberSnap.exists) {
+            throw new functions.https.HttpsError('not-found', 'Member not found.');
+        }
+
+        const memberData = memberSnap.data() || {};
+        const portalUid = memberData.portalUid;
+        const birthdayVal = memberData.birthday;
+
+        if (!portalUid) {
+            throw new functions.https.HttpsError('failed-precondition', 'Member does not have a portal account.');
+        }
+        if (!birthdayVal) {
+            throw new functions.https.HttpsError('failed-precondition', 'Member does not have a birthdate registered.');
+        }
+
+        // Format Birthday PIN (from Firestore Date/Timestamp to MMDDYYYY string in GMT+8)
+        let birthdayDate: Date;
+        if (birthdayVal.toDate && typeof birthdayVal.toDate === 'function') {
+            birthdayDate = birthdayVal.toDate();
+        } else {
+            birthdayDate = new Date(birthdayVal);
+        }
+
+        if (isNaN(birthdayDate.getTime())) {
+            throw new functions.https.HttpsError('failed-precondition', 'Invalid birthdate format registered.');
+        }
+
+        // Adjust to GMT+8 (Philippines timezone) to prevent UTC date shift
+        const phOffset = 8 * 60 * 60 * 1000; 
+        const localDate = new Date(birthdayDate.getTime() + phOffset);
+
+        const mm = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(localDate.getUTCDate()).padStart(2, '0');
+        const yyyy = String(localDate.getUTCFullYear());
+        const birthdayPin = `${mm}${dd}${yyyy}`; // MMDDYYYY PIN
+
+        // Update password using Firebase Auth admin SDK
+        await admin.auth().updateUser(portalUid, {
+            password: birthdayPin
+        });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Error resetting member portal account:', error);
+        throw new functions.https.HttpsError('internal', error.message || 'Unable to reset member portal account.', error);
+    }
+});
 

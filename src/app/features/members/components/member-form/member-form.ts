@@ -123,6 +123,59 @@ export class MemberForm implements OnInit {
     }
   }
 
+  async deactivatePortalAccount() {
+    if (!this.memberId) return;
+    this.portalLoading = true;
+    try {
+      const deactivateFn = httpsCallable(this.functions, 'deactivateMemberPortalAccount');
+      const result: any = await deactivateFn({ memberId: this.memberId });
+      if (result.data?.success) {
+        this.loadMember(this.memberId);
+      }
+    } catch (error: any) {
+      console.error('Failed to deactivate portal account:', error);
+      alert(error.message || 'Error deactivating portal account.');
+    } finally {
+      this.portalLoading = false;
+    }
+  }
+
+  async reactivatePortalAccount() {
+    if (!this.memberId) return;
+    this.portalLoading = true;
+    try {
+      const reactivateFn = httpsCallable(this.functions, 'reactivateMemberPortalAccount');
+      const result: any = await reactivateFn({ memberId: this.memberId });
+      if (result.data?.success) {
+        this.loadMember(this.memberId);
+      }
+    } catch (error: any) {
+      console.error('Failed to reactivate portal account:', error);
+      alert(error.message || 'Error reactivating portal account.');
+    } finally {
+      this.portalLoading = false;
+    }
+  }
+
+  async resetPortalAccount() {
+    if (!this.memberId) return;
+    if (!confirm('Are you sure you want to reset this portal account password back to the default temporary birthday PIN (MMDDYYYY)?')) return;
+    this.portalLoading = true;
+    try {
+      const resetFn = httpsCallable(this.functions, 'resetMemberPortalAccount');
+      const result: any = await resetFn({ memberId: this.memberId });
+      if (result.data?.success) {
+        alert('Password has been successfully reset to the member\'s default birthday PIN (MMDDYYYY).');
+        this.loadMember(this.memberId);
+      }
+    } catch (error: any) {
+      console.error('Failed to reset portal account password:', error);
+      alert(error.message || 'Error resetting portal account password.');
+    } finally {
+      this.portalLoading = false;
+    }
+  }
+
   cancel() {
     this.location.back();
   }

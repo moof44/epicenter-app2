@@ -9,10 +9,11 @@ import { ProfileComponent } from './features/profile.component';
 import { WorkoutNotebookComponent } from './features/workout-notebook.component';
 import { GymScheduleComponent } from './features/gym-schedule.component';
 import { authGuard } from './core/guards/auth.guard';
+import { redirectIfLoggedInGuard } from './core/guards/redirect-if-logged-in.guard';
 
 export const routes: Routes = [
-    { path: '', component: HomeComponent },
-    { path: 'login', component: LoginComponent },
+    { path: '', component: HomeComponent, canActivate: [redirectIfLoggedInGuard] },
+    { path: 'login', component: LoginComponent, canActivate: [redirectIfLoggedInGuard] },
     {
         path: 'dashboard',
         component: AppLayoutComponent,

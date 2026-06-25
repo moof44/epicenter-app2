@@ -204,10 +204,16 @@ export class DashboardService {
     }
     const latest = m[0];
     const prev = m[1];
+
+    const getRoundDelta = (curr: number, prevVal: number): number => {
+      const diff = curr - prevVal;
+      return Math.round(diff * 10) / 10;
+    };
+
     return {
-      weightDelta: (latest.weight || 0) - (prev.weight || 0),
-      bodyFatDelta: (latest.bodyFat || 0) - (prev.bodyFat || 0),
-      muscleMassDelta: (latest.muscleMass || 0) - (prev.muscleMass || 0)
+      weightDelta: getRoundDelta(latest.weight || 0, prev.weight || 0),
+      bodyFatDelta: getRoundDelta(latest.bodyFat || 0, prev.bodyFat || 0),
+      muscleMassDelta: getRoundDelta(latest.muscleMass || 0, prev.muscleMass || 0)
     };
   });
 }
