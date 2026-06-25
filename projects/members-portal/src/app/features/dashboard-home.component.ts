@@ -31,22 +31,69 @@ import { ReferralCardComponent } from '../shared/components/referral-card/referr
       } @else {
         
         <!-- Welcome Header Banner -->
-        <div class="bg-bg-surface border border-bg-surface-alt p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
-          <div class="flex flex-col">
-            <span class="text-xs text-text-secondary font-bold tracking-widest uppercase">Member Dashboard</span>
-            <h1 class="text-2xl sm:text-3xl font-black font-oswald text-gold-primary tracking-wide mt-1 uppercase">
-              Welcome back, {{ memberName() }}!
-            </h1>
-            <p class="text-sm text-text-secondary mt-1">Ready to crush your workout goals today?</p>
-          </div>
+        <div class="bg-bg-surface border border-bg-surface-alt p-6 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-[0_4px_20px_rgba(0,0,0,0.4)] animate-fade-in">
           
-          <div class="flex items-center gap-2 self-start sm:self-center">
-            <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-ping absolute"></span>
-            <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 relative"></span>
-            <span class="text-xs font-bold font-oswald uppercase tracking-widest text-emerald-400">
-              {{ memberStatus() }}
-            </span>
+          <!-- Avatar + Member Welcome Section -->
+          <div class="flex items-center gap-4">
+            <!-- Premium Avatar with Gold Gradient Ring -->
+            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-gold-primary via-gold-light to-gold-primary p-[2px] shadow-[0_0_15px_rgba(212,175,55,0.3)] shrink-0">
+              <div class="w-full h-full rounded-full bg-bg-surface-alt flex items-center justify-center text-gold-primary text-xl font-black font-oswald uppercase select-none">
+                {{ memberInitials() }}
+              </div>
+            </div>
+            
+            <div class="flex flex-col">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] text-text-secondary font-bold tracking-widest uppercase">Member Profile</span>
+                <!-- Status Dot -->
+                <div class="flex items-center gap-1.5 ml-1">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping absolute"></span>
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 relative"></span>
+                  <span class="text-[9px] font-bold font-oswald uppercase tracking-widest text-emerald-400">
+                    {{ memberStatus() }}
+                  </span>
+                </div>
+              </div>
+              <h1 class="text-xl sm:text-2xl font-black font-oswald text-gold-primary tracking-wide mt-0.5 uppercase">
+                {{ memberName() }}
+              </h1>
+              <p class="text-xs text-text-secondary">Ready to crush your workout goals today?</p>
+            </div>
           </div>
+
+          <!-- Equipped Gear Showcase Sockets -->
+          <div class="flex flex-col gap-2 bg-bg-surface-alt/45 border border-bg-surface-alt/45 p-3 rounded-xl min-w-[260px] self-start lg:self-center">
+            <div class="flex items-center justify-between">
+              <span class="text-[9px] text-gold-light font-bold uppercase tracking-wider">Equipped Showcase</span>
+              <span class="text-[8px] text-text-muted">Tap to unequip</span>
+            </div>
+            
+            <div class="flex gap-3 justify-around mt-1">
+              @for (slotIdx of [0, 1, 2]; track slotIdx) {
+                @if (getEquippedBadgeAt(slotIdx); as badge) {
+                  <!-- Equipped Badge Slot -->
+                  <button 
+                    (click)="toggleBadgeEquip(badge.id)"
+                    class="w-12 h-12 rounded-xl bg-gradient-to-b from-gold-primary/20 to-gold-primary/5 border border-gold-primary/45 flex items-center justify-center text-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_10px_rgba(212,175,55,0.15)] relative group cursor-pointer"
+                    [title]="badge.title + ' (Click to Unequip)'"
+                  >
+                    {{ badge.icon }}
+                    <span class="absolute -bottom-1 -right-1 text-[8px] bg-gold-primary text-bg-surface px-1.5 rounded-md font-bold scale-75 border border-bg-surface-alt">EQ</span>
+                  </button>
+                } @else {
+                  <!-- Empty Socket Slot -->
+                  <div 
+                    class="w-12 h-12 rounded-xl bg-bg-surface/50 border border-dashed border-bg-surface-alt/60 flex flex-col items-center justify-center text-text-muted relative"
+                    title="Empty Socket. Tap an unlocked badge below to equip!"
+                  >
+                    <span class="text-lg font-light select-none text-text-muted/40">+</span>
+                    <span class="text-[7px] text-text-muted/30 font-bold uppercase tracking-widest mt-0.5">SLOT</span>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+
         </div>
 
         <!-- Quick Action Launcher (Mobile & Desktop) -->
@@ -167,87 +214,180 @@ import { ReferralCardComponent } from '../shared/components/referral-card/referr
         </div>
 
         <!-- Gamification Achievements Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 animate-fade-in">
-          <!-- Main Badge Display (spans 2 columns on desktop) -->
-          <div class="card-surface lg:col-span-2 flex flex-col gap-6">
-            <div class="border-b border-bg-surface-alt pb-4">
-              <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">My Attendance Badges</h2>
-              <p class="text-xs text-text-secondary mt-0.5">Maintain consistency to level up your status</p>
+        <!-- Gamification Achievements Section (The Prestige Gear Grid) -->
+        <div class="card-surface mt-6 flex flex-col gap-6 animate-fade-in">
+          
+          <div class="border-b border-bg-surface-alt pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">My Equipment Locker</h2>
+              <p class="text-xs text-text-secondary mt-0.5">Socket unlocked badges to brag on your profile. Click unlocked to toggle.</p>
             </div>
-
-            <div class="flex flex-col sm:flex-row items-center gap-6 p-2">
-              <!-- Tier Badge Image / Graphic -->
-              <div class="flex flex-col items-center justify-center text-center p-4 bg-bg-surface-alt/20 rounded-2xl border border-bg-surface-alt/30 w-full sm:w-48 aspect-square relative overflow-hidden group">
-                <span class="text-5xl select-none transition-transform group-hover:scale-110 duration-300">
-                  @if (badgeLevel() === 3) { 👑 }
-                  @else if (badgeLevel() === 2) { 🥈 }
-                  @else if (badgeLevel() === 1) { 🥉 }
-                  @else { 🔒 }
-                </span>
-                <span class="text-sm font-bold font-oswald uppercase tracking-wider text-gold-light mt-3">
-                  @if (badgeLevel() === 3) { Gold Legend }
-                  @else if (badgeLevel() === 2) { Silver Consistent }
-                  @else if (badgeLevel() === 1) { Bronze Active }
-                  @else { No Badge }
-                </span>
-                <span class="text-[9px] text-text-secondary mt-1">
-                  @if (badgeLevel() === 3) { 33+ visits in 90d }
-                  @else if (badgeLevel() === 2) { 22+ visits in 60d }
-                  @else if (badgeLevel() === 1) { 11+ visits in 30d }
-                  @else { Gym consistent! }
-                </span>
-              </div>
-
-              <!-- Explanation and stats -->
-              <div class="flex-1 flex flex-col gap-3">
-                <h4 class="text-sm font-bold font-oswald text-gold-light uppercase tracking-wider">How to Level Up:</h4>
-                <ul class="text-xs text-text-secondary flex flex-col gap-2 list-none p-0">
-                  <li class="flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-gold-primary"></span>
-                    <span [class.text-gold-primary]="badgeLevel() >= 1">**Bronze Active:** 11 check-ins in the last 30 days.</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-gold-primary"></span>
-                    <span [class.text-gold-primary]="badgeLevel() >= 2">**Silver Consistent:** 22 check-ins in the last 60 days.</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-gold-primary"></span>
-                    <span [class.text-gold-primary]="badgeLevel() >= 3">**Gold Legend:** 33 check-ins in the last 90 days.</span>
-                  </li>
-                </ul>
-                <p class="text-[10px] text-text-muted mt-2">
-                  *Note: The recovery-day logic allows 1 rest day after any check-in without breaking your check-in streak. Consecutive absences will break the streak.
-                </p>
-              </div>
+            
+            <div class="text-[10px] font-bold text-text-muted bg-bg-surface-alt/50 border border-bg-surface-alt/30 px-3 py-1.5 rounded-lg self-start sm:self-center">
+              Active Streak: <span class="text-red-400">🔥 {{ streak() }} Days</span>
             </div>
           </div>
 
-          <!-- Monthly Collectible Shelf Card (spans 1 column) -->
-          <div class="card-surface flex flex-col justify-between gap-4">
-            <div class="border-b border-bg-surface-alt pb-4">
-              <h2 class="text-lg font-bold font-oswald text-gold-light uppercase tracking-wider">Monthly Shelf</h2>
-              <p class="text-[10px] text-text-secondary mt-0.5">Collectibles earned (at least 4 visits/month)</p>
-            </div>
-
-            <div class="flex-1 overflow-y-auto max-h-[160px] pr-1">
-              @if (earnedMonthlyBadges().length === 0) {
-                <div class="flex flex-col items-center justify-center h-full text-center text-text-muted py-6 gap-2">
-                  <span class="text-3xl">🏺</span>
-                  <span class="text-[10px] uppercase font-bold tracking-wider">Shelf Empty</span>
-                  <span class="text-[9px] max-w-[150px]">Your monthly badges will appear here once you hit 4 check-ins!</span>
-                </div>
-              } @else {
-                <div class="grid grid-cols-2 gap-2">
-                  @for (mBadge of earnedMonthlyBadges(); track mBadge) {
-                    <div class="flex flex-col items-center justify-center p-2 rounded-xl bg-bg-surface-alt/30 border border-bg-surface-alt/40 text-center">
-                      <span class="text-xl">🏅</span>
-                      <span class="text-[10px] font-bold text-text-primary mt-1">{{ formatMonthlyBadgeId(mBadge) }}</span>
+          <!-- Rolling Tiers Section -->
+          <div class="flex flex-col gap-4">
+            <h3 class="text-xs font-bold font-oswald text-gold-light uppercase tracking-wider">Attendance Tier Ranks</h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              @for (badge of badgesWithProgress(); track badge.id) {
+                @if (badge.type === 'tier') {
+                  <div 
+                    (click)="badge.isUnlocked ? toggleBadgeEquip(badge.id) : null"
+                    [class.border-gold-primary/40]="badge.isEquipped"
+                    [class.bg-gradient-to-b]="badge.isUnlocked"
+                    [class.from-gold-primary/10]="badge.isUnlocked && badge.isEquipped"
+                    [class.to-gold-primary/5]="badge.isUnlocked && badge.isEquipped"
+                    [class.cursor-pointer]="badge.isUnlocked"
+                    [class.hover:border-gold-primary/20]="badge.isUnlocked"
+                    class="relative flex items-center gap-4 p-4 rounded-2xl bg-bg-surface-alt/20 border border-bg-surface-alt/40 transition-all select-none group"
+                  >
+                    <!-- Badge Icon / Graphic with circular SVG progress ring -->
+                    <div class="relative w-16 h-16 shrink-0 flex items-center justify-center rounded-xl bg-bg-surface-alt/40 border border-bg-surface-alt/60">
+                      <!-- Circular SVG Progress Ring (behind the badge) -->
+                      <svg class="absolute w-full h-full -rotate-90 select-none pointer-events-none" viewBox="0 0 36 36">
+                        <!-- Background Circle -->
+                        <path 
+                          class="text-bg-surface-alt/80 stroke-current" 
+                          stroke-width="2.5" 
+                          fill="none" 
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <!-- Foreground Progress Ring -->
+                        <path 
+                          [class.text-gold-primary]="badge.isUnlocked"
+                          [class.text-gold-light/35]="!badge.isUnlocked"
+                          class="stroke-current transition-all duration-500 ease-out" 
+                          [attr.stroke-dasharray]="badge.percentage + ', 100'"
+                          stroke-width="2.5" 
+                          stroke-linecap="round"
+                          fill="none" 
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                      </svg>
+                      
+                      <!-- Badge Graphic (Emoji) -->
+                      <span 
+                        [class.grayscale]="!badge.isUnlocked" 
+                        [class.opacity-40]="!badge.isUnlocked" 
+                        class="text-3xl select-none relative z-10 transition-transform duration-300 group-hover:scale-110"
+                      >
+                        {{ badge.isUnlocked ? badge.icon : '🔒' }}
+                      </span>
                     </div>
-                  }
-                </div>
+
+                    <!-- Badge Details -->
+                    <div class="flex-1 flex flex-col min-w-0">
+                      <div class="flex items-center gap-1.5">
+                        <span 
+                          [class.text-text-primary]="badge.isUnlocked"
+                          [class.text-text-secondary]="!badge.isUnlocked"
+                          class="text-xs font-bold font-oswald uppercase tracking-wider truncate"
+                        >
+                          {{ badge.title }}
+                        </span>
+                        
+                        @if (badge.isEquipped) {
+                          <span class="text-[8px] font-black uppercase text-gold-primary bg-gold-dim px-1.5 py-0.5 rounded border border-gold-primary/20 shrink-0">Equipped</span>
+                        } @else if (badge.isUnlocked) {
+                          <span class="text-[8px] font-black uppercase text-emerald-400 bg-emerald-950/20 px-1.5 py-0.5 rounded border border-emerald-800/30 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Equip</span>
+                        }
+                      </div>
+
+                      <span class="text-[10px] text-text-secondary truncate mt-0.5">{{ badge.requirement }}</span>
+                      
+                      <!-- Progress text and percentage bar -->
+                      <div class="flex items-center justify-between mt-2 text-[9px]">
+                        <span class="text-text-muted font-mono font-bold">{{ badge.current }}/{{ badge.target }} visits</span>
+                        <span class="font-bold font-mono text-gold-primary">{{ badge.percentage }}%</span>
+                      </div>
+                    </div>
+                  </div>
+                }
               }
             </div>
           </div>
+
+          <div class="border-t border-bg-surface-alt/60 my-2"></div>
+
+          <!-- Monthly shelf Section -->
+          <div class="flex flex-col gap-4">
+            <h3 class="text-xs font-bold font-oswald text-gold-light uppercase tracking-wider">Monthly Collectible Trophies</h3>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3.5">
+              @for (badge of badgesWithProgress(); track badge.id) {
+                @if (badge.type === 'monthly') {
+                  <div 
+                    (click)="badge.isUnlocked ? toggleBadgeEquip(badge.id) : null"
+                    [class.border-gold-primary/40]="badge.isEquipped"
+                    [class.bg-gradient-to-b]="badge.isUnlocked"
+                    [class.from-gold-primary/10]="badge.isUnlocked && badge.isEquipped"
+                    [class.to-gold-primary/5]="badge.isUnlocked && badge.isEquipped"
+                    [class.cursor-pointer]="badge.isUnlocked"
+                    [class.hover:border-gold-primary/20]="badge.isUnlocked"
+                    class="relative flex flex-col items-center justify-center p-3.5 rounded-2xl bg-bg-surface-alt/10 border border-bg-surface-alt/40 transition-all select-none group text-center"
+                    [title]="badge.isUnlocked ? (badge.isEquipped ? 'Click to Unequip' : 'Click to Equip') : 'Locked: Requires 4+ visits. ' + badge.current + '/4 visits'"
+                  >
+                    <!-- Progress ring + Icon container -->
+                    <div class="relative w-12 h-12 flex items-center justify-center rounded-xl bg-bg-surface-alt/30 border border-bg-surface-alt/40 mb-2">
+                      <!-- Circular SVG Progress Ring -->
+                      <svg class="absolute w-full h-full -rotate-90 select-none pointer-events-none" viewBox="0 0 36 36">
+                        <!-- Background Circle -->
+                        <path 
+                          class="text-bg-surface-alt/80 stroke-current" 
+                          stroke-width="2.5" 
+                          fill="none" 
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <!-- Foreground Progress Ring -->
+                        <path 
+                          [class.text-gold-primary]="badge.isUnlocked"
+                          [class.text-gold-light/35]="!badge.isUnlocked"
+                          class="stroke-current transition-all duration-500 ease-out" 
+                          [attr.stroke-dasharray]="badge.percentage + ', 100'"
+                          stroke-width="2.5" 
+                          stroke-linecap="round"
+                          fill="none" 
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                      </svg>
+
+                      <!-- Badge Graphic -->
+                      <span 
+                        [class.grayscale]="!badge.isUnlocked" 
+                        [class.opacity-45]="!badge.isUnlocked" 
+                        class="text-2xl select-none relative z-10 transition-transform duration-300 group-hover:scale-110"
+                      >
+                        {{ badge.isUnlocked ? badge.icon : '🔒' }}
+                      </span>
+                    </div>
+
+                    <!-- Title -->
+                    <span class="text-[10px] font-bold text-text-primary uppercase tracking-wider font-oswald mt-0.5 truncate max-w-full px-1">
+                      {{ badge.title }}
+                    </span>
+                    
+                    <!-- Progress fraction text -->
+                    <span class="text-[8px] text-text-muted mt-0.5 font-mono font-bold">
+                      @if (badge.isUnlocked) {
+                        <span class="text-gold-primary">Secured</span>
+                      } @else {
+                        {{ badge.current }}/4 visits
+                      }
+                    </span>
+
+                    @if (badge.isEquipped) {
+                      <div class="absolute -top-1 -right-1 text-[7px] font-black uppercase text-gold-primary bg-bg-surface px-1.5 py-0.5 rounded-md border border-gold-primary/30 shadow-md">EQ</div>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          </div>
+          
         </div>
 
         <!-- Somatics / Biometrics Overview -->
@@ -388,9 +528,193 @@ export class DashboardHomeComponent {
   monthVisits = computed(() => this.dashboardService.visitsThisMonth());
   badgeLevel = computed(() => this.dashboardService.memberData()?.attendanceBadgeLevel || 0);
   earnedMonthlyBadges = computed(() => this.dashboardService.memberData()?.earnedMonthlyBadges || []);
+  equippedBadges = computed<string[]>(() => this.dashboardService.memberData()?.equippedBadges || []);
   
   latestData = computed(() => this.dashboardService.latestMeasurement());
   trends = computed(() => this.dashboardService.somaticTrends());
+
+  memberInitials = computed(() => {
+    const name = this.memberName();
+    if (!name || name === 'Guest') return 'G';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  });
+
+  allAvailableBadges = computed(() => {
+    const badges: Array<{
+      id: string;
+      title: string;
+      icon: string;
+      requirement: string;
+      type: 'tier' | 'monthly';
+      reqVisits: number;
+    }> = [
+      { id: 'bronze-active', title: 'Bronze Active', icon: '🥉', requirement: '11+ visits in last 30d', type: 'tier', reqVisits: 11 },
+      { id: 'silver-consistent', title: 'Silver Consistent', icon: '🥈', requirement: '22+ visits in last 60d', type: 'tier', reqVisits: 22 },
+      { id: 'gold-legend', title: 'Gold Legend', icon: '👑', requirement: '33+ visits in last 90d', type: 'tier', reqVisits: 33 },
+    ];
+    
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    
+    let year = 2026;
+    let month = 1;
+    
+    while (year < currentYear || (year === currentYear && month <= currentMonth)) {
+      const mId = `${year}-${String(month).padStart(2, '0')}`;
+      badges.push({
+        id: mId,
+        title: this.formatMonthlyBadgeId(mId),
+        icon: '🏅',
+        requirement: '4+ visits in calendar month',
+        type: 'monthly',
+        reqVisits: 4
+      });
+      
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+    }
+    
+    return badges;
+  });
+
+  attendanceDates = computed(() => {
+    const records = this.dashboardService.attendanceRecords();
+    return records.map(r => {
+      const date = r.checkInTime;
+      if (!date) return '';
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }).filter(Boolean);
+  });
+
+  formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  visits30 = computed(() => {
+    const dates = this.attendanceDates();
+    const today = new Date();
+    const limitDate = new Date(today);
+    limitDate.setDate(limitDate.getDate() - 29);
+    const limitStr = this.formatLocalDate(limitDate);
+    const todayStr = this.formatLocalDate(today);
+    return dates.filter(d => d >= limitStr && d <= todayStr).length;
+  });
+
+  visits60 = computed(() => {
+    const dates = this.attendanceDates();
+    const today = new Date();
+    const limitDate = new Date(today);
+    limitDate.setDate(limitDate.getDate() - 59);
+    const limitStr = this.formatLocalDate(limitDate);
+    const todayStr = this.formatLocalDate(today);
+    return dates.filter(d => d >= limitStr && d <= todayStr).length;
+  });
+
+  visits90 = computed(() => {
+    const dates = this.attendanceDates();
+    const today = new Date();
+    const limitDate = new Date(today);
+    limitDate.setDate(limitDate.getDate() - 89);
+    const limitStr = this.formatLocalDate(limitDate);
+    const todayStr = this.formatLocalDate(today);
+    return dates.filter(d => d >= limitStr && d <= todayStr).length;
+  });
+
+  badgesWithProgress = computed(() => {
+    const list = this.allAvailableBadges();
+    const lvl = this.badgeLevel();
+    const earnedMonthlies = this.earnedMonthlyBadges();
+    const v30 = this.visits30();
+    const v60 = this.visits60();
+    const v90 = this.visits90();
+    const vMonth = this.monthVisits();
+    
+    const today = new Date();
+    const currentYearMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    
+    return list.map(badge => {
+      let current = 0;
+      let target = 4;
+      let isUnlocked = false;
+      
+      if (badge.id === 'bronze-active') {
+        current = v30;
+        target = 11;
+        isUnlocked = lvl >= 1 || current >= target;
+      } else if (badge.id === 'silver-consistent') {
+        current = v60;
+        target = 22;
+        isUnlocked = lvl >= 2 || current >= target;
+      } else if (badge.id === 'gold-legend') {
+        current = v90;
+        target = 33;
+        isUnlocked = lvl >= 3 || current >= target;
+      } else {
+        isUnlocked = earnedMonthlies.includes(badge.id);
+        target = 4;
+        if (badge.id === currentYearMonthStr) {
+          current = vMonth;
+          if (current >= target) {
+            isUnlocked = true;
+          }
+        } else {
+          current = isUnlocked ? 4 : 0;
+        }
+      }
+      
+      const percentage = Math.min(100, Math.round((current / target) * 100));
+      const isEquipped = this.equippedBadges().includes(badge.id);
+      
+      return {
+        ...badge,
+        current,
+        target,
+        isUnlocked,
+        percentage,
+        isEquipped
+      };
+    });
+  });
+
+  getEquippedBadgeAt(index: number) {
+    const equipped = this.equippedBadges();
+    const badgeId = equipped[index];
+    if (!badgeId) return null;
+    return this.badgesWithProgress().find(b => b.id === badgeId) || null;
+  }
+
+  async toggleBadgeEquip(badgeId: string) {
+    const current = [...this.equippedBadges()];
+    const index = current.indexOf(badgeId);
+    
+    if (index >= 0) {
+      current.splice(index, 1);
+    } else {
+      if (current.length >= 3) {
+        alert('Maximum 3 badges can be equipped. Unequip a badge first!');
+        return;
+      }
+      current.push(badgeId);
+    }
+    
+    try {
+      await this.dashboardService.updateEquippedBadges(current);
+    } catch (err) {
+      console.error('Failed to update equipped badges:', err);
+    }
+  }
 
   formatMonthlyBadgeId(mBadgeId: string): string {
     if (!mBadgeId) return '';

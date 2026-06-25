@@ -20,4 +20,5 @@ export interface Member {
     attendanceBadgeLevel?: number; // 0=None, 1=Bronze, 2=Silver, 3=Gold
     attendanceStreak?: number;
     earnedMonthlyBadges?: string[]; // e.g. ["2026-01", "2026-02"]
+    equippedBadges?: string[]; // e.g. ["bronze-active", "2026-05"]
 }

@@ -1,5 +1,5 @@
 import { inject, Injectable, signal, computed, effect } from '@angular/core';
-import { Firestore, doc, docData, collection, collectionData, query, where, orderBy, limit } from '@angular/fire/firestore';
+import { Firestore, doc, docData, collection, collectionData, query, where, orderBy, limit, updateDoc } from '@angular/fire/firestore';
 import { AuthService } from '../auth/auth.service';
 import { Observable, Subscription } from 'rxjs';
 
@@ -180,4 +180,13 @@ export class DashboardService {
       muscleMassDelta: getRoundDelta(latest.muscleMass || 0, prev.muscleMass || 0)
     };
   });
+
+  async updateEquippedBadges(equippedBadges: string[]): Promise<void> {
+    const profile = this.authService.memberProfile();
+    if (!profile || !profile.memberId) {
+      throw new Error('No active member session found.');
+    }
+    const memberDocRef = doc(this.firestore, `members/${profile.memberId}`);
+    return updateDoc(memberDocRef, { equippedBadges });
+  }
 }
