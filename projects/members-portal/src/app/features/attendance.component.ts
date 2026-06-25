@@ -1,11 +1,12 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../core/services/dashboard.service';
+import { AttendanceCalendarComponent } from '../shared/components/attendance-calendar/attendance-calendar.component';
 
 @Component({
   selector: 'app-attendance',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AttendanceCalendarComponent],
   template: `
     <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in">
       
@@ -32,45 +33,53 @@ import { DashboardService } from '../core/services/dashboard.service';
         <!-- Heatmap Graph & Stats Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           
-          <!-- Heatmap Card (Spans 2 columns on desktop) -->
-          <div class="card-surface lg:col-span-2 flex flex-col gap-4">
-            <div>
-              <h2 class="text-base font-bold font-oswald text-gold-light uppercase tracking-wider">Gym Attendance Heatmap</h2>
-              <p class="text-[10px] text-text-secondary mt-0.5">Your past 90 days activity grid</p>
-            </div>
+          <!-- Left Column (Spans 2 columns on desktop) -->
+          <div class="lg:col-span-2 flex flex-col gap-6">
             
-            <!-- Horizontal scrollable container for mobile safety -->
-            <div class="w-full overflow-x-auto pb-2 scrollbar-thin">
-              <div class="min-w-[420px] flex flex-col gap-2 p-1">
-                
-                <!-- Grid: 7 rows (Sunday at top, Saturday at bottom) flowing in columns -->
-                <div class="grid grid-flow-col grid-rows-7 gap-1.5 self-start">
-                  @for (day of past90Days(); track day.dateStr) {
-                    <div 
-                      [attr.title]="getDayTooltip(day)"
-                      [class.bg-gold-primary]="day.visited"
-                      [class.bg-bg-surface-alt]="!day.visited"
-                      [class.border]="day.visited"
-                      [class.border-gold-light]="day.visited"
-                      class="w-4.5 h-4.5 rounded-sm transition-all hover:scale-110 cursor-help"
-                    ></div>
-                  }
-                </div>
-
-                <!-- Label Indicators -->
-                <div class="flex items-center justify-between text-[9px] text-text-muted px-1 mt-1">
-                  <span>90 Days Ago</span>
-                  <div class="flex items-center gap-1.5">
-                    <span>Less</span>
-                    <span class="w-3.5 h-3.5 bg-bg-surface-alt rounded-sm"></span>
-                    <span class="w-3.5 h-3.5 bg-gold-primary border border-gold-light rounded-sm"></span>
-                    <span>More</span>
-                  </div>
-                  <span>Today</span>
-                </div>
-
+            <!-- Heatmap Card -->
+            <div class="card-surface flex flex-col gap-4">
+              <div>
+                <h2 class="text-base font-bold font-oswald text-gold-light uppercase tracking-wider">Gym Attendance Heatmap</h2>
+                <p class="text-[10px] text-text-secondary mt-0.5">Your past 90 days activity grid</p>
               </div>
+              
+              <!-- Horizontal scrollable container for mobile safety -->
+              <div class="w-full overflow-x-auto pb-2 scrollbar-thin">
+                <div class="min-w-[420px] flex flex-col gap-2 p-1">
+                  
+                  <!-- Grid: 7 rows (Sunday at top, Saturday at bottom) flowing in columns -->
+                  <div class="grid grid-flow-col grid-rows-7 gap-1.5 self-start">
+                    @for (day of past90Days(); track day.dateStr) {
+                      <div 
+                        [attr.title]="getDayTooltip(day)"
+                        [class.bg-gold-primary]="day.visited"
+                        [class.bg-bg-surface-alt]="!day.visited"
+                        [class.border]="day.visited"
+                        [class.border-gold-light]="day.visited"
+                        class="w-4.5 h-4.5 rounded-sm transition-all hover:scale-110 cursor-help"
+                      ></div>
+                    }
+                  </div>
+
+                  <!-- Label Indicators -->
+                  <div class="flex items-center justify-between text-[9px] text-text-muted px-1 mt-1">
+                    <span>90 Days Ago</span>
+                    <div class="flex items-center gap-1.5">
+                      <span>Less</span>
+                      <span class="w-3.5 h-3.5 bg-bg-surface-alt rounded-sm"></span>
+                      <span class="w-3.5 h-3.5 bg-gold-primary border border-gold-light rounded-sm"></span>
+                      <span>More</span>
+                    </div>
+                    <span>Today</span>
+                  </div>
+
+                </div>
+              </div>
+
             </div>
+
+            <!-- Monthly Calendar View -->
+            <app-attendance-calendar [attendanceDates]="attendanceDates()"></app-attendance-calendar>
 
           </div>
 
@@ -208,6 +217,7 @@ export class AttendanceComponent {
   streak = computed(() => this.dashboardService.checkInStreak());
   monthVisits = computed(() => this.dashboardService.visitsThisMonth());
   totalVisits = computed(() => this.dashboardService.attendanceRecords().length);
+  attendanceDates = computed(() => this.dashboardService.attendanceRecords().map(r => r.date).filter(Boolean));
 
   readonly past90Days = computed(() => {
     const records = this.dashboardService.attendanceRecords();

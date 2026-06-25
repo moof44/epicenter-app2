@@ -195,4 +195,44 @@
       </div>
     </mat-card-content>
   </mat-card>
+
+  <!-- Attendance Streaks & Badges Card -->
+  <mat-card *ngIf="isEditMode" class="portal-card" style="margin-top: 16px;">
+    <mat-card-header>
+      <mat-card-title>Attendance Streaks & Badges</mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="portal-card-content">
+      <div class="portal-status-container">
+        <div class="status-info">
+          
+          <div class="status-row">
+            <span class="label">Current Streak:</span>
+            <span class="value font-bold" style="color: #ff9800; display: inline-flex; align-items: center; gap: 4px;">
+              🔥 {{ member?.attendanceStreak || 0 }} Day{{ (member?.attendanceStreak === 1) ? '' : 's' }}
+            </span>
+          </div>
+
+          <div class="status-row">
+            <span class="label">Attendance Badge:</span>
+            <span *ngIf="member?.attendanceBadgeLevel === 3" class="status-badge" style="background: #ffd700; color: #000; font-weight: bold; border: 1px solid #cca100;">Gold Legend</span>
+            <span *ngIf="member?.attendanceBadgeLevel === 2" class="status-badge" style="background: #c0c0c0; color: #000; font-weight: bold; border: 1px solid #999;">Silver Consistent</span>
+            <span *ngIf="member?.attendanceBadgeLevel === 1" class="status-badge" style="background: #cd7f32; color: #fff; font-weight: bold; border: 1px solid #8c531d;">Bronze Active</span>
+            <span *ngIf="!member?.attendanceBadgeLevel" class="status-badge inactive">No Badge</span>
+          </div>
+
+          <div class="status-row" *ngIf="member?.earnedMonthlyBadges?.length">
+            <span class="label">Monthly Collectibles:</span>
+            <div class="value" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+              <span *ngFor="let mBadge of member?.earnedMonthlyBadges" 
+                    class="status-badge active" 
+                    style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; border-color: #bae6fd;">
+                🏅 {{ formatMonthlyBadgeId(mBadge) }}
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
 </div>

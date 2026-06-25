@@ -137,43 +137,7 @@ export class DashboardService {
   });
 
   readonly checkInStreak = computed(() => {
-    const records = this.attendanceRecords();
-    if (records.length === 0) return 0;
-
-    const dates = Array.from(new Set(records.map(r => r.date))).sort().reverse();
-    if (dates.length === 0) return 0;
-
-    const formatDate = (d: Date) => {
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
-    const todayStr = formatDate(new Date());
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = formatDate(yesterday);
-
-    const lastCheckInDate = dates[0];
-    if (lastCheckInDate !== todayStr && lastCheckInDate !== yesterdayStr) {
-      return 0;
-    }
-
-    let streak = 0;
-    const currentCheckDate = new Date(lastCheckInDate);
-
-    while (true) {
-      const expectedStr = formatDate(currentCheckDate);
-      if (dates.includes(expectedStr)) {
-        streak++;
-        currentCheckDate.setDate(currentCheckDate.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-
-    return streak;
+    return this.memberData()?.attendanceStreak || 0;
   });
 
   readonly visitsThisMonth = computed(() => {

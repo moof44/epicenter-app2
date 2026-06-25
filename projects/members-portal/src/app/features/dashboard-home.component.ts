@@ -166,6 +166,90 @@ import { ReferralCardComponent } from '../shared/components/referral-card/referr
 
         </div>
 
+        <!-- Gamification Achievements Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 animate-fade-in">
+          <!-- Main Badge Display (spans 2 columns on desktop) -->
+          <div class="card-surface lg:col-span-2 flex flex-col gap-6">
+            <div class="border-b border-bg-surface-alt pb-4">
+              <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">My Attendance Badges</h2>
+              <p class="text-xs text-text-secondary mt-0.5">Maintain consistency to level up your status</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center gap-6 p-2">
+              <!-- Tier Badge Image / Graphic -->
+              <div class="flex flex-col items-center justify-center text-center p-4 bg-bg-surface-alt/20 rounded-2xl border border-bg-surface-alt/30 w-full sm:w-48 aspect-square relative overflow-hidden group">
+                <span class="text-5xl select-none transition-transform group-hover:scale-110 duration-300">
+                  @if (badgeLevel() === 3) { 👑 }
+                  @else if (badgeLevel() === 2) { 🥈 }
+                  @else if (badgeLevel() === 1) { 🥉 }
+                  @else { 🔒 }
+                </span>
+                <span class="text-sm font-bold font-oswald uppercase tracking-wider text-gold-light mt-3">
+                  @if (badgeLevel() === 3) { Gold Legend }
+                  @else if (badgeLevel() === 2) { Silver Consistent }
+                  @else if (badgeLevel() === 1) { Bronze Active }
+                  @else { No Badge }
+                </span>
+                <span class="text-[9px] text-text-secondary mt-1">
+                  @if (badgeLevel() === 3) { 33+ visits in 90d }
+                  @else if (badgeLevel() === 2) { 22+ visits in 60d }
+                  @else if (badgeLevel() === 1) { 11+ visits in 30d }
+                  @else { Gym consistent! }
+                </span>
+              </div>
+
+              <!-- Explanation and stats -->
+              <div class="flex-1 flex flex-col gap-3">
+                <h4 class="text-sm font-bold font-oswald text-gold-light uppercase tracking-wider">How to Level Up:</h4>
+                <ul class="text-xs text-text-secondary flex flex-col gap-2 list-none p-0">
+                  <li class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gold-primary"></span>
+                    <span [class.text-gold-primary]="badgeLevel() >= 1">**Bronze Active:** 11 check-ins in the last 30 days.</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gold-primary"></span>
+                    <span [class.text-gold-primary]="badgeLevel() >= 2">**Silver Consistent:** 22 check-ins in the last 60 days.</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gold-primary"></span>
+                    <span [class.text-gold-primary]="badgeLevel() >= 3">**Gold Legend:** 33 check-ins in the last 90 days.</span>
+                  </li>
+                </ul>
+                <p class="text-[10px] text-text-muted mt-2">
+                  *Note: The recovery-day logic allows 1 rest day after any check-in without breaking your check-in streak. Consecutive absences will break the streak.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Monthly Collectible Shelf Card (spans 1 column) -->
+          <div class="card-surface flex flex-col justify-between gap-4">
+            <div class="border-b border-bg-surface-alt pb-4">
+              <h2 class="text-lg font-bold font-oswald text-gold-light uppercase tracking-wider">Monthly Shelf</h2>
+              <p class="text-[10px] text-text-secondary mt-0.5">Collectibles earned (at least 4 visits/month)</p>
+            </div>
+
+            <div class="flex-1 overflow-y-auto max-h-[160px] pr-1">
+              @if (earnedMonthlyBadges().length === 0) {
+                <div class="flex flex-col items-center justify-center h-full text-center text-text-muted py-6 gap-2">
+                  <span class="text-3xl">🏺</span>
+                  <span class="text-[10px] uppercase font-bold tracking-wider">Shelf Empty</span>
+                  <span class="text-[9px] max-w-[150px]">Your monthly badges will appear here once you hit 4 check-ins!</span>
+                </div>
+              } @else {
+                <div class="grid grid-cols-2 gap-2">
+                  @for (mBadge of earnedMonthlyBadges(); track mBadge) {
+                    <div class="flex flex-col items-center justify-center p-2 rounded-xl bg-bg-surface-alt/30 border border-bg-surface-alt/40 text-center">
+                      <span class="text-xl">🏅</span>
+                      <span class="text-[10px] font-bold text-text-primary mt-1">{{ formatMonthlyBadgeId(mBadge) }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
         <!-- Somatics / Biometrics Overview -->
         <div class="card-surface mt-6 flex flex-col gap-6">
           <div class="border-b border-bg-surface-alt pb-4">
@@ -302,9 +386,23 @@ export class DashboardHomeComponent {
   ptDays = computed(() => this.dashboardService.ptDaysLeft());
   streak = computed(() => this.dashboardService.checkInStreak());
   monthVisits = computed(() => this.dashboardService.visitsThisMonth());
+  badgeLevel = computed(() => this.dashboardService.memberData()?.attendanceBadgeLevel || 0);
+  earnedMonthlyBadges = computed(() => this.dashboardService.memberData()?.earnedMonthlyBadges || []);
   
   latestData = computed(() => this.dashboardService.latestMeasurement());
   trends = computed(() => this.dashboardService.somaticTrends());
+
+  formatMonthlyBadgeId(mBadgeId: string): string {
+    if (!mBadgeId) return '';
+    const [year, monthStr] = mBadgeId.split('-');
+    const month = parseInt(monthStr, 10);
+    const monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    const monthName = monthNames[month - 1] || monthStr;
+    return `${monthName} ${year}`;
+  }
 
   expiryDateText = computed(() => {
     const data = this.dashboardService.memberData();

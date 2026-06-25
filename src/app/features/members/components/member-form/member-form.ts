@@ -176,6 +176,18 @@ export class MemberForm implements OnInit {
     }
   }
 
+  formatMonthlyBadgeId(mBadgeId: string): string {
+    if (!mBadgeId) return '';
+    const [year, monthStr] = mBadgeId.split('-');
+    const month = parseInt(monthStr, 10);
+    const monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    const monthName = monthNames[month - 1] || monthStr;
+    return `${monthName} ${year}`;
+  }
+
   cancel() {
     this.location.back();
   }

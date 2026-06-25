@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import { sendNotificationsToRoles } from './helpers/notifier';
+import { evaluateAttendance } from './utils/attendance-evaluator';
 
 admin.initializeApp();
 
@@ -610,6 +611,34 @@ export const onMemberCheckInNotification = functions.firestore.document('/attend
             itemId: attendance.memberId || ''
         }
     });
+
+    // --- Gamified Attendance Evaluation (Non-blocking) ---
+    try {
+        const memberId = attendance.memberId;
+        if (memberId) {
+            const attendanceSnap = await db.collection('attendance')
+                .where('memberId', '==', memberId)
+                .get();
+            
+            const dates = attendanceSnap.docs
+                .map(doc => doc.data().date)
+                .filter(Boolean);
+
+            const manilaDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Manila' });
+            const manilaDate = new Date(manilaDateStr);
+
+            const result = evaluateAttendance(dates, manilaDate);
+
+            await db.collection('members').doc(memberId).update({
+                attendanceBadgeLevel: result.badgeLevel,
+                attendanceStreak: result.currentStreak,
+                earnedMonthlyBadges: result.earnedMonthlyBadges
+            });
+            console.log(`Successfully updated badges/streak for member ${memberId}: streak=${result.currentStreak}, badge=${result.badgeLevel}`);
+        }
+    } catch (err) {
+        console.error('Error evaluating member attendance gamification:', err);
+    }
 });
 
 /**
@@ -844,6 +873,123 @@ export const resetMemberPortalAccount = functions.https.onCall(async (data: any,
     } catch (error: any) {
         console.error('Error resetting member portal account:', error);
         throw new functions.https.HttpsError('internal', error.message || 'Unable to reset member portal account.', error);
+    }
+});
+
+/**
+ * Scheduled monthly function (running on the 1st of the month at 00:05 AM Asia/Manila)
+ * to evaluate and update monthly badges and check-in streak/rank down updates for all members.
+ */
+export const processMonthlyBadgesAndRanks = functions.pubsub.schedule('5 0 1 * *')
+    .timeZone('Asia/Manila')
+    .onRun(async (context) => {
+        const db = admin.firestore();
+        const manilaDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Manila' });
+        const manilaDate = new Date(manilaDateStr);
+
+        try {
+            const membersSnap = await db.collection('members').get();
+            const batch = db.batch();
+            let writeCount = 0;
+            const batches: admin.firestore.WriteBatch[] = [batch];
+
+            for (const memberDoc of membersSnap.docs) {
+                const memberId = memberDoc.id;
+                
+                const attendanceSnap = await db.collection('attendance')
+                    .where('memberId', '==', memberId)
+                    .get();
+                
+                const dates = attendanceSnap.docs
+                    .map(doc => doc.data().date)
+                    .filter(Boolean);
+
+                const result = evaluateAttendance(dates, manilaDate);
+
+                const currentBatch = batches[batches.length - 1];
+                currentBatch.update(db.collection('members').doc(memberId), {
+                    attendanceBadgeLevel: result.badgeLevel,
+                    attendanceStreak: result.currentStreak,
+                    earnedMonthlyBadges: result.earnedMonthlyBadges
+                });
+
+                writeCount++;
+                if (writeCount >= 500) {
+                    batches.push(db.batch());
+                    writeCount = 0;
+                }
+            }
+
+            for (const b of batches) {
+                await b.commit();
+            }
+            console.log(`Successfully processed monthly badges and rank updates for ${membersSnap.size} members.`);
+        } catch (error) {
+            console.error('Error processing monthly badges and ranks:', error);
+        }
+    });
+
+/**
+ * Callable HTTP function to retroactively calculate and update badges/streaks
+ * for all members in the database (typically run once).
+ * Must be called by an ADMIN.
+ */
+export const retroactivelyProcessAllBadges = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    // Security Check
+    if (!context.auth || !context.auth.token.roles || !context.auth.token.roles.includes('ADMIN')) {
+        throw new functions.https.HttpsError(
+            'permission-denied',
+            'Only admins can trigger retroactive badge processing.'
+        );
+    }
+
+    const db = admin.firestore();
+    const manilaDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Manila' });
+    const manilaDate = new Date(manilaDateStr);
+
+    try {
+        const membersSnap = await db.collection('members').get();
+        let processedCount = 0;
+        let batch = db.batch();
+        let writeCount = 0;
+        const batches: admin.firestore.WriteBatch[] = [batch];
+
+        for (const memberDoc of membersSnap.docs) {
+            const memberId = memberDoc.id;
+
+            const attendanceSnap = await db.collection('attendance')
+                .where('memberId', '==', memberId)
+                .get();
+
+            const dates = attendanceSnap.docs
+                .map(doc => doc.data().date)
+                .filter(Boolean);
+
+            const result = evaluateAttendance(dates, manilaDate);
+
+            const currentBatch = batches[batches.length - 1];
+            currentBatch.update(db.collection('members').doc(memberId), {
+                attendanceBadgeLevel: result.badgeLevel,
+                attendanceStreak: result.currentStreak,
+                earnedMonthlyBadges: result.earnedMonthlyBadges
+            });
+
+            writeCount++;
+            processedCount++;
+            if (writeCount >= 500) {
+                batches.push(db.batch());
+                writeCount = 0;
+            }
+        }
+
+        for (const b of batches) {
+            await b.commit();
+        }
+
+        return { success: true, processedMembers: processedCount };
+    } catch (error: any) {
+        console.error('Error running retroactive badge processing:', error);
+        throw new functions.https.HttpsError('internal', error.message || 'Unable to process retroactive badges.', error);
     }
 });
 
