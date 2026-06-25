@@ -60,4 +60,25 @@
             </div>
         </mat-card-content>
     </mat-card>
+
+    <mat-card class="settings-card security-card" *ngIf="authService.isAdmin()" style="margin-top: 16px;">
+        <mat-card-header>
+            <mat-icon mat-card-avatar color="primary">build</mat-icon>
+            <mat-card-title>System Maintenance</mat-card-title>
+            <mat-card-subtitle>Maintenance tools for gamification data</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="security-warning" style="border-left-color: #3b82f6;">
+                <mat-icon color="primary" style="color: #3b82f6;">info</mat-icon>
+                <p><strong>Attendance Badges Initialization:</strong> Running this will retroactively analyze all check-in history from January 2026 to today for all members and compute their streaks and earned badges.</p>
+            </div>
+
+            <div class="actions" style="margin-top: 16px;">
+                <button mat-raised-button color="primary" (click)="retroactiveBadges()" [disabled]="isProcessingBadges">
+                    <mat-icon>military_tech</mat-icon>
+                    {{ isProcessingBadges ? 'Processing Badges...' : 'Initialize Historical Badges' }}
+                </button>
+            </div>
+        </mat-card-content>
+    </mat-card>
 </div>

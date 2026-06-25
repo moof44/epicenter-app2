@@ -43,6 +43,7 @@ export class GeneralSettingsComponent implements OnInit {
 
     isSaving = false;
     isLoggingOut = false;
+    isProcessingBadges = false;
 
     async ngOnInit() {
         try {
@@ -85,6 +86,27 @@ export class GeneralSettingsComponent implements OnInit {
             this.snackBar.open(`Failed: ${error.message}`, 'Close', { duration: 5000 });
         } finally {
             this.isLoggingOut = false;
+        }
+    }
+
+    async retroactiveBadges() {
+        if (!confirm('Are you sure you want to run the retroactive badge processing? This will analyze all gym check-ins since January 2026 for all members.')) {
+            return;
+        }
+
+        this.isProcessingBadges = true;
+        const retroFn = httpsCallable(this.functions, 'retroactivelyProcessAllBadges');
+
+        try {
+            const result: any = await retroFn();
+            if (result.data?.success) {
+                this.snackBar.open(`Success: Processed ${result.data.processedMembers} members.`, 'Close', { duration: 5000 });
+            }
+        } catch (error: any) {
+            console.error('Retroactive badge processing failed:', error);
+            this.snackBar.open(`Failed: ${error.message}`, 'Close', { duration: 5000 });
+        } finally {
+            this.isProcessingBadges = false;
         }
     }
 }
