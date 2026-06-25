@@ -61,8 +61,10 @@ interface CalendarDay {
             [class.text-black]="day.status === 'Present'"
             [class.font-bold]="day.status === 'Present'"
             
-            [class.bg-bg-surface-alt]="day.status === 'Rest'"
-            [class.text-text-secondary]="day.status === 'Rest'"
+            [class.bg-slate-800/45]="day.status === 'Rest'"
+            [class.text-slate-400]="day.status === 'Rest'"
+            [class.border]="day.status === 'Rest'"
+            [class.border-slate-700/45]="day.status === 'Rest'"
             
             [class.bg-red-950/40]="day.status === 'Absent'"
             [class.text-red-400]="day.status === 'Absent'"
@@ -72,18 +74,19 @@ interface CalendarDay {
             [class.bg-transparent]="day.status === 'Future' || day.status === 'None'"
             [class.text-text-muted]="day.status === 'Future' || day.status === 'None'"
             
-            class="aspect-square flex flex-col items-center justify-center rounded-lg text-xs transition-transform hover:scale-105 cursor-help"
+            class="aspect-square flex flex-col justify-between p-1 rounded-lg transition-transform hover:scale-105 cursor-help"
           >
-            <span>{{ day.dayNumber }}</span>
+            <!-- Day Number in top-left corner -->
+            <span class="text-[9px] font-mono leading-none self-start">{{ day.dayNumber }}</span>
             
-            <!-- Small status indicator dot at the bottom of the day block -->
-            <div class="mt-0.5 flex gap-0.5 justify-center">
+            <!-- Central Status Icon -->
+            <div class="flex-grow flex items-center justify-center text-[11px] sm:text-xs leading-none select-none">
               @if (day.status === 'Present') {
-                <span class="w-1 h-1 rounded-full bg-black"></span>
+                <span>🏋️</span>
               } @else if (day.status === 'Rest') {
-                <span class="w-1 h-1 rounded-full bg-gold-primary"></span>
+                <span>🛌</span>
               } @else if (day.status === 'Absent') {
-                <span class="w-1.5 h-0.5 bg-red-400"></span>
+                <span class="text-[8px] opacity-75">❌</span>
               }
             </div>
           </div>
@@ -91,18 +94,18 @@ interface CalendarDay {
       </div>
 
       <!-- Calendar Legend -->
-      <div class="flex items-center gap-4 text-[10px] text-text-muted mt-2 border-t border-bg-surface-alt/30 pt-3 flex-wrap">
-        <div class="flex items-center gap-1.5">
-          <span class="w-2.5 h-2.5 rounded bg-gold-primary"></span>
-          <span>Present</span>
+      <div class="flex items-center gap-3.5 text-[10px] text-text-muted mt-2 border-t border-bg-surface-alt/30 pt-3 flex-wrap justify-start select-none">
+        <div class="flex items-center gap-1.5 bg-gold-primary/10 border border-gold-primary/30 px-2.5 py-1.5 rounded-xl text-gold-light">
+          <span class="text-xs">🏋️</span>
+          <span class="font-bold uppercase tracking-wider font-oswald text-[9px]">Present</span>
         </div>
-        <div class="flex items-center gap-1.5">
-          <span class="w-2.5 h-2.5 rounded bg-bg-surface-alt"></span>
-          <span>Rest Day (Recovery)</span>
+        <div class="flex items-center gap-1.5 bg-slate-800/40 border border-slate-700/45 px-2.5 py-1.5 rounded-xl text-slate-400">
+          <span class="text-xs">🛌</span>
+          <span class="font-bold uppercase tracking-wider font-oswald text-[9px]">Rest Day</span>
         </div>
-        <div class="flex items-center gap-1.5">
-          <span class="w-2.5 h-2.5 rounded bg-red-950/40 border border-red-900/50"></span>
-          <span>Absent (Missed)</span>
+        <div class="flex items-center gap-1.5 bg-red-950/30 border border-red-900/40 px-2.5 py-1.5 rounded-xl text-red-400">
+          <span class="text-xs">❌</span>
+          <span class="font-bold uppercase tracking-wider font-oswald text-[9px]">Absent</span>
         </div>
       </div>
 

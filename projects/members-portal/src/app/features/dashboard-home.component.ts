@@ -4,11 +4,12 @@ import { RouterLink } from '@angular/router';
 import { DashboardService } from '../core/services/dashboard.service';
 import { ShareCardService } from '../core/services/share-card.service';
 import { ReferralCardComponent } from '../shared/components/referral-card/referral-card.component';
+import { AttendanceCalendarComponent } from '../shared/components/attendance-calendar/attendance-calendar.component';
 
 @Component({
   selector: 'app-dashboard-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReferralCardComponent],
+  imports: [CommonModule, RouterLink, ReferralCardComponent, AttendanceCalendarComponent],
   template: `
     <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none">
       
@@ -226,6 +227,28 @@ import { ReferralCardComponent } from '../shared/components/referral-card/referr
             </div>
           </div>
 
+        </div>
+
+        <!-- Copy of Attendance Calendar (Dashboard Home) -->
+        <div class="card-surface mt-6 flex flex-col gap-4 animate-fade-in">
+          <div class="border-b border-bg-surface-alt pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">My Check-In Calendar</h2>
+              <p class="text-xs text-text-secondary mt-0.5">Quick overview of your active check-in history</p>
+            </div>
+            
+            <a 
+              routerLink="/dashboard/attendance"
+              class="w-full sm:w-auto h-9 px-4 border border-gold-primary/30 hover:border-gold-primary/60 bg-gold-primary/10 hover:bg-gold-primary/20 text-gold-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
+            >
+              <span>View Detailed Logs</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </a>
+          </div>
+          
+          <app-attendance-calendar [attendanceDates]="attendanceDates()"></app-attendance-calendar>
         </div>
 
         <!-- Gamification Achievements Section -->
