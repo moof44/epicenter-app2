@@ -94,7 +94,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
                     [title]="badge.title + ' (Click to Unequip)'"
                   >
                     <!-- Glowing Backdrop (masked to circle) -->
-                    <div class="absolute left-[5px] top-[5px] w-[38px] h-[38px] rounded-full overflow-hidden pointer-events-none z-0">
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[81%] h-[81%] rounded-full overflow-hidden pointer-events-none z-0">
                       <div [class]="'absolute inset-0 w-full h-full ' + getBadgeGlowClass(badge.id)"></div>
                       @if (badge.id === 'gold-legend') {
                         <div class="absolute inset-0 w-full h-full shimmer-ray"></div>
@@ -369,7 +369,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
                     <div class="relative w-16 h-16 shrink-0 flex items-center justify-center rounded-xl bg-bg-surface-alt/40 border border-bg-surface-alt/60 overflow-visible">
                       <!-- Glowing Backdrop (masked to circle) -->
                       @if (badge.isUnlocked) {
-                        <div class="absolute left-[6px] top-[6px] w-[52px] h-[52px] rounded-full overflow-hidden pointer-events-none z-0">
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[81%] h-[81%] rounded-full overflow-hidden pointer-events-none z-0">
                           <div [class]="'absolute inset-0 w-full h-full ' + getBadgeGlowClass(badge.id)"></div>
                           @if (badge.id === 'gold-legend') {
                             <div class="absolute inset-0 w-full h-full shimmer-ray"></div>
@@ -478,7 +478,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
                     <div class="relative w-12 h-12 flex items-center justify-center rounded-xl bg-bg-surface-alt/30 border border-bg-surface-alt/40 mb-2 overflow-visible">
                       <!-- Glowing Backdrop (masked to circle) -->
                       @if (badge.isUnlocked) {
-                        <div class="absolute left-[5px] top-[5px] w-[38px] h-[38px] rounded-full overflow-hidden pointer-events-none z-0">
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[81%] h-[81%] rounded-full overflow-hidden pointer-events-none z-0">
                           <div [class]="'absolute inset-0 w-full h-full ' + getBadgeGlowClass(badge.id)"></div>
                         </div>
                       }
@@ -679,16 +679,16 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
   `,
   styles: [`
     @keyframes glow-pulse-bronze {
-      0%, 100% { opacity: 0.4; transform: scale(0.96); }
-      50% { opacity: 0.7; transform: scale(1.04); }
+      0%, 100% { opacity: 0.45; transform: scale(0.96); }
+      50% { opacity: 0.8; transform: scale(1.04); }
     }
     @keyframes glow-pulse-silver {
-      0%, 100% { opacity: 0.45; transform: scale(0.94); }
-      50% { opacity: 0.85; transform: scale(1.08); }
+      0%, 100% { opacity: 0.6; transform: scale(0.95); }
+      50% { opacity: 0.9; transform: scale(1.06); }
     }
     @keyframes glow-pulse-gold {
-      0%, 100% { opacity: 0.55; transform: scale(0.9); }
-      50% { opacity: 1.0; transform: scale(1.15); }
+      0%, 100% { opacity: 0.7; transform: scale(0.95); }
+      50% { opacity: 0.95; transform: scale(1.10); }
     }
     @keyframes glow-pulse-monthly {
       0%, 100% { opacity: 0.35; transform: scale(0.96); }
@@ -700,15 +700,15 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
     }
 
     .badge-glow-bronze {
-      background: radial-gradient(circle, rgba(205, 127, 50, 0.5) 0%, rgba(205, 127, 50, 0) 70%);
+      background: radial-gradient(circle, rgba(220, 130, 50, 0.7) 0%, rgba(220, 130, 50, 0.2) 60%, rgba(220, 130, 50, 0) 75%);
       animation: glow-pulse-bronze 3s ease-in-out infinite;
     }
     .badge-glow-silver {
-      background: radial-gradient(circle, rgba(165, 243, 252, 0.6) 0%, rgba(165, 243, 252, 0) 70%);
+      background: radial-gradient(circle, rgba(165, 243, 252, 0.85) 0%, rgba(165, 243, 252, 0.3) 60%, rgba(165, 243, 252, 0) 80%);
       animation: glow-pulse-silver 2.2s ease-in-out infinite;
     }
     .badge-glow-gold {
-      background: radial-gradient(circle, rgba(251, 191, 36, 0.75) 0%, rgba(251, 191, 36, 0) 70%);
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.95) 0%, rgba(251, 191, 36, 0.4) 65%, rgba(251, 191, 36, 0) 85%);
       animation: glow-pulse-gold 1.6s ease-in-out infinite;
     }
     .badge-glow-monthly {
@@ -718,7 +718,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
 
     /* Conic light rays overlay for Gold badge */
     .shimmer-ray {
-      background: conic-gradient(from 0deg, transparent, rgba(251, 191, 36, 0.12), transparent 30%, transparent, rgba(251, 191, 36, 0.12), transparent 70%);
+      background: conic-gradient(from 0deg, transparent, rgba(251, 191, 36, 0.15), transparent 30%, transparent, rgba(251, 191, 36, 0.15), transparent 70%);
       animation: rotate-slow 10s linear infinite;
     }
   `]
@@ -1201,6 +1201,6 @@ export class DashboardHomeComponent {
     if (badgeId === 'bronze-active') return 'badge-glow-bronze';
     if (badgeId === 'silver-consistent') return 'badge-glow-silver';
     if (badgeId === 'gold-legend') return 'badge-glow-gold';
-    return 'badge-glow-monthly';
+    return 'badge-glow-bronze';
   }
 }
