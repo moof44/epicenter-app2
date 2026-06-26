@@ -193,7 +193,12 @@ export class AttendanceCalendarComponent implements OnInit, OnChanges {
       if (dateStr > todayStr) {
         status = 'Future';
       } else {
-        status = statusMap.get(dateStr) || 'Absent';
+        const computedStatus = statusMap.get(dateStr) || 'Absent';
+        if (dateStr === todayStr && computedStatus === 'Absent') {
+          status = 'None';
+        } else {
+          status = computedStatus;
+        }
       }
 
       days.push({

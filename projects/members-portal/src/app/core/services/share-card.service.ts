@@ -473,7 +473,7 @@ export class ShareCardService {
     try {
       (ctx as any).letterSpacing = '2px';
     } catch (e) {}
-    ctx.fillText('EPICENTERGYM.PH', width / 2, height - 100);
+    ctx.fillText('EPICENTER FITNESS GYM', width / 2, height - 100);
     try {
       (ctx as any).letterSpacing = '0px';
     } catch (e) {}
@@ -704,7 +704,12 @@ export class ShareCardService {
       if (dateStr > todayStr) {
         status = 'Future';
       } else {
-        status = statusMap.get(dateStr) || 'Absent';
+        const computedStatus = statusMap.get(dateStr) || 'Absent';
+        if (dateStr === todayStr && computedStatus === 'Absent') {
+          status = 'None';
+        } else {
+          status = computedStatus;
+        }
       }
 
       days.push({
@@ -903,7 +908,7 @@ export class ShareCardService {
     try {
       (ctx as any).letterSpacing = '2px';
     } catch (e) {}
-    ctx.fillText('EPICENTERGYM.PH', width / 2, height - 100);
+    ctx.fillText('EPICENTER FITNESS GYM', width / 2, height - 100);
     try {
       (ctx as any).letterSpacing = '0px';
     } catch (e) {}
@@ -1367,7 +1372,7 @@ export class ShareCardService {
     try {
       (ctx as any).letterSpacing = '2px';
     } catch (e) {}
-    ctx.fillText('EPICENTERGYM.PH', width / 2, height - 100);
+    ctx.fillText('EPICENTER FITNESS GYM', width / 2, height - 100);
     try {
       (ctx as any).letterSpacing = '0px';
     } catch (e) {}

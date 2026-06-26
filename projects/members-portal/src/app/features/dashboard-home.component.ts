@@ -1037,12 +1037,12 @@ export class DashboardHomeComponent {
     const isConsistency = this.shareModalTitle() === 'Share Consistency';
     const isBiometrics = this.shareModalTitle() === 'Share Biometrics';
     const caption = isConsistency
-      ? `Staying consistent with my workout goals at Epicenter Gym! 🔥 Check out epicentergym.ph`
+      ? `Staying consistent with my workout goals at Epicenter Fitness Gym! 🔥`
       : isShowcase
-        ? `Check out my equipped showcase loadout at Epicenter Gym! 🔥 Leveling up daily at epicentergym.ph`
+        ? `Check out my equipped showcase loadout at Epicenter Fitness Gym! 🔥`
         : isBiometrics
-          ? `Just tracked my latest somatic body checkup biometrics at Epicenter Gym! 📊 Check out epicentergym.ph`
-          : `Just unlocked the ${this.shareBadgeTitle} badge at Epicenter Gym! 🔥 Check out epicentergym.ph`;
+          ? `Just tracked my latest somatic body checkup biometrics at Epicenter Fitness Gym! 📊`
+          : `Just unlocked the ${this.shareBadgeTitle} badge at Epicenter Fitness Gym! 🔥`;
       
     navigator.clipboard.writeText(caption).then(() => {
       alert('Caption text copied to clipboard! You can paste it when posting your graphic.');
