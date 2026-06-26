@@ -1,5 +1,5 @@
 import { inject, Injectable, signal, computed, effect } from '@angular/core';
-import { Firestore, doc, docData, collection, collectionData, query, where, orderBy, limit, updateDoc } from '@angular/fire/firestore';
+import { Firestore, doc, docData, collection, collectionData, query, where, orderBy, limit, updateDoc, addDoc } from '@angular/fire/firestore';
 import { AuthService } from '../auth/auth.service';
 import { Observable, Subscription } from 'rxjs';
 
@@ -188,5 +188,52 @@ export class DashboardService {
     }
     const memberDocRef = doc(this.firestore, `members/${profile.memberId}`);
     return updateDoc(memberDocRef, { equippedBadges });
+  }
+
+  async saveCompletedWorkout(workoutData: any): Promise<void> {
+    const profile = this.authService.memberProfile();
+    if (!profile || !profile.memberId) {
+      throw new Error('No active member session found.');
+    }
+    const memberId = profile.memberId;
+    
+    // 1. Save workout to members/{memberId}/workouts
+    const workoutsRef = collection(this.firestore, `members/${memberId}/workouts`);
+    await addDoc(workoutsRef, {
+      ...workoutData,
+      createdAt: new Date()
+    });
+
+    // 2. Compute/Update Personal Records (PRs)
+    const currentMemberData = this.memberData() || {};
+    const personalBests = { ...(currentMemberData.personalBests || {}) };
+    let hasNewBests = false;
+
+    // Check each completed set in the workout for a new PR
+    workoutData.exercises.forEach((ex: any) => {
+      ex.sets.forEach((set: any) => {
+        if (set.completed && set.weight > 0) {
+          const key = ex.name.toLowerCase().trim();
+          const existing = personalBests[key];
+          
+          // A PR is achieved if no record exists, or weight is higher,
+          // or if weight is equal but reps are higher.
+          if (!existing || set.weight > existing.weight || (set.weight === existing.weight && set.reps > existing.reps)) {
+            personalBests[key] = {
+              weight: set.weight,
+              reps: set.reps,
+              date: workoutData.date // YYYY-MM-DD
+            };
+            hasNewBests = true;
+          }
+        }
+      });
+    });
+
+    // Update member's document if there are new personal bests
+    if (hasNewBests) {
+      const memberDocRef = doc(this.firestore, `members/${memberId}`);
+      await updateDoc(memberDocRef, { personalBests });
+    }
   }
 }
