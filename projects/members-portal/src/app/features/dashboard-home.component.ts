@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService } from '../core/services/dashboard.service';
@@ -33,7 +33,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
       } @else {
         
         <!-- Welcome Header Banner -->
-        <div class="bg-bg-surface border border-bg-surface-alt p-6 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-[0_4px_20px_rgba(0,0,0,0.4)] animate-fade-in">
+        <div class="bg-bg-surface border border-bg-surface-alt p-6 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-[0_4px_20px_rgba(0,0,0,0.4)] animate-fade-in-up [animation-delay:0ms]">
           
           <!-- Avatar + Member Welcome Section -->
           <div class="flex items-center gap-4">
@@ -113,10 +113,10 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
         </div>
 
         <!-- Quick Action Launcher (Mobile & Desktop) -->
-        <div class="grid grid-cols-2 gap-4 mt-6">
+        <div class="grid grid-cols-1 gap-4 mt-6">
           <a 
             routerLink="/dashboard/workout"
-            class="flex items-center justify-between p-4 bg-bg-surface border border-bg-surface-alt rounded-2xl transition-all active:scale-98 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30"
+            class="flex items-center justify-between p-4 bg-bg-surface border border-bg-surface-alt rounded-2xl transition-all active:scale-[0.98] hover:scale-[1.005] hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30 animate-fade-in-up [animation-delay:75ms]"
           >
             <div class="flex flex-col gap-0.5">
               <span class="text-[10px] text-gold-light font-bold uppercase tracking-wider">Workout Log</span>
@@ -124,24 +124,13 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
             </div>
             <span class="text-xl">🏋️‍♂️</span>
           </a>
-
-          <a 
-            routerLink="/dashboard/schedule"
-            class="flex items-center justify-between p-4 bg-bg-surface border border-bg-surface-alt rounded-2xl transition-all active:scale-98 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30"
-          >
-            <div class="flex flex-col gap-0.5">
-              <span class="text-[10px] text-gold-light font-bold uppercase tracking-wider">Timetable</span>
-              <span class="text-[10px] sm:text-xs text-text-secondary font-bold">Class Schedules</span>
-            </div>
-            <span class="text-xl">📅</span>
-          </a>
         </div>
 
         <!-- Quick Stats Cards Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
           
           <!-- Membership Validity Card -->
-          <div class="card-surface flex flex-col justify-between min-h-[120px] transition-all hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30">
+          <div class="card-surface flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30 animate-fade-in-up [animation-delay:150ms]">
             <div class="flex items-start justify-between">
               <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Gym Membership</span>
               <span class="p-1.5 bg-gold-dim text-gold-primary rounded-lg">
@@ -152,7 +141,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
             </div>
             <div class="mt-2">
               <div class="text-2xl font-black font-oswald text-gold-light">
-                {{ membershipDays() }} Days Left
+                {{ animatedMembershipDays() }} Days Left
               </div>
               <div class="text-[10px] text-text-secondary mt-1 font-bold">
                 Expires: {{ expiryDateText() }}
@@ -160,8 +149,46 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
             </div>
           </div>
 
+          <!-- Check-in Streak Card -->
+          <div class="card-surface flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30 animate-fade-in-up [animation-delay:225ms]">
+            <div class="flex items-start justify-between">
+              <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Gym Streak</span>
+              <span class="p-1.5 bg-red-950 text-red-500 rounded-lg">
+                🔥
+              </span>
+            </div>
+            <div class="mt-2">
+              <div class="text-2xl font-black font-oswald text-red-400">
+                {{ animatedStreak() }} Days Active
+              </div>
+              <div class="text-[10px] text-text-secondary mt-1 font-bold">
+                Keep the flame burning!
+              </div>
+            </div>
+          </div>
+
+          <!-- Monthly Visits Card -->
+          <div class="card-surface flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30 animate-fade-in-up [animation-delay:300ms]">
+            <div class="flex items-start justify-between">
+              <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Visits This Month</span>
+              <span class="p-1.5 bg-gold-dim text-gold-primary rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                </svg>
+              </span>
+            </div>
+            <div class="mt-2">
+              <div class="text-2xl font-black font-oswald text-gold-light">
+                {{ animatedMonthVisits() }} Session{{ monthVisits() === 1 ? '' : 's' }}
+              </div>
+              <div class="text-[10px] text-text-secondary mt-1 font-bold">
+                Consistent attendance
+              </div>
+            </div>
+          </div>
+
           <!-- Personal Training Card -->
-          <div class="card-surface flex flex-col justify-between min-h-[120px] transition-all hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30">
+          <div class="card-surface flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30 animate-fade-in-up [animation-delay:375ms]">
             <div class="flex items-start justify-between">
               <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Personal Training</span>
               <span class="p-1.5 bg-gold-dim text-gold-primary rounded-lg">
@@ -173,7 +200,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
             <div class="mt-2">
               @if (ptDays() > 0) {
                 <div class="text-2xl font-black font-oswald text-gold-light">
-                  {{ ptDays() }} Days Left
+                  {{ animatedPtDays() }} Days Left
                 </div>
                 <div class="text-[10px] text-text-secondary mt-1 font-bold">
                   Active Package
@@ -189,84 +216,119 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
             </div>
           </div>
 
-          <!-- Check-in Streak Card -->
-          <div class="card-surface flex flex-col justify-between min-h-[120px] transition-all hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30">
-            <div class="flex items-start justify-between">
-              <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Gym Streak</span>
-              <span class="p-1.5 bg-red-950 text-red-500 rounded-lg">
-                🔥
-              </span>
-            </div>
-            <div class="mt-2">
-              <div class="text-2xl font-black font-oswald text-red-400">
-                {{ streak() }} Days Active
-              </div>
-              <div class="text-[10px] text-text-secondary mt-1 font-bold">
-                Keep the flame burning!
-              </div>
-            </div>
-          </div>
-
-          <!-- Monthly Visits Card -->
-          <div class="card-surface flex flex-col justify-between min-h-[120px] transition-all hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30">
-            <div class="flex items-start justify-between">
-              <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Visits This Month</span>
-              <span class="p-1.5 bg-gold-dim text-gold-primary rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                </svg>
-              </span>
-            </div>
-            <div class="mt-2">
-              <div class="text-2xl font-black font-oswald text-gold-light">
-                {{ monthVisits() }} Session{{ monthVisits() === 1 ? '' : 's' }}
-              </div>
-              <div class="text-[10px] text-text-secondary mt-1 font-bold">
-                Consistent attendance
-              </div>
-            </div>
-          </div>
-
         </div>
 
-        <!-- Copy of Attendance Calendar (Dashboard Home) -->
-        <div class="card-surface mt-6 flex flex-col gap-4 animate-fade-in">
-          <div class="border-b border-bg-surface-alt pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">My Check-In Calendar</h2>
-              <p class="text-xs text-text-secondary mt-0.5">Quick overview of your active check-in history</p>
+        <!-- Somatics / Biometrics Overview -->
+        <div class="card-surface mt-6 flex flex-col gap-6 transition-all duration-300 hover:shadow-[0_4px_20px_rgba(212,175,55,0.05)] hover:border-gold-primary/10 animate-fade-in-up [animation-delay:450ms]">
+          <div class="border-b border-bg-surface-alt pb-4">
+            <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">Recent Somatic Overview</h2>
+            <p class="text-xs text-text-secondary mt-0.5">Biometrics from your latest body checkup</p>
+          </div>
+
+          @if (latestData()) {
+            <!-- Core Biometrics Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              <!-- Weight Metric -->
+              <div class="bg-bg-surface-alt border border-bg-surface-alt/50 p-6 rounded-2xl flex flex-col gap-3">
+                <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Body Weight</span>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-4xl font-black font-oswald text-gold-light">{{ latestData().weight }}</span>
+                  <span class="text-xs text-text-secondary font-bold">kg</span>
+                </div>
+                <!-- Trend Indicator -->
+                <div class="flex items-center gap-1.5 mt-1 text-xs">
+                  @if (trends().weightDelta < 0) {
+                    <span class="text-emerald-400 font-bold">↓ {{ abs(trends().weightDelta) }} kg</span>
+                    <span class="text-text-muted text-[10px]">vs last check</span>
+                  } @else if (trends().weightDelta > 0) {
+                    <span class="text-gold-primary font-bold">↑ {{ trends().weightDelta }} kg</span>
+                    <span class="text-text-muted text-[10px]">vs last check</span>
+                  } @else {
+                    <span class="text-text-secondary">No change</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Body Fat Metric -->
+              <div class="bg-bg-surface-alt border border-bg-surface-alt/50 p-6 rounded-2xl flex flex-col gap-3">
+                <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Body Fat</span>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-4xl font-black font-oswald text-gold-light">{{ latestData().bodyFat }}</span>
+                  <span class="text-xs text-text-secondary font-bold">%</span>
+                </div>
+                <!-- Trend Indicator -->
+                <div class="flex items-center gap-1.5 mt-1 text-xs">
+                  @if (trends().bodyFatDelta < 0) {
+                    <span class="text-emerald-400 font-bold">↓ {{ abs(trends().bodyFatDelta) }}%</span>
+                    <span class="text-text-muted text-[10px]">vs last check</span>
+                  } @else if (trends().bodyFatDelta > 0) {
+                    <span class="text-red-400 font-bold">↑ {{ trends().bodyFatDelta }}%</span>
+                    <span class="text-text-muted text-[10px]">vs last check</span>
+                  } @else {
+                    <span class="text-text-secondary">No change</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Muscle Mass Metric -->
+              <div class="bg-bg-surface-alt border border-bg-surface-alt/50 p-6 rounded-2xl flex flex-col gap-3">
+                <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Muscle Mass</span>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-4xl font-black font-oswald text-gold-light">{{ latestData().muscleMass }}</span>
+                  <span class="text-xs text-text-secondary font-bold">%</span>
+                </div>
+                <!-- Trend Indicator -->
+                <div class="flex items-center gap-1.5 mt-1 text-xs">
+                  @if (trends().muscleMassDelta > 0) {
+                    <span class="text-emerald-400 font-bold">↑ {{ trends().muscleMassDelta }}%</span>
+                    <span class="text-text-muted text-[10px]">vs last check</span>
+                  } @else if (trends().muscleMassDelta < 0) {
+                    <span class="text-red-400 font-bold">↓ {{ abs(trends().muscleMassDelta) }}%</span>
+                    <span class="text-text-muted text-[10px]">vs last check</span>
+                  } @else {
+                    <span class="text-text-secondary">No change</span>
+                  }
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Secondary Metrics Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+              <div class="p-4 bg-bg-surface-alt/30 border border-bg-surface-alt/30 rounded-xl flex flex-col">
+                <span class="text-[9px] text-text-secondary font-bold uppercase tracking-wider">BMI Score</span>
+                <span class="text-lg font-bold font-oswald text-text-primary mt-1">{{ latestData().bmi }}</span>
+              </div>
+              <div class="p-4 bg-bg-surface-alt/30 border border-bg-surface-alt/30 rounded-xl flex flex-col">
+                <span class="text-[9px] text-text-secondary font-bold uppercase tracking-wider">Basal Metabolism</span>
+                <span class="text-lg font-bold font-oswald text-text-primary mt-1">{{ latestData().metabolism }} kcal</span>
+              </div>
+              <div class="p-4 bg-bg-surface-alt/30 border border-bg-surface-alt/30 rounded-xl flex flex-col">
+                <span class="text-[9px] text-text-secondary font-bold uppercase tracking-wider">Body Age</span>
+                <span class="text-lg font-bold font-oswald text-text-primary mt-1">{{ latestData().bodyAge }} Years</span>
+              </div>
+              <div class="p-4 bg-bg-surface-alt/30 border border-bg-surface-alt/30 rounded-xl flex flex-col">
+                <span class="text-[9px] text-text-secondary font-bold uppercase tracking-wider">Last Check Date</span>
+                <span class="text-lg font-bold font-oswald text-text-primary mt-1">{{ checkupDateText() }}</span>
+              </div>
             </div>
             
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-              <button 
-                (click)="openConsistencyShareModal(); $event.stopPropagation()"
-                class="w-full sm:w-auto h-9 px-4 border border-gold-primary/30 hover:border-gold-primary/60 bg-gold-primary/10 hover:bg-gold-primary/20 text-gold-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
-                title="Share Consistency Card"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186l5.308-2.654m-5.308 2.654l5.308 2.654m-9.754-2.654a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm9.754-5.308a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm0 10.616a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Z" />
-                </svg>
-                <span>Share Consistency</span>
-              </button>
-
-              <a 
-                routerLink="/dashboard/attendance"
-                class="w-full sm:w-auto h-9 px-4 border border-bg-surface-alt hover:border-text-secondary bg-bg-surface/50 text-text-secondary hover:text-text-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
-              >
-                <span>View Detailed Logs</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                </svg>
-              </a>
+          } @else {
+            <!-- No Biometrics Fallback -->
+            <div class="flex flex-col items-center justify-center py-8 text-center text-text-secondary gap-2">
+              <span class="text-3xl">📊</span>
+              <span class="text-sm font-bold uppercase tracking-wider text-gold-light">No measurements logged yet</span>
+              <p class="text-xs text-text-secondary max-w-sm mt-1">
+                Please complete your initial somatic checkup at the fitness desk to activate your biometric tracking indicators.
+              </p>
             </div>
-          </div>
-          
-          <app-attendance-calendar [attendanceDates]="attendanceDates()"></app-attendance-calendar>
+          }
         </div>
 
         <!-- Gamification Achievements Section -->
         <!-- Gamification Achievements Section (The Prestige Gear Grid) -->
-        <div class="card-surface mt-6 flex flex-col gap-6 animate-fade-in">
+        <div class="card-surface mt-6 flex flex-col gap-6 transition-all duration-300 hover:shadow-[0_4px_20px_rgba(212,175,55,0.05)] hover:border-gold-primary/10 animate-fade-in-up [animation-delay:525ms]">
           
           <div class="border-b border-bg-surface-alt pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
@@ -467,112 +529,39 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
           
         </div>
 
-        <!-- Somatics / Biometrics Overview -->
-        <div class="card-surface mt-6 flex flex-col gap-6">
-          <div class="border-b border-bg-surface-alt pb-4">
-            <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">Recent Somatic Overview</h2>
-            <p class="text-xs text-text-secondary mt-0.5">Biometrics from your latest body checkup</p>
-          </div>
-
-          @if (latestData()) {
-            <!-- Core Biometrics Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              <!-- Weight Metric -->
-              <div class="bg-bg-surface-alt border border-bg-surface-alt/50 p-6 rounded-2xl flex flex-col gap-3">
-                <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Body Weight</span>
-                <div class="flex items-baseline gap-2">
-                  <span class="text-4xl font-black font-oswald text-gold-light">{{ latestData().weight }}</span>
-                  <span class="text-xs text-text-secondary font-bold">kg</span>
-                </div>
-                <!-- Trend Indicator -->
-                <div class="flex items-center gap-1.5 mt-1 text-xs">
-                  @if (trends().weightDelta < 0) {
-                    <span class="text-emerald-400 font-bold">↓ {{ abs(trends().weightDelta) }} kg</span>
-                    <span class="text-text-muted text-[10px]">vs last check</span>
-                  } @else if (trends().weightDelta > 0) {
-                    <span class="text-gold-primary font-bold">↑ {{ trends().weightDelta }} kg</span>
-                    <span class="text-text-muted text-[10px]">vs last check</span>
-                  } @else {
-                    <span class="text-text-secondary">No change</span>
-                  }
-                </div>
-              </div>
-
-              <!-- Body Fat Metric -->
-              <div class="bg-bg-surface-alt border border-bg-surface-alt/50 p-6 rounded-2xl flex flex-col gap-3">
-                <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Body Fat</span>
-                <div class="flex items-baseline gap-2">
-                  <span class="text-4xl font-black font-oswald text-gold-light">{{ latestData().bodyFat }}</span>
-                  <span class="text-xs text-text-secondary font-bold">%</span>
-                </div>
-                <!-- Trend Indicator -->
-                <div class="flex items-center gap-1.5 mt-1 text-xs">
-                  @if (trends().bodyFatDelta < 0) {
-                    <span class="text-emerald-400 font-bold">↓ {{ abs(trends().bodyFatDelta) }}%</span>
-                    <span class="text-text-muted text-[10px]">vs last check</span>
-                  } @else if (trends().bodyFatDelta > 0) {
-                    <span class="text-red-400 font-bold">↑ {{ trends().bodyFatDelta }}%</span>
-                    <span class="text-text-muted text-[10px]">vs last check</span>
-                  } @else {
-                    <span class="text-text-secondary">No change</span>
-                  }
-                </div>
-              </div>
-
-              <!-- Muscle Mass Metric -->
-              <div class="bg-bg-surface-alt border border-bg-surface-alt/50 p-6 rounded-2xl flex flex-col gap-3">
-                <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Muscle Mass</span>
-                <div class="flex items-baseline gap-2">
-                  <span class="text-4xl font-black font-oswald text-gold-light">{{ latestData().muscleMass }}</span>
-                  <span class="text-xs text-text-secondary font-bold">%</span>
-                </div>
-                <!-- Trend Indicator -->
-                <div class="flex items-center gap-1.5 mt-1 text-xs">
-                  @if (trends().muscleMassDelta > 0) {
-                    <span class="text-emerald-400 font-bold">↑ {{ trends().muscleMassDelta }}%</span>
-                    <span class="text-text-muted text-[10px]">vs last check</span>
-                  } @else if (trends().muscleMassDelta < 0) {
-                    <span class="text-red-400 font-bold">↓ {{ abs(trends().muscleMassDelta) }}%</span>
-                    <span class="text-text-muted text-[10px]">vs last check</span>
-                  } @else {
-                    <span class="text-text-secondary">No change</span>
-                  }
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Secondary Metrics Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-              <div class="p-4 bg-bg-surface-alt/30 border border-bg-surface-alt/30 rounded-xl flex flex-col">
-                <span class="text-[9px] text-text-secondary font-bold uppercase tracking-wider">BMI Score</span>
-                <span class="text-lg font-bold font-oswald text-text-primary mt-1">{{ latestData().bmi }}</span>
-              </div>
-              <div class="p-4 bg-bg-surface-alt/30 border border-bg-surface-alt/30 rounded-xl flex flex-col">
-                <span class="text-[9px] text-text-secondary font-bold uppercase tracking-wider">Basal Metabolism</span>
-                <span class="text-lg font-bold font-oswald text-text-primary mt-1">{{ latestData().metabolism }} kcal</span>
-              </div>
-              <div class="p-4 bg-bg-surface-alt/30 border border-bg-surface-alt/30 rounded-xl flex flex-col">
-                <span class="text-[9px] text-text-secondary font-bold uppercase tracking-wider">Body Age</span>
-                <span class="text-lg font-bold font-oswald text-text-primary mt-1">{{ latestData().bodyAge }} Years</span>
-              </div>
-              <div class="p-4 bg-bg-surface-alt/30 border border-bg-surface-alt/30 rounded-xl flex flex-col">
-                <span class="text-[9px] text-text-secondary font-bold uppercase tracking-wider">Last Check Date</span>
-                <span class="text-lg font-bold font-oswald text-text-primary mt-1">{{ checkupDateText() }}</span>
-              </div>
+        <!-- Copy of Attendance Calendar (Dashboard Home) -->
+        <div class="card-surface mt-6 flex flex-col gap-4 transition-all duration-300 hover:shadow-[0_4px_20px_rgba(212,175,55,0.05)] hover:border-gold-primary/10 animate-fade-in-up [animation-delay:600ms]">
+          <div class="border-b border-bg-surface-alt pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">My Check-In Calendar</h2>
+              <p class="text-xs text-text-secondary mt-0.5">Quick overview of your active check-in history</p>
             </div>
             
-          } @else {
-            <!-- No Biometrics Fallback -->
-            <div class="flex flex-col items-center justify-center py-8 text-center text-text-secondary gap-2">
-              <span class="text-3xl">📊</span>
-              <span class="text-sm font-bold uppercase tracking-wider text-gold-light">No measurements logged yet</span>
-              <p class="text-xs text-text-secondary max-w-sm mt-1">
-                Please complete your initial somatic checkup at the fitness desk to activate your biometric tracking indicators.
-              </p>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <button 
+                (click)="openConsistencyShareModal(); $event.stopPropagation()"
+                class="w-full sm:w-auto h-9 px-4 border border-gold-primary/30 hover:border-gold-primary/60 bg-gold-primary/10 hover:bg-gold-primary/20 text-gold-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
+                title="Share Consistency Card"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186l5.308-2.654m-5.308 2.654l5.308 2.654m-9.754-2.654a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm9.754-5.308a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm0 10.616a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Z" />
+                </svg>
+                <span>Share Consistency</span>
+              </button>
+
+              <a 
+                routerLink="/dashboard/attendance"
+                class="w-full sm:w-auto h-9 px-4 border border-bg-surface-alt hover:border-text-secondary bg-bg-surface/50 text-text-secondary hover:text-text-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
+              >
+                <span>View Detailed Logs</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+              </a>
             </div>
-          }
+          </div>
+          
+          <app-attendance-calendar [attendanceDates]="attendanceDates()"></app-attendance-calendar>
         </div>
 
         <!-- Referral Loop Invitation Widget -->
@@ -583,7 +572,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
         <!-- Share Achievement Modal -->
         @if (isShareModalOpen()) {
           <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-            <div class="bg-bg-surface border border-bg-surface-alt rounded-2xl w-full max-w-sm overflow-hidden shadow-[0_10px_30px_rgba(212,175,55,0.15)] flex flex-col max-h-[90vh]">
+            <div class="bg-bg-surface border border-bg-surface-alt rounded-2xl w-full max-w-sm overflow-hidden shadow-[0_10px_30px_rgba(212,175,55,0.15)] flex flex-col max-h-[90vh] animate-scale-up">
               
               <!-- Modal Header -->
               <div class="p-4 border-b border-bg-surface-alt flex justify-between items-center">
@@ -664,19 +653,59 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
 
     </div>
   `,
-  styles: [`
-    .animate-pulse {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .5; }
-    }
-  `]
+  styles: [``]
 })
 export class DashboardHomeComponent {
   readonly dashboardService = inject(DashboardService);
   readonly shareCardService = inject(ShareCardService);
+
+  // Animated Stats Signals
+  animatedMembershipDays = signal<number>(0);
+  animatedPtDays = signal<number>(0);
+  animatedStreak = signal<number>(0);
+  animatedMonthVisits = signal<number>(0);
+
+  constructor() {
+    effect(() => {
+      const target = this.membershipDays();
+      this.animateValue(target, this.animatedMembershipDays);
+    });
+    effect(() => {
+      const target = this.ptDays();
+      this.animateValue(target, this.animatedPtDays);
+    });
+    effect(() => {
+      const target = this.streak();
+      this.animateValue(target, this.animatedStreak);
+    });
+    effect(() => {
+      const target = this.monthVisits();
+      this.animateValue(target, this.animatedMonthVisits);
+    });
+  }
+
+  private animateValue(targetVal: number, animateSignal: any) {
+    if (!targetVal || targetVal <= 0) {
+      animateSignal.set(0);
+      return;
+    }
+    const duration = 800; // ms
+    const startTime = performance.now();
+    const startVal = animateSignal();
+    
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      const currentVal = Math.round(startVal + (targetVal - startVal) * easeProgress);
+      animateSignal.set(currentVal);
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      }
+    };
+    
+    requestAnimationFrame(tick);
+  }
 
   // Sharing Card Signals & State
   isShareModalOpen = signal<boolean>(false);

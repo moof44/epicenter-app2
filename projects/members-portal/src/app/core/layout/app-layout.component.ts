@@ -156,17 +156,6 @@ import { AuthService } from '../auth/auth.service';
                 Workout Log
               </a>
 
-              <a
-                routerLink="/dashboard/schedule"
-                routerLinkActive="bg-bg-surface-alt text-gold-light border-l-4 border-gold-primary"
-                class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-text-secondary rounded-xl hover:bg-bg-surface-alt hover:text-text-primary transition-all border-l-4 border-transparent active:scale-98"
-              >
-                <!-- Schedule Icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-                Gym Timetable
-              </a>
 
               <a
                 routerLink="/dashboard/profile"

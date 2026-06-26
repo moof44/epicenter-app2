@@ -9,7 +9,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
   standalone: true,
   imports: [CommonModule, AttendanceCalendarComponent],
   template: `
-    <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in">
+    <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in-up">
       
       <!-- Top Title Section -->
       <div class="border-b border-bg-surface-alt pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -20,7 +20,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
         
         <button 
           (click)="openConsistencyShareModal(); $event.stopPropagation()"
-          class="w-full sm:w-auto h-10 px-5 border border-gold-primary/30 hover:border-gold-primary/60 bg-gold-primary/10 hover:bg-gold-primary/20 text-gold-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer shadow-sm animate-fade-in"
+          class="w-full sm:w-auto h-10 px-5 border border-gold-primary/30 hover:border-gold-primary/60 bg-gold-primary/10 hover:bg-gold-primary/20 text-gold-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer shadow-sm animate-fade-in-up"
           title="Share Consistency Card"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
@@ -338,13 +338,6 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
     </div>
   `,
   styles: [`
-    .animate-fade-in {
-      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
     .scrollbar-thin::-webkit-scrollbar {
       height: 4px;
     }

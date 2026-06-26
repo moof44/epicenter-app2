@@ -9,7 +9,7 @@ import { DashboardService } from '../core/services/dashboard.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in">
+    <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in-up">
       
       <!-- Top Title Section -->
       <div class="border-b border-bg-surface-alt pb-4">
@@ -183,15 +183,7 @@ import { DashboardService } from '../core/services/dashboard.service';
 
     </div>
   `,
-  styles: [`
-    .animate-fade-in {
-      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  `]
+  styles: [``]
 })
 export class ProfileComponent {
   readonly dashboardService = inject(DashboardService);

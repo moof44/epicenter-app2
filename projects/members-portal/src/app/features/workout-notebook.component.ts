@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../core/auth/auth.service';
 import { DashboardService } from '../core/services/dashboard.service';
 import { EXERCISE_LIBRARY, LibraryExercise } from '../core/utils/exercise-database';
+import { rowAnimation, drawerAnimation } from '../shared/animations';
 
 interface WorkoutSet {
   setNumber: number;
@@ -41,12 +42,13 @@ interface CompletedWorkout {
   selector: 'app-workout-notebook',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  animations: [rowAnimation, drawerAnimation],
   template: `
-    <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in pb-32">
+    <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in-up pb-32">
       
       <!-- Success Celebration Overlay -->
       <div *ngIf="showSuccessOverlay()" class="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4 text-center animate-fade-in">
-        <div class="max-w-md w-full card-surface border-gold-primary/30 gold-glow flex flex-col items-center gap-6 p-8 relative overflow-hidden bg-bg-surface">
+        <div class="max-w-md w-full card-surface border-gold-primary/30 gold-glow flex flex-col items-center gap-6 p-8 relative overflow-hidden bg-bg-surface animate-scale-up">
           <!-- Background pulse glows -->
           <div class="absolute -top-24 -left-24 w-48 h-48 bg-gold-primary/10 rounded-full blur-3xl"></div>
           <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-gold-primary/10 rounded-full blur-3xl"></div>
@@ -59,7 +61,7 @@ interface CompletedWorkout {
           <div class="grid grid-cols-2 gap-4 w-full bg-bg-surface-alt/50 p-4 rounded-2xl border border-bg-surface-alt">
             <div class="flex flex-col items-center">
               <span class="text-[10px] text-text-muted font-bold uppercase tracking-wider">Total Volume</span>
-              <span class="text-lg font-black text-gold-primary font-oswald">{{ totalVolume() }} kg</span>
+              <span class="text-lg font-black text-gold-primary font-oswald">{{ animatedVolume() }} kg</span>
             </div>
             <div class="flex flex-col items-center">
               <span class="text-[10px] text-text-muted font-bold uppercase tracking-wider">Duration</span>
@@ -189,7 +191,7 @@ interface CompletedWorkout {
       </div>
 
       <!-- Templates Management Drawer/Panel -->
-      <div *ngIf="showTemplatesPanel()" class="card-surface mt-4 border-gold-primary/20 flex flex-col gap-4 animate-fade-in bg-bg-surface-alt/25">
+      <div *ngIf="showTemplatesPanel()" @drawerAnimation class="card-surface mt-4 border-gold-primary/20 flex flex-col gap-4 bg-bg-surface-alt/25">
         <div class="flex justify-between items-center border-b border-bg-surface-alt pb-2">
           <h3 class="text-sm font-bold font-oswald text-gold-light uppercase tracking-wider">Routine Templates</h3>
           <button (click)="showTemplatesPanel.set(false)" class="text-[10px] font-bold text-text-secondary hover:text-white uppercase font-oswald tracking-wider">
@@ -270,7 +272,7 @@ interface CompletedWorkout {
             <!-- Autocomplete Suggestions List -->
             <div 
               *ngIf="showAutocomplete() && filteredExercises().length > 0" 
-              class="autocomplete-dropdown absolute left-0 right-0 top-full mt-1.5 z-30 bg-bg-surface border border-bg-surface-alt rounded-2xl shadow-2xl max-h-56 overflow-y-auto p-1.5 flex flex-col gap-1 gold-glow border-gold-primary/20 scrollbar-custom"
+              class="autocomplete-dropdown absolute left-0 right-0 top-full mt-1.5 z-30 bg-bg-surface border border-bg-surface-alt rounded-2xl shadow-2xl max-h-56 overflow-y-auto p-1.5 flex flex-col gap-1 gold-glow border-gold-primary/20 scrollbar-custom animate-slide-down"
             >
               @for (ex of filteredExercises(); track ex.name) {
                 <button 
@@ -328,7 +330,7 @@ interface CompletedWorkout {
         
         <div class="flex flex-col gap-4 mt-6">
           @for (ex of exercises(); track ex.id; let exIdx = $index) {
-            <div class="card-surface flex flex-col gap-4 border border-bg-surface-alt/60 hover:border-gold-primary/20 transition-all relative overflow-hidden bg-bg-surface">
+            <div [@rowAnimation] class="card-surface flex flex-col gap-4 border border-bg-surface-alt/60 hover:border-gold-primary/20 transition-all relative overflow-hidden bg-bg-surface">
               
               <!-- Exercise Header -->
               <div class="flex justify-between items-center border-b border-bg-surface-alt pb-3">
@@ -370,6 +372,7 @@ interface CompletedWorkout {
                 <!-- Set Logs List -->
                 @for (set of ex.sets; track set.setNumber; let setIdx = $index) {
                   <div 
+                    [@rowAnimation]
                     [class.bg-emerald-950/10]="set.completed"
                     [class.border-emerald-900/30]="set.completed"
                     class="grid grid-cols-4 items-center bg-bg-surface-alt/30 border border-bg-surface-alt/25 rounded-xl p-2 transition-all hover:bg-bg-surface-alt/55"
@@ -526,21 +529,6 @@ interface CompletedWorkout {
     </div>
   `,
   styles: [`
-    .animate-fade-in {
-      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .animate-slide-up {
-      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
     /* Scrollbar Styling */
     .scrollbar-custom::-webkit-scrollbar {
       width: 4px;
@@ -682,6 +670,8 @@ export class WorkoutNotebookComponent implements OnInit, OnDestroy {
     ).slice(0, 8);
   });
 
+  animatedVolume = signal<number>(0);
+
   constructor() {
     // Automatically load data when profile resolved
     effect(() => {
@@ -692,6 +682,35 @@ export class WorkoutNotebookComponent implements OnInit, OnDestroy {
         this.startElapsedTimeTimer();
       }
     }, { allowSignalWrites: true });
+
+    effect(() => {
+      if (this.showSuccessOverlay()) {
+        const target = this.totalVolume();
+        this.animateVolume(target);
+      } else {
+        this.animatedVolume.set(0);
+      }
+    });
+  }
+
+  private animateVolume(targetVal: number) {
+    const duration = 1200; // ms
+    const startTime = performance.now();
+    const startVal = 0;
+    
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      const currentVal = Math.round(startVal + (targetVal - startVal) * easeProgress);
+      this.animatedVolume.set(currentVal);
+      
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      }
+    };
+    
+    requestAnimationFrame(tick);
   }
 
   ngOnInit() {

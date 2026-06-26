@@ -7,7 +7,7 @@ import { DashboardService } from '../core/services/dashboard.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in">
+    <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in-up">
       
       <!-- Top Title and Metrics Selector -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-bg-surface-alt pb-4">
@@ -238,9 +238,12 @@ import { DashboardService } from '../core/services/dashboard.service';
                             [class.text-emerald-400]="diff.type === 'improve'"
                             [class.text-red-400]="diff.type === 'worse'"
                             [class.text-text-muted]="diff.type === 'neutral'"
-                            class="text-[9px] font-bold"
+                            [class.animate-fade-blink]="diff.type === 'improve'"
+                            class="text-[9px] font-bold inline-flex items-center gap-1"
                           >
-                            {{ diff.text }}
+                            <span>{{ diff.text }}</span>
+                            <span *ngIf="diff.type === 'improve'">🤩</span>
+                            <span *ngIf="diff.type === 'worse'">😢</span>
                           </span>
                         }
                       </div>
@@ -255,9 +258,12 @@ import { DashboardService } from '../core/services/dashboard.service';
                             [class.text-emerald-400]="diff.type === 'improve'"
                             [class.text-red-400]="diff.type === 'worse'"
                             [class.text-text-muted]="diff.type === 'neutral'"
-                            class="text-[9px] font-bold"
+                            [class.animate-fade-blink]="diff.type === 'improve'"
+                            class="text-[9px] font-bold inline-flex items-center gap-1"
                           >
-                            {{ diff.text }}
+                            <span>{{ diff.text }}</span>
+                            <span *ngIf="diff.type === 'improve'">💪</span>
+                            <span *ngIf="diff.type === 'worse'">😢</span>
                           </span>
                         }
                       </div>
@@ -272,9 +278,12 @@ import { DashboardService } from '../core/services/dashboard.service';
                             [class.text-emerald-400]="diff.type === 'improve'"
                             [class.text-red-400]="diff.type === 'worse'"
                             [class.text-text-muted]="diff.type === 'neutral'"
-                            class="text-[9px] font-bold"
+                            [class.animate-fade-blink]="diff.type === 'improve'"
+                            class="text-[9px] font-bold inline-flex items-center gap-1"
                           >
-                            {{ diff.text }}
+                            <span>{{ diff.text }}</span>
+                            <span *ngIf="diff.type === 'improve'">🤩</span>
+                            <span *ngIf="diff.type === 'worse'">😢</span>
                           </span>
                         }
                       </div>
@@ -289,9 +298,12 @@ import { DashboardService } from '../core/services/dashboard.service';
                             [class.text-emerald-400]="diff.type === 'improve'"
                             [class.text-red-400]="diff.type === 'worse'"
                             [class.text-text-muted]="diff.type === 'neutral'"
-                            class="text-[9px] font-bold"
+                            [class.animate-fade-blink]="diff.type === 'improve'"
+                            class="text-[9px] font-bold inline-flex items-center gap-1"
                           >
-                            {{ diff.text }}
+                            <span>{{ diff.text }}</span>
+                            <span *ngIf="diff.type === 'improve'">🤩</span>
+                            <span *ngIf="diff.type === 'worse'">😢</span>
                           </span>
                         }
                       </div>
@@ -306,9 +318,12 @@ import { DashboardService } from '../core/services/dashboard.service';
                             [class.text-emerald-400]="diff.type === 'improve'"
                             [class.text-red-400]="diff.type === 'worse'"
                             [class.text-text-muted]="diff.type === 'neutral'"
-                            class="text-[9px] font-bold"
+                            [class.animate-fade-blink]="diff.type === 'improve'"
+                            class="text-[9px] font-bold inline-flex items-center gap-1"
                           >
-                            {{ diff.text }}
+                            <span>{{ diff.text }}</span>
+                            <span *ngIf="diff.type === 'improve'">✨</span>
+                            <span *ngIf="diff.type === 'worse'">👴</span>
                           </span>
                         }
                       </div>
@@ -324,15 +339,7 @@ import { DashboardService } from '../core/services/dashboard.service';
 
     </div>
   `,
-  styles: [`
-    .animate-fade-in {
-      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  `]
+  styles: [``]
 })
 export class ProgressComponent {
   readonly dashboardService = inject(DashboardService);

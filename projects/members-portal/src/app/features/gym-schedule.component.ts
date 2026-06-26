@@ -17,7 +17,7 @@ interface GymClass {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in">
+    <div class="min-h-screen text-text-primary py-4 px-2 sm:px-6 select-none animate-fade-in-up">
       
       <!-- Top Title and opening hours -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-bg-surface-alt pb-4">
@@ -178,20 +178,6 @@ interface GymClass {
     </div>
   `,
   styles: [`
-    .animate-fade-in {
-      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-    .animate-slide-up {
-      animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
     .scrollbar-none::-webkit-scrollbar {
       display: none;
     }
