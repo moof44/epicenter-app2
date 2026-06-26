@@ -976,4 +976,400 @@ export class ShareCardService {
     ctx.quadraticCurveTo(x, y, x + radius, y);
     ctx.closePath();
   }
+
+  /**
+   * Generates a 9:16 PNG Blob of the biometrics somatic checkup overview card.
+   */
+  generateSomaticCard(
+    memberName: string,
+    somaticData: {
+      weight: number;
+      bodyFat: number;
+      muscleMass: number;
+      bmi: number;
+      metabolism: number;
+      bodyAge: number;
+      date: any;
+    },
+    trends: {
+      weightDelta: number;
+      bodyFatDelta: number;
+      muscleMassDelta: number;
+    },
+    streak: number
+  ): Promise<Blob> {
+    return new Promise(async (resolve, reject) => {
+      const width = 1080;
+      const height = 1920;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        reject(new Error('Could not create Canvas 2D context.'));
+        return;
+      }
+
+      try {
+        // Load official logo image asynchronously
+        const logoImg = await this.loadImage('assets/logo.png');
+
+        // Ensure fonts are loaded
+        await document.fonts.ready;
+
+        this.drawSomaticCard(ctx, width, height, memberName, somaticData, trends, streak, logoImg);
+
+        // Convert to Blob
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to generate Canvas blob.'));
+            }
+          },
+          'image/png',
+          1.0
+        );
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  /**
+   * Renders the visual elements of the somatic checkup overview card.
+   */
+  private drawSomaticCard(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    memberName: string,
+    somaticData: {
+      weight: number;
+      bodyFat: number;
+      muscleMass: number;
+      bmi: number;
+      metabolism: number;
+      bodyAge: number;
+      date: any;
+    },
+    trends: {
+      weightDelta: number;
+      bodyFatDelta: number;
+      muscleMassDelta: number;
+    },
+    streak: number,
+    logoImg: HTMLImageElement | null
+  ) {
+    // 1. Dark Charcoal Background
+    ctx.fillStyle = '#0a0a0b';
+    ctx.fillRect(0, 0, width, height);
+
+    // 2. Outer Border (Sleek Gold Outline)
+    ctx.lineWidth = 16;
+    ctx.strokeStyle = '#d4af37';
+    ctx.strokeRect(40, 40, width - 80, height - 80);
+
+    // 3. Radial Gradient Ambient Glow
+    const glowX = width / 2;
+    const glowY = height / 2 - 100;
+    const innerRadius = 50;
+    const outerRadius = 600;
+    const gradient = ctx.createRadialGradient(glowX, glowY, innerRadius, glowX, glowY, outerRadius);
+    gradient.addColorStop(0, 'rgba(212, 175, 55, 0.08)');
+    gradient.addColorStop(1, 'rgba(10, 10, 11, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(48, 48, width - 96, height - 96);
+
+    // 4. Header - Brand Logo
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (logoImg) {
+      const logoWidth = 130;
+      const logoHeight = (logoImg.height / logoImg.width) * logoWidth;
+      ctx.shadowColor = 'rgba(212, 175, 55, 0.3)';
+      ctx.shadowBlur = 20;
+      ctx.drawImage(logoImg, width / 2 - logoWidth / 2, 110, logoWidth, logoHeight);
+      ctx.shadowBlur = 0;
+    } else {
+      const logoX = width / 2;
+      const logoY = 180;
+      const logoR = 45;
+      ctx.beginPath();
+      ctx.arc(logoX, logoY, logoR, 0, 2 * Math.PI);
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.fillStyle = '#d4af37';
+      ctx.font = '900 36px "Oswald", sans-serif';
+      ctx.fillText('EF', logoX, logoY + 2);
+    }
+
+    // Logo text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 48px "Oswald", sans-serif';
+    try {
+      (ctx as any).letterSpacing = '6px';
+    } catch (e) {}
+    ctx.fillText('EPICENTER PORTAL', width / 2, 285);
+    try {
+      (ctx as any).letterSpacing = '0px';
+    } catch (e) {}
+
+    ctx.fillStyle = '#a0a0ab';
+    ctx.font = 'bold 20px "Inter", sans-serif';
+    ctx.fillText('FITNESS • PERFORMANCE • COMMUNITY', width / 2, 330);
+
+    // 5. Section Header
+    ctx.fillStyle = '#d4af37';
+    ctx.font = '900 44px "Oswald", sans-serif';
+    try {
+      (ctx as any).letterSpacing = '2px';
+    } catch (e) {}
+    ctx.fillText('RECENT SOMATIC OVERVIEW', width / 2, 385);
+    try {
+      (ctx as any).letterSpacing = '0px';
+    } catch (e) {}
+
+    // Formatted Checkup Date
+    let checkupDate = somaticData?.date;
+    if (checkupDate && typeof checkupDate.toDate === 'function') {
+      checkupDate = checkupDate.toDate();
+    } else if (checkupDate && !(checkupDate instanceof Date)) {
+      checkupDate = new Date(checkupDate);
+    }
+    const checkupDateStr = checkupDate instanceof Date
+      ? checkupDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : 'N/A';
+    
+    ctx.fillStyle = '#a0a0ab';
+    ctx.font = 'bold 20px "Inter", sans-serif';
+    ctx.fillText(`Biometrics from body checkup on ${checkupDateStr}`, width / 2, 435);
+
+    // 6. Draw 3 Main Metrics Cards (Weight, Fat %, Muscle %)
+    const cardWidth = 800;
+    const cardHeight = 180;
+    const cardX = width / 2 - cardWidth / 2; // 140px
+    const cardRadii = 24;
+
+    const metrics = [
+      {
+        label: 'BODY WEIGHT',
+        value: somaticData?.weight ? somaticData.weight.toString() : 'N/A',
+        unit: 'kg',
+        deltaText: trends?.weightDelta < 0 
+          ? `↓ ${Math.abs(trends.weightDelta).toFixed(1)} kg vs last check`
+          : trends?.weightDelta > 0
+            ? `↑ ${trends.weightDelta.toFixed(1)} kg vs last check`
+            : 'No change vs last check',
+        deltaColor: trends?.weightDelta < 0
+          ? '#10b981' // green
+          : trends?.weightDelta > 0
+            ? '#d4af37' // gold (neutral weight gain)
+            : '#a0a0ab'
+      },
+      {
+        label: 'BODY FAT',
+        value: somaticData?.bodyFat ? somaticData.bodyFat.toString() : 'N/A',
+        unit: '%',
+        deltaText: trends?.bodyFatDelta < 0
+          ? `↓ ${Math.abs(trends.bodyFatDelta).toFixed(1)}% vs last check`
+          : trends?.bodyFatDelta > 0
+            ? `↑ ${trends.bodyFatDelta.toFixed(1)}% vs last check`
+            : 'No change vs last check',
+        deltaColor: trends?.bodyFatDelta < 0
+          ? '#10b981' // green (favorable fat loss)
+          : trends?.bodyFatDelta > 0
+            ? '#ef4444' // red (unfavorable fat gain)
+            : '#a0a0ab'
+      },
+      {
+        label: 'MUSCLE MASS',
+        value: somaticData?.muscleMass ? somaticData.muscleMass.toString() : 'N/A',
+        unit: '%',
+        deltaText: trends?.muscleMassDelta > 0
+          ? `↑ ${trends.muscleMassDelta.toFixed(1)}% vs last check`
+          : trends?.muscleMassDelta < 0
+            ? `↓ ${Math.abs(trends.muscleMassDelta).toFixed(1)}% vs last check`
+            : 'No change vs last check',
+        deltaColor: trends?.muscleMassDelta > 0
+          ? '#10b981' // green (favorable muscle gain)
+          : trends?.muscleMassDelta < 0
+            ? '#ef4444' // red (unfavorable muscle loss)
+            : '#a0a0ab'
+      }
+    ];
+
+    const cardStartY = 480;
+    const cardGap = 30;
+
+    for (let i = 0; i < metrics.length; i++) {
+      const m = metrics[i];
+      const cardY = cardStartY + i * (cardHeight + cardGap);
+
+      // Card Background with rounded corners
+      this.drawRoundedRect(ctx, cardX, cardY, cardWidth, cardHeight, cardRadii);
+      ctx.fillStyle = '#121214';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw Label
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.font = '900 24px "Oswald", sans-serif';
+      ctx.fillStyle = '#a0a0ab';
+      ctx.fillText(m.label, cardX + 45, cardY + 45);
+
+      // Draw Value in Gold
+      ctx.font = '900 64px "Oswald", sans-serif';
+      ctx.fillStyle = '#ffd700';
+      ctx.fillText(m.value, cardX + 45, cardY + 112);
+      const valWidth = ctx.measureText(m.value).width;
+
+      // Draw Unit (kg or %) in White
+      ctx.font = 'bold 26px "Inter", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(' ' + m.unit, cardX + 45 + valWidth, cardY + 110);
+
+      // Draw Delta Trend Text
+      ctx.font = 'bold 22px "Inter", sans-serif';
+      ctx.fillStyle = m.deltaColor;
+      ctx.fillText(m.deltaText, cardX + 45, cardY + 155);
+    }
+
+    // 7. Draw Secondary Metrics 2x2 Grid
+    const gridY = 1110;
+    const gridBoxW = 385;
+    const gridBoxH = 100;
+    const gridGapX = 30;
+    const gridGapY = 20;
+
+    const secondaryStats = [
+      { label: 'BMI SCORE', value: somaticData?.bmi ? somaticData.bmi.toString() : 'N/A' },
+      { label: 'BASAL METABOLISM', value: somaticData?.metabolism ? `${somaticData.metabolism} kcal` : 'N/A' },
+      { label: 'BODY AGE', value: somaticData?.bodyAge ? `${somaticData.bodyAge} Years` : 'N/A' },
+      { label: 'LAST CHECK DATE', value: checkupDateStr }
+    ];
+
+    for (let i = 0; i < secondaryStats.length; i++) {
+      const stat = secondaryStats[i];
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+
+      const boxX = cardX + col * (gridBoxW + gridGapX);
+      const boxY = gridY + row * (gridBoxH + gridGapY);
+
+      // Draw rounded container block
+      this.drawRoundedRect(ctx, boxX, boxY, gridBoxW, gridBoxH, 16);
+      ctx.fillStyle = '#121214';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Title
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.font = '900 16px "Oswald", sans-serif';
+      ctx.fillStyle = '#a0a0ab';
+      ctx.fillText(stat.label, boxX + 25, boxY + 35);
+
+      // Value
+      ctx.font = '900 26px "Oswald", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(stat.value, boxX + 25, boxY + 75);
+    }
+
+    // 8. Progress Motivation Quote Section
+    const quoteY = 1360;
+
+    // Quote Top Divider
+    ctx.beginPath();
+    ctx.moveTo(width / 2 - 80, quoteY);
+    ctx.lineTo(width / 2 + 80, quoteY);
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#d4af37';
+    ctx.font = 'italic 900 28px "Oswald", sans-serif';
+    ctx.fillText('“ FOCUS ON PROGRESS, ”', width / 2, quoteY + 45);
+    ctx.fillText('“ NOT PERFECTION. ”', width / 2, quoteY + 85);
+
+    // Quote Bottom Divider
+    ctx.beginPath();
+    ctx.moveTo(width / 2 - 80, quoteY + 130);
+    ctx.lineTo(width / 2 + 80, quoteY + 130);
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 9. Member Profile Info & Active Streak
+    const profileY = 1590;
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 52px "Oswald", sans-serif';
+    ctx.fillText(memberName.toUpperCase(), width / 2, profileY);
+
+    if (streak > 0) {
+      const streakText = `🔥  ${streak}-DAY CONSISTENCY STREAK`;
+      ctx.font = '900 36px "Oswald", sans-serif';
+      const textWidth = ctx.measureText(streakText).width;
+
+      const capWidth = textWidth + 80;
+      const capHeight = 80;
+      const capX = (width - capWidth) / 2;
+      const capY = profileY + 40;
+      const capR = 40;
+
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(capX, capY, capWidth, capHeight, capR);
+      } else {
+        ctx.rect(capX, capY, capWidth, capHeight);
+      }
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#f87171';
+      ctx.fillText(streakText, width / 2, capY + capHeight / 2 + 2);
+    } else {
+      ctx.fillStyle = '#a0a0ab';
+      ctx.font = 'bold 24px "Inter", sans-serif';
+      ctx.fillText('CRUSHING GYM GOALS DAILY', width / 2, profileY + 80);
+    }
+
+    // 10. Branded Footer
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.font = 'bold 24px "Inter", sans-serif';
+    try {
+      (ctx as any).letterSpacing = '1px';
+    } catch (e) {}
+    ctx.fillText('PROUD MEMBER OF EPICENTER FITNESS', width / 2, height - 150);
+    try {
+      (ctx as any).letterSpacing = '0px';
+    } catch (e) {}
+
+    ctx.fillStyle = '#d4af37';
+    ctx.font = '900 28px "Oswald", sans-serif';
+    try {
+      (ctx as any).letterSpacing = '2px';
+    } catch (e) {}
+    ctx.fillText('EPICENTERGYM.PH', width / 2, height - 100);
+    try {
+      (ctx as any).letterSpacing = '0px';
+    } catch (e) {}
+  }
 }

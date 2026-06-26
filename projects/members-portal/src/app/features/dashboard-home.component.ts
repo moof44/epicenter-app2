@@ -157,19 +157,40 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
           </div>
 
           <!-- Check-in Streak Card -->
-          <div class="card-surface flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30 animate-fade-in-up [animation-delay:225ms]">
+          <div 
+            [class]="'card-surface flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] animate-fade-in-up [animation-delay:225ms] border ' + streakCardClass()"
+          >
             <div class="flex items-start justify-between">
               <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Gym Streak</span>
-              <span class="p-1.5 bg-red-950 text-red-500 rounded-lg">
-                🔥
-              </span>
+              
+              <!-- Flame Badge with Tier-based animations -->
+              @if (streakTier() === 3) {
+                <div class="relative w-7 h-7 flex items-center justify-center shrink-0">
+                  <div class="absolute inset-0 rounded-lg bg-orange-500/20 animate-ping"></div>
+                  <span class="p-1.5 bg-orange-950/80 text-orange-400 rounded-lg border border-orange-500/50 relative z-10 momentum-badge-t3 font-bold select-none text-xs">
+                    🔥
+                  </span>
+                </div>
+              } @else if (streakTier() === 2) {
+                <div class="relative w-7 h-7 flex items-center justify-center shrink-0">
+                  <div class="absolute inset-0 rounded-lg bg-orange-500/10 animate-pulse"></div>
+                  <span class="p-1.5 bg-orange-950/40 text-orange-400 rounded-lg border border-orange-500/20 relative z-10 momentum-badge-t2 font-bold select-none text-xs">
+                    🔥
+                  </span>
+                </div>
+              } @else {
+                <span class="p-1.5 bg-red-950/40 text-red-400 rounded-lg border border-red-500/10 select-none text-xs shrink-0">
+                  🔥
+                </span>
+              }
             </div>
+            
             <div class="mt-2">
-              <div class="text-2xl font-black font-oswald text-red-400">
-                {{ animatedStreak() }} Days Active
+              <div [class]="'text-2xl font-oswald ' + streakValueClass()">
+                {{ animatedStreak() }} Day{{ animatedStreak() === 1 ? '' : 's' }} Active
               </div>
               <div class="text-[10px] text-text-secondary mt-1 font-bold">
-                Keep the flame burning!
+                {{ streakMessage() }}
               </div>
             </div>
           </div>
@@ -227,9 +248,24 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
 
         <!-- Somatics / Biometrics Overview -->
         <div class="card-surface mt-6 flex flex-col gap-6 transition-all duration-300 hover:shadow-[0_4px_20px_rgba(212,175,55,0.05)] hover:border-gold-primary/10 animate-fade-in-up [animation-delay:450ms]">
-          <div class="border-b border-bg-surface-alt pb-4">
-            <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">Recent Somatic Overview</h2>
-            <p class="text-xs text-text-secondary mt-0.5">Biometrics from your latest body checkup</p>
+          <div class="border-b border-bg-surface-alt pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">Recent Somatic Overview</h2>
+              <p class="text-xs text-text-secondary mt-0.5">Biometrics from your latest body checkup</p>
+            </div>
+            
+            @if (latestData()) {
+              <button 
+                (click)="openSomaticShareModal(); $event.stopPropagation()"
+                class="w-full sm:w-auto h-9 px-4 border border-gold-primary/30 hover:border-gold-primary/60 bg-gold-primary/10 hover:bg-gold-primary/20 text-gold-primary text-xs font-bold font-oswald uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
+                title="Share Biometrics Card"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186l5.308-2.654m-5.308 2.654l5.308 2.654m-9.754-2.654a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm9.754-5.308a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Zm0 10.616a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Z" />
+                </svg>
+                <span>Share Biometrics</span>
+              </button>
+            }
           </div>
 
           @if (latestData()) {
@@ -721,6 +757,66 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
       background: conic-gradient(from 0deg, transparent, rgba(251, 191, 36, 0.15), transparent 30%, transparent, rgba(251, 191, 36, 0.15), transparent 70%);
       animation: rotate-slow 10s linear infinite;
     }
+
+    @keyframes pulse-flame-halo {
+      0%, 100% { box-shadow: 0 0 5px rgba(249, 115, 22, 0.4); }
+      50% { box-shadow: 0 0 15px rgba(249, 115, 22, 0.8); }
+    }
+    @keyframes bg-pan-fire {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes ember-glow-card {
+      0%, 100% { 
+        border-color: rgba(239, 68, 68, 0.15); 
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 8px rgba(239, 68, 68, 0.05); 
+      }
+      50% { 
+        border-color: rgba(239, 68, 68, 0.35); 
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 15px rgba(239, 68, 68, 0.15); 
+      }
+    }
+    @keyframes blaze-glow-card {
+      0%, 100% { 
+        border-color: rgba(249, 115, 22, 0.25); 
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 12px rgba(249, 115, 22, 0.08); 
+      }
+      50% { 
+        border-color: rgba(249, 115, 22, 0.55); 
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 25px rgba(249, 115, 22, 0.25); 
+      }
+    }
+    @keyframes supernova-glow-card {
+      0%, 100% { 
+        border-color: rgba(249, 115, 22, 0.4); 
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 15px rgba(249, 115, 22, 0.15), 0 0 25px rgba(239, 68, 68, 0.08); 
+      }
+      50% { 
+        border-color: rgba(251, 191, 36, 0.7); 
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 28px rgba(249, 115, 22, 0.4), 0 0 50px rgba(239, 68, 68, 0.22); 
+      }
+    }
+
+    .momentum-badge-t2 {
+      animation: pulse-flame-halo 2s infinite ease-in-out;
+    }
+    .momentum-badge-t3 {
+      animation: pulse-flame-halo 1s infinite ease-in-out;
+    }
+    .momentum-card-t1 {
+      background: radial-gradient(circle at 90% 25%, rgba(239, 68, 68, 0.04) 0%, var(--bg-surface) 60%);
+      animation: ember-glow-card 3.5s infinite ease-in-out;
+    }
+    .momentum-card-t2 {
+      background: radial-gradient(circle at 90% 25%, rgba(249, 115, 22, 0.08) 0%, var(--bg-surface) 65%);
+      animation: blaze-glow-card 2.5s infinite ease-in-out;
+    }
+    .momentum-card-t3 {
+      background: linear-gradient(-45deg, #0d0d0e, #26160d, #0d0d0e, #331d0f);
+      background-size: 400% 400%;
+      animation: bg-pan-fire 8s infinite ease-in-out, supernova-glow-card 2s infinite ease-in-out;
+    }
   `]
 })
 export class DashboardHomeComponent {
@@ -863,21 +959,28 @@ export class DashboardHomeComponent {
 
     const isShowcase = this.shareModalTitle() === 'Share Showcase';
     const isConsistency = this.shareModalTitle() === 'Share Consistency';
+    const isBiometrics = this.shareModalTitle() === 'Share Biometrics';
     const filename = isConsistency 
       ? `epicenter-consistency-calendar.png`
       : isShowcase 
         ? `epicenter-equipped-showcase.png` 
-        : `epicenter-${this.shareBadgeId}-badge.png`;
+        : isBiometrics
+          ? `epicenter-biometrics.png`
+          : `epicenter-${this.shareBadgeId}-badge.png`;
     const titleText = isConsistency
       ? 'Epicenter Gym Consistency Calendar'
       : isShowcase 
         ? 'Epicenter Gym Showcase' 
-        : 'Epicenter Gym Achievement';
+        : isBiometrics
+          ? 'Epicenter Gym Biometrics Overview'
+          : 'Epicenter Gym Achievement';
     const textCaption = isConsistency
       ? `Staying consistent with my workout goals at Epicenter Gym! 🔥`
       : isShowcase 
         ? `Check out my equipped showcase loadout at Epicenter Gym! 🔥`
-        : `Unlocking achievements at Epicenter Gym! 🔥`;
+        : isBiometrics
+          ? `My latest body checkup results at Epicenter Gym! 📊`
+          : `Unlocking achievements at Epicenter Gym! 🔥`;
 
     if (this.canUseWebShare()) {
       try {
@@ -921,11 +1024,14 @@ export class DashboardHomeComponent {
   copyShareCaption() {
     const isShowcase = this.shareModalTitle() === 'Share Showcase';
     const isConsistency = this.shareModalTitle() === 'Share Consistency';
+    const isBiometrics = this.shareModalTitle() === 'Share Biometrics';
     const caption = isConsistency
       ? `Staying consistent with my workout goals at Epicenter Gym! 🔥 Check out epicentergym.ph`
       : isShowcase
         ? `Check out my equipped showcase loadout at Epicenter Gym! 🔥 Leveling up daily at epicentergym.ph`
-        : `Just unlocked the ${this.shareBadgeTitle} badge at Epicenter Gym! 🔥 Check out epicentergym.ph`;
+        : isBiometrics
+          ? `Just tracked my latest somatic body checkup biometrics at Epicenter Gym! 📊 Check out epicentergym.ph`
+          : `Just unlocked the ${this.shareBadgeTitle} badge at Epicenter Gym! 🔥 Check out epicentergym.ph`;
       
     navigator.clipboard.writeText(caption).then(() => {
       alert('Caption text copied to clipboard! You can paste it when posting your graphic.');
@@ -960,6 +1066,32 @@ export class DashboardHomeComponent {
     }
   }
 
+  async openSomaticShareModal() {
+    this.shareModalTitle.set('Share Biometrics');
+    this.shareBadgeTitle = 'Biometrics Overview';
+    this.shareBadgeId = 'biometrics';
+    this.isShareModalOpen.set(true);
+    this.generatingShareImage.set(true);
+    this.shareImageUrl.set(null);
+    this.shareBlob.set(null);
+
+    try {
+      const blob = await this.shareCardService.generateSomaticCard(
+        this.memberName(),
+        this.latestData() as any,
+        this.trends() as any,
+        this.streak()
+      );
+      this.shareBlob.set(blob);
+      const url = URL.createObjectURL(blob);
+      this.shareImageUrl.set(url);
+    } catch (err) {
+      console.error('Failed to generate somatic checkup card image:', err);
+    } finally {
+      this.generatingShareImage.set(false);
+    }
+  }
+
   highestTierBadge = computed(() => {
     const lvl = this.badgeLevel();
     if (lvl === 3) {
@@ -977,6 +1109,33 @@ export class DashboardHomeComponent {
   membershipDays = computed(() => this.dashboardService.membershipDaysLeft());
   ptDays = computed(() => this.dashboardService.ptDaysLeft());
   streak = computed(() => this.dashboardService.checkInStreak());
+  streakTier = computed(() => {
+    const s = this.streak();
+    if (s >= 6) return 3;
+    if (s >= 3) return 2;
+    return s > 0 ? 1 : 0;
+  });
+  streakCardClass = computed(() => {
+    const tier = this.streakTier();
+    if (tier === 3) return 'momentum-card-t3';
+    if (tier === 2) return 'momentum-card-t2';
+    if (tier === 1) return 'momentum-card-t1';
+    return 'border-bg-surface-alt hover:border-gold-primary/10';
+  });
+  streakValueClass = computed(() => {
+    const tier = this.streakTier();
+    if (tier === 3) return 'text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300 font-black tracking-wide';
+    if (tier === 2) return 'text-orange-400 font-extrabold';
+    if (tier === 1) return 'text-red-400 font-bold';
+    return 'text-text-muted';
+  });
+  streakMessage = computed(() => {
+    const tier = this.streakTier();
+    if (tier === 3) return 'SUPERNOVA MOMENTUM! Unstoppable! 🚀';
+    if (tier === 2) return "You're building heat! Keep it up! ⚡";
+    if (tier === 1) return 'Keep the flame burning!';
+    return 'Start your streak today!';
+  });
   monthVisits = computed(() => this.dashboardService.visitsThisMonth());
   badgeLevel = computed(() => this.dashboardService.memberData()?.attendanceBadgeLevel || 0);
   earnedMonthlyBadges = computed(() => this.dashboardService.memberData()?.earnedMonthlyBadges || []);
