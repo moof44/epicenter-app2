@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal, effect } from '@angular/core';
+import { Component, inject, computed, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService } from '../core/services/dashboard.service';
@@ -829,6 +829,8 @@ export class DashboardHomeComponent {
   animatedStreak = signal<number>(0);
   animatedMonthVisits = signal<number>(0);
 
+  private animationFrames = new Map<any, number>();
+
   constructor() {
     effect(() => {
       const target = this.membershipDays();
@@ -849,13 +851,18 @@ export class DashboardHomeComponent {
   }
 
   private animateValue(targetVal: number, animateSignal: any) {
+    if (this.animationFrames.has(animateSignal)) {
+      cancelAnimationFrame(this.animationFrames.get(animateSignal)!);
+      this.animationFrames.delete(animateSignal);
+    }
+
     if (!targetVal || targetVal <= 0) {
       animateSignal.set(0);
       return;
     }
     const duration = 800; // ms
     const startTime = performance.now();
-    const startVal = animateSignal();
+    const startVal = untracked(() => animateSignal());
     
     const tick = (now: number) => {
       const elapsed = now - startTime;
@@ -864,11 +871,15 @@ export class DashboardHomeComponent {
       const currentVal = Math.round(startVal + (targetVal - startVal) * easeProgress);
       animateSignal.set(currentVal);
       if (progress < 1) {
-        requestAnimationFrame(tick);
+        const frameId = requestAnimationFrame(tick);
+        this.animationFrames.set(animateSignal, frameId);
+      } else {
+        this.animationFrames.delete(animateSignal);
       }
     };
     
-    requestAnimationFrame(tick);
+    const frameId = requestAnimationFrame(tick);
+    this.animationFrames.set(animateSignal, frameId);
   }
 
   // Sharing Card Signals & State
