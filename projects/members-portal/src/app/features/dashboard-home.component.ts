@@ -90,11 +90,18 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
                   <!-- Equipped Badge Slot -->
                   <button 
                     (click)="toggleBadgeEquip(badge.id)"
-                    class="w-12 h-12 rounded-xl bg-gradient-to-b from-gold-primary/20 to-gold-primary/5 border border-gold-primary/45 flex items-center justify-center text-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_10px_rgba(212,175,55,0.15)] relative group cursor-pointer"
+                    class="w-12 h-12 rounded-xl bg-gradient-to-b from-gold-primary/20 to-gold-primary/5 border border-gold-primary/45 flex items-center justify-center text-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_10px_rgba(212,175,55,0.15)] relative group cursor-pointer overflow-visible"
                     [title]="badge.title + ' (Click to Unequip)'"
                   >
-                    {{ badge.icon }}
-                    <span class="absolute -bottom-1 -right-1 text-[8px] bg-gold-primary text-bg-surface px-1.5 rounded-md font-bold scale-75 border border-bg-surface-alt">EQ</span>
+                    <!-- Glowing Backdrop (masked to circle) -->
+                    <div class="absolute left-[5px] top-[5px] w-[38px] h-[38px] rounded-full overflow-hidden pointer-events-none z-0">
+                      <div [class]="'absolute inset-0 w-full h-full ' + getBadgeGlowClass(badge.id)"></div>
+                      @if (badge.id === 'gold-legend') {
+                        <div class="absolute inset-0 w-full h-full shimmer-ray"></div>
+                      }
+                    </div>
+                    <span class="relative z-10">{{ badge.icon }}</span>
+                    <span class="absolute -bottom-1 -right-1 text-[8px] bg-gold-primary text-bg-surface px-1.5 rounded-md font-bold scale-75 border border-bg-surface-alt z-20">EQ</span>
                   </button>
                 } @else {
                   <!-- Empty Socket Slot -->
@@ -359,9 +366,19 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
                     class="relative flex items-center gap-4 p-4 rounded-2xl bg-bg-surface-alt/20 border border-bg-surface-alt/40 transition-all select-none group"
                   >
                     <!-- Badge Icon / Graphic with circular SVG progress ring -->
-                    <div class="relative w-16 h-16 shrink-0 flex items-center justify-center rounded-xl bg-bg-surface-alt/40 border border-bg-surface-alt/60">
+                    <div class="relative w-16 h-16 shrink-0 flex items-center justify-center rounded-xl bg-bg-surface-alt/40 border border-bg-surface-alt/60 overflow-visible">
+                      <!-- Glowing Backdrop (masked to circle) -->
+                      @if (badge.isUnlocked) {
+                        <div class="absolute left-[6px] top-[6px] w-[52px] h-[52px] rounded-full overflow-hidden pointer-events-none z-0">
+                          <div [class]="'absolute inset-0 w-full h-full ' + getBadgeGlowClass(badge.id)"></div>
+                          @if (badge.id === 'gold-legend') {
+                            <div class="absolute inset-0 w-full h-full shimmer-ray"></div>
+                          }
+                        </div>
+                      }
+
                       <!-- Circular SVG Progress Ring (behind the badge) -->
-                      <svg class="absolute w-full h-full -rotate-90 select-none pointer-events-none" viewBox="0 0 36 36">
+                      <svg class="absolute w-full h-full -rotate-90 select-none pointer-events-none z-10" viewBox="0 0 36 36">
                         <!-- Background Circle -->
                         <path 
                           class="text-bg-surface-alt/80 stroke-current" 
@@ -458,9 +475,16 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
                     [title]="badge.isUnlocked ? (badge.isEquipped ? 'Click to Unequip' : 'Click to Equip') : 'Locked: Requires 4+ visits. ' + badge.current + '/4 visits'"
                   >
                     <!-- Progress ring + Icon container -->
-                    <div class="relative w-12 h-12 flex items-center justify-center rounded-xl bg-bg-surface-alt/30 border border-bg-surface-alt/40 mb-2">
+                    <div class="relative w-12 h-12 flex items-center justify-center rounded-xl bg-bg-surface-alt/30 border border-bg-surface-alt/40 mb-2 overflow-visible">
+                      <!-- Glowing Backdrop (masked to circle) -->
+                      @if (badge.isUnlocked) {
+                        <div class="absolute left-[5px] top-[5px] w-[38px] h-[38px] rounded-full overflow-hidden pointer-events-none z-0">
+                          <div [class]="'absolute inset-0 w-full h-full ' + getBadgeGlowClass(badge.id)"></div>
+                        </div>
+                      }
+
                       <!-- Circular SVG Progress Ring -->
-                      <svg class="absolute w-full h-full -rotate-90 select-none pointer-events-none" viewBox="0 0 36 36">
+                      <svg class="absolute w-full h-full -rotate-90 select-none pointer-events-none z-10" viewBox="0 0 36 36">
                         <!-- Background Circle -->
                         <path 
                           class="text-bg-surface-alt/80 stroke-current" 
@@ -653,7 +677,51 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
 
     </div>
   `,
-  styles: [``]
+  styles: [`
+    @keyframes glow-pulse-bronze {
+      0%, 100% { opacity: 0.4; transform: scale(0.96); }
+      50% { opacity: 0.7; transform: scale(1.04); }
+    }
+    @keyframes glow-pulse-silver {
+      0%, 100% { opacity: 0.45; transform: scale(0.94); }
+      50% { opacity: 0.85; transform: scale(1.08); }
+    }
+    @keyframes glow-pulse-gold {
+      0%, 100% { opacity: 0.55; transform: scale(0.9); }
+      50% { opacity: 1.0; transform: scale(1.15); }
+    }
+    @keyframes glow-pulse-monthly {
+      0%, 100% { opacity: 0.35; transform: scale(0.96); }
+      50% { opacity: 0.7; transform: scale(1.04); }
+    }
+    @keyframes rotate-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .badge-glow-bronze {
+      background: radial-gradient(circle, rgba(205, 127, 50, 0.5) 0%, rgba(205, 127, 50, 0) 70%);
+      animation: glow-pulse-bronze 3s ease-in-out infinite;
+    }
+    .badge-glow-silver {
+      background: radial-gradient(circle, rgba(165, 243, 252, 0.6) 0%, rgba(165, 243, 252, 0) 70%);
+      animation: glow-pulse-silver 2.2s ease-in-out infinite;
+    }
+    .badge-glow-gold {
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.75) 0%, rgba(251, 191, 36, 0) 70%);
+      animation: glow-pulse-gold 1.6s ease-in-out infinite;
+    }
+    .badge-glow-monthly {
+      background: radial-gradient(circle, rgba(192, 132, 252, 0.5) 0%, rgba(192, 132, 252, 0) 70%);
+      animation: glow-pulse-monthly 2.8s ease-in-out infinite;
+    }
+
+    /* Conic light rays overlay for Gold badge */
+    .shimmer-ray {
+      background: conic-gradient(from 0deg, transparent, rgba(251, 191, 36, 0.12), transparent 30%, transparent, rgba(251, 191, 36, 0.12), transparent 70%);
+      animation: rotate-slow 10s linear infinite;
+    }
+  `]
 })
 export class DashboardHomeComponent {
   readonly dashboardService = inject(DashboardService);
@@ -1127,5 +1195,12 @@ export class DashboardHomeComponent {
 
   abs(val: number): number {
     return Math.abs(val);
+  }
+
+  getBadgeGlowClass(badgeId: string): string {
+    if (badgeId === 'bronze-active') return 'badge-glow-bronze';
+    if (badgeId === 'silver-consistent') return 'badge-glow-silver';
+    if (badgeId === 'gold-legend') return 'badge-glow-gold';
+    return 'badge-glow-monthly';
   }
 }
