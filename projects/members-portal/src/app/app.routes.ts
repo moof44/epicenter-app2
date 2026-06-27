@@ -12,6 +12,8 @@ import { DailyQuestsComponent } from './features/daily-quests/daily-quests.compo
 import { authGuard } from './core/guards/auth.guard';
 import { redirectIfLoggedInGuard } from './core/guards/redirect-if-logged-in.guard';
 
+import { GamificationLedger } from './features/gamification-ledger/gamification-ledger';
+
 export const routes: Routes = [
     { path: '', component: HomeComponent, canActivate: [redirectIfLoggedInGuard] },
     { path: 'login', component: LoginComponent, canActivate: [redirectIfLoggedInGuard] },
@@ -27,6 +29,7 @@ export const routes: Routes = [
             { path: 'workout', component: WorkoutNotebookComponent },
             { path: 'schedule', component: GymScheduleComponent },
             { path: 'quests', component: DailyQuestsComponent },
+            { path: 'rewards', component: GamificationLedger },
             { path: '', redirectTo: 'home', pathMatch: 'full' }
         ]
     },

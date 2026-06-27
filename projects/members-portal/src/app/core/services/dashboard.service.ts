@@ -13,16 +13,24 @@ export class DashboardService {
   readonly memberData = signal<any | null>(null);
   readonly measurements = signal<any[]>([]);
   readonly attendanceRecords = signal<any[]>([]);
+  readonly recentTransactions = signal<any[]>([]);
   readonly loading = signal<boolean>(false);
 
   private docSub?: Subscription;
   private measurementsSub?: Subscription;
   private attendanceSub?: Subscription;
+  private transactionsSub?: Subscription;
 
   readonly dailyQuests = computed(() => {
     const data = this.memberData();
     if (!data) return null;
     return data.dailyQuestsState || { date: '', completed: {} };
+  });
+
+  readonly gamification = computed(() => {
+    const data = this.memberData();
+    if (!data) return null;
+    return data.gamification || { coins: 0, xp: 0, level: 1 };
   });
 
   getTodayDateString(): string {
@@ -63,10 +71,12 @@ export class DashboardService {
     this.docSub?.unsubscribe();
     this.measurementsSub?.unsubscribe();
     this.attendanceSub?.unsubscribe();
+    this.transactionsSub?.unsubscribe();
 
     this.memberData.set(null);
     this.measurements.set([]);
     this.attendanceRecords.set([]);
+    this.recentTransactions.set([]);
     this.loading.set(false);
   }
 
@@ -143,6 +153,22 @@ export class DashboardService {
         console.error('Error fetching attendance records:', err);
         attendanceLoaded = true;
         checkFinished();
+      }
+    });
+
+    // 4. Fetch recent gamification transactions
+    const txRef = collection(this.firestore, `members/${memberId}/transactions`);
+    const txQuery = query(txRef, orderBy('timestamp', 'desc'), limit(10));
+    this.transactionsSub = (collectionData(txQuery, { idField: 'id' }) as Observable<any[]>).subscribe({
+      next: (data) => {
+        const parsed = (data || []).map(t => ({
+          ...t,
+          timestamp: t.timestamp?.toDate ? t.timestamp.toDate() : new Date(t.timestamp)
+        }));
+        this.recentTransactions.set(parsed);
+      },
+      error: (err) => {
+        console.error('Error fetching transactions:', err);
       }
     });
   }

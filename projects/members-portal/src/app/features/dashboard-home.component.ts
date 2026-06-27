@@ -119,6 +119,61 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
 
         </div>
 
+        <!-- Gamification Status Bar & Ticker -->
+        <div class="bg-bg-surface border border-bg-surface-alt p-4 rounded-2xl mt-6 flex flex-col gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.2)] animate-fade-in-up [animation-delay:50ms]">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-gold-primary via-gold-light to-gold-primary p-[2px] flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(212,175,55,0.3)]">
+                <div class="w-full h-full rounded-full bg-bg-surface-alt flex items-center justify-center text-gold-primary text-sm font-black font-oswald uppercase">
+                  LVL {{ dashboardService.gamification()?.level || 1 }}
+                </div>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Somatic XP</span>
+                <span class="text-sm font-bold text-text-primary">
+                  {{ dashboardService.gamification()?.xp | number }} XP
+                </span>
+              </div>
+            </div>
+            
+            <a routerLink="/dashboard/rewards" class="flex flex-col items-end cursor-pointer group">
+              <span class="text-[10px] text-text-secondary font-bold uppercase tracking-wider group-hover:text-gold-light transition-colors">Wealth (Store ➔)</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-lg">🪙</span>
+                <span class="text-lg font-black font-oswald text-gold-primary group-hover:text-gold-light transition-colors">
+                  {{ dashboardService.gamification()?.coins | number }}
+                </span>
+              </div>
+            </a>
+          </div>
+          
+          <!-- XP Progress Bar -->
+          <div class="w-full bg-bg-surface-alt rounded-full h-1.5 overflow-hidden">
+            <div class="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full rounded-full transition-all duration-1000" [style.width.%]="xpProgressPercentage()"></div>
+          </div>
+          <div class="flex justify-between text-[9px] text-text-muted font-bold tracking-widest uppercase">
+            <span>Level {{ dashboardService.gamification()?.level || 1 }}</span>
+            <span>Level {{ (dashboardService.gamification()?.level || 1) + 1 }}</span>
+          </div>
+
+          <!-- Recent Activity Ticker -->
+          @if (dashboardService.recentTransactions().length > 0) {
+            <div class="mt-2 pt-3 border-t border-bg-surface-alt flex items-center gap-2 overflow-x-auto no-scrollbar">
+              <span class="text-[9px] text-gold-light font-bold uppercase tracking-wider whitespace-nowrap shrink-0">Recent:</span>
+              <div class="flex gap-3">
+                @for (tx of dashboardService.recentTransactions().slice(0, 3); track tx.id) {
+                  <div class="flex items-center gap-1.5 bg-bg-surface-alt/50 px-2 py-1 rounded border border-bg-surface-alt shrink-0">
+                    <span class="text-[10px] font-bold" [class.text-emerald-400]="tx.amount > 0" [class.text-red-400]="tx.amount < 0">
+                      {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number }}
+                    </span>
+                    <span class="text-[9px] text-text-secondary truncate max-w-[120px]">{{ tx.description }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
         <!-- Quick Action Launcher (Mobile & Desktop) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
           <a 
@@ -1118,7 +1173,40 @@ export class DashboardHomeComponent {
     this.animationFrames.set(animateSignal, frameId);
   }
 
-  // Sharing Card Signals & State
+  // XP Progress Calculation
+  readonly xpProgressPercentage = computed(() => {
+    const xp = this.dashboardService.gamification()?.xp || 0;
+    const level = this.dashboardService.gamification()?.level || 1;
+    
+    // Thresholds matching the backend
+    const thresholds = [
+      { lvl: 1, req: 0 },
+      { lvl: 2, req: 2000 },
+      { lvl: 5, req: 15000 },
+      { lvl: 10, req: 40000 },
+      { lvl: 15, req: 80000 },
+      { lvl: 20, req: 120000 },
+      { lvl: 30, req: 240000 },
+      { lvl: 50, req: 500000 }
+    ];
+    
+    let currentFloor = 0;
+    let nextCeiling = 2000;
+    
+    for (let i = 0; i < thresholds.length; i++) {
+      if (level >= thresholds[i].lvl) {
+        currentFloor = thresholds[i].req;
+        nextCeiling = thresholds[i+1] ? thresholds[i+1].req : thresholds[i].req + 500000;
+      }
+    }
+    
+    const xpInLevel = Math.max(0, xp - currentFloor);
+    const requiredForNext = nextCeiling - currentFloor;
+    const pct = Math.min(100, Math.max(0, (xpInLevel / requiredForNext) * 100));
+    return pct;
+  });
+
+  // Share Card Generation & State
   isShareModalOpen = signal<boolean>(false);
   generatingShareImage = signal<boolean>(false);
   shareImageUrl = signal<string | null>(null);
