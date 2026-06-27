@@ -7,9 +7,10 @@
 
 /* ── Shared base ─────────────────────────────────────────── */
 .pos-container {
-  height: calc(100vh - 64px);
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   background: #f0f2f5;
   overflow: hidden;
 }
@@ -647,10 +648,7 @@ mat-card-content {
   .pos-desktop-layout { display: none; }
   .pos-stepper        { display: flex; flex: 1; min-height: 0; }
 
-  .pos-container {
-    height: calc(100vh - 64px);
-    overflow: hidden;
-  }
+
 
   .products-header {
     flex-wrap: wrap;
@@ -677,9 +675,7 @@ mat-card-content {
 
 /* ── MOBILE (< 600px) ───────────────────────────────────── */
 @media (max-width: 599px) {
-  .pos-container {
-    height: calc(100vh - 56px);
-  }
+
 
   .member-selection-card {
     padding: 20px;
@@ -704,4 +700,42 @@ mat-card-content {
     grid-template-columns: repeat(2, 1fr);
     gap: 6px;
   }
+}
+
+/* Badge Styles */
+.selected-member-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.member-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mobile-badges {
+  margin-top: 6px;
+}
+
+.badge-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  display: inline-flex;
+  align-items: center;
+}
+
+.item-override-reason {
+  font-size: 11px;
+  color: #f57c00;
+  display: block;
+  font-style: italic;
+  margin-top: 2px;
 }

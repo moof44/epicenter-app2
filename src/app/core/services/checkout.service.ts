@@ -18,6 +18,28 @@ import { CashRegisterService } from './cash-register.service';
 import { ReportStateService } from './report.state.service';
 import { toLocalDateStr } from '../utils/date.utils';
 
+export function cleanUndefined(obj: any): any {
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+    const proto = Object.getPrototypeOf(obj);
+    const isPlain = proto === null || proto === Object.prototype;
+    if (!isPlain && !Array.isArray(obj)) {
+        return obj;
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(cleanUndefined);
+    }
+    const cleanObj: any = {};
+    for (const key of Object.keys(obj)) {
+        const val = obj[key];
+        if (val !== undefined) {
+            cleanObj[key] = cleanUndefined(val);
+        }
+    }
+    return cleanObj;
+}
+
 @Injectable({
     providedIn: 'root',
 })
@@ -97,7 +119,7 @@ export class CheckoutService {
                 staffId: staff?.uid,
                 staffName: staff?.displayName,
             };
-            batch.set(logRef, log);
+            batch.set(logRef, cleanUndefined(log));
         }
 
         // 3. Create transaction record
@@ -116,7 +138,28 @@ export class CheckoutService {
             memberName: memberName || 'Walk-in',
         };
         const transactionRef = doc(this.transactionsCollection);
-        batch.set(transactionRef, transaction);
+        batch.set(transactionRef, cleanUndefined(transaction));
+
+        // 3.5. Auto-tag member with 'FOUNDER' badge if buying eligible launch products (July 1 - August 31, 2026)
+        if (memberId) {
+            const startWindow = new Date('2026-07-01T00:00:00');
+            const endWindow = new Date('2026-08-31T23:59:59');
+            if (timestamp >= startWindow && timestamp <= endWindow) {
+                const targetProductIds = [
+                    'Qfi33eVnbxN6kIPRTGbT', // Monthly Membership
+                    'TKNm92Ekg87gub4eHCHO', // Monthly Membership (w/ coaching)
+                    'GxNrhJR5CVSpnQuy4PwN', // Personal Training (1 Month)
+                    'kA3g2qW4jS1u235leAjK'  // Personal Training (1 Month) (Group)
+                ];
+                const hasEligibleProduct = cartItems.some(item => targetProductIds.includes(item.productId));
+                if (hasEligibleProduct) {
+                    const memberRef = doc(this.firestore, 'members', memberId);
+                    batch.update(memberRef, {
+                        tags: arrayUnion('FOUNDER')
+                    });
+                }
+            }
+        }
 
         // 4. Update daily_sales (denormalized aggregate)
         const dateStr = toLocalDateStr(timestamp);

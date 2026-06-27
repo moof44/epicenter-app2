@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, ActivatedRoute } from '@angular/router';
 import { MemberService } from '../../../../core/services/member.service';
 import { Member } from '../../../../core/models/member.model';
+import { BadgeService } from '../../../../core/services/badge.service';
+import { BadgeDefinition } from '../../../../core/models/badge.model';
 import { take } from 'rxjs/operators';
 
 import { MatInputModule } from '@angular/material/input';
@@ -33,6 +35,7 @@ import { fadeIn } from '../../../../core/animations/animations';
 export class MemberForm implements OnInit {
   private fb = inject(FormBuilder);
   private memberService = inject(MemberService);
+  private badgeService = inject(BadgeService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private location = inject(Location);
@@ -45,6 +48,7 @@ export class MemberForm implements OnInit {
   loading = false;
   member: Member | null = null;
   portalLoading = false;
+  availableBadges: BadgeDefinition[] = [];
 
   constructor() {
     this.form = this.fb.group({
@@ -57,7 +61,8 @@ export class MemberForm implements OnInit {
       trainingExpiration: [null],
       goal: [''],
       remarks: [''],
-      membershipStatus: ['Active', [Validators.required]]
+      membershipStatus: ['Active', [Validators.required]],
+      tags: [[]]
     });
   }
 
@@ -67,6 +72,11 @@ export class MemberForm implements OnInit {
       this.isEditMode = true;
       this.loadMember(this.memberId);
     }
+    
+    // Load administrative and achievement badges for tagging
+    this.badgeService.getBadges().pipe(take(1)).subscribe(badges => {
+      this.availableBadges = badges.filter(b => b.type === 'ADMINISTRATIVE' || b.type === 'ACHIEVEMENT');
+    });
   }
 
   async loadMember(id: string) {

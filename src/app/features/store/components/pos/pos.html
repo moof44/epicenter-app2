@@ -34,10 +34,21 @@
           </mat-autocomplete>
         </mat-form-field>
 
-        <!-- Selected member chip -->
-        <div class="selected-member-chip" *ngIf="selectedMember()">
-          <mat-icon>check_circle</mat-icon>
-          <span>{{ selectedMember()?.name }}</span>
+        <!-- Selected member chip & badges -->
+        <div class="selected-member-container" *ngIf="selectedMember()">
+          <div class="selected-member-chip">
+            <mat-icon>check_circle</mat-icon>
+            <span>{{ selectedMember()?.name }}</span>
+          </div>
+          <div class="member-badges" *ngIf="selectedMember()?.tags?.length">
+            <span *ngFor="let tag of selectedMember()?.tags" 
+                  class="badge-chip"
+                  [style.background-color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex || '#e0e0e0'"
+                  [style.color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex ? '#ffffff' : '#333333'"
+                  [matTooltip]="badgeDefinitions()[tag.toUpperCase()]?.description || ''">
+              {{ badgeDefinitions()[tag.toUpperCase()]?.name || tag }}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -109,6 +120,7 @@
         <div *ngFor="let item of cartItems" class="cart-item" [@fadeIn]>
           <div class="item-info">
             <span class="item-name">{{ item.productName }}</span>
+            <span class="item-override-reason" *ngIf="item.isPriceOverridden && item.overrideReason">{{ item.overrideReason }}</span>
             <div class="price-container">
               <span class="original-price" *ngIf="item.isPriceOverridden">₱{{ item.originalPrice | number:'1.2-2' }}</span>
               <span class="item-price" [class.overridden]="item.isPriceOverridden">₱{{ item.price | number:'1.2-2' }}</span>
@@ -184,6 +196,15 @@
             <div>
               <h3>{{ selectedMember()?.name }}</h3>
               <span>Member Selected</span>
+              <div class="member-badges mobile-badges" *ngIf="selectedMember()?.tags?.length">
+                <span *ngFor="let tag of selectedMember()?.tags" 
+                      class="badge-chip"
+                      [style.background-color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex || '#e0e0e0'"
+                      [style.color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex ? '#ffffff' : '#333333'"
+                      [matTooltip]="badgeDefinitions()[tag.toUpperCase()]?.description || ''">
+                  {{ badgeDefinitions()[tag.toUpperCase()]?.name || tag }}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -275,6 +296,7 @@
             <div *ngFor="let item of cartItems" class="cart-item-row" [@fadeIn]>
               <div class="item-details">
                 <span class="name">{{ item.productName }}</span>
+                <span class="item-override-reason" *ngIf="item.isPriceOverridden && item.overrideReason">{{ item.overrideReason }}</span>
                 <div class="price-line">
                   <span class="original" *ngIf="item.isPriceOverridden">₱{{ item.originalPrice }}</span>
                   <span class="current">₱{{ item.price | number:'1.2-2' }}</span>
