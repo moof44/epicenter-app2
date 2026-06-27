@@ -812,6 +812,7 @@ export class DailyQuestsComponent implements OnInit {
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
       this.spawnSugarParticles(x, y);
+      this.initParticlesAnimation(false); // Start loop without shatter burst
     }
 
     if (this.sugarTaps >= 10) {
@@ -819,7 +820,7 @@ export class DailyQuestsComponent implements OnInit {
       if (navigator.vibrate) {
         navigator.vibrate([100, 30, 250]);
       }
-      this.initParticlesAnimation();
+      this.initParticlesAnimation(true); // Trigger full shatter burst
     }
     this.cdr.detectChanges();
   }
@@ -839,7 +840,7 @@ export class DailyQuestsComponent implements OnInit {
     }
   }
 
-  initParticlesAnimation() {
+  initParticlesAnimation(triggerShatter: boolean = false) {
     const canvas = document.getElementById('sugarParticlesCanvas') as HTMLCanvasElement;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -847,15 +848,13 @@ export class DailyQuestsComponent implements OnInit {
     
     // Setup canvas size
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width || 280;
-    canvas.height = rect.height || 200;
-    
-    if (this.particlesInterval) {
-      clearInterval(this.particlesInterval);
+    if (canvas.width !== (rect.width || 280) || canvas.height !== (rect.height || 200)) {
+      canvas.width = rect.width || 280;
+      canvas.height = rect.height || 200;
     }
-
+    
     // Explode sugar block on shatter
-    if (this.isShattered) {
+    if (triggerShatter) {
       for (let i = 0; i < 40; i++) {
         const px = canvas.width / 2 + (Math.random() * 40 - 20);
         const py = canvas.height / 2 + (Math.random() * 40 - 20);
@@ -871,6 +870,8 @@ export class DailyQuestsComponent implements OnInit {
         });
       }
     }
+
+    if (this.particlesInterval) return; // already running!
 
     this.particlesInterval = setInterval(() => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -895,7 +896,7 @@ export class DailyQuestsComponent implements OnInit {
       }
       
       // Clean up interval if no particles left
-      if (this.particles.length === 0 && this.isShattered) {
+      if (this.particles.length === 0) {
         clearInterval(this.particlesInterval);
         this.particlesInterval = null;
       }
