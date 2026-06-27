@@ -79,6 +79,14 @@ export class MemberService {
         return docData(docRef);
     }
 
+    async getMemberOnce(id: string): Promise<Member | undefined> {
+        const docRef = doc(this.firestore, 'members', id).withConverter(
+            createConverter<Member>()
+        );
+        const snapshot = await getDoc(docRef);
+        return snapshot.data();
+    }
+
     addMember(member: Member): Promise<any> {
         const trace = this._currentUserSnapshot;
         const memberWithTrace = {

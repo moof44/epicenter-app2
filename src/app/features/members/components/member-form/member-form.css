@@ -140,16 +140,15 @@ mat-card-content {
   align-items: stretch;
   gap: 1.25rem;
   width: 100%;
-  background: #f8fafc;
-  padding: 1.5rem;
-  border-radius: var(--border-radius);
-  border: 1px solid #e2e8f0;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  border: none;
 }
 
 .status-info {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
   width: 100%;
 }
 
@@ -158,12 +157,18 @@ mat-card-content {
   align-items: center;
   gap: 0.75rem;
   font-size: 0.95rem;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.status-row:last-child {
+  border-bottom: none;
 }
 
 .status-row .label {
   font-weight: 600;
   color: var(--text-secondary);
-  width: 140px;
+  width: 160px;
   flex-shrink: 0;
 }
 
@@ -177,7 +182,7 @@ mat-card-content {
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 20px;
   display: inline-flex;
   align-items: center;
@@ -204,7 +209,8 @@ mat-card-content {
   flex-wrap: wrap;
   width: 100%;
   border-top: 1px solid #e2e8f0;
-  padding-top: 1.25rem;
+  padding-top: 1.5rem;
+  margin-top: 0.5rem;
 }
 
 .portal-actions button {

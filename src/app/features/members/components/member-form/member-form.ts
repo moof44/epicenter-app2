@@ -81,13 +81,17 @@ export class MemberForm implements OnInit {
 
   async loadMember(id: string) {
     this.loading = true;
-    this.memberService.getMember(id).pipe(take(1)).subscribe(member => {
+    try {
+      const member = await this.memberService.getMemberOnce(id);
       if (member) {
         this.member = member;
         this.form.patchValue(member);
       }
+    } catch (err) {
+      console.error('Failed to load member:', err);
+    } finally {
       this.loading = false;
-    });
+    }
   }
 
   async createPortalAccount() {
