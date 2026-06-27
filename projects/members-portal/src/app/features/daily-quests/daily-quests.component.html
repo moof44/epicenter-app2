@@ -163,7 +163,7 @@
           </div>
 
           <!-- Calorie deficit -->
-          <div class="quest-row stagger-item">
+          <div class="quest-row stagger-item" [class.completed]="completedQuests['calorie_deficit']" (click)="openGame('calorie_deficit')">
             <div class="quest-info">
               <div class="quest-icon-wrapper">
                 <svg class="w-5 h-5 anim-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -175,13 +175,14 @@
                 <p>Drag weights to balance the calorie scales</p>
               </div>
             </div>
-            <div class="quest-action">
-              <span class="play-icon">▶</span>
+            <div class="quest-action" [class.completed]="completedQuests['calorie_deficit']">
+              <span *ngIf="!completedQuests['calorie_deficit']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['calorie_deficit']" class="check-icon">✓</span>
             </div>
           </div>
 
           <!-- 3 servings veggies/fruits -->
-          <div class="quest-row stagger-item">
+          <div class="quest-row stagger-item" [class.completed]="completedQuests['veggies_fruits']" (click)="openGame('veggies_fruits')">
             <div class="quest-info">
               <div class="quest-icon-wrapper">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -194,13 +195,14 @@
                 <p>Drag plants to the blender and blend</p>
               </div>
             </div>
-            <div class="quest-action">
-              <span class="play-icon">▶</span>
+            <div class="quest-action" [class.completed]="completedQuests['veggies_fruits']">
+              <span *ngIf="!completedQuests['veggies_fruits']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['veggies_fruits']" class="check-icon">✓</span>
             </div>
           </div>
 
           <!-- Zero sugar-sweetened beverages -->
-          <div class="quest-row stagger-item">
+          <div class="quest-row stagger-item" [class.completed]="completedQuests['zero_sugar']" (click)="openGame('zero_sugar')">
             <div class="quest-info">
               <div class="quest-icon-wrapper">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -213,8 +215,9 @@
                 <p>Smash the sugar cube to unlock the shield</p>
               </div>
             </div>
-            <div class="quest-action">
-              <span class="play-icon">▶</span>
+            <div class="quest-action" [class.completed]="completedQuests['zero_sugar']">
+              <span *ngIf="!completedQuests['zero_sugar']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['zero_sugar']" class="check-icon">✓</span>
             </div>
           </div>
         </div>
@@ -606,6 +609,237 @@
           <h4>Lift Completed! 🏆</h4>
           <p>Barbell loaded to {{ currentProtein }}g protein. Muscle gains incoming!</p>
           <button class="claim-btn" (click)="completeQuest('protein_barbell')">Close</button>
+        </div>
+      </div>
+
+      <!-- Calorie Deficit (Balance the Scales) game -->
+      <div *ngIf="activeGame === 'calorie_deficit'" class="game-container scales-game-container">
+        <h3>Calorie Deficit</h3>
+        <p class="game-instructions">Drag deficit weights to the right pan to balance the scale with your intake!</p>
+
+        <!-- Metric Dashboard -->
+        <div class="scales-dashboard">
+          <div class="scale-metric">
+            <span class="metric-label">INTAKE (LEFT)</span>
+            <span class="metric-value">{{ leftPanWeight }} kcal</span>
+          </div>
+          <div class="scale-metric">
+            <span class="metric-label">TOTAL BURN (RIGHT)</span>
+            <span class="metric-value" [class.target-met]="rightPanWeight === leftPanWeight">{{ rightPanWeight }} kcal</span>
+          </div>
+        </div>
+
+        <!-- Scale Visual -->
+        <div class="scales-arena">
+          <div class="scale-stand"></div>
+          <div class="scale-beam-assembly" [style.transform]="'rotate(' + scaleAngle + 'deg)'">
+            <div class="scale-beam"></div>
+            <!-- Left Pan (Intake) -->
+            <div class="scale-pan left-pan" [style.transform]="'rotate(' + -scaleAngle + 'deg)'">
+              <div class="pan-strings"></div>
+              <div class="pan-dish">
+                <div class="pan-label">Intake</div>
+                <div class="pan-weight-block intake-block">2000</div>
+              </div>
+            </div>
+            <!-- Right Pan (Burn + Deficits) -->
+            <div class="scale-pan right-pan" [style.transform]="'rotate(' + -scaleAngle + 'deg)'">
+              <div class="pan-strings"></div>
+              <div class="pan-dish">
+                <div class="pan-label">Burn</div>
+                <!-- Base burn weight representation -->
+                <div class="pan-weight-block base-burn-block">1500</div>
+                <!-- Placed deficit weights -->
+                <div class="placed-weights-container">
+                  <div *ngFor="let wt of placedWeights; let i = index" 
+                       class="placed-weight weight-{{ wt }}"
+                       (click)="removeWeight(i)">
+                    {{ wt }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating active weight during drag -->
+        <div *ngIf="isDraggingWeight" 
+             class="floating-drag-weight weight-{{ isDraggingWeight }}"
+             [style.left.px]="weightDragX"
+             [style.top.px]="weightDragY"
+             style="position: absolute; z-index: 9999999; transform: translate(-50%, -50%);">
+          {{ isDraggingWeight }}
+        </div>
+
+        <!-- Weights Rack -->
+        <div class="weight-rack-container">
+          <h5>Deficit Weights Rack</h5>
+          <div class="weight-rack-items">
+            <div class="rack-weight weight-100" 
+                 (mousedown)="startWeightDrag($event, 100)"
+                 (touchstart)="startWeightDrag($event, 100)">
+              100
+            </div>
+            <div class="rack-weight weight-200" 
+                 (mousedown)="startWeightDrag($event, 200)"
+                 (touchstart)="startWeightDrag($event, 200)">
+              200
+            </div>
+            <div class="rack-weight weight-500" 
+                 (mousedown)="startWeightDrag($event, 500)"
+                 (touchstart)="startWeightDrag($event, 500)">
+              500
+            </div>
+          </div>
+          <span class="drag-hint" *ngIf="!isDraggingWeight">Drag weights onto the right pan</span>
+          <span class="drag-hint active-hint" *ngIf="isDraggingWeight">Drop weight anywhere on the right side of scale</span>
+        </div>
+
+        <!-- Success overlay -->
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <span class="success-badge">⚖️</span>
+          <h4>Scales Balanced! 🏆</h4>
+          <p>Caloric intake perfectly matched by calorie burn and deficit. Balance is key!</p>
+          <button class="claim-btn" (click)="completeQuest('calorie_deficit')">Close</button>
+        </div>
+      </div>
+
+      <!-- 3 servings veggies/fruits (The Blender) game -->
+      <div *ngIf="activeGame === 'veggies_fruits'" class="game-container blender-game-container">
+        <h3>Veggies & Fruits Blender</h3>
+        <p class="game-instructions">Drag 3 healthy ingredients into the blender, then hit Blend to make a smoothie!</p>
+
+        <div class="blender-arena">
+          <div class="blender-assembly" [class.blending]="isBlending">
+            <div class="blender-lid"></div>
+            <div class="blender-jar">
+              <!-- Liquid vortex overlay while blending -->
+              <div class="blender-vortex" *ngIf="isBlending"></div>
+              <!-- Dropped ingredients inside the blender -->
+              <div class="ingredients-inside">
+                <div *ngFor="let ing of blenderIngredients; let i = index" 
+                     class="ingredient-item-inside"
+                     [style.left.px]="20 + (i * 25)"
+                     [style.animationDelay]="(i * 0.1) + 's'"
+                     [class.blending]="isBlending">
+                  {{ ing }}
+                </div>
+              </div>
+            </div>
+            <div class="blender-base">
+              <div class="blender-switch" [class.on]="isBlending"></div>
+            </div>
+          </div>
+
+          <!-- Smoothie Glass adjacent to the blender -->
+          <div class="glass-assembly">
+            <div class="smoothie-liquid" [style.height.%]="smoothieFilled ? 85 : 0" [style.background]="glassColor"></div>
+            <div class="glass-outline">
+              <div class="straw"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating ingredient during drag -->
+        <div *ngIf="isDraggingIngredient" 
+             class="floating-drag-ingredient"
+             [style.left.px]="ingredientDragX"
+             [style.top.px]="ingredientDragY"
+             style="position: absolute; z-index: 9999999; transform: translate(-50%, -50%); font-size: 2.2rem; pointer-events: none;">
+          {{ isDraggingIngredient }}
+        </div>
+
+        <!-- Ingredients Rack -->
+        <div class="ingredients-rack-container" *ngIf="blenderIngredients.length < 3">
+          <h5>Ingredient Rack</h5>
+          <div class="ingredients-rack-items">
+            <div class="rack-ingredient" 
+                 (mousedown)="startIngredientDrag($event, '🍓')"
+                 (touchstart)="startIngredientDrag($event, '🍓')">🍓</div>
+            <div class="rack-ingredient" 
+                 (mousedown)="startIngredientDrag($event, '🍌')"
+                 (touchstart)="startIngredientDrag($event, '🍌')">🍌</div>
+            <div class="rack-ingredient" 
+                 (mousedown)="startIngredientDrag($event, '🥬')"
+                 (touchstart)="startIngredientDrag($event, '🥬')">🥬</div>
+            <div class="rack-ingredient" 
+                 (mousedown)="startIngredientDrag($event, '🥕')"
+                 (touchstart)="startIngredientDrag($event, '🥕')">🥕</div>
+            <div class="rack-ingredient" 
+                 (mousedown)="startIngredientDrag($event, '🍎')"
+                 (touchstart)="startIngredientDrag($event, '🍎')">🍎</div>
+          </div>
+          <span class="drag-hint">Drag 3 items into the blender ({{ blenderIngredients.length }}/3)</span>
+        </div>
+
+        <!-- Blending Actions -->
+        <div class="blender-actions" *ngIf="blenderIngredients.length >= 3 && !smoothieFilled">
+          <button class="blend-btn" 
+                  [disabled]="isBlending"
+                  [class.ready]="!isBlending"
+                  (click)="startBlending()">
+            {{ isBlending ? 'BLENDING...' : 'START BLENDING 🌀' }}
+          </button>
+        </div>
+
+        <!-- Success overlay -->
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <span class="success-badge">🥤</span>
+          <h4>Smoothie Ready! 🏆</h4>
+          <p>Successfully blended 3 servings of veggies & fruits. Drink up for instant micronutrients!</p>
+          <button class="claim-btn" (click)="completeQuest('veggies_fruits')">Close</button>
+        </div>
+      </div>
+
+      <!-- Zero Sugar (Smash the Sugar) game -->
+      <div *ngIf="activeGame === 'zero_sugar'" class="game-container sugar-game-container">
+        <h3>Smash the Sugar</h3>
+        <p class="game-instructions">Tap the sugar cube repeatedly to smash it and reveal your health shield!</p>
+
+        <div class="sugar-arena">
+          <!-- Particle Canvas for flying shards -->
+          <canvas id="sugarParticlesCanvas" class="particles-canvas"></canvas>
+
+          <!-- The Sugar Cube -->
+          <div class="sugar-cube-wrapper" 
+               *ngIf="!isShattered"
+               [class.shaking]="sugarTaps > 0"
+               (click)="smashSugar($event)">
+            <!-- Glossy 3D sugar cube face -->
+            <div class="sugar-cube">
+              <div class="cube-face front"></div>
+              <div class="cube-face top"></div>
+              <div class="cube-face right"></div>
+              
+              <!-- Overlay crack lines based on taps -->
+              <div class="sugar-cracks" [class.stage-1]="sugarTaps >= 2" [class.stage-2]="sugarTaps >= 5" [class.stage-3]="sugarTaps >= 8"></div>
+            </div>
+          </div>
+
+          <!-- The Immunity Shield inside (revealed when shattered) -->
+          <div class="shield-container" *ngIf="isShattered" (click)="claimShield()">
+            <div class="shield-halo"></div>
+            <div class="immunity-shield-visual">🛡️</div>
+            <span class="shield-hint">Tap shield to complete!</span>
+          </div>
+        </div>
+
+        <div class="sugar-counter" *ngIf="!isShattered">
+          <span class="tap-label">SUGAR INTEGRITY</span>
+          <div class="integrity-bar-track">
+            <div class="integrity-bar-fill" [style.width.%]="(10 - sugarTaps) * 10"></div>
+          </div>
+        </div>
+
+        <!-- Success overlay -->
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <span class="success-badge">🛡️</span>
+          <h4>Defense Activated! 🏆</h4>
+          <p>You avoided sugar-sweetened beverages and locked in cellular defense. Keep it up!</p>
+          <button class="claim-btn" (click)="completeQuest('zero_sugar')">Close</button>
         </div>
       </div>
 

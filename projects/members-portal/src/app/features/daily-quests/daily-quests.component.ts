@@ -67,6 +67,30 @@ export class DailyQuestsComponent implements OnInit {
   plateDragX = 0;
   plateDragY = 0;
 
+  // 6. Calorie Deficit (Scale game)
+  leftPanWeight = 2000;
+  rightPanWeight = 1500;
+  scaleAngle = 25; // starts tilted (left heavy)
+  placedWeights: number[] = [];
+  isDraggingWeight: number | null = null;
+  weightDragX = 0;
+  weightDragY = 0;
+
+  // 7. 3 Veggies/Fruits (Blender game)
+  blenderIngredients: string[] = [];
+  isBlending = false;
+  smoothieFilled = false;
+  glassColor = '';
+  isDraggingIngredient: string | null = null;
+  ingredientDragX = 0;
+  ingredientDragY = 0;
+
+  // 8. Zero Sugar (Smash sugar game)
+  sugarTaps = 0;
+  isShattered = false;
+  particles: Array<{ x: number, y: number, vx: number, vy: number, alpha: number, size: number }> = [];
+  private particlesInterval: any = null;
+
   ngOnInit() {
     const pledgeStatus = localStorage.getItem('somatic_pledge_accepted');
     if (pledgeStatus === 'true') {
@@ -121,11 +145,36 @@ export class DailyQuestsComponent implements OnInit {
       this.isLifting = false;
       this.isLiftComplete = false;
       this.isDraggingPlate = null;
+    } else if (questId === 'calorie_deficit') {
+      this.leftPanWeight = 2000;
+      this.rightPanWeight = 1500;
+      this.scaleAngle = 25;
+      this.placedWeights = [];
+      this.isDraggingWeight = null;
+    } else if (questId === 'veggies_fruits') {
+      this.blenderIngredients = [];
+      this.isBlending = false;
+      this.smoothieFilled = false;
+      this.glassColor = '';
+      this.isDraggingIngredient = null;
+    } else if (questId === 'zero_sugar') {
+      this.sugarTaps = 0;
+      this.isShattered = false;
+      this.particles = [];
+      if (this.particlesInterval) {
+        clearInterval(this.particlesInterval);
+        this.particlesInterval = null;
+      }
     }
   }
 
   closeGame() {
     this.stopPouringParticles();
+    if (this.particlesInterval) {
+      clearInterval(this.particlesInterval);
+      this.particlesInterval = null;
+    }
+    this.particles = [];
     this.activeGame = null;
     this.gameCompletedSuccess = false;
   }
@@ -183,6 +232,10 @@ export class DailyQuestsComponent implements OnInit {
       this.handleWaterCanMove(event);
     } else if (this.isDraggingPlate) {
       this.handlePlateMove(event);
+    } else if (this.isDraggingWeight) {
+      this.handleWeightMove(event);
+    } else if (this.isDraggingIngredient) {
+      this.handleIngredientMove(event);
     }
   }
 
@@ -199,6 +252,14 @@ export class DailyQuestsComponent implements OnInit {
     
     if (this.isDraggingPlate) {
       this.handlePlateRelease();
+    }
+    
+    if (this.isDraggingWeight) {
+      this.handleWeightRelease();
+    }
+    
+    if (this.isDraggingIngredient) {
+      this.handleIngredientRelease();
     }
   }
 
@@ -583,5 +644,266 @@ export class DailyQuestsComponent implements OnInit {
       this.isLiftComplete = true;
       this.triggerSuccess();
     }, 1800);
+  }
+
+  // --- 6. Calorie Deficit (Scale game) helper methods ---
+
+  startWeightDrag(event: MouseEvent | TouchEvent, weight: number) {
+    if (this.gameCompletedSuccess) return;
+    event.preventDefault();
+    this.isDraggingWeight = weight;
+    this.updateWeightDragPos(event);
+  }
+
+  private handleWeightMove(event: MouseEvent | TouchEvent) {
+    this.updateWeightDragPos(event);
+  }
+
+  private updateWeightDragPos(event: MouseEvent | TouchEvent) {
+    const container = document.querySelector('.scales-game-container') as HTMLElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    this.weightDragX = this.getEventX(event) - rect.left;
+    this.weightDragY = this.getEventY(event) - rect.top;
+  }
+
+  private handleWeightRelease() {
+    if (!this.isDraggingWeight) return;
+    const dish = document.querySelector('.right-pan .pan-dish') as HTMLElement;
+    const container = document.querySelector('.scales-game-container') as HTMLElement;
+    if (dish && container) {
+      const dishRect = dish.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const clientX = this.weightDragX + containerRect.left;
+      const clientY = this.weightDragY + containerRect.top;
+
+      // Drop check on the right dish
+      if (
+        clientX >= dishRect.left - 20 &&
+        clientX <= dishRect.right + 20 &&
+        clientY >= dishRect.top - 20 &&
+        clientY <= dishRect.bottom + 40
+      ) {
+        this.placedWeights.push(this.isDraggingWeight);
+        this.recalculateScale();
+      }
+    }
+    this.isDraggingWeight = null;
+  }
+
+  removeWeight(index: number) {
+    if (this.gameCompletedSuccess) return;
+    this.placedWeights.splice(index, 1);
+    this.recalculateScale();
+  }
+
+  private recalculateScale() {
+    const sum = this.placedWeights.reduce((a, b) => a + b, 0);
+    this.rightPanWeight = 1500 + sum;
+    
+    // Scale balance angle. Max tilt is 25 degrees.
+    // Balanced at 2000. Diff = left - right
+    const diff = this.leftPanWeight - this.rightPanWeight;
+    this.scaleAngle = Math.max(-25, Math.min(25, diff / 20));
+    
+    if (this.rightPanWeight === this.leftPanWeight) {
+      this.triggerSuccess();
+    }
+    this.cdr.detectChanges();
+  }
+
+  // --- 7. 3 Veggies/Fruits (Blender game) helper methods ---
+
+  startIngredientDrag(event: MouseEvent | TouchEvent, item: string) {
+    if (this.gameCompletedSuccess || this.isBlending) return;
+    event.preventDefault();
+    this.isDraggingIngredient = item;
+    this.updateIngredientDragPos(event);
+  }
+
+  private handleIngredientMove(event: MouseEvent | TouchEvent) {
+    this.updateIngredientDragPos(event);
+  }
+
+  private updateIngredientDragPos(event: MouseEvent | TouchEvent) {
+    const container = document.querySelector('.blender-game-container') as HTMLElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    this.ingredientDragX = this.getEventX(event) - rect.left;
+    this.ingredientDragY = this.getEventY(event) - rect.top;
+  }
+
+  private handleIngredientRelease() {
+    if (!this.isDraggingIngredient) return;
+    const jar = document.querySelector('.blender-jar') as HTMLElement;
+    const container = document.querySelector('.blender-game-container') as HTMLElement;
+    if (jar && container) {
+      const jarRect = jar.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const clientX = this.ingredientDragX + containerRect.left;
+      const clientY = this.ingredientDragY + containerRect.top;
+
+      if (
+        clientX >= jarRect.left &&
+        clientX <= jarRect.right &&
+        clientY >= jarRect.top &&
+        clientY <= jarRect.bottom
+      ) {
+        this.blenderIngredients.push(this.isDraggingIngredient);
+      }
+    }
+    this.isDraggingIngredient = null;
+    this.cdr.detectChanges();
+  }
+
+  startBlending() {
+    if (this.isBlending || this.blenderIngredients.length < 3) return;
+    this.isBlending = true;
+    
+    // Choose smoothie color based on ingredients
+    const colors: { [key: string]: string } = {
+      '🍓': 'linear-gradient(180deg, #f43f5e 0%, #be123c 100%)', // red
+      '🍌': 'linear-gradient(180deg, #fef08a 0%, #eab308 100%)', // yellow/banana
+      '🥬': 'linear-gradient(180deg, #4ade80 0%, #166534 100%)', // green/spinach
+      '🥕': 'linear-gradient(180deg, #f97316 0%, #c2410c 100%)', // orange/carrot
+      '🍎': 'linear-gradient(180deg, #ef4444 0%, #991b1b 100%)'  // apple/red
+    };
+    
+    // Find the dominant color
+    let primaryColor = colors['🥬'];
+    for (const item of this.blenderIngredients) {
+      if (colors[item]) {
+        primaryColor = colors[item];
+        break;
+      }
+    }
+    this.glassColor = primaryColor;
+    
+    // Play light vibration
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 200]);
+    }
+    
+    // Blending animation duration 2.5s
+    setTimeout(() => {
+      this.isBlending = false;
+      this.smoothieFilled = true;
+      this.triggerSuccess();
+      this.cdr.detectChanges();
+    }, 2500);
+    this.cdr.detectChanges();
+  }
+
+  // --- 8. Zero Sugar (Smash the Sugar) helper methods ---
+
+  smashSugar(event: MouseEvent) {
+    if (this.isShattered || this.gameCompletedSuccess) return;
+    this.sugarTaps++;
+    
+    // Trigger vibration tap
+    if (navigator.vibrate) {
+      navigator.vibrate(30);
+    }
+    
+    // Trigger particle explosion shards
+    const canvas = document.getElementById('sugarParticlesCanvas') as HTMLCanvasElement;
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      this.spawnSugarParticles(x, y);
+    }
+
+    if (this.sugarTaps >= 10) {
+      this.isShattered = true;
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 30, 250]);
+      }
+      this.initParticlesAnimation();
+    }
+    this.cdr.detectChanges();
+  }
+
+  spawnSugarParticles(x: number, y: number) {
+    for (let i = 0; i < 8; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 4;
+      this.particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1, // slight upward bias
+        alpha: 1.0,
+        size: 2 + Math.random() * 4
+      });
+    }
+  }
+
+  initParticlesAnimation() {
+    const canvas = document.getElementById('sugarParticlesCanvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Setup canvas size
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width || 280;
+    canvas.height = rect.height || 200;
+    
+    if (this.particlesInterval) {
+      clearInterval(this.particlesInterval);
+    }
+
+    // Explode sugar block on shatter
+    if (this.isShattered) {
+      for (let i = 0; i < 40; i++) {
+        const px = canvas.width / 2 + (Math.random() * 40 - 20);
+        const py = canvas.height / 2 + (Math.random() * 40 - 20);
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 3 + Math.random() * 6;
+        this.particles.push({
+          x: px,
+          y: py,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 2,
+          alpha: 1.0,
+          size: 3 + Math.random() * 5
+        });
+      }
+    }
+
+    this.particlesInterval = setInterval(() => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Update & render particles
+      for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.15; // gravity
+        p.alpha -= 0.02; // fade
+        
+        if (p.alpha <= 0 || p.y > canvas.height) {
+          this.particles.splice(i, 1);
+          continue;
+        }
+        
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
+        ctx.shadowBlur = 3;
+        ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      }
+      
+      // Clean up interval if no particles left
+      if (this.particles.length === 0 && this.isShattered) {
+        clearInterval(this.particlesInterval);
+        this.particlesInterval = null;
+      }
+    }, 1000 / 60); // 60 FPS
+  }
+
+  claimShield() {
+    if (this.gameCompletedSuccess) return;
+    this.triggerSuccess();
   }
 }

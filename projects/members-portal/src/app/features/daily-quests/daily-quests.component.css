@@ -1370,4 +1370,694 @@
   filter: brightness(1.1);
 }
 
+/* --- 6. Calorie Deficit ("Balance the Scales") styling --- */
+.scales-game-container {
+  position: relative;
+}
+
+.scales-dashboard {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.scale-metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.scales-arena {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  height: 160px;
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+  margin: 0 auto 1.25rem auto;
+  overflow: hidden;
+}
+
+.scale-stand {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 80px;
+  background: linear-gradient(90deg, #64748b 0%, #475569 100%);
+  border-radius: 4px 4px 0 0;
+}
+
+.scale-stand::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 8px;
+  background: #334155;
+  border-radius: 4px 4px 0 0;
+}
+
+.scale-beam-assembly {
+  position: absolute;
+  top: 75px;
+  left: 0;
+  width: 100%;
+  height: 0;
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform-origin: center center;
+}
+
+.scale-beam {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  height: 6px;
+  background: linear-gradient(180deg, #94a3b8 0%, #475569 100%);
+  border-radius: 3px;
+  top: -3px;
+}
+
+.scale-beam::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: #f59e0b;
+  border-radius: 50%;
+}
+
+.scale-pan {
+  position: absolute;
+  top: -3px;
+  width: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform-origin: top center;
+}
+
+.left-pan {
+  left: 20px;
+}
+
+.right-pan {
+  right: 20px;
+}
+
+.pan-strings {
+  width: 50px;
+  height: 45px;
+  border-left: 1px solid rgba(148, 163, 184, 0.6);
+  border-right: 1px solid rgba(148, 163, 184, 0.6);
+  transform: perspective(40px) rotateX(15deg);
+  transform-origin: top center;
+}
+
+.pan-dish {
+  width: 70px;
+  height: 8px;
+  background: linear-gradient(180deg, #94a3b8 0%, #475569 100%);
+  border-radius: 0 0 10px 10px;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+}
+
+.pan-label {
+  position: absolute;
+  top: 10px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+.pan-weight-block {
+  position: absolute;
+  bottom: 8px;
+  color: white;
+  font-weight: 900;
+  font-size: 0.65rem;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.intake-block {
+  width: 28px;
+  height: 28px;
+  background: #3b82f6;
+  border: 1px solid #1d4ed8;
+}
+
+.base-burn-block {
+  width: 24px;
+  height: 24px;
+  background: #ef4444;
+  border: 1px solid #b91c1c;
+  left: 6px;
+}
+
+.placed-weights-container {
+  position: absolute;
+  bottom: 8px;
+  right: 6px;
+  left: 32px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 1px;
+}
+
+.placed-weight {
+  color: white;
+  font-weight: 900;
+  font-size: 0.5rem;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.placed-weight:hover {
+  filter: brightness(1.2);
+}
+
+.weight-100 {
+  width: 22px;
+  height: 10px;
+  background: #10b981;
+  border: 1px solid #047857;
+}
+
+.weight-200 {
+  width: 26px;
+  height: 12px;
+  background: #8b5cf6;
+  border: 1px solid #6d28d9;
+}
+
+.weight-500 {
+  width: 32px;
+  height: 15px;
+  background: #f59e0b;
+  border: 1px solid #b45309;
+}
+
+.weight-rack-container {
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto 1.25rem auto;
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 16px;
+  padding: 0.75rem;
+}
+
+.weight-rack-container h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.weight-rack-items {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.rack-weight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 900;
+  border-radius: 4px;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+  touch-action: none;
+}
+
+.rack-weight:active {
+  cursor: grabbing;
+}
+
+.rack-weight:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+.floating-drag-weight {
+  z-index: 9999999;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 900;
+  border-radius: 4px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+  opacity: 0.95;
+}
+
+
+/* --- 7. 3 Servings Veggies/Fruits ("The Blender") styling --- */
+.blender-game-container {
+  position: relative;
+}
+
+.blender-arena {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  height: 180px;
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+  margin: 0 auto 1.25rem auto;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  padding: 1.5rem 1rem;
+  overflow: hidden;
+}
+
+.blender-assembly {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 90px;
+}
+
+.blender-assembly.blending {
+  animation: shake-blender 0.1s infinite alternate;
+}
+
+@keyframes shake-blender {
+  from { transform: translate(-1px, 0); }
+  to { transform: translate(1px, 1px); }
+}
+
+.blender-lid {
+  width: 60px;
+  height: 10px;
+  background: #ef4444;
+  border-radius: 6px 6px 0 0;
+  border-bottom: 2px solid #b91c1c;
+}
+
+.blender-jar {
+  width: 60px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.blender-vortex {
+  position: absolute;
+  top: 10%; left: 10%; width: 80%; height: 80%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 70%);
+  animation: spin-vortex 0.2s infinite linear;
+}
+
+@keyframes spin-vortex {
+  from { transform: rotate(0deg) scale(0.9); }
+  to { transform: rotate(360deg) scale(1.1); }
+}
+
+.ingredients-inside {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ingredient-item-inside {
+  font-size: 1.5rem;
+  position: absolute;
+  animation: drop-ingredient 0.4s ease-out forwards;
+}
+
+@keyframes drop-ingredient {
+  0% { transform: translateY(-70px) rotate(0deg); opacity: 0; }
+  100% { transform: translateY(0) rotate(15deg); opacity: 1; }
+}
+
+.ingredient-item-inside.blending {
+  animation: blend-spin 0.4s infinite linear;
+}
+
+@keyframes blend-spin {
+  0% { transform: scale(1) translate(0, 0) rotate(0deg); opacity: 0.8; }
+  50% { transform: scale(0.6) translate(10px, -20px) rotate(180deg); opacity: 0.4; }
+  100% { transform: scale(0.2) translate(-10px, -40px) rotate(360deg); opacity: 0; }
+}
+
+.blender-base {
+  width: 76px;
+  height: 35px;
+  background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.blender-switch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #dc2626;
+  border: 2px solid #991b1b;
+  cursor: pointer;
+}
+
+.blender-switch.on {
+  background: #22c55e;
+  border-color: #16a34a;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+}
+
+.glass-assembly {
+  width: 48px;
+  height: 105px;
+  position: relative;
+}
+
+.glass-outline {
+  width: 100%;
+  height: 80px;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-top: none;
+  border-radius: 0 0 14px 14px;
+  position: absolute;
+  bottom: 0;
+  overflow: visible;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.straw {
+  position: absolute;
+  top: -30px;
+  left: 20px;
+  width: 6px;
+  height: 80px;
+  background: #f43f5e;
+  transform: rotate(15deg);
+  border-radius: 3px;
+  z-index: 2;
+}
+
+.straw::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: repeating-linear-gradient(45deg, transparent, transparent 4px, white 4px, white 8px);
+}
+
+.smoothie-liquid {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  width: calc(100% - 6px);
+  border-radius: 0 0 10px 10px;
+  transition: height 1.8s cubic-bezier(0.1, 0.8, 0.3, 1);
+  box-shadow: inset 0 4px 10px rgba(255,255,255,0.2);
+}
+
+.ingredients-rack-container {
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto 1.25rem auto;
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 16px;
+  padding: 0.75rem;
+}
+
+.ingredients-rack-container h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ingredients-rack-items {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2rem;
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.rack-ingredient {
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.2s;
+  touch-action: none;
+}
+
+.rack-ingredient:active {
+  cursor: grabbing;
+}
+
+.rack-ingredient:hover {
+  transform: scale(1.2) translateY(-2px);
+}
+
+.blend-btn {
+  background: #ef4444;
+  border: none;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 700;
+  width: 100%;
+  max-width: 240px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  cursor: not-allowed;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.blend-btn.ready {
+  background: linear-gradient(135deg, #10b981, #059669);
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+  animation: pulse-ready-btn 1.5s infinite alternate;
+}
+
+
+/* --- 8. Zero Sugar ("Smash the Sugar") styling --- */
+.sugar-game-container {
+  position: relative;
+}
+
+.sugar-arena {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  height: 180px;
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+  margin: 0 auto 1.25rem auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.particles-canvas {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sugar-cube-wrapper {
+  perspective: 400px;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.sugar-cube-wrapper.shaking {
+  animation: shake-sugar 0.1s infinite alternate;
+}
+
+@keyframes shake-sugar {
+  from { transform: translate(-2px, -1px) rotate(-1deg); }
+  to { transform: translate(2px, 1px) rotate(1deg); }
+}
+
+.sugar-cube {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  transform: rotateX(-20deg) rotateY(25deg);
+  transform-style: preserve-3d;
+  transition: transform 0.2s;
+}
+
+.sugar-cube:active {
+  transform: scale(0.9) rotateX(-20deg) rotateY(25deg);
+}
+
+.cube-face {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+.cube-face.front {
+  transform: translateZ(40px);
+}
+
+.cube-face.top {
+  transform: rotateX(90deg) translateZ(40px);
+  background: #ffffff;
+}
+
+.cube-face.right {
+  transform: rotateY(90deg) translateZ(40px);
+  background: #e2e8f0;
+}
+
+.sugar-cracks {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  transform: translateZ(40.2px); /* Rendered exactly in front of cube face */
+  background-size: cover;
+  pointer-events: none;
+}
+
+/* Simulated visual cracks using background-image SVG structures */
+.sugar-cracks.stage-1 {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><path d='M30,10 L45,45 L50,70 M45,45 L65,30' stroke='rgba(71,85,105,0.7)' stroke-width='2' fill='none'/></svg>");
+}
+
+.sugar-cracks.stage-2 {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><path d='M30,10 L45,45 L50,70 M45,45 L65,30 M15,40 L45,45 M50,55 L30,75 M60,60 L48,50' stroke='rgba(71,85,105,0.85)' stroke-width='2' fill='none'/></svg>");
+}
+
+.sugar-cracks.stage-3 {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><path d='M30,10 L45,45 L50,70 M45,45 L65,30 M15,40 L45,45 M50,55 L30,75 M60,60 L48,50 M10,15 L32,32 M70,12 L52,25 M20,60 L38,48' stroke='rgba(15,23,42,0.95)' stroke-width='2.5' fill='none'/></svg>");
+}
+
+.shield-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  animation: pop-shield 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  z-index: 5;
+}
+
+@keyframes pop-shield {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.shield-halo {
+  position: absolute;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle, rgba(245,158,11,0.3) 0%, rgba(245,158,11,0) 70%);
+  animation: pulse-halo 2s infinite alternate;
+}
+
+@keyframes pulse-halo {
+  from { transform: scale(0.8); opacity: 0.6; }
+  to { transform: scale(1.2); opacity: 1; }
+}
+
+.immunity-shield-visual {
+  font-size: 4rem;
+  filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.8));
+  margin-bottom: 0.75rem;
+}
+
+.shield-hint {
+  font-size: 0.7rem;
+  color: #fbbf24;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  animation: pulse-hint 1s infinite alternate;
+}
+
+.sugar-counter {
+  width: 100%;
+  max-width: 240px;
+  margin: 0 auto 1.5rem auto;
+  text-align: left;
+}
+
+.tap-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+.integrity-bar-track {
+  width: 100%;
+  height: 6px;
+  background: #334155;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.integrity-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #ef4444);
+  border-radius: 3px;
+  transition: width 0.15s ease-out;
+}
+
+
 
