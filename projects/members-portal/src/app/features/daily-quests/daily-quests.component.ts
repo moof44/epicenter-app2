@@ -264,12 +264,17 @@ export class DailyQuestsComponent implements OnInit {
     const clientX = this.getEventX(moveEvent);
     const clientY = this.getEventY(moveEvent);
     
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    // Calculate client offset position
+    const relativeX = clientX - rect.left;
+    const relativeY = clientY - rect.top;
+    
+    // Map client coordinates to the canvas internal resolution (280x200)
+    const canvasX = (relativeX / (rect.width || 280)) * canvas.width;
+    const canvasY = (relativeY / (rect.height || 200)) * canvas.height;
     
     ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
-    ctx.arc(x, y, 22, 0, Math.PI * 2);
+    ctx.arc(canvasX, canvasY, 22, 0, Math.PI * 2);
     ctx.fill();
     
     this.checkFogCleared(canvas, ctx);

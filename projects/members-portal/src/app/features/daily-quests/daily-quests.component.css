@@ -830,8 +830,9 @@
 
 /* --- 30 Min Outdoors ("Wipe the Fog") styling --- */
 .fog-canvas-container {
-  width: 280px;
-  height: 200px;
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 280 / 200;
   margin: 0 auto 1.5rem auto;
   position: relative;
   border-radius: 20px;
@@ -868,6 +869,8 @@
 #fogCanvas {
   position: absolute;
   top: 0; left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 2;
   cursor: crosshair;
   touch-action: none;
@@ -952,5 +955,11 @@
 .check-icon {
   font-size: 1rem;
   font-weight: bold;
+}
+
+@media (max-width: 360px) {
+  .game-modal-content {
+    padding: 1.5rem 1rem;
+  }
 }
 
