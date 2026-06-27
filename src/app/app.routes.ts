@@ -105,4 +105,10 @@ export const routes: Routes = [
         canActivate: [authGuard],
         data: { animation: 'ListPage' }
     },
+    {
+        path: 'economy',
+        loadComponent: () => import('./features/gamification-admin/gamification-admin').then(m => m.GamificationAdmin),
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'DashboardPage', roles: ['ADMIN', 'MANAGER'] }
+    },
 ];

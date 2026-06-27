@@ -1143,3 +1143,5 @@ export const retroactivelyProcessAllBadges = functions.https.onCall(async (data:
 
 // Gamification Economy
 export * from './gamification';
+
+export * from './gamification-audit';

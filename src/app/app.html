@@ -49,6 +49,12 @@
           <span matListItemTitle>Reports Dashboard</span>
         </a>
 
+        <a mat-list-item routerLink="/economy" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
+          <mat-icon matListItemIcon>account_balance</mat-icon>
+          <span matListItemTitle>Gamification Economy</span>
+        </a>
+
         <a mat-list-item routerLink="/audit-log" routerLinkActive="active"
           (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
           <mat-icon matListItemIcon>manage_search</mat-icon>

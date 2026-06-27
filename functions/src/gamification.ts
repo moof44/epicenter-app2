@@ -22,6 +22,22 @@ function calculateLevel(xp: number): number {
     return 50; // Max level for now
 }
 
+export async function logGamificationError(action: string, uid: string, data: any, error: any) {
+    try {
+        const db = admin.firestore();
+        await db.collection('system_logs').doc('gamification_errors').collection('errors').add({
+            action,
+            uid,
+            data,
+            errorMessage: error.message || String(error),
+            stack: error.stack || null,
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (e) {
+        console.error('CRITICAL: Failed to log gamification error', e);
+    }
+}
+
 async function awardGamification(uid: string, type: string, description: string, coins: number, xp: number) {
     const db = admin.firestore();
     const memberRef = db.collection('members').doc(uid);
@@ -31,57 +47,90 @@ async function awardGamification(uid: string, type: string, description: string,
     let finalCoins = coins;
     let finalDesc = description;
     
-    // Apply Global Pool logic if this is an earning event (not a store purchase)
-    if (coins > 0) {
-        const poolDoc = await poolRef.get();
-        if (poolDoc.exists) {
-            const poolData = poolDoc.data() || { balance: 0, initialBudget: 0 };
-            const today = new Date().getDate();
-            
-            if (poolData.balance <= 0) {
-                // Hard cap: Disable crits and cut standard rewards by 50%
-                finalCoins = Math.floor(coins / 2);
+    try {
+        // Apply Global Pool logic if this is an earning event (not a store purchase)
+        if (coins > 0) {
+            const poolDoc = await poolRef.get();
+            if (poolDoc.exists) {
+                const poolData = poolDoc.data() || { balance: 0, initialBudget: 0 };
+                const today = new Date().getDate();
                 
-                // Strip out any crit/multiplier text from the original description
-                let baseDesc = description
-                    .replace('🎉 LUCKY PURCHASE! Double Cashback on', 'Cashback on')
-                    .replace('🔥 7+ Day Streak Check-in (1.5x)', 'Gym Check-in Bonus');
-                
-                finalDesc = `[Economy Cap] ${baseDesc} (50% Reward)`;
-            } else if (today >= 25 && poolData.initialBudget > 0) {
-                // Surplus Event: If > 30% of budget remains after the 25th of the month
-                if ((poolData.balance / poolData.initialBudget) > 0.3) {
-                    finalCoins *= 3;
-                    finalDesc = `🔥 SURPLUS EVENT (3x)! ${description}`;
+                if (poolData.balance <= 0) {
+                    // Hard cap: Disable crits and cut standard rewards by 50%
+                    finalCoins = Math.floor(coins / 2);
+                    
+                    // Strip out any crit/multiplier text from the original description
+                    let baseDesc = description
+                        .replace('🎉 LUCKY PURCHASE! Double Cashback on', 'Cashback on')
+                        .replace('🔥 7+ Day Streak Check-in (1.5x)', 'Gym Check-in Bonus');
+                    
+                    finalDesc = `[Economy Cap] ${baseDesc} (50% Reward)`;
+                } else if (today >= 25 && poolData.initialBudget > 0) {
+                    // Surplus Event: If > 30% of budget remains after the 25th of the month
+                    if ((poolData.balance / poolData.initialBudget) > 0.3) {
+                        finalCoins *= 3;
+                        finalDesc = `🔥 SURPLUS EVENT (3x)! ${description}`;
+                    }
                 }
             }
         }
-    }
-    
-    await db.runTransaction(async (t) => {
-        const doc = await t.get(memberRef);
-        if (!doc.exists) return;
-        const data = doc.data() || {};
-        const g = data.gamification || { coins: 0, xp: 0, level: 1 };
         
-        g.coins += finalCoins;
-        g.xp += xp;
-        g.level = calculateLevel(g.xp);
-        
-        t.update(memberRef, { gamification: g });
-        t.set(ledgerRef, {
-            type,
-            description: finalDesc,
-            amount: finalCoins,
-            xpAdded: xp,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
-            balanceAfter: g.coins
+        await db.runTransaction(async (t) => {
+            const doc = await t.get(memberRef);
+            if (!doc.exists) return;
+            const data = doc.data() || {};
+            const g = data.gamification || { coins: 0, xp: 0, level: 1 };
+            
+            g.coins += finalCoins;
+            g.xp += xp;
+            g.level = calculateLevel(g.xp);
+            
+            t.update(memberRef, { gamification: g });
+            t.set(ledgerRef, {
+                type,
+                description: finalDesc,
+                amount: finalCoins,
+                xpAdded: xp,
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                balanceAfter: g.coins
+            });
         });
-    });
-    
-    // Deduct from Global Pool out-of-band to prevent transaction contention locks on the pool doc
-    if (finalCoins > 0) {
-        await poolRef.set({ balance: admin.firestore.FieldValue.increment(-finalCoins) }, { merge: true });
+        
+        // Deduct from Global Pool out-of-band to prevent transaction contention locks on the pool doc
+        if (finalCoins > 0) {
+            await poolRef.set({ balance: admin.firestore.FieldValue.increment(-finalCoins) }, { merge: true });
+        }
+    } catch (error: any) {
+        console.error(`Gamification Error [${type}]:`, error);
+        await logGamificationError('AWARD_GAMIFICATION', uid, { type, description, coins, xp }, error);
+        
+        // Safety Measure: Fallback Reward
+        try {
+            console.log(`Executing Fallback Reward for ${uid}`);
+            const fallbackCoins = 10;
+            const fallbackXP = 10;
+            const fallbackDesc = `[FALLBACK] ${description}`;
+            
+            // Simple non-transactional write for maximum resilience
+            await memberRef.set({
+                gamification: {
+                    coins: admin.firestore.FieldValue.increment(fallbackCoins),
+                    xp: admin.firestore.FieldValue.increment(fallbackXP)
+                }
+            }, { merge: true });
+            
+            await ledgerRef.set({
+                type,
+                description: fallbackDesc,
+                amount: fallbackCoins,
+                xpAdded: fallbackXP,
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                isFallback: true
+            });
+        } catch (fallbackError: any) {
+            console.error(`CRITICAL: Fallback Reward Failed for ${uid}`, fallbackError);
+            await logGamificationError('FALLBACK_REWARD_FAILED', uid, { type, description }, fallbackError);
+        }
     }
 }
 
@@ -317,6 +366,7 @@ export const purchaseStoreReward = functions.https.onCall(async (data: any, cont
         
     } catch (error: any) {
         console.error('Purchase error:', error);
+        await logGamificationError('PURCHASE_STORE_REWARD', uid, { itemName, cost }, error);
         throw new functions.https.HttpsError(error.code || 'internal', error.message || 'Unable to process purchase.');
     }
 });

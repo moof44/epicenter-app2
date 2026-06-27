@@ -1,0 +1,127 @@
+<div class="economy-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-title">
+      <h1>Gamification Economy</h1>
+      <p>Monitor the global token pool, monthly budgets, and safety fallback logs.</p>
+    </div>
+    <button mat-flat-button color="primary" class="refresh-btn" (click)="loadEconomyData()">
+      <mat-icon>refresh</mat-icon> Refresh Data
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+  } @else {
+    <!-- Global Pool Metrics -->
+    <div class="metrics-grid">
+      
+      <!-- Initial Budget Card -->
+      <div class="metric-card">
+        <div class="card-icon-wrapper icon-blue">
+          <mat-icon>account_balance</mat-icon>
+        </div>
+        <div class="metric-info">
+          <div class="metric-label">Initial Budget</div>
+          <div class="metric-value">{{ poolInitialBudget() | number }}</div>
+        </div>
+      </div>
+
+      <!-- Current Balance Card -->
+      <div class="metric-card">
+        @if (poolBalance() <= 0) {
+          <span class="status-badge">DEPLETED</span>
+        }
+        <div class="card-icon-wrapper" [class.icon-green]="poolBalance() > 0" [class.class-red]="poolBalance() <= 0" [ngClass]="poolBalance() <= 0 ? 'icon-red' : 'icon-green'">
+          <mat-icon>toll</mat-icon>
+        </div>
+        <div class="metric-info">
+          <div class="metric-label">Current Balance</div>
+          <div class="metric-value" [class.depleted]="poolBalance() <= 0">{{ poolBalance() | number }}</div>
+        </div>
+      </div>
+
+      <!-- Consumption Card -->
+      <div class="metric-card">
+        <div class="card-icon-wrapper icon-purple">
+          <mat-icon>pie_chart</mat-icon>
+        </div>
+        <div class="metric-info">
+          <div class="metric-label">Pool Consumed</div>
+          <div class="metric-value">{{ percentConsumed }}%</div>
+          
+          <div class="progress-section">
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" 
+                   [ngStyle]="{ 'width': percentConsumed + '%', 'background-color': percentConsumed >= 95 ? '#ef4444' : (percentConsumed >= 75 ? '#eab308' : '#22c55e') }">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Error Logs Section Header -->
+    <div class="section-header">
+      <h2>
+        <mat-icon>warning</mat-icon> Safety Error Logs
+      </h2>
+      <span class="section-badge">Recent 50 logs</span>
+    </div>
+
+    <!-- Logs Container -->
+    <div class="logs-card">
+      @if (errorLogs().length === 0) {
+        <div class="empty-state">
+          <mat-icon>check_circle</mat-icon>
+          <p>No gamification errors found! The system is running smoothly.</p>
+        </div>
+      } @else {
+        <div class="logs-table-wrapper">
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Action Type</th>
+                <th>Member ID</th>
+                <th>Error Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (log of errorLogs(); track log.id) {
+                <tr>
+                  <td class="timestamp-cell">
+                    {{ log.timestamp?.toDate() | date:'short' }}
+                  </td>
+                  <td>
+                    <span class="action-badge" 
+                          [ngClass]="{
+                            'award': log.action === 'AWARD_GAMIFICATION',
+                            'purchase': log.action === 'PURCHASE_STORE_REWARD',
+                            'audit': log.action === 'ECONOMY_AUDIT_DISCREPANCY' || log.action === 'ECONOMY_AUDIT_FAILURE',
+                            'fallback': log.action === 'FALLBACK_REWARD_FAILED'
+                          }">
+                      {{ log.action }}
+                    </span>
+                  </td>
+                  <td class="uid-cell">
+                    {{ log.uid || 'SYSTEM' }}
+                  </td>
+                  <td class="details-cell">
+                    <p class="error-message">{{ log.errorMessage }}</p>
+                    @if (log.data) {
+                      <pre class="error-data-preview">{{ log.data | json }}</pre>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>
