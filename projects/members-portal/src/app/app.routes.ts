@@ -8,6 +8,7 @@ import { AttendanceComponent } from './features/attendance.component';
 import { ProfileComponent } from './features/profile.component';
 import { WorkoutNotebookComponent } from './features/workout-notebook.component';
 import { GymScheduleComponent } from './features/gym-schedule.component';
+import { DailyQuestsComponent } from './features/daily-quests/daily-quests.component';
 import { authGuard } from './core/guards/auth.guard';
 import { redirectIfLoggedInGuard } from './core/guards/redirect-if-logged-in.guard';
 
@@ -25,6 +26,7 @@ export const routes: Routes = [
             { path: 'profile', component: ProfileComponent },
             { path: 'workout', component: WorkoutNotebookComponent },
             { path: 'schedule', component: GymScheduleComponent },
+            { path: 'quests', component: DailyQuestsComponent },
             { path: '', redirectTo: 'home', pathMatch: 'full' }
         ]
     },

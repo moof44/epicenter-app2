@@ -1,0 +1,436 @@
+<div class="quests-container">
+  <!-- Honesty Pledge Inline Card -->
+  <div *ngIf="!isPledgeAccepted" class="pledge-card-inline">
+    <!-- Back Button for Pledge Page -->
+    <a routerLink="/dashboard/home" class="pledge-back-btn" title="Back to Dashboard">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+      </svg>
+      <span>Back</span>
+    </a>
+    
+    <div class="pledge-icon">🛡️</div>
+    <h2>Somatic Honor Pledge</h2>
+    <p class="pledge-text">
+      These daily quests rely entirely on your honesty. The app doesn't care about the badges you earn—your body does. Deception only harms your own progress and defeats the purpose of the journey.
+    </p>
+    <button class="pledge-btn" (click)="acceptPledge()">I Commit to Honesty</button>
+  </div>
+
+  <!-- Main Quests List -->
+  <div *ngIf="isPledgeAccepted" class="quests-content stagger-container">
+    <div class="quests-header stagger-item">
+      <!-- Back Link for Quests Page -->
+      <a routerLink="/dashboard/home" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+        </svg>
+        <span>Back to Dashboard</span>
+      </a>
+      <div class="header-trophy-wrapper stagger-item">
+        <img src="assets/daily_quest_trophy.png" alt="Daily Quest Trophy" class="header-trophy" />
+      </div>
+      <h2 class="stagger-item">Daily Quests</h2>
+      
+      <p class="quests-subtitle stagger-item">Complete daily quest to earn badges that will improve your heart, mind and body</p>
+    </div>
+
+    <!-- Activity Category -->
+    <div class="quest-category stagger-item">
+      <div class="category-header" (click)="toggleCategory('activity')">
+        <div class="category-title">
+          <span class="category-icon">🏃‍♂️</span>
+          <h3>Activity</h3>
+        </div>
+        <span class="toggle-icon" [style.transform]="expandedCategories['activity'] ? 'rotate(90deg)' : 'rotate(0deg)'">▶</span>
+      </div>
+      <div class="category-items-wrapper" [class.expanded]="expandedCategories['activity']">
+        <div class="category-items">
+          <!-- Walk 8,000 steps -->
+          <div class="quest-row stagger-item" [class.completed]="completedQuests['walk_steps']" (click)="openGame('walk_steps')">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5 anim-shoe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 10h4l2.5 5H13l1.5-3H19a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7Z" />
+                  <path d="M13 15v4" />
+                  <path d="M8 10V6" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>Walk 8,000 steps</h4>
+                <p>Break the tape at the finish line</p>
+              </div>
+            </div>
+            <div class="quest-action" [class.completed]="completedQuests['walk_steps']">
+              <span *ngIf="!completedQuests['walk_steps']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['walk_steps']" class="check-icon">✓</span>
+            </div>
+          </div>
+
+          <!-- 15 min stretching -->
+          <div class="quest-row stagger-item" [class.completed]="completedQuests['stretching']" (click)="openGame('stretching')">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5 anim-stretch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="m5 12 4-2 3 3 3-3 4 2" />
+                  <path d="m9 16 3-4 3 4" />
+                  <path d="M12 12v5a2 2 0 0 1-2 2H9" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>15 min stretching</h4>
+                <p>Snap the joints of the stick figure</p>
+              </div>
+            </div>
+            <div class="quest-action" [class.completed]="completedQuests['stretching']">
+              <span *ngIf="!completedQuests['stretching']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['stretching']" class="check-icon">✓</span>
+            </div>
+          </div>
+
+          <!-- 30 min outdoors -->
+          <div class="quest-row stagger-item" [class.completed]="completedQuests['outdoors']" (click)="openGame('outdoors')">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5 anim-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                  <circle cx="12" cy="12" r="4" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>30 min outdoors</h4>
+                <p>Rub the screen to reveal the sun</p>
+              </div>
+            </div>
+            <div class="quest-action" [class.completed]="completedQuests['outdoors']">
+              <span *ngIf="!completedQuests['outdoors']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['outdoors']" class="check-icon">✓</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nutrition Category -->
+    <div class="quest-category stagger-item">
+      <div class="category-header" (click)="toggleCategory('nutrition')">
+        <div class="category-title">
+          <span class="category-icon">🥗</span>
+          <h3>Nutrition</h3>
+        </div>
+        <span class="toggle-icon" [style.transform]="expandedCategories['nutrition'] ? 'rotate(90deg)' : 'rotate(0deg)'">▶</span>
+      </div>
+      <div class="category-items-wrapper" [class.expanded]="expandedCategories['nutrition']">
+        <div class="category-items">
+          <!-- Drink 2-3L water -->
+          <div class="quest-row stagger-item">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path class="anim-water-shake" d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7Z" />
+                  <circle class="anim-water-drip" cx="12" cy="7" r="1.5" fill="currentColor" stroke="none" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>Drink 2-3L water</h4>
+                <p>Water the seedling to make it bloom</p>
+              </div>
+            </div>
+            <div class="quest-action">
+              <span class="play-icon">▶</span>
+            </div>
+          </div>
+
+          <!-- Hit protein target -->
+          <div class="quest-row stagger-item">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5 anim-barbell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 12h12M4 8v8M20 8v8M2 10v4M22 10v4" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>Hit protein target</h4>
+                <p>Load the barbell and complete the lift</p>
+              </div>
+            </div>
+            <div class="quest-action">
+              <span class="play-icon">▶</span>
+            </div>
+          </div>
+
+          <!-- Calorie deficit -->
+          <div class="quest-row stagger-item">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5 anim-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>Calorie deficit</h4>
+                <p>Drag weights to balance the calorie scales</p>
+              </div>
+            </div>
+            <div class="quest-action">
+              <span class="play-icon">▶</span>
+            </div>
+          </div>
+
+          <!-- 3 servings veggies/fruits -->
+          <div class="quest-row stagger-item">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path class="anim-leaf" d="M12 2c1 2 3 3 5 3" stroke-linecap="round" />
+                  <path d="M12 2v3M12 5c-3.5 0-6 2.5-6 6a6 6 0 0 0 12 0c0-3.5-2.5-6-6-6Z" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>3 servings veggies/fruits</h4>
+                <p>Drag plants to the blender and blend</p>
+              </div>
+            </div>
+            <div class="quest-action">
+              <span class="play-icon">▶</span>
+            </div>
+          </div>
+
+          <!-- Zero sugar-sweetened beverages -->
+          <div class="quest-row stagger-item">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect class="anim-sugar" x="6" y="6" width="12" height="12" rx="2" />
+                  <line x1="3" y1="3" x2="21" y2="21" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>Zero sugar-sweetened beverages</h4>
+                <p>Smash the sugar cube to unlock the shield</p>
+              </div>
+            </div>
+            <div class="quest-action">
+              <span class="play-icon">▶</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recovery Category -->
+    <div class="quest-category stagger-item">
+      <div class="category-header" (click)="toggleCategory('recovery')">
+        <div class="category-title">
+          <span class="category-icon">🧘‍♂️</span>
+          <h3>Recovery & Mind</h3>
+        </div>
+        <span class="toggle-icon" [style.transform]="expandedCategories['recovery'] ? 'rotate(90deg)' : 'rotate(0deg)'">▶</span>
+      </div>
+      <div class="category-items-wrapper" [class.expanded]="expandedCategories['recovery']">
+        <div class="category-items">
+          <!-- Sleep 7-8 hours -->
+          <div class="quest-row stagger-item">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path class="anim-moon" d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                  <path class="anim-star-1" d="M19 5h.01M20 7h.01" />
+                  <path class="anim-star-2" d="M6 7h.01M7 9h.01" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>Sleep 7-8 hours</h4>
+                <p>Plug in the cord to charge your body battery</p>
+              </div>
+            </div>
+            <div class="quest-action">
+              <span class="play-icon">▶</span>
+            </div>
+          </div>
+
+          <!-- No screens 30 min before bed -->
+          <div class="quest-row stagger-item">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5 anim-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="2" width="14" height="20" rx="2" />
+                  <path d="M12 18h.01" />
+                  <line x1="3" y1="3" x2="21" y2="21" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>No screens 30 min before bed</h4>
+                <p>Pull the screen power lever to dim the room</p>
+              </div>
+            </div>
+            <div class="quest-action">
+              <span class="play-icon">▶</span>
+            </div>
+          </div>
+
+          <!-- 5-10 min meditation -->
+          <div class="quest-row stagger-item">
+            <div class="quest-info">
+              <div class="quest-icon-wrapper">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle class="anim-breath" cx="12" cy="12" r="9" />
+                  <path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                  <path d="M12 12v5" />
+                </svg>
+              </div>
+              <div class="quest-text">
+                <h4>5-10 min meditation</h4>
+                <p>Breathe in sync to launch the balloon</p>
+              </div>
+            </div>
+            <div class="quest-action">
+              <span class="play-icon">▶</span>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Reusable Game Modal -->
+  <div class="game-modal-overlay" *ngIf="activeGame" (click)="closeGame()"
+       (window:mousemove)="onGlobalMove($event)"
+       (window:touchmove)="onGlobalMove($event)"
+       (window:mouseup)="onGlobalUp()"
+       (window:touchend)="onGlobalUp()">
+    <div class="game-modal-content" (click)="$event.stopPropagation()">
+      <button class="close-modal-btn" (click)="closeGame()">&times;</button>
+      
+      <!-- Walk 8,000 steps game -->
+      <div *ngIf="activeGame === 'walk_steps'" class="game-container">
+        <h3>Walk 8,000 Steps</h3>
+        <p class="game-instructions">Drag the runner to break the finish line tape!</p>
+        
+        <div class="track-area">
+          <div class="running-track">
+            <div class="track-line"></div>
+            <!-- Runner -->
+            <div class="runner-element" 
+                 [style.left.%]="runnerPos" 
+                 draggable="false"
+                 style="user-select: none;"
+                 (mousedown)="startRunnerDrag($event)"
+                 (touchstart)="startRunnerDrag($event)">
+              🏃‍♂️
+            </div>
+            <!-- Finish Line Ribbon -->
+            <div class="finish-line" [class.broken]="runnerPos >= 80">
+              <div class="ribbon-top"></div>
+              <div class="ribbon-bottom"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <h4>Quest Completed! 🎉</h4>
+          <p>You broke the tape. Great job walking today!</p>
+          <button class="claim-btn" (click)="completeQuest('walk_steps')">Close</button>
+        </div>
+      </div>
+
+      <!-- 15 min stretching game -->
+      <div *ngIf="activeGame === 'stretching'" class="game-container">
+        <h3>15 Min Stretching</h3>
+        <p class="game-instructions">Correct the posture of the stick figure by dragging the dislocated wrist (red) to the target socket (green)!</p>
+        
+        <div class="stretching-canvas">
+          <svg width="200" height="250" viewBox="0 0 200 250" class="stretching-svg">
+            <!-- Background Target Posture -->
+            <g opacity="0.15" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none">
+              <circle cx="100" cy="50" r="15" />
+              <line x1="100" y1="65" x2="100" y2="140" />
+              <line x1="100" y1="140" x2="70" y2="210" />
+              <line x1="100" y1="140" x2="130" y2="210" />
+              <line x1="100" y1="85" x2="50" y2="60" />
+              <line x1="100" y1="85" x2="150" y2="30" />
+            </g>
+
+            <!-- Actual Figure -->
+            <g stroke="#d4af37" stroke-width="6" stroke-linecap="round" fill="none">
+              <!-- Head -->
+              <circle cx="100" cy="50" r="15" stroke-width="4" />
+              <!-- Torso -->
+              <line x1="100" y1="65" x2="100" y2="140" />
+              <line x1="100" y1="140" x2="70" y2="210" />
+              <line x1="100" y1="140" x2="130" y2="210" />
+              <line x1="100" y1="85" x2="50" y2="60" />
+              <!-- Arm Right (interactive) -->
+              <line x1="100" y1="85" [attr.x2]="jointX" [attr.y2]="jointY" stroke="#ef4444" />
+            </g>
+
+            <!-- Target Socket -->
+            <circle cx="150" cy="30" r="12" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="4 4" class="target-socket" />
+
+            <!-- Joint Handle -->
+            <circle [attr.cx]="jointX" [attr.cy]="jointY" r="12" fill="#ef4444" class="joint-handle" 
+                    (mousedown)="startJointDrag($event)"
+                    (touchstart)="startJointDrag($event)" />
+          </svg>
+        </div>
+        
+        <div class="stretch-actions">
+          <button class="sub-action-btn" (click)="showStretchLibrary = !showStretchLibrary">
+            {{ showStretchLibrary ? 'Hide Stretch Guide' : 'View Stretch Guide' }}
+          </button>
+        </div>
+
+        <!-- Stretching Library -->
+        <div class="stretching-library" *ngIf="showStretchLibrary">
+          <h5>Stretch Guide</h5>
+          <div class="stretch-cards">
+            <div class="stretch-card">
+              <h6>1. Overhead Arm Reach</h6>
+              <p>Reaches shoulders and sides. Hold for 30s.</p>
+            </div>
+            <div class="stretch-card">
+              <h6>2. Side Bend Stretch</h6>
+              <p>Elongates core and obliques. Repeat both sides.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <h4>Posture Aligned! 🧘</h4>
+          <p>Joint snapped successfully. Ensure you do these daily stretches!</p>
+          <button class="claim-btn" (click)="completeQuest('stretching')">Close</button>
+        </div>
+      </div>
+
+      <!-- 30 min outdoors game -->
+      <div *ngIf="activeGame === 'outdoors'" class="game-container">
+        <h3>30 Min Outdoors</h3>
+        <p class="game-instructions">Rub/Wipe away the fog layer to reveal the sun!</p>
+        
+        <div class="fog-canvas-container">
+          <div class="sun-reveal-bg">
+            <svg class="sun-reveal-svg anim-sun" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5">
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+              <circle cx="12" cy="12" r="4" fill="#f59e0b" />
+            </svg>
+            <div class="reveal-text">OUTDOORS LIFE</div>
+          </div>
+          
+          <canvas id="fogCanvas" width="280" height="200" 
+                  (mousedown)="startFogWipe($event)"
+                  (touchstart)="startFogWipe($event)"></canvas>
+        </div>
+
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <h4>Sun Revealed! ☀️</h4>
+          <p>Great job getting some fresh air today!</p>
+          <button class="claim-btn" (click)="completeQuest('outdoors')">Close</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

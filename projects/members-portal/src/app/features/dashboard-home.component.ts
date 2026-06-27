@@ -1,6 +1,6 @@
 import { Component, inject, computed, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { DashboardService } from '../core/services/dashboard.service';
 import { ShareCardService } from '../core/services/share-card.service';
 import { ReferralCardComponent } from '../shared/components/referral-card/referral-card.component';
@@ -369,6 +369,81 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
           }
         </div>
 
+        <!-- Daily Quests CTA Card -->
+        <div class="card-surface mt-6 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-bg-surface-alt hover:border-gold-primary/30 transition-all duration-300 hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] animate-fade-in-up [animation-delay:480ms]">
+          <div class="flex items-start gap-4">
+            <div class="p-2 bg-gold-dim text-gold-primary rounded-2xl shrink-0 select-none w-14 h-14 flex items-center justify-center relative overflow-hidden">
+              <svg class="w-10 h-10 runner-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Head -->
+                <circle cx="50" cy="25" r="8" fill="currentColor" />
+                <!-- Torso -->
+                <path d="M50 33 L48 55" stroke="currentColor" stroke-width="6" stroke-linecap="round" />
+                <!-- Left Arm -->
+                <path class="runner-left-arm" d="M49 35 L35 45 L25 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+                <!-- Right Arm -->
+                <path class="runner-right-arm" d="M49 35 L62 43 L72 35" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+                <!-- Left Leg -->
+                <path class="runner-left-leg" d="M48 55 L35 70 L45 85" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+                <!-- Right Leg -->
+                <path class="runner-right-leg" d="M48 55 L58 68 L50 85" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold font-oswald tracking-wide text-gold-primary uppercase">Daily Quests</h2>
+              <p class="text-xs text-text-secondary mt-0.5">Complete daily quest to earn badges that will improve your heart, mind and body</p>
+              
+              <!-- Progress Summary -->
+              <div class="flex items-center gap-2 mt-2">
+                <div class="w-32 bg-bg-surface-alt rounded-full h-1.5 overflow-hidden">
+                  <div class="bg-gradient-to-r from-gold-primary to-gold-light h-1.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <span class="text-[10px] font-bold text-text-secondary">0 / 11 Completed</span>
+              </div>
+            </div>
+          </div>
+          <a 
+            (click)="onEnterLounge(); $event.stopPropagation()"
+            class="relative w-full max-w-sm mx-auto sm:mx-0 sm:w-80 h-14 bg-bg-surface-alt border border-gold-primary/30 hover:border-gold-primary rounded-2xl flex items-center overflow-hidden transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.25)] active:scale-95 cursor-pointer shrink-0 select-none"
+          >
+            <!-- Animation Corridor -->
+            <div class="absolute inset-0 flex items-center justify-start pointer-events-none px-4">
+              
+              <!-- Drifting Runner Wrapper -->
+              <div class="runner-travel-wrapper flex items-center">
+                <svg class="w-7 h-7 runner-svg text-gold-light" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="25" r="8" fill="currentColor" />
+                  <path d="M50 33 L48 55" stroke="currentColor" stroke-width="6" stroke-linecap="round" />
+                  <path class="runner-left-arm" d="M49 35 L35 45 L25 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path class="runner-right-arm" d="M49 35 L62 43 L72 35" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path class="runner-left-leg" d="M48 55 L35 70 L45 85" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path class="runner-right-leg" d="M48 55 L58 68 L50 85" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+
+              <!-- Faint Background Text (Always Visible) -->
+              <span class="absolute left-6 text-[10px] sm:text-xs font-black font-oswald uppercase tracking-widest text-gold-primary/20">
+                Enter Quest Lounge
+              </span>
+
+              <!-- Wipe Revealed Text (Foreground Glow) -->
+              <span class="absolute left-6 text-[10px] sm:text-xs font-black font-oswald uppercase tracking-widest text-gold-primary quest-reveal-text">
+                Enter Quest Lounge
+              </span>
+            </div>
+
+            <!-- Glowing Door on the Right -->
+            <div class="absolute right-4 flex items-center justify-center door-glow-wrapper pointer-events-none">
+              <svg class="w-8 h-8 text-gold-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <path d="M6 21H18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <path d="M12 5V21" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2" />
+                <!-- Portal light (flashes when runner enters) -->
+                <path d="M7 21V6C7 4.89543 7.89543 4 9 4H15C16.1046 4 17 4.89543 17 6V21H7Z" fill="currentColor" class="door-portal-light" />
+              </svg>
+            </div>
+          </a>
+        </div>
+
         <!-- Gamification Achievements Section -->
         <!-- Gamification Achievements Section (The Prestige Gear Grid) -->
         <div class="card-surface mt-6 flex flex-col gap-6 transition-all duration-300 hover:shadow-[0_4px_20px_rgba(212,175,55,0.05)] hover:border-gold-primary/10 animate-fade-in-up [animation-delay:525ms]">
@@ -708,12 +783,96 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
             </div>
           </div>
         }
-
       }
+    </div>
 
+    <!-- Transition Portal Overlay -->
+    <div *ngIf="isEnteringLounge()" class="portal-transition-overlay">
+      <div class="portal-door-zoom"></div>
     </div>
   `,
   styles: [`
+    @keyframes run-leg-left {
+      0%, 100% { transform: rotate(-25deg); }
+      50% { transform: rotate(35deg); }
+    }
+    @keyframes run-leg-right {
+      0%, 100% { transform: rotate(35deg); }
+      50% { transform: rotate(-25deg); }
+    }
+    @keyframes run-arm-left {
+      0%, 100% { transform: rotate(30deg); }
+      50% { transform: rotate(-30deg); }
+    }
+    @keyframes run-arm-right {
+      0%, 100% { transform: rotate(-30deg); }
+      50% { transform: rotate(30deg); }
+    }
+    @keyframes runner-bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+    @keyframes runner-travel {
+      0% { left: -30px; opacity: 0; }
+      8% { opacity: 1; }
+      68% { opacity: 1; }
+      75% { left: calc(100% - 64px); opacity: 1; }
+      78% { left: calc(100% - 48px); opacity: 0; }
+      100% { left: calc(100% - 48px); opacity: 0; }
+    }
+    @keyframes text-wipe {
+      0%, 15% { clip-path: inset(0 100% 0 0); opacity: 0; }
+      16% { opacity: 1; }
+      60% { clip-path: inset(0 0 0 0); opacity: 1; }
+      80% { opacity: 1; }
+      90%, 100% { opacity: 0; }
+    }
+    @keyframes portal-flash {
+      0%, 65% { opacity: 0.15; fill: rgba(212,175,55,0.2); filter: none; }
+      74%, 82% { opacity: 1; fill: rgba(212,175,55,0.9); filter: drop-shadow(0 0 10px rgba(212,175,55,0.9)); }
+      92%, 100% { opacity: 0.15; fill: rgba(212,175,55,0.2); filter: none; }
+    }
+    @keyframes door-jiggle {
+      0%, 70%, 90%, 100% { transform: scale(1); }
+      74%, 82% { transform: scale(1.04); }
+    }
+
+    .runner-svg {
+      animation: runner-bob 0.6s infinite ease-in-out;
+    }
+    .runner-left-leg {
+      transform-origin: 48px 55px;
+      animation: run-leg-left 0.6s infinite ease-in-out;
+    }
+    .runner-right-leg {
+      transform-origin: 48px 55px;
+      animation: run-leg-right 0.6s infinite ease-in-out;
+    }
+    .runner-left-arm {
+      transform-origin: 49px 35px;
+      animation: run-arm-left 0.6s infinite ease-in-out;
+    }
+    .runner-right-arm {
+      transform-origin: 49px 35px;
+      animation: run-arm-right 0.6s infinite ease-in-out;
+    }
+    .runner-travel-wrapper {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: runner-travel 3.8s infinite linear;
+    }
+    .quest-reveal-text {
+      text-shadow: 0 0 10px rgba(212,175,55,0.6), 0 0 20px rgba(212,175,55,0.2);
+      animation: text-wipe 3.8s infinite ease-out;
+    }
+    .door-portal-light {
+      animation: portal-flash 3.8s infinite ease-out;
+    }
+    .door-glow-wrapper {
+      animation: door-jiggle 3.8s infinite ease-out;
+    }
+
     @keyframes glow-pulse-bronze {
       0%, 100% { opacity: 0.45; transform: scale(0.96); }
       50% { opacity: 0.8; transform: scale(1.04); }
@@ -817,11 +976,54 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
       background-size: 400% 400%;
       animation: bg-pan-fire 8s infinite ease-in-out, supernova-glow-card 2s infinite ease-in-out;
     }
+
+    /* Cinematic Portal Zoom Page Transition */
+    .portal-transition-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #090d16;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fade-in-dark 0.3s forwards;
+      pointer-events: auto;
+    }
+    .portal-door-zoom {
+      width: 80px;
+      height: 120px;
+      border: 3px solid #d4af37;
+      border-radius: 12px 12px 0 0;
+      box-shadow: 0 0 30px rgba(212,175,55,0.8), inset 0 0 30px rgba(212,175,55,0.5);
+      background: radial-gradient(circle, rgba(212,175,55,0.8) 0%, rgba(212,175,55,0) 70%);
+      animation: portal-zoom 0.9s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+    }
+    @keyframes fade-in-dark {
+      from { background: rgba(9, 13, 22, 0); }
+      to { background: rgba(9, 13, 22, 1); }
+    }
+    @keyframes portal-zoom {
+      0% { transform: scale(0.5); opacity: 0; filter: blur(4px); }
+      20% { opacity: 1; filter: blur(0); }
+      100% { transform: scale(30); opacity: 0; filter: blur(12px); }
+    }
   `]
 })
 export class DashboardHomeComponent {
   readonly dashboardService = inject(DashboardService);
   readonly shareCardService = inject(ShareCardService);
+  private router = inject(Router);
+
+  isEnteringLounge = signal(false);
+
+  onEnterLounge() {
+    this.isEnteringLounge.set(true);
+    setTimeout(() => {
+      this.router.navigate(['/dashboard/quests']).then(() => {
+        this.isEnteringLounge.set(false);
+      });
+    }, 850);
+  }
 
   // Animated Stats Signals
   animatedMembershipDays = signal<number>(0);

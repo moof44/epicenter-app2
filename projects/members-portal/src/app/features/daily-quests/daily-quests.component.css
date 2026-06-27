@@ -1,0 +1,948 @@
+.quests-container {
+  font-family: 'Inter', sans-serif;
+  color: white;
+  width: 100%;
+  max-width: 650px;
+  margin: 0 auto;
+  position: relative;
+  padding: 1.5rem 1rem;
+}
+
+/* Pledge Inline Card */
+.pledge-card-inline {
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3rem 1.5rem 2.5rem 1.5rem;
+  border-radius: 24px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 30px rgba(59, 130, 246, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative; /* Allows absolute placement of back button */
+}
+
+.pledge-back-btn {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #64748b;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.pledge-back-btn:hover {
+  color: #f1f5f9;
+}
+
+.pledge-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.pledge-card h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  background: linear-gradient(to right, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.pledge-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #9ca3af;
+  margin-bottom: 2rem;
+}
+
+.pledge-btn {
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.back-link:hover {
+  color: #d4af37; /* gold primary */
+}
+
+/* Quests Content */
+.quests-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.header-trophy-wrapper {
+  margin: 0.5rem auto 1.5rem auto;
+  display: flex;
+  justify-content: center;
+}
+
+.header-trophy {
+  width: 144px;
+  height: 144px;
+  object-fit: cover;
+  border-radius: 24px;
+  border: 2px solid rgba(212, 175, 55, 0.35);
+  background: #000;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 0 35px rgba(245, 158, 11, 0.35);
+  animation: float-trophy 3.0s ease-in-out infinite;
+}
+
+@keyframes float-trophy {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.quests-header h2 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin: 0;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 2px;
+  text-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+}
+
+.quests-subtitle {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  max-width: 90%;
+  margin: 0 auto;
+}
+
+/* Categories - Base Setup */
+.quest-category {
+  /* Default variables (fallback) */
+  --cat-primary: #f59e0b;
+  --cat-gradient: linear-gradient(135deg, #f59e0b, #ea580c);
+  --cat-bg: rgba(245, 158, 11, 0.08);
+  --cat-border: rgba(245, 158, 11, 0.3);
+  --cat-glow: rgba(245, 158, 11, 0.15);
+
+  background: #1e293b;
+  border-radius: 18px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* Category-specific Theming */
+/* 1. Activity (Fiery Orange/Red) - 2nd child after header */
+.quests-content > .quest-category:nth-child(2) {
+  --cat-primary: #f97316;
+  --cat-gradient: linear-gradient(135deg, #f97316, #ef4444);
+  --cat-bg: rgba(249, 115, 22, 0.12);
+  --cat-border: rgba(249, 115, 22, 0.4);
+  --cat-glow: rgba(249, 115, 22, 0.25);
+}
+
+/* 2. Nutrition (Vibrant Emerald Green) - 3rd child */
+.quests-content > .quest-category:nth-child(3) {
+  --cat-primary: #10b981;
+  --cat-gradient: linear-gradient(135deg, #34d399, #059669);
+  --cat-bg: rgba(16, 185, 129, 0.12);
+  --cat-border: rgba(16, 185, 129, 0.4);
+  --cat-glow: rgba(16, 185, 129, 0.25);
+}
+
+/* 3. Recovery & Mind (Electric Indigo/Purple) - 4th child */
+.quests-content > .quest-category:nth-child(4) {
+  --cat-primary: #a855f7;
+  --cat-gradient: linear-gradient(135deg, #c084fc, #7e22ce);
+  --cat-bg: rgba(168, 85, 247, 0.12);
+  --cat-border: rgba(168, 85, 247, 0.4);
+  --cat-glow: rgba(168, 85, 247, 0.25);
+}
+
+.quest-category:hover {
+  border-color: var(--cat-border);
+  box-shadow: 0 8px 25px var(--cat-glow);
+}
+
+.category-header {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.2s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.category-header:hover {
+  background: var(--cat-bg);
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.category-title h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.category-icon {
+  font-size: 1.25rem;
+  background: var(--cat-gradient);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px var(--cat-glow);
+}
+
+.toggle-icon {
+  color: var(--cat-primary);
+  font-size: 0.9rem;
+  font-weight: 800;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.category-items-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.category-items-wrapper.expanded {
+  grid-template-rows: 1fr;
+}
+
+.category-items {
+  overflow: hidden;
+  padding: 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.category-items-wrapper.expanded .category-items {
+  padding: 1rem 1.25rem 1.25rem 1.25rem;
+}
+
+.quest-row {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle gradient glow behind the row on hover */
+.quest-row::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--cat-gradient);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.quest-row:hover {
+  border-color: var(--cat-primary);
+  transform: translateX(8px) scale(1.02);
+  box-shadow: 0 8px 20px var(--cat-glow);
+}
+
+.quest-row:hover::before {
+  opacity: 0.06;
+}
+
+.quest-info, .quest-action {
+  position: relative;
+  z-index: 1; /* Keep content above hover glow */
+}
+
+.quest-info {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.quest-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background: var(--cat-bg);
+  color: var(--cat-primary);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid var(--cat-border);
+  flex-shrink: 0;
+}
+
+.quest-row:hover .quest-icon-wrapper {
+  background: var(--cat-gradient);
+  color: white;
+  border-color: transparent;
+  transform: scale(1.15) rotate(4deg);
+  box-shadow: 0 0 15px var(--cat-glow);
+}
+
+.quest-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.quest-text h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.015em;
+  transition: color 0.2s;
+}
+
+.quest-row:hover .quest-text h4 {
+  color: white;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+.quest-text p {
+  margin: 4px 0 0 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+.quest-action {
+  color: #64748b;
+  font-size: 0.9rem;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.03);
+}
+
+.quest-row:hover .quest-action {
+  color: white;
+  background: var(--cat-gradient);
+  transform: scale(1.1) translateX(-4px);
+  box-shadow: 0 4px 10px var(--cat-glow);
+}
+
+.play-icon {
+  font-size: 0.8rem;
+  margin-left: 3px; /* optical center */
+}
+
+/* Page emerge transition (Part B of portal travel) */
+@keyframes page-emerge {
+  0% { opacity: 0; filter: brightness(3) blur(10px); transform: scale(0.97); }
+  100% { opacity: 1; filter: brightness(1) blur(0); transform: scale(1); }
+}
+
+.quests-content, .pledge-card-inline {
+  animation: page-emerge 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Staggered Entrance Animations */
+.stagger-container {
+  --stagger-delay: 0.1s;
+}
+
+.stagger-item {
+  opacity: 0;
+  animation: fade-in-up 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.quests-header.stagger-item { animation-delay: calc(var(--stagger-delay) * 1); }
+.header-trophy-wrapper.stagger-item { animation-delay: calc(var(--stagger-delay) * 1.5); }
+.quests-subtitle.stagger-item { animation-delay: calc(var(--stagger-delay) * 2); }
+
+.quest-category.stagger-item:nth-child(2) { animation-delay: calc(var(--stagger-delay) * 3); }
+.quest-category.stagger-item:nth-child(3) { animation-delay: calc(var(--stagger-delay) * 4); }
+.quest-category.stagger-item:nth-child(4) { animation-delay: calc(var(--stagger-delay) * 5); }
+
+.quest-row.stagger-item:nth-child(1) { animation-delay: calc(var(--stagger-delay) * 1); }
+.quest-row.stagger-item:nth-child(2) { animation-delay: calc(var(--stagger-delay) * 2); }
+.quest-row.stagger-item:nth-child(3) { animation-delay: calc(var(--stagger-delay) * 3); }
+.quest-row.stagger-item:nth-child(4) { animation-delay: calc(var(--stagger-delay) * 4); }
+.quest-row.stagger-item:nth-child(5) { animation-delay: calc(var(--stagger-delay) * 5); }
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(20px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- Quest Icon Micro-Animations --- */
+
+/* 1. Walk 8,000 steps - Shoe step/tilt (Increased speed and angle) */
+@keyframes shoe-step {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-18deg) translateY(-2.5px); }
+  75% { transform: rotate(18deg) translateY(-1px); }
+}
+.anim-shoe {
+  animation: shoe-step 1.0s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* 2. 15 min stretching - Stretch pulse (Increased scale and vertical motion) */
+@keyframes stretch-pulse {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.16) translateY(-4px); }
+}
+.anim-stretch {
+  animation: stretch-pulse 1.3s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* 3. 30 min outdoors - Sun ray spin (Doubled spin speed) */
+@keyframes sun-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.anim-sun {
+  animation: sun-spin 5.5s linear infinite;
+  transform-origin: center;
+}
+
+/* 4. Drink 2-3L water - Water drip & shake (Faster, larger drip route, higher swell) */
+@keyframes water-drip {
+  0% { transform: translateY(-5px) scale(0.5); opacity: 0; }
+  15% { opacity: 1; }
+  80% { transform: translateY(15px) scale(1.2); opacity: 0; }
+  100% { transform: translateY(15px) scale(1.2); opacity: 0; }
+}
+@keyframes water-swell {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15) translateY(1px); }
+}
+.anim-water-drip {
+  animation: water-drip 1.0s cubic-bezier(0.4, 0, 1, 1) infinite;
+  transform-origin: top center;
+}
+.anim-water-shake {
+  animation: water-swell 1.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* 5. Hit protein target - Barbell Lift (Higher lift, faster pace) */
+@keyframes barbell-lift {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.05); }
+}
+.anim-barbell {
+  animation: barbell-lift 1.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* 6. Calorie Deficit - Flame Flicker (Violent fire swell and rotation) */
+@keyframes flame-flicker {
+  0%, 100% { transform: scale(0.9) rotate(-3deg); opacity: 0.9; }
+  35% { transform: scale(1.22) rotate(5deg); opacity: 1; }
+  70% { transform: scale(0.85) rotate(-6deg); opacity: 0.95; }
+}
+.anim-flame {
+  animation: flame-flicker 0.75s infinite ease-in-out;
+  transform-origin: bottom center;
+}
+
+/* 7. 3 servings veggies - Leaf sway (Larger rotation angle, faster) */
+@keyframes leaf-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(25deg); }
+}
+.anim-leaf {
+  animation: leaf-sway 1.4s ease-in-out infinite;
+  transform-origin: bottom left;
+}
+
+/* 8. Zero sugar - Sugar shake (More rapid, regular shaking) */
+@keyframes sugar-shake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  10% { transform: rotate(-16deg) scale(0.95); }
+  20% { transform: rotate(16deg) scale(1.05); }
+  30% { transform: rotate(-16deg) scale(0.95); }
+  40% { transform: rotate(16deg) scale(1.05); }
+  50% { transform: rotate(0deg) scale(1); }
+}
+.anim-sugar {
+  animation: sugar-shake 1.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* 9. Sleep 7-8 hours - Moon rock & star twinkle (Greater rock angle, faster twinkle) */
+@keyframes moon-rock {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-14deg); }
+}
+@keyframes star-twinkle-1 {
+  0%, 100% { opacity: 0.1; transform: scale(0.4); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
+@keyframes star-twinkle-2 {
+  0%, 100% { opacity: 1; transform: scale(1.4); }
+  50% { opacity: 0.1; transform: scale(0.4); }
+}
+.anim-moon {
+  animation: moon-rock 2.2s ease-in-out infinite;
+  transform-origin: center;
+}
+.anim-star-1 {
+  animation: star-twinkle-1 0.9s ease-in-out infinite;
+  transform-origin: center;
+}
+.anim-star-2 {
+  animation: star-twinkle-2 1.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* 10. No screens - Phone vibrate (Much faster, stronger vibration shakes) */
+@keyframes phone-vibrate {
+  0%, 100% { transform: rotate(0deg) translate(0, 0); }
+  5%, 15%, 25% { transform: rotate(-8deg) translate(-1px, -0.5px); }
+  10%, 20%, 30% { transform: rotate(8deg) translate(1px, 0.5px); }
+  35% { transform: rotate(0deg) translate(0, 0); }
+}
+.anim-phone {
+  animation: phone-vibrate 1.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* 11. Meditation - Breathing pulse (Dramatically wider expansion ratio) */
+@keyframes breath-expand {
+  0%, 100% { transform: scale(0.78); opacity: 0.15; }
+  50% { transform: scale(1.26); opacity: 0.85; }
+}
+.anim-breath {
+  animation: breath-expand 2.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* --- Reusable Game Modal Overlay --- */
+.game-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 999999; /* Top priority z-index */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in-overlay 0.3s ease forwards;
+}
+
+@keyframes fade-in-overlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.game-modal-content {
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border: 2px solid rgba(212, 175, 55, 0.25);
+  width: 90%;
+  max-width: 420px;
+  border-radius: 28px;
+  padding: 2.2rem 1.8rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(212, 175, 55, 0.15);
+  position: relative;
+  text-align: center;
+  transform: scale(0.9);
+  animation: scale-up-modal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes scale-up-modal {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.close-modal-btn {
+  position: absolute;
+  top: 1rem; right: 1.25rem;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.close-modal-btn:hover {
+  color: #f1f5f9;
+  transform: rotate(90deg);
+}
+
+.game-container h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, #f8fafc, #cbd5e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.game-instructions {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin: 0 auto 1.75rem auto;
+  max-width: 90%;
+}
+
+/* --- Walk 8,000 steps ("Break the Tape") track styling --- */
+.track-area {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 2rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.running-track {
+  height: 50px;
+  background: #334155; /* Slate-700 asphalt */
+  border-radius: 25px;
+  position: relative;
+  border: 3px solid #1e293b;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+  overflow: visible;
+}
+
+.track-line {
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 2px;
+  border-top: 2px dashed rgba(255, 255, 255, 0.35);
+  transform: translateY(-50%);
+}
+
+.runner-element {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.75rem;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  z-index: 10;
+  transition: transform 0.1s ease;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+}
+
+.runner-element:active {
+  cursor: grabbing;
+  transform: translateY(-50%) scale(1.15);
+}
+
+.finish-line {
+  position: absolute;
+  left: 80%; top: -5px; bottom: -5px;
+  width: 6px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.ribbon-top, .ribbon-bottom {
+  width: 100%;
+  height: 50%;
+  background: #ef4444; /* Bright red finish tape */
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.finish-line.broken .ribbon-top {
+  transform: translateY(-15px) rotate(-35deg);
+  opacity: 0.8;
+}
+
+.finish-line.broken .ribbon-bottom {
+  transform: translateY(15px) rotate(35deg);
+  opacity: 0.8;
+}
+
+/* --- 15 Min Stretching ("Snap the Joints") stick-figure styling --- */
+.stretching-canvas {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.stretching-svg {
+  overflow: visible;
+}
+
+.target-socket {
+  animation: pulse-socket 1.5s infinite ease-in-out;
+  transform-origin: 150px 30px;
+}
+
+@keyframes pulse-socket {
+  0%, 100% { transform: scale(1); opacity: 0.5; stroke-width: 2; }
+  50% { transform: scale(1.3); opacity: 1; stroke-width: 3; }
+}
+
+.joint-handle {
+  cursor: grab;
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6));
+  transition: transform 0.1s ease;
+}
+
+.joint-handle:active {
+  cursor: grabbing;
+  transform: scale(1.2);
+}
+
+.stretch-actions {
+  margin-bottom: 1rem;
+}
+
+.sub-action-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sub-action-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.3);
+  color: #f59e0b;
+}
+
+.stretching-library {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  padding: 0.85rem;
+  text-align: left;
+  margin-bottom: 1.25rem;
+  animation: slide-down-guide 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes slide-down-guide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stretching-library h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stretch-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stretch-card {
+  background: rgba(30, 41, 59, 0.6);
+  border-left: 3px solid #10b981;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+}
+
+.stretch-card h6 {
+  margin: 0 0 2px 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.stretch-card p {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+/* --- 30 Min Outdoors ("Wipe the Fog") styling --- */
+.fog-canvas-container {
+  width: 280px;
+  height: 200px;
+  margin: 0 auto 1.5rem auto;
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.sun-reveal-bg {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(circle at center, #075985 0%, #0c4a6e 100%); /* Deep rich blue sky */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+}
+
+.sun-reveal-svg {
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.6));
+}
+
+.reveal-text {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #f1f5f9;
+}
+
+#fogCanvas {
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 2;
+  cursor: crosshair;
+}
+
+/* --- Game Completion Success Screen overlay --- */
+.success-screen {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  padding: 1.5rem;
+  animation: fade-in-success 0.4s ease-out forwards;
+}
+
+@keyframes fade-in-success {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.success-glow {
+  position: absolute;
+  width: 150px; height: 150px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0) 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.success-screen h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #10b981; /* Green */
+  text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+}
+
+.success-screen p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0 0 1.75rem 0;
+  line-height: 1.4;
+  max-width: 85%;
+}
+
+.claim-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 0.8rem 2.2rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.claim-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+}
+
+/* Custom completed badge in the play action trigger */
+.quest-action.completed {
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.check-icon {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
