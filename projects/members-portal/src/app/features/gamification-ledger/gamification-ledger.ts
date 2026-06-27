@@ -237,7 +237,7 @@ export class GamificationLedger {
   ];
 
   tier3Items = [
-    { id: 'walkin', name: 'Friend Walk-in Pass', description: 'Bring a friend for free for one day.', icon: '🎟️', cost: 70000, reqLevel: 20, reqBadge: 'silver-hero' },
+    { id: 'walkin', name: 'Friend Walk-in Pass', description: 'Bring a friend for free for one day.', icon: '🎟️', cost: 70000, reqLevel: 20, reqBadge: 'silver-consistent' },
     { id: 'freemonth', name: '1 Free Month', description: 'A massive reward for ultimate loyalty.', icon: '👑', cost: 700000, reqLevel: 30, reqBadge: 'gold-legend' },
   ];
 
