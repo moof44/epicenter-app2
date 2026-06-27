@@ -39,8 +39,15 @@ async function awardGamification(uid: string, type: string, description: string,
             const today = new Date().getDate();
             
             if (poolData.balance <= 0) {
-                // Hard cap: Disable crits if pool is empty (we fall back to standard reward)
-                // Assuming standard reward doesn't have words like 'Double' or '3x'
+                // Hard cap: Disable crits and cut standard rewards by 50%
+                finalCoins = Math.floor(coins / 2);
+                
+                // Strip out any crit/multiplier text from the original description
+                let baseDesc = description
+                    .replace('🎉 LUCKY PURCHASE! Double Cashback on', 'Cashback on')
+                    .replace('🔥 7+ Day Streak Check-in (1.5x)', 'Gym Check-in Bonus');
+                
+                finalDesc = `[Economy Cap] ${baseDesc} (50% Reward)`;
             } else if (today >= 25 && poolData.initialBudget > 0) {
                 // Surplus Event: If > 30% of budget remains after the 25th of the month
                 if ((poolData.balance / poolData.initialBudget) > 0.3) {
