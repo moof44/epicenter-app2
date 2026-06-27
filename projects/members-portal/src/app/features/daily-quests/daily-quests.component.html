@@ -124,7 +124,7 @@
       <div class="category-items-wrapper" [class.expanded]="expandedCategories['nutrition']">
         <div class="category-items">
           <!-- Drink 2-3L water -->
-          <div class="quest-row stagger-item">
+          <div class="quest-row stagger-item" [class.completed]="completedQuests['water_plant']" (click)="openGame('water_plant')">
             <div class="quest-info">
               <div class="quest-icon-wrapper">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -137,13 +137,14 @@
                 <p>Water the seedling to make it bloom</p>
               </div>
             </div>
-            <div class="quest-action">
-              <span class="play-icon">▶</span>
+            <div class="quest-action" [class.completed]="completedQuests['water_plant']">
+              <span *ngIf="!completedQuests['water_plant']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['water_plant']" class="check-icon">✓</span>
             </div>
           </div>
 
           <!-- Hit protein target -->
-          <div class="quest-row stagger-item">
+          <div class="quest-row stagger-item" [class.completed]="completedQuests['protein_barbell']" (click)="openGame('protein_barbell')">
             <div class="quest-info">
               <div class="quest-icon-wrapper">
                 <svg class="w-5 h-5 anim-barbell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -155,8 +156,9 @@
                 <p>Load the barbell and complete the lift</p>
               </div>
             </div>
-            <div class="quest-action">
-              <span class="play-icon">▶</span>
+            <div class="quest-action" [class.completed]="completedQuests['protein_barbell']">
+              <span *ngIf="!completedQuests['protein_barbell']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['protein_barbell']" class="check-icon">✓</span>
             </div>
           </div>
 
@@ -428,6 +430,182 @@
           <h4>Sun Revealed! ☀️</h4>
           <p>Great job getting some fresh air today!</p>
           <button class="claim-btn" (click)="completeQuest('outdoors')">Close</button>
+        </div>
+      </div>
+
+      <!-- Drink 2-3L water (Water the Seedling) game -->
+      <div *ngIf="activeGame === 'water_plant'" class="game-container plant-game-container">
+        <h3>Drink 2-3L Water</h3>
+        <p class="game-instructions">Drag the watering can over the soil to water the seedling and make it bloom!</p>
+        
+        <div class="plant-stage-area">
+          <div class="pot-container">
+            <svg width="280" height="200" viewBox="0 0 280 200" class="plant-svg">
+              <!-- Watering droplets -->
+              <circle *ngFor="let drop of droplets" [attr.cx]="drop.x" [attr.cy]="drop.y" r="3.5" fill="#38bdf8" />
+
+              <!-- Soil/Dirt -->
+              <ellipse cx="140" cy="175" rx="55" ry="12" fill="#5c4033" />
+              <!-- Pot -->
+              <path d="M 90,170 L 100,200 L 180,200 L 190,170 Z" fill="#b45309" stroke="#78350f" stroke-width="2" />
+              <rect x="85" y="166" width="110" height="6" rx="2" fill="#d97706" />
+
+              <!-- Stem -->
+              <path [attr.d]="plantStemPath" stroke="#10b981" stroke-width="6" stroke-linecap="round" fill="none" />
+              
+              <!-- Leaves -->
+              <g [style.transform]="'translate(140px, 170px) scale(' + leaf1Scale + ')'" class="leaf-group">
+                <path d="M 0,0 C -30,-10 -35,-40 -10,-30 C -5,-25 0,0 0,0" fill="#34d399" />
+              </g>
+              <g [style.transform]="leaf2Transform" class="leaf-group">
+                <path d="M 0,0 C 30,-5 35,-35 10,-25 C 5,-20 0,0 0,0" fill="#34d399" />
+              </g>
+
+              <!-- Flower Bloom -->
+              <g [style.transform]="plantFlowerTransform" class="flower-bloom">
+                <!-- Center -->
+                <circle cx="0" cy="0" r="10" fill="#fbbf24" stroke="#f59e0b" stroke-width="1.5" />
+                <!-- Petals -->
+                <circle cx="0" cy="-14" r="7" fill="#ef4444" />
+                <circle cx="14" cy="0" r="7" fill="#ef4444" />
+                <circle cx="0" cy="14" r="7" fill="#ef4444" />
+                <circle cx="-14" cy="0" r="7" fill="#ef4444" />
+                <circle cx="9" cy="-10" r="7" fill="#f59e0b" />
+                <circle cx="9" cy="10" r="7" fill="#f59e0b" />
+                <circle cx="-9" cy="10" r="7" fill="#f59e0b" />
+                <circle cx="-9" cy="-10" r="7" fill="#f59e0b" />
+              </g>
+            </svg>
+          </div>
+          
+          <!-- Watering Can (centered initial) -->
+          <div class="watering-can-element" 
+               [class.pouring]="isPouring"
+               [style.left.px]="waterCanX" 
+               [style.top.px]="waterCanY"
+               draggable="false"
+               style="user-select: none;"
+               (mousedown)="startWaterCanDrag($event)"
+               (touchstart)="startWaterCanDrag($event)">
+            <span class="water-drop-icon">💧</span>
+            <span class="can-base-icon">🏺</span>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="moisture-bar-container">
+          <div class="moisture-label">Soil Moisture: {{ waterAmount }}%</div>
+          <div class="moisture-track">
+            <div class="moisture-fill" [style.width.%]="waterAmount"></div>
+          </div>
+        </div>
+
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <h4>Seedling Bloomed! 🌸</h4>
+          <p>You revived the plant! Keep yourself hydrated throughout the day.</p>
+          <button class="claim-btn" (click)="completeQuest('water_plant')">Close</button>
+        </div>
+      </div>
+
+      <!-- Hit protein target (Load the Barbell) game -->
+      <div *ngIf="activeGame === 'protein_barbell'" class="game-container barbell-game-container">
+        <h3>Hit Protein Target</h3>
+        <p class="game-instructions">Drag protein plates from the rack onto the barbell sleeves to load exactly 60g protein, then perform the lift!</p>
+
+        <!-- Metric Dashboard -->
+        <div class="protein-dashboard">
+          <div class="protein-metric">
+            <span class="metric-label">CURRENT</span>
+            <span class="metric-value" [class.target-met]="currentProtein >= targetProtein">{{ currentProtein }}g</span>
+          </div>
+          <div class="protein-metric-target">
+            <span class="metric-label">TARGET</span>
+            <span class="metric-value-target">{{ targetProtein }}g</span>
+          </div>
+        </div>
+
+        <div class="barbell-arena" [class.shaking]="isLifting && !isLiftComplete">
+          <!-- The Barbell Rack & Barbell -->
+          <div class="barbell-rack-visual" [class.lifting-up]="isLifting">
+            <div class="barbell-holder left-holder"></div>
+            <div class="barbell-holder right-holder"></div>
+            
+            <div class="barbell-shaft">
+              <div class="barbell-collar left-collar"></div>
+              <div class="barbell-collar right-collar"></div>
+              
+              <!-- Left Sleeve Snapped Plates -->
+              <div class="sleeve-plates left-sleeve">
+                <div *ngFor="let plate of loadedPlatesLeft; let i = index" 
+                     class="loaded-plate plate-{{ plate }}"
+                     (click)="removePlate('left', i)">
+                  {{ plate }}g
+                </div>
+              </div>
+              
+              <!-- Right Sleeve Snapped Plates -->
+              <div class="sleeve-plates right-sleeve">
+                <div *ngFor="let plate of loadedPlatesRight; let i = index" 
+                     class="loaded-plate plate-{{ plate }}"
+                     (click)="removePlate('right', i)">
+                  {{ plate }}g
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating active plate being dragged (rendered on top of everything) -->
+        <div *ngIf="isDraggingPlate" 
+             class="floating-drag-plate plate-{{ isDraggingPlate }}"
+             [style.left.px]="plateDragX"
+             [style.top.px]="plateDragY"
+             style="position: absolute; z-index: 9999999; transform: translate(-50%, -50%);">
+          {{ isDraggingPlate }}g
+        </div>
+
+        <!-- Weight Plate Rack -->
+        <div class="plate-rack-container">
+          <h5>Plate Rack</h5>
+          <div class="plate-rack-items">
+            <div class="rack-plate plate-20" 
+                 (mousedown)="startPlateDrag($event, 20)"
+                 (touchstart)="startPlateDrag($event, 20)">
+              20g
+            </div>
+            <div class="rack-plate plate-10" 
+                 (mousedown)="startPlateDrag($event, 10)"
+                 (touchstart)="startPlateDrag($event, 10)">
+              10g
+            </div>
+            <div class="rack-plate plate-5" 
+                 (mousedown)="startPlateDrag($event, 5)"
+                 (touchstart)="startPlateDrag($event, 5)">
+              5g
+            </div>
+          </div>
+          <span class="drag-hint" *ngIf="!isDraggingPlate">Drag plates onto the barbell</span>
+          <span class="drag-hint active-hint" *ngIf="isDraggingPlate">Drop plate anywhere on the barbell side</span>
+        </div>
+
+        <!-- Lift Action Button -->
+        <div class="barbell-actions">
+          <button class="lift-action-btn" 
+                  [disabled]="isLifting || currentProtein < targetProtein"
+                  [class.ready]="currentProtein >= targetProtein"
+                  (click)="liftBarbell()">
+            {{ isLifting ? 'LIFTING...' : currentProtein >= targetProtein ? 'PERFORM LIFT! 💪' : 'LOAD BARBELL TO LIFT' }}
+          </button>
+        </div>
+
+        <!-- Success overlay -->
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <span class="success-badge">🏋️‍♂️</span>
+          <h4>Lift Completed! 🏆</h4>
+          <p>Barbell loaded to {{ currentProtein }}g protein. Muscle gains incoming!</p>
+          <button class="claim-btn" (click)="completeQuest('protein_barbell')">Close</button>
         </div>
       </div>
 

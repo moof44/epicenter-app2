@@ -42,6 +42,31 @@ export class DailyQuestsComponent implements OnInit {
   // 3. Outdoors fog wipe state
   isWipingFog = false;
 
+  // 4. Drink 2-3L water (Plant game)
+  waterAmount = 0;
+  isDraggingWaterCan = false;
+  waterCanX = 125;
+  waterCanY = 15;
+  isPouring = false;
+  droplets: Array<{ x: number; y: number; id: number }> = [];
+  private dropletIdCounter = 0;
+  private waterInterval: any = null;
+
+  // 5. Hit protein target (Barbell game)
+  targetProtein = 60;
+  currentProtein = 0;
+  loadedPlatesLeft: number[] = [];
+  loadedPlatesRight: number[] = [];
+  isLifting = false;
+  isLiftComplete = false;
+
+  // Plate Drag state
+  isDraggingPlate: number | null = null;
+  plateDragStartX = 0;
+  plateDragStartY = 0;
+  plateDragX = 0;
+  plateDragY = 0;
+
   ngOnInit() {
     const pledgeStatus = localStorage.getItem('somatic_pledge_accepted');
     if (pledgeStatus === 'true') {
@@ -83,10 +108,24 @@ export class DailyQuestsComponent implements OnInit {
       this.showStretchLibrary = false;
     } else if (questId === 'outdoors') {
       this.initFogCanvas();
+    } else if (questId === 'water_plant') {
+      this.waterAmount = 0;
+      this.waterCanX = 125;
+      this.waterCanY = 15;
+      this.isPouring = false;
+      this.droplets = [];
+    } else if (questId === 'protein_barbell') {
+      this.currentProtein = 0;
+      this.loadedPlatesLeft = [];
+      this.loadedPlatesRight = [];
+      this.isLifting = false;
+      this.isLiftComplete = false;
+      this.isDraggingPlate = null;
     }
   }
 
   closeGame() {
+    this.stopPouringParticles();
     this.activeGame = null;
     this.gameCompletedSuccess = false;
   }
@@ -97,6 +136,11 @@ export class DailyQuestsComponent implements OnInit {
     // Play a lightweight visual haptic buzz (confetti effect simulated via CSS or simple overlay trigger)
     if (navigator.vibrate) {
       navigator.vibrate([100, 30, 100]);
+    }
+    
+    // Force angular change detection for mobile browsers where async timeouts might drop Zone context
+    if (this.cdr) {
+      this.cdr.detectChanges();
     }
   }
 
@@ -135,6 +179,10 @@ export class DailyQuestsComponent implements OnInit {
       this.handleJointMove(event);
     } else if (this.isWipingFog) {
       this.handleFogWipe(event);
+    } else if (this.isDraggingWaterCan) {
+      this.handleWaterCanMove(event);
+    } else if (this.isDraggingPlate) {
+      this.handlePlateMove(event);
     }
   }
 
@@ -142,6 +190,16 @@ export class DailyQuestsComponent implements OnInit {
     this.isDraggingRunner = false;
     this.isDraggingJoint = false;
     this.isWipingFog = false;
+    
+    if (this.isDraggingWaterCan) {
+      this.isDraggingWaterCan = false;
+      this.isPouring = false;
+      this.stopPouringParticles();
+    }
+    
+    if (this.isDraggingPlate) {
+      this.handlePlateRelease();
+    }
   }
 
   // --- 1. Walk 8,000 steps (Runner drag) ---
@@ -300,5 +358,230 @@ export class DailyQuestsComponent implements OnInit {
       canvas.style.transition = 'opacity 0.8s ease-out';
       canvas.style.opacity = '0';
     }
+  }
+
+  // --- 4. Drink 2-3L water (Plant game helper methods) ---
+
+  startWaterCanDrag(event: MouseEvent | TouchEvent) {
+    if (this.gameCompletedSuccess) return;
+    event.preventDefault();
+    this.isDraggingWaterCan = true;
+    
+    const container = document.querySelector('.plant-stage-area') as HTMLElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    
+    const clientX = this.getEventX(event);
+    const clientY = this.getEventY(event);
+    
+    this.waterCanX = clientX - rect.left - 25; // 25 is half of 50px element width
+    this.waterCanY = clientY - rect.top - 25;
+  }
+
+  private handleWaterCanMove(moveEvent: MouseEvent | TouchEvent) {
+    if (moveEvent.cancelable) {
+      moveEvent.preventDefault();
+    }
+    const container = document.querySelector('.plant-stage-area') as HTMLElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    
+    const clientX = this.getEventX(moveEvent);
+    const clientY = this.getEventY(moveEvent);
+    
+    // Clamp inside plant-stage-area boundaries (280x200)
+    this.waterCanX = Math.max(0, Math.min(rect.width - 50, clientX - rect.left - 25));
+    this.waterCanY = Math.max(0, Math.min(rect.height - 50, clientY - rect.top - 25));
+    
+    // Check if can is above the pot (X: 60 to 200)
+    // The can itself is 50px wide. Its left edge is waterCanX.
+    if (this.waterCanX >= 60 && this.waterCanX <= 200) {
+      this.isPouring = true;
+      this.startPouringParticles();
+    } else {
+      this.isPouring = false;
+      this.stopPouringParticles();
+    }
+  }
+
+  startPouringParticles() {
+    if (this.waterInterval) return;
+    
+    this.waterInterval = setInterval(() => {
+      // 1. Increment water amount
+      if (this.waterAmount < 100) {
+        this.waterAmount = Math.min(100, this.waterAmount + 1);
+        
+        // Trigger success at 100%
+        if (this.waterAmount === 100 && !this.gameCompletedSuccess) {
+          this.triggerSuccess();
+          this.isPouring = false;
+          this.stopPouringParticles();
+        }
+      }
+      
+      // 2. Generate droplets (nozzle is around top-left of the rotated watering can)
+      const nozzleX = this.waterCanX + 10;
+      const nozzleY = this.waterCanY + 25;
+      
+      if (this.waterAmount < 100) {
+        this.droplets.push({
+          x: nozzleX + (Math.random() * 14 - 7),
+          y: nozzleY,
+          id: this.dropletIdCounter++
+        });
+      }
+      
+      // 3. Update existing droplets (falling down)
+      this.droplets = this.droplets
+        .map(d => ({ ...d, y: d.y + 6 }))
+        .filter(d => d.y < 175); // hit soil
+        
+    }, 50);
+  }
+
+  stopPouringParticles() {
+    if (this.waterInterval) {
+      clearInterval(this.waterInterval);
+      this.waterInterval = null;
+    }
+  }
+
+  // Plant SVG Getters for Morph/Scales
+  get plantStemPath(): string {
+    const pct = this.waterAmount;
+    if (pct < 65) {
+      const progress = pct / 65; // 0 to 1
+      const bend = -45 * (1 - progress);
+      const height = 45 * progress;
+      const targetX = 140 + bend;
+      const targetY = 175 - height;
+      return `M 140,175 Q ${140 + bend / 2},${175 - height / 2} ${targetX},${targetY}`;
+    } else {
+      const progress = (pct - 65) / 35; // 0 to 1
+      const height = 45 + 50 * progress;
+      const targetY = 175 - height;
+      return `M 140,175 Q 140,${175 - 45 / 2} 140,${targetY}`;
+    }
+  }
+
+  get plantFlowerTransform(): string {
+    if (this.waterAmount < 65) return 'translate(140px, 175px) scale(0)';
+    const progress = (this.waterAmount - 65) / 35;
+    const height = 45 + 50 * progress;
+    const targetY = 175 - height;
+    return `translate(140px, ${targetY}px) scale(${progress})`;
+  }
+
+  get leaf1Scale(): number {
+    return Math.min(1, this.waterAmount / 50);
+  }
+
+  get leaf2Scale(): number {
+    if (this.waterAmount < 50) return 0;
+    return Math.min(1, (this.waterAmount - 50) / 30);
+  }
+
+  get leaf2Transform(): string {
+    if (this.waterAmount < 50) return 'translate(140px, 175px) scale(0)';
+    const pct = Math.min(65, this.waterAmount);
+    const progress = pct / 65;
+    const bend = -45 * (1 - progress);
+    const height = 45 * progress;
+    const leafX = 140 + bend;
+    const leafY = 175 - height;
+    return `translate(${leafX}px, ${leafY}px) scale(${this.leaf2Scale})`;
+  }
+
+  // --- 5. Hit protein target (Barbell game helper methods) ---
+
+  startPlateDrag(event: MouseEvent | TouchEvent, weight: number) {
+    if (this.gameCompletedSuccess || this.isLifting) return;
+    event.preventDefault();
+    this.isDraggingPlate = weight;
+    this.updatePlateDragPos(event);
+  }
+
+  private handlePlateMove(moveEvent: MouseEvent | TouchEvent) {
+    if (moveEvent.cancelable) {
+      moveEvent.preventDefault();
+    }
+    this.updatePlateDragPos(moveEvent);
+  }
+
+  private updatePlateDragPos(event: MouseEvent | TouchEvent) {
+    const container = document.querySelector('.barbell-game-container') as HTMLElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    
+    const clientX = this.getEventX(event);
+    const clientY = this.getEventY(event);
+    
+    this.plateDragX = clientX - rect.left;
+    this.plateDragY = clientY - rect.top;
+  }
+
+  private handlePlateRelease() {
+    if (!this.isDraggingPlate) return;
+    
+    const arena = document.querySelector('.barbell-arena') as HTMLElement;
+    const container = document.querySelector('.barbell-game-container') as HTMLElement;
+    
+    if (arena && container) {
+      const arenaRect = arena.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      
+      const clientX = this.plateDragX + containerRect.left;
+      const clientY = this.plateDragY + containerRect.top;
+      
+      // Check if dropped inside the barbell-arena bounds
+      if (
+        clientX >= arenaRect.left &&
+        clientX <= arenaRect.right &&
+        clientY >= arenaRect.top &&
+        clientY <= arenaRect.bottom
+      ) {
+        // Did they drop it on the left or right half?
+        const centerX = arenaRect.left + arenaRect.width / 2;
+        if (clientX < centerX) {
+          if (this.loadedPlatesLeft.length < 4) {
+            this.loadedPlatesLeft.push(this.isDraggingPlate);
+            this.currentProtein += this.isDraggingPlate;
+          }
+        } else {
+          if (this.loadedPlatesRight.length < 4) {
+            this.loadedPlatesRight.push(this.isDraggingPlate);
+            this.currentProtein += this.isDraggingPlate;
+          }
+        }
+      }
+    }
+    
+    this.isDraggingPlate = null;
+  }
+
+  removePlate(side: 'left' | 'right', index: number) {
+    if (this.isLifting || this.gameCompletedSuccess) return;
+    if (side === 'left') {
+      const removed = this.loadedPlatesLeft.splice(index, 1)[0];
+      this.currentProtein -= removed;
+    } else {
+      const removed = this.loadedPlatesRight.splice(index, 1)[0];
+      this.currentProtein -= removed;
+    }
+  }
+
+  liftBarbell() {
+    if (this.isLifting || this.currentProtein < this.targetProtein) return;
+    this.isLifting = true;
+    
+    if (navigator.vibrate) {
+      navigator.vibrate([150, 50, 150]);
+    }
+    
+    setTimeout(() => {
+      this.isLiftComplete = true;
+      this.triggerSuccess();
+    }, 1800);
   }
 }
