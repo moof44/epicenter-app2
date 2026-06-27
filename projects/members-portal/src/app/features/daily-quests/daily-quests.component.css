@@ -598,6 +598,9 @@
   position: relative;
   text-align: center;
   transform: scale(0.9);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
   animation: scale-up-modal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
@@ -728,6 +731,7 @@
 
 .stretching-svg {
   overflow: visible;
+  touch-action: none;
 }
 
 .target-socket {
@@ -742,6 +746,7 @@
 
 .joint-handle {
   cursor: grab;
+  touch-action: none;
   filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6));
   transition: transform 0.1s ease;
 }
@@ -865,6 +870,9 @@
   top: 0; left: 0;
   z-index: 2;
   cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* --- Game Completion Success Screen overlay --- */
