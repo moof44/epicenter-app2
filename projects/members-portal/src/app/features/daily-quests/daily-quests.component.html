@@ -308,11 +308,7 @@
   </div>
 
   <!-- Reusable Game Modal -->
-  <div class="game-modal-overlay" *ngIf="activeGame" (click)="closeGame()"
-       (window:mousemove)="onGlobalMove($event)"
-       (window:touchmove)="onGlobalMove($event)"
-       (window:mouseup)="onGlobalUp()"
-       (window:touchend)="onGlobalUp()">
+  <div class="game-modal-overlay" *ngIf="activeGame" (click)="closeGame()">
     <div class="game-modal-content" (click)="$event.stopPropagation()">
       <button class="close-modal-btn" (click)="closeGame()">&times;</button>
       

@@ -19,6 +19,20 @@ export class DashboardService {
   private measurementsSub?: Subscription;
   private attendanceSub?: Subscription;
 
+  readonly dailyQuests = computed(() => {
+    const data = this.memberData();
+    if (!data) return null;
+    return data.dailyQuestsState || { date: '', completed: {} };
+  });
+
+  getTodayDateString(): string {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   constructor() {
     // Reload dashboard data reactively when the member profile is resolved
     effect(() => {
@@ -27,6 +41,20 @@ export class DashboardService {
         this.loadAllData(profile.memberId);
       } else {
         this.clearData();
+      }
+    });
+
+    // Auto-reset daily quests in Firestore on a new day
+    effect(() => {
+      const data = this.memberData();
+      if (data) {
+        const todayStr = this.getTodayDateString();
+        const state = data.dailyQuestsState || { date: '', completed: {} };
+        if (!state.date || state.date !== todayStr) {
+          this.updateDailyQuests({}, todayStr).catch(err => 
+            console.error('Failed to auto-reset daily quests:', err)
+          );
+        }
       }
     });
   }
@@ -188,6 +216,20 @@ export class DashboardService {
     }
     const memberDocRef = doc(this.firestore, `members/${profile.memberId}`);
     return updateDoc(memberDocRef, { equippedBadges });
+  }
+
+  async updateDailyQuests(completed: { [key: string]: boolean }, dateStr: string): Promise<void> {
+    const profile = this.authService.memberProfile();
+    if (!profile || !profile.memberId) {
+      throw new Error('No active member session found.');
+    }
+    const memberDocRef = doc(this.firestore, `members/${profile.memberId}`);
+    return updateDoc(memberDocRef, {
+      dailyQuestsState: {
+        date: dateStr,
+        completed
+      }
+    });
   }
 
   async saveCompletedWorkout(workoutData: any): Promise<void> {

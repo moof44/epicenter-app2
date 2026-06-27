@@ -120,7 +120,7 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
         </div>
 
         <!-- Quick Action Launcher (Mobile & Desktop) -->
-        <div class="grid grid-cols-1 gap-4 mt-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
           <a 
             routerLink="/dashboard/workout"
             class="flex items-center justify-between p-4 bg-bg-surface border border-bg-surface-alt rounded-2xl transition-all active:scale-[0.98] hover:scale-[1.005] hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30 animate-fade-in-up [animation-delay:75ms]"
@@ -130,6 +130,30 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
               <span class="text-[10px] sm:text-xs text-text-secondary font-bold">Track Today's Lift</span>
             </div>
             <span class="text-xl">🏋️‍♂️</span>
+          </a>
+
+          <a 
+            routerLink="/dashboard/quests"
+            class="flex items-center justify-between p-4 bg-bg-surface border border-bg-surface-alt rounded-2xl transition-all active:scale-[0.98] hover:scale-[1.005] hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:border-gold-primary/30 animate-fade-in-up [animation-delay:100ms]"
+          >
+            <div class="flex flex-col gap-0.5 w-full mr-4">
+              <span class="text-[10px] text-gold-light font-bold uppercase tracking-wider">Daily Quests</span>
+              <div class="flex items-center justify-between w-full mt-0.5">
+                <span class="text-[10px] sm:text-xs text-text-secondary font-bold">
+                  {{ animatedQuestCount() }}/11 Completed
+                </span>
+                <span class="text-[10px] text-gold-primary font-bold">
+                  {{ animatedQuestPercentage() }}%
+                </span>
+              </div>
+              <div class="w-full bg-bg-surface-alt rounded-full h-1.5 mt-1.5 overflow-hidden">
+                <div 
+                  class="bg-gradient-to-r from-gold-primary to-gold-light h-full rounded-full transition-all duration-500" 
+                  [style.width.%]="animatedQuestPercentage()"
+                ></div>
+              </div>
+            </div>
+            <span class="text-xl shrink-0">🎯</span>
           </a>
         </div>
 
@@ -1030,6 +1054,8 @@ export class DashboardHomeComponent {
   animatedPtDays = signal<number>(0);
   animatedStreak = signal<number>(0);
   animatedMonthVisits = signal<number>(0);
+  animatedQuestCount = signal<number>(0);
+  animatedQuestPercentage = signal<number>(0);
 
   private animationFrames = new Map<any, number>();
 
@@ -1049,6 +1075,14 @@ export class DashboardHomeComponent {
     effect(() => {
       const target = this.monthVisits();
       this.animateValue(target, this.animatedMonthVisits);
+    });
+    effect(() => {
+      const target = this.completedQuestsCount();
+      this.animateValue(target, this.animatedQuestCount);
+    });
+    effect(() => {
+      const target = this.questPercentage();
+      this.animateValue(target, this.animatedQuestPercentage);
     });
   }
 
@@ -1353,6 +1387,17 @@ export class DashboardHomeComponent {
   badgeLevel = computed(() => this.dashboardService.memberData()?.attendanceBadgeLevel || 0);
   earnedMonthlyBadges = computed(() => this.dashboardService.memberData()?.earnedMonthlyBadges || []);
   equippedBadges = computed<string[]>(() => this.dashboardService.memberData()?.equippedBadges || []);
+  
+  completedQuestsCount = computed(() => {
+    const qState = this.dashboardService.dailyQuests();
+    if (!qState || !qState.completed) return 0;
+    return Object.values(qState.completed).filter(val => val === true).length;
+  });
+
+  questPercentage = computed(() => {
+    const count = this.completedQuestsCount();
+    return Math.round((count / 11) * 100);
+  });
   
   latestData = computed(() => this.dashboardService.latestMeasurement());
   trends = computed(() => this.dashboardService.somaticTrends());

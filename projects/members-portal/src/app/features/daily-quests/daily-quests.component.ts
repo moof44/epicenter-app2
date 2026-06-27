@@ -1,7 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { DashboardService } from '../../core/services/dashboard.service';
 
 @Component({
   selector: 'app-daily-quests',
@@ -10,10 +11,26 @@ import { RouterLink } from '@angular/router';
   templateUrl: './daily-quests.component.html',
   styleUrl: './daily-quests.component.css',
 })
-export class DailyQuestsComponent implements OnInit {
+export class DailyQuestsComponent implements OnInit, OnDestroy {
   isPledgeAccepted = false;
   
-  constructor(private cdr: ChangeDetectorRef) {}
+  private destroyMoveListeners: (() => void) | null = null;
+  private lastFogCheckTime = 0;
+
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
+    private dashboardService: DashboardService
+  ) {
+    // Sync Firestore state to local component state
+    effect(() => {
+      const qState = this.dashboardService.dailyQuests();
+      if (qState) {
+        this.completedQuests = { ...qState.completed };
+        this.cdr.detectChanges();
+      }
+    });
+  }
   
   // Track open/closed state of categories
   expandedCategories: { [key: string]: boolean } = {
@@ -118,14 +135,35 @@ export class DailyQuestsComponent implements OnInit {
       this.isPledgeAccepted = true;
     }
     
-    // Load completed quests
+    // Load completed quests from localStorage as initial fast fallback
     const completedStr = localStorage.getItem('daily_quests_completed');
     if (completedStr) {
       try {
-        this.completedQuests = JSON.parse(completedStr);
+        const localData = JSON.parse(completedStr);
+        const qState = this.dashboardService.dailyQuests();
+        if (!qState || !qState.completed || Object.keys(qState.completed).length === 0) {
+          this.completedQuests = localData;
+        }
       } catch {
         this.completedQuests = {};
       }
+    }
+  }
+
+  ngOnDestroy() {
+    this.removeGlobalListeners();
+    this.stopPouringParticles();
+    if (this.particlesInterval) {
+      clearInterval(this.particlesInterval);
+      this.particlesInterval = null;
+    }
+    if (this.batteryInterval) {
+      clearInterval(this.batteryInterval);
+      this.batteryInterval = null;
+    }
+    if (this.meditationInterval) {
+      clearInterval(this.meditationInterval);
+      this.meditationInterval = null;
     }
   }
 
@@ -140,9 +178,42 @@ export class DailyQuestsComponent implements OnInit {
 
   // --- Game Modal Handlers ---
 
+  private setupGlobalListeners() {
+    this.removeGlobalListeners();
+
+    this.ngZone.runOutsideAngular(() => {
+      const moveHandler = (e: MouseEvent | TouchEvent) => {
+        this.onGlobalMove(e);
+      };
+      const upHandler = () => {
+        this.onGlobalUp();
+      };
+
+      window.addEventListener('mousemove', moveHandler);
+      window.addEventListener('touchmove', moveHandler, { passive: false });
+      window.addEventListener('mouseup', upHandler);
+      window.addEventListener('touchend', upHandler);
+
+      this.destroyMoveListeners = () => {
+        window.removeEventListener('mousemove', moveHandler);
+        window.removeEventListener('touchmove', moveHandler);
+        window.removeEventListener('mouseup', upHandler);
+        window.removeEventListener('touchend', upHandler);
+      };
+    });
+  }
+
+  private removeGlobalListeners() {
+    if (this.destroyMoveListeners) {
+      this.destroyMoveListeners();
+      this.destroyMoveListeners = null;
+    }
+  }
+
   openGame(questId: string) {
     this.activeGame = questId;
     this.gameCompletedSuccess = false;
+    this.setupGlobalListeners();
     
     // Reset specific game states
     if (questId === 'walk_steps') {
@@ -214,6 +285,7 @@ export class DailyQuestsComponent implements OnInit {
   }
 
   closeGame() {
+    this.removeGlobalListeners();
     this.stopPouringParticles();
     if (this.particlesInterval) {
       clearInterval(this.particlesInterval);
@@ -247,6 +319,13 @@ export class DailyQuestsComponent implements OnInit {
   completeQuest(questId: string) {
     this.completedQuests[questId] = true;
     localStorage.setItem('daily_quests_completed', JSON.stringify(this.completedQuests));
+    
+    // Sync to Firestore
+    const todayStr = this.dashboardService.getTodayDateString();
+    this.dashboardService.updateDailyQuests(this.completedQuests, todayStr).catch(err => {
+      console.error('Error saving completed quest to Firestore:', err);
+    });
+
     this.closeGame();
   }
 
@@ -283,56 +362,93 @@ export class DailyQuestsComponent implements OnInit {
   // --- Global Event Handlers for Dragging ---
 
   onGlobalMove(event: MouseEvent | TouchEvent) {
+    let changed = false;
     if (this.isDraggingRunner) {
       this.handleRunnerMove(event);
+      changed = true;
     } else if (this.isDraggingJoint) {
       this.handleJointMove(event);
+      changed = true;
     } else if (this.isWipingFog) {
       this.handleFogWipe(event);
     } else if (this.isDraggingWaterCan) {
       this.handleWaterCanMove(event);
+      changed = true;
     } else if (this.isDraggingPlate) {
       this.handlePlateMove(event);
+      changed = true;
     } else if (this.isDraggingWeight) {
       this.handleWeightMove(event);
+      changed = true;
     } else if (this.isDraggingIngredient) {
       this.handleIngredientMove(event);
+      changed = true;
     } else if (this.isDraggingPlug) {
       this.handlePlugMove(event);
+      changed = true;
     } else if (this.isDraggingLever) {
       this.handleLeverMove(event);
+      changed = true;
+    }
+
+    if (changed) {
+      this.cdr.detectChanges();
     }
   }
 
   onGlobalUp() {
-    this.isDraggingRunner = false;
-    this.isDraggingJoint = false;
-    this.isWipingFog = false;
+    let changed = false;
+    
+    if (this.isDraggingRunner || this.isDraggingJoint) {
+      this.isDraggingRunner = false;
+      this.isDraggingJoint = false;
+      changed = true;
+    }
+    
+    if (this.isWipingFog) {
+      this.isWipingFog = false;
+      changed = true;
+      const canvas = document.getElementById('fogCanvas') as HTMLCanvasElement;
+      const ctx = canvas?.getContext('2d');
+      if (canvas && ctx) {
+        this.checkFogCleared(canvas, ctx);
+      }
+    }
     
     if (this.isDraggingWaterCan) {
       this.isDraggingWaterCan = false;
       this.isPouring = false;
       this.stopPouringParticles();
+      changed = true;
     }
     
     if (this.isDraggingPlate) {
       this.handlePlateRelease();
+      changed = true;
     }
     
     if (this.isDraggingWeight) {
       this.handleWeightRelease();
+      changed = true;
     }
     
     if (this.isDraggingIngredient) {
       this.handleIngredientRelease();
+      changed = true;
     }
     
     if (this.isDraggingPlug) {
       this.handlePlugRelease();
+      changed = true;
     }
     
     if (this.isDraggingLever) {
       this.handleLeverRelease();
+      changed = true;
+    }
+
+    if (changed) {
+      this.cdr.detectChanges();
     }
   }
 
@@ -440,6 +556,7 @@ export class DailyQuestsComponent implements OnInit {
     if (this.gameCompletedSuccess) return;
     event.preventDefault();
     this.isWipingFog = true;
+    this.lastFogCheckTime = 0;
   }
 
   private handleFogWipe(moveEvent: MouseEvent | TouchEvent) {
@@ -469,7 +586,11 @@ export class DailyQuestsComponent implements OnInit {
     ctx.arc(canvasX, canvasY, 22, 0, Math.PI * 2);
     ctx.fill();
     
-    this.checkFogCleared(canvas, ctx);
+    const now = Date.now();
+    if (now - this.lastFogCheckTime > 250) {
+      this.lastFogCheckTime = now;
+      this.checkFogCleared(canvas, ctx);
+    }
   }
 
   private checkFogCleared(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
@@ -541,37 +662,50 @@ export class DailyQuestsComponent implements OnInit {
   startPouringParticles() {
     if (this.waterInterval) return;
     
-    this.waterInterval = setInterval(() => {
-      // 1. Increment water amount
-      if (this.waterAmount < 100) {
-        this.waterAmount = Math.min(100, this.waterAmount + 1);
-        
-        // Trigger success at 100%
-        if (this.waterAmount === 100 && !this.gameCompletedSuccess) {
-          this.triggerSuccess();
-          this.isPouring = false;
-          this.stopPouringParticles();
+    this.ngZone.runOutsideAngular(() => {
+      this.waterInterval = setInterval(() => {
+        let changed = false;
+        // 1. Increment water amount
+        if (this.waterAmount < 100) {
+          this.waterAmount = Math.min(100, this.waterAmount + 1);
+          changed = true;
+          
+          // Trigger success at 100%
+          if (this.waterAmount === 100 && !this.gameCompletedSuccess) {
+            this.ngZone.run(() => {
+              this.triggerSuccess();
+            });
+            this.isPouring = false;
+            this.stopPouringParticles();
+          }
         }
-      }
-      
-      // 2. Generate droplets (nozzle is around top-left of the rotated watering can)
-      const nozzleX = this.waterCanX + 10;
-      const nozzleY = this.waterCanY + 25;
-      
-      if (this.waterAmount < 100) {
-        this.droplets.push({
-          x: nozzleX + (Math.random() * 14 - 7),
-          y: nozzleY,
-          id: this.dropletIdCounter++
-        });
-      }
-      
-      // 3. Update existing droplets (falling down)
-      this.droplets = this.droplets
-        .map(d => ({ ...d, y: d.y + 6 }))
-        .filter(d => d.y < 175); // hit soil
         
-    }, 50);
+        // 2. Generate droplets (nozzle is around top-left of the rotated watering can)
+        const nozzleX = this.waterCanX + 10;
+        const nozzleY = this.waterCanY + 25;
+        
+        if (this.waterAmount < 100) {
+          this.droplets.push({
+            x: nozzleX + (Math.random() * 14 - 7),
+            y: nozzleY,
+            id: this.dropletIdCounter++
+          });
+          changed = true;
+        }
+        
+        // 3. Update existing droplets (falling down)
+        if (this.droplets.length > 0) {
+          this.droplets = this.droplets
+            .map(d => ({ ...d, y: d.y + 6 }))
+            .filter(d => d.y < 175); // hit soil
+          changed = true;
+        }
+        
+        if (changed) {
+          this.cdr.detectChanges();
+        }
+      }, 50);
+    });
   }
 
   stopPouringParticles() {
@@ -942,34 +1076,36 @@ export class DailyQuestsComponent implements OnInit {
 
     if (this.particlesInterval) return; // already running!
 
-    this.particlesInterval = setInterval(() => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Update & render particles
-      for (let i = this.particles.length - 1; i >= 0; i--) {
-        const p = this.particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.15; // gravity
-        p.alpha -= 0.02; // fade
+    this.ngZone.runOutsideAngular(() => {
+      this.particlesInterval = setInterval(() => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        if (p.alpha <= 0 || p.y > canvas.height) {
-          this.particles.splice(i, 1);
-          continue;
+        // Update & render particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.15; // gravity
+          p.alpha -= 0.02; // fade
+          
+          if (p.alpha <= 0 || p.y > canvas.height) {
+            this.particles.splice(i, 1);
+            continue;
+          }
+          
+          ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
+          ctx.shadowBlur = 3;
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
         }
         
-        ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
-        ctx.shadowBlur = 3;
-        ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
-        ctx.fillRect(p.x, p.y, p.size, p.size);
-      }
-      
-      // Clean up interval if no particles left
-      if (this.particles.length === 0) {
-        clearInterval(this.particlesInterval);
-        this.particlesInterval = null;
-      }
-    }, 1000 / 60); // 60 FPS
+        // Clean up interval if no particles left
+        if (this.particles.length === 0) {
+          clearInterval(this.particlesInterval);
+          this.particlesInterval = null;
+        }
+      }, 1000 / 60); // 60 FPS
+    });
   }
 
   claimShield() {
@@ -1028,18 +1164,22 @@ export class DailyQuestsComponent implements OnInit {
   private startChargingBattery() {
     if (this.batteryInterval) clearInterval(this.batteryInterval);
     
-    this.batteryInterval = setInterval(() => {
-      if (this.batteryCharge < 100) {
-        this.batteryCharge += 5;
-        this.vibrate(30);
-        this.cdr.detectChanges();
-      } else {
-        clearInterval(this.batteryInterval);
-        this.batteryInterval = null;
-        this.triggerSuccess();
-        this.cdr.detectChanges();
-      }
-    }, 120);
+    this.ngZone.runOutsideAngular(() => {
+      this.batteryInterval = setInterval(() => {
+        if (this.batteryCharge < 100) {
+          this.batteryCharge += 5;
+          this.vibrate(30);
+          this.cdr.detectChanges();
+        } else {
+          clearInterval(this.batteryInterval);
+          this.batteryInterval = null;
+          this.ngZone.run(() => {
+            this.triggerSuccess();
+          });
+          this.cdr.detectChanges();
+        }
+      }, 120);
+    });
   }
 
   // --- 10. No Screens (Power Down Screen) helper methods ---
@@ -1096,50 +1236,54 @@ export class DailyQuestsComponent implements OnInit {
     window.addEventListener('mouseup', releaseHandler);
     window.addEventListener('touchend', releaseHandler);
 
-    this.meditationInterval = setInterval(() => {
-      if (this.breathPhase === 'inhale') {
-        if (this.breathProgress < 100) {
-          this.breathProgress += 4;
-          this.vibrate(20);
-          this.cdr.detectChanges();
-        } else {
-          this.breathPhase = 'hold';
-          this.vibrate([80, 40]);
-          this.cdr.detectChanges();
-          
-          setTimeout(() => {
-            if (this.isBreathing && this.breathPhase === 'hold') {
-              this.breathPhase = 'exhale';
-              this.cdr.detectChanges();
-            }
-          }, 1200);
-        }
-      } else if (this.breathPhase === 'exhale') {
-        if (this.breathProgress > 0) {
-          this.breathProgress -= 4;
-          this.cdr.detectChanges();
-        } else {
-          this.meditationCycles++;
-          this.vibrate([100, 30, 100]);
-          this.balloonY = this.meditationCycles * 40;
-          this.cdr.detectChanges();
-          
-          if (this.meditationCycles >= 2) {
-            clearInterval(this.meditationInterval);
-            this.meditationInterval = null;
-            this.isBreathing = false;
-            this.balloonY = 150;
+    this.ngZone.runOutsideAngular(() => {
+      this.meditationInterval = setInterval(() => {
+        if (this.breathPhase === 'inhale') {
+          if (this.breathProgress < 100) {
+            this.breathProgress += 4;
+            this.vibrate(20);
+            this.cdr.detectChanges();
+          } else {
+            this.breathPhase = 'hold';
+            this.vibrate([80, 40]);
+            this.cdr.detectChanges();
             
             setTimeout(() => {
-              this.triggerSuccess();
-              this.cdr.detectChanges();
-            }, 500);
+              if (this.isBreathing && this.breathPhase === 'hold') {
+                this.breathPhase = 'exhale';
+                this.cdr.detectChanges();
+              }
+            }, 1200);
+          }
+        } else if (this.breathPhase === 'exhale') {
+          if (this.breathProgress > 0) {
+            this.breathProgress -= 4;
+            this.cdr.detectChanges();
           } else {
-            this.breathPhase = 'inhale';
+            this.meditationCycles++;
+            this.vibrate([100, 30, 100]);
+            this.balloonY = this.meditationCycles * 40;
+            this.cdr.detectChanges();
+            
+            if (this.meditationCycles >= 2) {
+              clearInterval(this.meditationInterval);
+              this.meditationInterval = null;
+              this.isBreathing = false;
+              this.balloonY = 150;
+              
+              setTimeout(() => {
+                this.ngZone.run(() => {
+                  this.triggerSuccess();
+                });
+                this.cdr.detectChanges();
+              }, 500);
+            } else {
+              this.breathPhase = 'inhale';
+            }
           }
         }
-      }
-    }, 100);
+      }, 100);
+    });
   }
 
   private stopInhale() {
