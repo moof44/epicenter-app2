@@ -720,7 +720,7 @@
               <div class="ingredients-inside">
                 <div *ngFor="let ing of blenderIngredients; let i = index" 
                      class="ingredient-item-inside"
-                     [style.left.px]="20 + (i * 25)"
+                     [style.left.px]="10 + (i * 15)"
                      [style.animationDelay]="(i * 0.1) + 's'"
                      [class.blending]="isBlending">
                   {{ ing }}

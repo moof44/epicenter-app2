@@ -183,9 +183,7 @@ export class DailyQuestsComponent implements OnInit {
     this.gameCompletedSuccess = true;
     
     // Play a lightweight visual haptic buzz (confetti effect simulated via CSS or simple overlay trigger)
-    if (navigator.vibrate) {
-      navigator.vibrate([100, 30, 100]);
-    }
+    this.vibrate([100, 30, 100]);
     
     // Force angular change detection for mobile browsers where async timeouts might drop Zone context
     if (this.cdr) {
@@ -217,6 +215,16 @@ export class DailyQuestsComponent implements OnInit {
       return event.changedTouches[0].clientY;
     }
     return (event as MouseEvent).clientY;
+  }
+
+  private vibrate(pattern: number | number[]) {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate(pattern);
+      } catch (e) {
+        // Ignore haptic failures (e.g. on iframe restrictions or desktop)
+      }
+    }
   }
 
   // --- Global Event Handlers for Dragging ---
@@ -636,9 +644,7 @@ export class DailyQuestsComponent implements OnInit {
     if (this.isLifting || this.currentProtein < this.targetProtein) return;
     this.isLifting = true;
     
-    if (navigator.vibrate) {
-      navigator.vibrate([150, 50, 150]);
-    }
+    this.vibrate([150, 50, 150]);
     
     setTimeout(() => {
       this.isLiftComplete = true;
@@ -669,23 +675,27 @@ export class DailyQuestsComponent implements OnInit {
 
   private handleWeightRelease() {
     if (!this.isDraggingWeight) return;
-    const dish = document.querySelector('.right-pan .pan-dish') as HTMLElement;
+    const arena = document.querySelector('.scales-arena') as HTMLElement;
     const container = document.querySelector('.scales-game-container') as HTMLElement;
-    if (dish && container) {
-      const dishRect = dish.getBoundingClientRect();
+    if (arena && container) {
+      const arenaRect = arena.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
       const clientX = this.weightDragX + containerRect.left;
       const clientY = this.weightDragY + containerRect.top;
 
-      // Drop check on the right dish
+      // Drop check anywhere inside the scales arena
       if (
-        clientX >= dishRect.left - 20 &&
-        clientX <= dishRect.right + 20 &&
-        clientY >= dishRect.top - 20 &&
-        clientY <= dishRect.bottom + 40
+        clientX >= arenaRect.left &&
+        clientX <= arenaRect.right &&
+        clientY >= arenaRect.top &&
+        clientY <= arenaRect.bottom
       ) {
-        this.placedWeights.push(this.isDraggingWeight);
-        this.recalculateScale();
+        const centerX = arenaRect.left + arenaRect.width / 2;
+        // Drop on the right side of the arena snaps it to the right pan
+        if (clientX > centerX) {
+          this.placedWeights.push(this.isDraggingWeight);
+          this.recalculateScale();
+        }
       }
     }
     this.isDraggingWeight = null;
@@ -780,9 +790,7 @@ export class DailyQuestsComponent implements OnInit {
     this.glassColor = primaryColor;
     
     // Play light vibration
-    if (navigator.vibrate) {
-      navigator.vibrate([100, 50, 100, 50, 200]);
-    }
+    this.vibrate([100, 50, 100, 50, 200]);
     
     // Blending animation duration 2.5s
     setTimeout(() => {
@@ -801,9 +809,7 @@ export class DailyQuestsComponent implements OnInit {
     this.sugarTaps++;
     
     // Trigger vibration tap
-    if (navigator.vibrate) {
-      navigator.vibrate(30);
-    }
+    this.vibrate(30);
     
     // Trigger particle explosion shards
     const canvas = document.getElementById('sugarParticlesCanvas') as HTMLCanvasElement;
@@ -817,9 +823,7 @@ export class DailyQuestsComponent implements OnInit {
 
     if (this.sugarTaps >= 10) {
       this.isShattered = true;
-      if (navigator.vibrate) {
-        navigator.vibrate([100, 30, 250]);
-      }
+      this.vibrate([100, 30, 250]);
       this.initParticlesAnimation(true); // Trigger full shatter burst
     }
     this.cdr.detectChanges();
