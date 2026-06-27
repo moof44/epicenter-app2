@@ -48,7 +48,7 @@ export class DailyQuestsComponent implements OnInit {
   waterCanX = 125;
   waterCanY = 15;
   isPouring = false;
-  droplets: Array<{ x: number; y: number; id: number }> = [];
+  droplets: { x: number; y: number; id: number }[] = [];
   private dropletIdCounter = 0;
   private waterInterval: any = null;
 
@@ -88,7 +88,7 @@ export class DailyQuestsComponent implements OnInit {
   // 8. Zero Sugar (Smash sugar game)
   sugarTaps = 0;
   isShattered = false;
-  particles: Array<{ x: number, y: number, vx: number, vy: number, alpha: number, size: number }> = [];
+  particles: { x: number; y: number; vx: number; vy: number; alpha: number; size: number }[] = [];
   private particlesInterval: any = null;
 
   ngOnInit() {
@@ -323,8 +323,8 @@ export class DailyQuestsComponent implements OnInit {
     const clientY = this.getEventY(moveEvent);
     
     // Convert screen pixels to 200x250 SVG viewport viewBox coordinates
-    let relativeX = ((clientX - rect.left) / (rect.width || 200)) * 200;
-    let relativeY = ((clientY - rect.top) / (rect.height || 250)) * 250;
+    const relativeX = ((clientX - rect.left) / (rect.width || 200)) * 200;
+    const relativeY = ((clientY - rect.top) / (rect.height || 250)) * 250;
     
     this.jointX = Math.max(10, Math.min(190, relativeX));
     this.jointY = Math.max(10, Math.min(240, relativeY));
@@ -761,7 +761,7 @@ export class DailyQuestsComponent implements OnInit {
     this.isBlending = true;
     
     // Choose smoothie color based on ingredients
-    const colors: { [key: string]: string } = {
+    const colors: Record<string, string> = {
       '🍓': 'linear-gradient(180deg, #f43f5e 0%, #be123c 100%)', // red
       '🍌': 'linear-gradient(180deg, #fef08a 0%, #eab308 100%)', // yellow/banana
       '🥬': 'linear-gradient(180deg, #4ade80 0%, #166534 100%)', // green/spinach
@@ -840,7 +840,7 @@ export class DailyQuestsComponent implements OnInit {
     }
   }
 
-  initParticlesAnimation(triggerShatter: boolean = false) {
+  initParticlesAnimation(triggerShatter = false) {
     const canvas = document.getElementById('sugarParticlesCanvas') as HTMLCanvasElement;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
