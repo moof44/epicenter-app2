@@ -137,15 +137,18 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
           <div>
             <h2 class="text-lg font-bold font-oswald text-text-primary uppercase tracking-wide mb-3 flex items-center gap-2">
               <span class="text-purple-400">●</span> Tier 3: Prestige Collection
-              <span class="ml-2 text-[9px] text-text-muted tracking-widest border border-bg-surface-alt px-1.5 py-0.5 rounded">Requires Level 20+</span>
+              <span class="ml-2 text-[9px] text-text-muted tracking-widest border border-bg-surface-alt px-1.5 py-0.5 rounded">Requires Level 20+ & Badges</span>
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               @for (item of tier3Items; track item.id) {
-                <div class="bg-gradient-to-br from-bg-surface to-bg-surface-alt border border-purple-900/30 p-4 rounded-xl flex flex-col gap-3 relative overflow-hidden" [class.opacity-60]="!meetsLevel(item.reqLevel)">
-                  @if (!meetsLevel(item.reqLevel)) {
+                <div class="bg-gradient-to-br from-bg-surface to-bg-surface-alt border border-purple-900/30 p-4 rounded-xl flex flex-col gap-3 relative overflow-hidden" [class.opacity-60]="!meetsLevel(item.reqLevel) || !meetsBadge(item.reqBadge)">
+                  @if (!meetsLevel(item.reqLevel) || !meetsBadge(item.reqBadge)) {
                     <div class="absolute inset-0 bg-bg-base/70 backdrop-blur-[3px] z-10 flex flex-col items-center justify-center gap-2">
                       <span class="text-3xl">🔒</span>
-                      <span class="text-[10px] font-bold text-text-primary uppercase tracking-widest bg-bg-surface px-2 py-1 rounded-md border border-bg-surface-alt shadow-lg">Unlocks at LVL {{ item.reqLevel }}</span>
+                      <span class="text-[10px] font-bold text-text-primary uppercase tracking-widest bg-bg-surface px-2 py-1 rounded-md border border-bg-surface-alt shadow-lg text-center">
+                        @if (!meetsLevel(item.reqLevel)) { Unlocks at LVL {{ item.reqLevel }} }
+                        @else { Requires {{ item.reqBadge === 'gold-legend' ? 'Gold' : 'Silver' }} Badge }
+                      </span>
                     </div>
                   }
                   <div class="text-4xl">{{ item.icon }}</div>
@@ -156,7 +159,7 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
                   <div class="mt-auto pt-3 border-t border-purple-900/30 flex items-center justify-between">
                     <span class="text-sm font-bold text-gold-primary flex items-center gap-1"><span class="text-[10px]">🪙</span> {{ item.cost | number }}</span>
                     <button 
-                      [disabled]="!canAfford(item.cost) || !hasActiveSubscription() || !meetsLevel(item.reqLevel) || purchasing()"
+                      [disabled]="!canAfford(item.cost) || !hasActiveSubscription() || !meetsLevel(item.reqLevel) || !meetsBadge(item.reqBadge) || purchasing()"
                       (click)="purchase(item)"
                       class="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 relative z-20 shadow-lg shadow-purple-900/20"
                     >
@@ -234,8 +237,8 @@ export class GamificationLedger {
   ];
 
   tier3Items = [
-    { id: 'walkin', name: 'Friend Walk-in Pass', description: 'Bring a friend for free for one day.', icon: '🎟️', cost: 70000, reqLevel: 20 },
-    { id: 'freemonth', name: '1 Free Month', description: 'A massive reward for ultimate loyalty.', icon: '👑', cost: 700000, reqLevel: 30 },
+    { id: 'walkin', name: 'Friend Walk-in Pass', description: 'Bring a friend for free for one day.', icon: '🎟️', cost: 70000, reqLevel: 20, reqBadge: 'silver-hero' },
+    { id: 'freemonth', name: '1 Free Month', description: 'A massive reward for ultimate loyalty.', icon: '👑', cost: 700000, reqLevel: 30, reqBadge: 'gold-legend' },
   ];
 
   canAfford(cost: number): boolean {
@@ -246,6 +249,15 @@ export class GamificationLedger {
   meetsLevel(req: number): boolean {
     const level = this.dashboardService.gamification()?.level || 1;
     return level >= req;
+  }
+
+  meetsBadge(reqBadge?: string): boolean {
+    if (!reqBadge) return true;
+    const data = this.dashboardService.memberData();
+    if (!data) return false;
+    const earned = data.earnedMonthlyBadges || [];
+    const equipped = data.equippedBadges || [];
+    return earned.includes(reqBadge) || equipped.includes(reqBadge);
   }
 
   async purchase(item: any) {
@@ -259,7 +271,8 @@ export class GamificationLedger {
       const result = await buyFn({
         itemName: item.name,
         cost: item.cost,
-        requiredLevel: item.reqLevel
+        requiredLevel: item.reqLevel,
+        requiredBadge: item.reqBadge
       });
       
       this.purchaseMessage.set({ text: (result.data as any).message || 'Purchase successful!', type: 'success' });

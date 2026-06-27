@@ -26,6 +26,30 @@ async function awardGamification(uid: string, type: string, description: string,
     const db = admin.firestore();
     const memberRef = db.collection('members').doc(uid);
     const ledgerRef = memberRef.collection('transactions').doc();
+    const poolRef = db.doc('system_config/gamification_pool');
+    
+    let finalCoins = coins;
+    let finalDesc = description;
+    
+    // Apply Global Pool logic if this is an earning event (not a store purchase)
+    if (coins > 0) {
+        const poolDoc = await poolRef.get();
+        if (poolDoc.exists) {
+            const poolData = poolDoc.data() || { balance: 0, initialBudget: 0 };
+            const today = new Date().getDate();
+            
+            if (poolData.balance <= 0) {
+                // Hard cap: Disable crits if pool is empty (we fall back to standard reward)
+                // Assuming standard reward doesn't have words like 'Double' or '3x'
+            } else if (today >= 25 && poolData.initialBudget > 0) {
+                // Surplus Event: If > 30% of budget remains after the 25th of the month
+                if ((poolData.balance / poolData.initialBudget) > 0.3) {
+                    finalCoins *= 3;
+                    finalDesc = `🔥 SURPLUS EVENT (3x)! ${description}`;
+                }
+            }
+        }
+    }
     
     await db.runTransaction(async (t) => {
         const doc = await t.get(memberRef);
@@ -33,20 +57,25 @@ async function awardGamification(uid: string, type: string, description: string,
         const data = doc.data() || {};
         const g = data.gamification || { coins: 0, xp: 0, level: 1 };
         
-        g.coins += coins;
+        g.coins += finalCoins;
         g.xp += xp;
         g.level = calculateLevel(g.xp);
         
         t.update(memberRef, { gamification: g });
         t.set(ledgerRef, {
             type,
-            description,
-            amount: coins,
+            description: finalDesc,
+            amount: finalCoins,
             xpAdded: xp,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
             balanceAfter: g.coins
         });
     });
+    
+    // Deduct from Global Pool out-of-band to prevent transaction contention locks on the pool doc
+    if (finalCoins > 0) {
+        await poolRef.set({ balance: admin.firestore.FieldValue.increment(-finalCoins) }, { merge: true });
+    }
 }
 
 // 1. Check-ins
@@ -56,13 +85,40 @@ export const onAttendanceCreatedGamification = functions.firestore
         const data = snapshot.data();
         if (!data || !data.memberId) return;
         
-        // Add Check-in reward
+        const db = admin.firestore();
+        const memberRef = db.collection('members').doc(data.memberId);
+        const memberDoc = await memberRef.get();
+        const memberData = memberDoc.data() || {};
+        
+        let coins = COIN_CHECKIN;
+        let desc = 'Gym Check-in Bonus';
+        
+        // Loss Aversion: 1.5x Streak Multiplier
+        if (memberData.attendanceStreak >= 7) {
+            coins = Math.floor(COIN_CHECKIN * 1.5);
+            desc = '🔥 7+ Day Streak Check-in (1.5x)';
+        }
+        
         await awardGamification(
             data.memberId,
             'CHECK_IN',
-            'Gym Check-in Bonus',
-            COIN_CHECKIN,
+            desc,
+            coins,
             XP_CHECKIN
+        );
+    });
+
+// Endowed Progress (Welcome Hook)
+export const onMemberCreatedGamification = functions.firestore
+    .document('/members/{memberId}')
+    .onCreate(async (snapshot, context) => {
+        const uid = context.params.memberId;
+        await awardGamification(
+            uid,
+            'WELCOME_BONUS',
+            'Endowed Progress Bonus (Welcome!)',
+            5000,
+            2000 // Jumps to Level 2
         );
     });
 
@@ -224,9 +280,9 @@ export const purchaseStoreReward = functions.https.onCall(async (data: any, cont
             // 4. Badge Check
             if (requiredBadge) {
                 const earnedBadges = memberData.earnedMonthlyBadges || [];
-                if (!earnedBadges.includes(requiredBadge) && !(memberData.equippedBadges || []).includes(requiredBadge)) {
-                    // For now, we just pass if the logic is not fully implemented, but this is the structure.
-                    // throw new functions.https.HttpsError('permission-denied', `Missing required badge: ${requiredBadge}`);
+                const equipped = memberData.equippedBadges || [];
+                if (!earnedBadges.includes(requiredBadge) && !equipped.includes(requiredBadge)) {
+                    throw new functions.https.HttpsError('permission-denied', `Missing required badge ID: ${requiredBadge}`);
                 }
             }
             
@@ -256,4 +312,42 @@ export const purchaseStoreReward = functions.https.onCall(async (data: any, cont
         console.error('Purchase error:', error);
         throw new functions.https.HttpsError(error.code || 'internal', error.message || 'Unable to process purchase.');
     }
+});
+
+export const refreshGlobalCoinPool = functions.pubsub.schedule('0 0 1 * *').onRun(async (context) => {
+    const db = admin.firestore();
+    
+    // Calculate last month's bounds
+    const now = new Date();
+    // E.g., if now is July 1, firstDayLastMonth is June 1.
+    const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    
+    const txRef = db.collection('transactions');
+    const snapshot = await txRef
+        .where('timestamp', '>=', firstDayLastMonth)
+        .where('timestamp', '<=', lastDayLastMonth)
+        .get();
+        
+    let totalSales = 0;
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        // Only sum actual store sales
+        if (data.transactionType === 'STORE_SALE' && data.totalAmount) {
+            totalSales += data.totalAmount;
+        }
+    });
+    
+    // 20% budget * 500 conversion
+    const budgetPhp = totalSales * 0.20;
+    const coins = Math.floor(budgetPhp * 500);
+    
+    await db.doc('system_config/gamification_pool').set({
+        balance: coins,
+        initialBudget: coins,
+        lastRefreshed: admin.firestore.FieldValue.serverTimestamp(),
+        previousMonthSales: totalSales
+    });
+    
+    console.log(`Global Coin Pool Refreshed: ${coins} Coins (Based on ${totalSales} Php sales).`);
 });
