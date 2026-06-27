@@ -236,7 +236,9 @@
       <div class="category-items-wrapper" [class.expanded]="expandedCategories['recovery']">
         <div class="category-items">
           <!-- Sleep 7-8 hours -->
-          <div class="quest-row stagger-item">
+          <div class="quest-row stagger-item" 
+               [class.completed]="completedQuests['sleep']"
+               (click)="openGame('sleep')">
             <div class="quest-info">
               <div class="quest-icon-wrapper">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -251,12 +253,15 @@
               </div>
             </div>
             <div class="quest-action">
-              <span class="play-icon">▶</span>
+              <span *ngIf="!completedQuests['sleep']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['sleep']" class="check-icon">✓</span>
             </div>
           </div>
 
           <!-- No screens 30 min before bed -->
-          <div class="quest-row stagger-item">
+          <div class="quest-row stagger-item"
+               [class.completed]="completedQuests['no_screens']"
+               (click)="openGame('no_screens')">
             <div class="quest-info">
               <div class="quest-icon-wrapper">
                 <svg class="w-5 h-5 anim-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -271,12 +276,15 @@
               </div>
             </div>
             <div class="quest-action">
-              <span class="play-icon">▶</span>
+              <span *ngIf="!completedQuests['no_screens']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['no_screens']" class="check-icon">✓</span>
             </div>
           </div>
 
           <!-- 5-10 min meditation -->
-          <div class="quest-row stagger-item">
+          <div class="quest-row stagger-item"
+               [class.completed]="completedQuests['meditation']"
+               (click)="openGame('meditation')">
             <div class="quest-info">
               <div class="quest-icon-wrapper">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -291,7 +299,8 @@
               </div>
             </div>
             <div class="quest-action">
-              <span class="play-icon">▶</span>
+              <span *ngIf="!completedQuests['meditation']" class="play-icon">▶</span>
+              <span *ngIf="completedQuests['meditation']" class="check-icon">✓</span>
             </div>
           </div>
         </div>
@@ -843,6 +852,181 @@
         </div>
       </div>
 
+      <!-- Sleep 7-8 hours (Charge Body Battery) game -->
+      <div *ngIf="activeGame === 'sleep'" class="game-container sleep-game-container">
+        <h3>Charge Body Battery</h3>
+        <p class="game-instructions">Drag the charger plug into the wall socket to fuel your cells!</p>
+
+        <div class="sleep-arena">
+          <!-- Battery Widget -->
+          <div class="battery-outer-container">
+            <div class="battery-cap"></div>
+            <div class="battery-shell">
+              <div class="battery-fill" [style.height.%]="batteryCharge" [class.charging]="isPluggedIn"></div>
+              <div class="battery-face-overlay">
+                <span class="battery-emoji">{{ batteryCharge >= 90 ? '🤩' : (batteryCharge >= 50 ? '🙂' : '😴') }}</span>
+                <span class="battery-percent">{{ batteryCharge }}%</span>
+              </div>
+              <!-- Lightning bolt overlay when charging -->
+              <span class="lightning-bolt" *ngIf="isPluggedIn && batteryCharge < 100">⚡</span>
+            </div>
+          </div>
+
+          <!-- Wall Socket Widget -->
+          <div class="wall-socket-box">
+            <div class="socket-face">
+              <div class="socket-slot slot-left"></div>
+              <div class="socket-slot slot-right"></div>
+            </div>
+            <span class="socket-label">220V</span>
+          </div>
+
+          <!-- Draggable Plug with wire -->
+          <svg class="plug-wire-svg" *ngIf="!isPluggedIn">
+            <!-- Draw wire curve from bottom of container to the plug base -->
+            <path [attr.d]="'M 140 160 Q 110 160, ' + plugX + ' ' + (plugY + 15)" 
+                  fill="none" stroke="#475569" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          
+          <div class="plug-draggable"
+               *ngIf="!isPluggedIn"
+               [style.left.px]="plugX"
+               [style.top.px]="plugY"
+               (mousedown)="startPlugDrag($event)"
+               (touchstart)="startPlugDrag($event)">
+            <div class="plug-body">
+              <div class="plug-prongs">
+                <div class="prong"></div>
+                <div class="prong"></div>
+              </div>
+              <div class="plug-base">🔌</div>
+            </div>
+          </div>
+          
+          <!-- Plug visual static plugged into socket -->
+          <div class="plug-visual-plugged" *ngIf="isPluggedIn">
+            🔌
+          </div>
+        </div>
+
+        <div class="charge-status-indicator" *ngIf="isPluggedIn && batteryCharge < 100">
+          <span class="charge-pulse-text">STREAMING POWER...</span>
+        </div>
+
+        <!-- Success overlay -->
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <span class="success-badge">🔋</span>
+          <h4>Fully Charged! 🏆</h4>
+          <p>Your cells are packed with ATP. A consistent sleep routine keeps your heart and brain performing at peak capacity!</p>
+          <button class="claim-btn" (click)="completeQuest('sleep')">Close</button>
+        </div>
+      </div>
+
+      <!-- No Screens 30 min before bed (Power Down Screen) game -->
+      <div *ngIf="activeGame === 'no_screens'" class="game-container screens-game-container">
+        <h3>Power Down Screen</h3>
+        <p class="game-instructions">Pull the industrial power lever down to dim the lights and prepare for bed!</p>
+
+        <div class="screens-arena" [class.dimmed]="isScreenOff">
+          <!-- Room/Desk setup -->
+          <div class="desk-setup">
+            <!-- Computer Monitor Screen -->
+            <div class="computer-monitor" [class.screen-off]="isScreenOff">
+              <div class="monitor-screen-glow" *ngIf="!isScreenOff"></div>
+              <div class="screen-content">
+                <span class="screen-graphics" *ngIf="!isScreenOff">📱💬🎮</span>
+                <span class="screen-moon" *ngIf="isScreenOff">💤🌙⭐</span>
+              </div>
+              <div class="monitor-stand"></div>
+              <div class="monitor-base"></div>
+            </div>
+            
+            <!-- Cozy sleeping cat at bottom of desk when off -->
+            <div class="sleeping-cat" *ngIf="isScreenOff">🐱💤</div>
+          </div>
+
+          <!-- Heavy Power Switch/Lever -->
+          <div class="industrial-switch-box">
+            <span class="lever-on-label" [class.active]="!isScreenOff">ON</span>
+            <div class="lever-track-slot">
+              <div class="lever-handle-bar" [style.height.px]="leverPos"></div>
+              <div class="lever-handle-knob" 
+                   [style.top.px]="leverPos"
+                   (mousedown)="startLeverDrag($event)"
+                   (touchstart)="startLeverDrag($event)">
+                <div class="knob-grip"></div>
+              </div>
+            </div>
+            <span class="lever-off-label" [class.active]="isScreenOff">OFF</span>
+          </div>
+        </div>
+
+        <!-- Success overlay -->
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <span class="success-badge">🌙</span>
+          <h4>Quiet Mind! 🏆</h4>
+          <p>Screens turned off. Avoiding high-energy blue light before sleep allows natural melatonin production to kick in!</p>
+          <button class="claim-btn" (click)="completeQuest('no_screens')">Close</button>
+        </div>
+      </div>
+
+      <!-- Meditation (Float the Balloon) game -->
+      <div *ngIf="activeGame === 'meditation'" class="game-container meditation-game-container">
+        <h3>Meditation & Breath</h3>
+        <p class="game-instructions">Hold down the button during "Inhale" and release it during "Exhale". Breathe in sync with the circle!</p>
+
+        <div class="meditation-arena">
+          <!-- Hot Air Balloon Scene -->
+          <div class="balloon-sky-scene">
+            <!-- Balloon graphic moving vertically based on balloonY -->
+            <div class="meditation-balloon" [style.transform]="'translateY(' + -balloonY + 'px)'">
+              <div class="balloon-envelope">🎈</div>
+              <!-- Flame burner indicator -->
+              <div class="balloon-burner-flame" *ngIf="isBreathing && breathPhase === 'inhale'">🔥</div>
+              <div class="balloon-basket">🧺</div>
+            </div>
+            <div class="landscape-clouds">☁️🌴🏔️</div>
+          </div>
+
+          <!-- Interactive Breathing HUD -->
+          <div class="breathing-circle-hud">
+            <div class="breath-ring-outer">
+              <!-- Animated sizing based on breathProgress -->
+              <div class="breath-ring-fill" [style.transform]="'scale(' + (0.4 + (breathProgress / 100) * 0.6) + ')'" [class.holding]="breathPhase === 'hold'"></div>
+              <div class="breath-state-label">
+                <span class="state-action-text">{{ breathPhase === 'inhale' ? 'INHALE' : (breathPhase === 'hold' ? 'HOLD' : 'EXHALE') }}</span>
+                <span class="state-timer-text" *ngIf="breathPhase !== 'hold'">{{ breathProgress / 33 | number:'1.0-0' }}s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="meditation-progress-row">
+          <!-- 2 breath cycles track dots -->
+          <span class="progress-cycle-dot" [class.done]="meditationCycles >= 1"></span>
+          <span class="progress-cycle-dot" [class.done]="meditationCycles >= 2"></span>
+          <span class="progress-cycle-label">Breath Cycles: {{ meditationCycles }}/2</span>
+        </div>
+
+        <!-- Touch/Hold Action Area -->
+        <button class="meditation-hold-btn"
+                [class.pressed]="isBreathing"
+                (mousedown)="startInhale($event)"
+                (touchstart)="startInhale($event)">
+          {{ isBreathing ? (breathPhase === 'hold' ? 'HOLD...' : 'BREATHING IN...') : 'PRESS & HOLD TO INHALE' }}
+        </button>
+
+        <!-- Success overlay -->
+        <div class="success-screen" *ngIf="gameCompletedSuccess">
+          <div class="success-glow"></div>
+          <span class="success-badge">🧘</span>
+          <h4>Mind Re-Centered! 🏆</h4>
+          <p>Rhythmic breathing pattern successfully completed. Heart rate variability optimized, cortisol levels reduced!</p>
+          <button class="claim-btn" (click)="completeQuest('meditation')">Close</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

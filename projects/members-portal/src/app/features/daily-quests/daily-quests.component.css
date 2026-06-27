@@ -2085,5 +2085,639 @@
   transition: width 0.15s ease-out;
 }
 
+/* --- 9. Sleep (Charge Body Battery) styling --- */
+.sleep-game-container {
+  position: relative;
+}
+
+.sleep-arena {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  height: 170px;
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  border-radius: 12px;
+  margin: 0 auto 1rem auto;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.battery-outer-container {
+  width: 55px;
+  height: 95px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.battery-cap {
+  width: 18px;
+  height: 6px;
+  background: #64748b;
+  border-radius: 3px 3px 0 0;
+}
+
+.battery-shell {
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  border: 3px solid #64748b;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.battery-fill {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%);
+  border-radius: 4px;
+  transition: height 0.3s ease, background 0.5s;
+}
+
+.battery-fill[style*="height: 5"],
+.battery-fill[style*="height: 6"],
+.battery-fill[style*="height: 7"],
+.battery-fill[style*="height: 8"],
+.battery-fill[style*="height: 9"] {
+  background: linear-gradient(180deg, #eab308 0%, #a16207 100%) !important;
+}
+
+.battery-fill[style*="height: 100"],
+.battery-fill[style*="height: 95"],
+.battery-fill[style*="height: 90"],
+.battery-fill[style*="height: 85"],
+.battery-fill[style*="height: 80"],
+.battery-fill[style*="height: 75"],
+.battery-fill[style*="height: 70"],
+.battery-fill[style*="height: 65"],
+.battery-fill[style*="height: 60"],
+.battery-fill[style*="height: 55"],
+.battery-fill[style*="height: 50"] {
+  background: linear-gradient(180deg, #10b981 0%, #065f46 100%) !important;
+}
+
+.battery-fill.charging {
+  animation: battery-glow 0.8s infinite alternate;
+}
+
+@keyframes battery-glow {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.3); }
+}
+
+.battery-face-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+.battery-emoji {
+  font-size: 1.25rem;
+}
+
+.battery-percent {
+  font-size: 0.55rem;
+  font-weight: 900;
+  color: white;
+  margin-top: 0.2rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.lightning-bolt {
+  position: absolute;
+  top: 30%;
+  left: 35%;
+  font-size: 1.3rem;
+  color: #f59e0b;
+  z-index: 4;
+  text-shadow: 0 0 10px rgba(245,158,11,0.8);
+  animation: flash-bolt 0.8s infinite alternate;
+}
+
+@keyframes flash-bolt {
+  from { opacity: 0.3; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1.1); }
+}
+
+.wall-socket-box {
+  width: 50px;
+  height: 50px;
+  background: #334155;
+  border: 2px solid #475569;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  position: relative;
+  left: 20px;
+}
+
+.socket-face {
+  width: 32px;
+  height: 32px;
+  background: #1e293b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.socket-slot {
+  width: 3px;
+  height: 10px;
+  background: #0f172a;
+  border-radius: 1px;
+}
+
+.socket-label {
+  font-size: 7px;
+  font-weight: 800;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.plug-wire-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.plug-draggable {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  z-index: 5;
+  cursor: grab;
+  touch-action: none;
+}
+
+.plug-draggable:active {
+  cursor: grabbing;
+}
+
+.plug-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.plug-prongs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: -4px;
+  margin-left: -2px;
+}
+
+.prong {
+  width: 3px;
+  height: 8px;
+  background: #cbd5e1;
+  border-radius: 1px;
+}
+
+.plug-base {
+  font-size: 1.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+}
+
+.plug-visual-plugged {
+  position: absolute;
+  right: 28px;
+  top: 40px;
+  font-size: 1.6rem;
+  z-index: 10;
+  animation: shake-plugged 0.1s infinite alternate;
+}
+
+@keyframes shake-plugged {
+  from { transform: translate(0, 0); }
+  to { transform: translate(0.5px, 0.5px); }
+}
+
+.charge-status-indicator {
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+.charge-pulse-text {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #f59e0b;
+  letter-spacing: 0.1em;
+  animation: pulse-txt 1s infinite alternate;
+}
+
+@keyframes pulse-txt {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+
+/* --- 10. No Screens (Power Down Screen) styling --- */
+.screens-game-container {
+  position: relative;
+}
+
+.screens-arena {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  height: 170px;
+  background: radial-gradient(circle at center, #334155 0%, #1e293b 100%);
+  border-radius: 12px;
+  margin: 0 auto 1.5rem auto;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.5s ease;
+}
+
+.screens-arena.dimmed {
+  background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+}
+
+.desk-setup {
+  position: absolute;
+  left: 20px;
+  bottom: 12px;
+  width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.computer-monitor {
+  width: 90px;
+  height: 60px;
+  background: #1e293b;
+  border: 2px solid #475569;
+  border-radius: 6px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px;
+}
+
+.computer-monitor.screen-off {
+  background: #020617;
+  border-color: #334155;
+  box-shadow: none;
+}
+
+.monitor-screen-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: 5px;
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.45);
+  pointer-events: none;
+}
+
+.screen-content {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.screen-graphics {
+  font-size: 1.15rem;
+  letter-spacing: 2px;
+  animation: float-graphics 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes float-graphics {
+  from { transform: translateY(0); filter: brightness(1); }
+  to { transform: translateY(-3px); filter: brightness(1.2); }
+}
+
+.screen-moon {
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  animation: pulse-moon 2s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-moon {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+.monitor-stand {
+  width: 8px;
+  height: 12px;
+  background: #475569;
+  margin: 0 auto;
+}
+
+.monitor-base {
+  width: 40px;
+  height: 4px;
+  background: #475569;
+  border-radius: 2px;
+  margin: 0 auto;
+}
+
+.sleeping-cat {
+  position: absolute;
+  bottom: 0;
+  left: 90px;
+  font-size: 1.25rem;
+  animation: sleeping-breath 2s infinite alternate ease-in-out;
+}
+
+@keyframes sleeping-breath {
+  from { transform: scale(0.95); opacity: 0.8; }
+  to { transform: scale(1.05); opacity: 1; }
+}
+
+.industrial-switch-box {
+  position: absolute;
+  right: 30px;
+  top: 25px;
+  width: 42px;
+  height: 120px;
+  background: #1e293b;
+  border: 2px solid #334155;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.lever-on-label, .lever-off-label {
+  font-size: 8px;
+  font-weight: 900;
+  color: #475569;
+  letter-spacing: 0.05em;
+  transition: color 0.3s;
+}
+
+.lever-on-label.active {
+  color: #ef4444;
+  text-shadow: 0 0 6px rgba(239,68,68,0.5);
+}
+
+.lever-off-label.active {
+  color: #10b981;
+  text-shadow: 0 0 6px rgba(16,185,129,0.5);
+}
+
+.lever-track-slot {
+  width: 6px;
+  height: 76px;
+  background: #020617;
+  border-radius: 3px;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.lever-handle-bar {
+  position: absolute;
+  top: 0;
+  left: 2px;
+  width: 2px;
+  background: #94a3b8;
+  border-radius: 1px;
+}
+
+.lever-handle-knob {
+  position: absolute;
+  left: -8px;
+  width: 22px;
+  height: 16px;
+  background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
+  border: 1px solid #7f1d1d;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  cursor: grab;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.lever-handle-knob:active {
+  cursor: grabbing;
+}
+
+.knob-grip {
+  width: 14px;
+  height: 2px;
+  background: rgba(0,0,0,0.4);
+  box-shadow: 0 3px 0 rgba(0,0,0,0.4), 0 -3px 0 rgba(0,0,0,0.4);
+}
+
+
+/* --- 11. Meditation (Float the Balloon) styling --- */
+.meditation-game-container {
+  position: relative;
+}
+
+.meditation-arena {
+  width: 100%;
+  max-width: 280px;
+  height: 180px;
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  border-radius: 12px;
+  margin: 0 auto 1rem auto;
+  border: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 0.5rem;
+}
+
+.balloon-sky-scene {
+  width: 110px;
+  height: 160px;
+  background: linear-gradient(180deg, #bae6fd 0%, #e0f2fe 50%, #cbd5e1 100%);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.meditation-balloon {
+  position: absolute;
+  bottom: 12px;
+  left: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s linear;
+  z-index: 5;
+}
+
+.balloon-envelope {
+  font-size: 3.2rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.balloon-burner-flame {
+  font-size: 0.95rem;
+  margin-top: -10px;
+  z-index: 6;
+  animation: flame-flicker 0.15s infinite alternate;
+}
+
+@keyframes flame-flicker {
+  0% { transform: scale(0.9) translateY(0); filter: brightness(1); }
+  100% { transform: scale(1.1) translateY(-2px); filter: brightness(1.3); }
+}
+
+.balloon-basket {
+  font-size: 1.15rem;
+  margin-top: -3px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+
+.landscape-clouds {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  opacity: 0.75;
+  user-select: none;
+  z-index: 1;
+}
+
+.breathing-circle-hud {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.breath-ring-outer {
+  width: 100px;
+  height: 100px;
+  border: 3px solid rgba(255,255,255,0.05);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.breath-ring-fill {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0.05) 75%);
+  border: 3px solid #a855f7;
+  transition: transform 0.1s linear, border-color 0.3s;
+  box-shadow: 0 0 15px rgba(168,85,247,0.4);
+}
+
+.breath-ring-fill.holding {
+  border-color: #fbbf24;
+  background: radial-gradient(circle, rgba(251,191,36,0.35) 0%, rgba(251,191,36,0.05) 75%);
+  box-shadow: 0 0 15px rgba(251,191,36,0.4);
+}
+
+.breath-state-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.state-action-text {
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: white;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.state-timer-text {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #c084fc;
+  margin-top: 0.1rem;
+}
+
+.meditation-progress-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.progress-cycle-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #334155;
+  border: 1px solid #475569;
+}
+
+.progress-cycle-dot.done {
+  background: #a855f7;
+  border-color: #c084fc;
+  box-shadow: 0 0 6px rgba(168,85,247,0.6);
+}
+
+.progress-cycle-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #64748b;
+  margin-left: 0.2rem;
+}
+
+.meditation-hold-btn {
+  width: 100%;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(180deg, #a855f7 0%, #7e22ce 100%);
+  border: 1px solid #c084fc;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 900;
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(168,85,247,0.3);
+  transition: all 0.15s;
+  user-select: none;
+  touch-action: none;
+}
+
+.meditation-hold-btn.pressed {
+  background: linear-gradient(180deg, #7e22ce 0%, #581c87 100%);
+  transform: scale(0.97);
+  box-shadow: 0 2px 6px rgba(126,34,206,0.3);
+}
+
+
 
 

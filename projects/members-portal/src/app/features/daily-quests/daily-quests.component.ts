@@ -91,6 +91,27 @@ export class DailyQuestsComponent implements OnInit {
   particles: { x: number; y: number; vx: number; vy: number; alpha: number; size: number }[] = [];
   private particlesInterval: any = null;
 
+  // 9. Sleep (Charge Body Battery)
+  isDraggingPlug = false;
+  plugX = 30;
+  plugY = 120;
+  isPluggedIn = false;
+  batteryCharge = 10;
+  private batteryInterval: any = null;
+
+  // 10. No Screens (Power Down Screen)
+  isDraggingLever = false;
+  leverPos = 0;
+  isScreenOff = false;
+
+  // 11. Meditation (Float the Balloon)
+  isBreathing = false;
+  breathPhase: 'inhale' | 'hold' | 'exhale' = 'inhale';
+  breathProgress = 0;
+  meditationCycles = 0;
+  balloonY = 0;
+  private meditationInterval: any = null;
+
   ngOnInit() {
     const pledgeStatus = localStorage.getItem('somatic_pledge_accepted');
     if (pledgeStatus === 'true') {
@@ -102,7 +123,7 @@ export class DailyQuestsComponent implements OnInit {
     if (completedStr) {
       try {
         this.completedQuests = JSON.parse(completedStr);
-      } catch (e) {
+      } catch {
         this.completedQuests = {};
       }
     }
@@ -165,6 +186,30 @@ export class DailyQuestsComponent implements OnInit {
         clearInterval(this.particlesInterval);
         this.particlesInterval = null;
       }
+    } else if (questId === 'sleep') {
+      this.isDraggingPlug = false;
+      this.plugX = 30;
+      this.plugY = 120;
+      this.isPluggedIn = false;
+      this.batteryCharge = 10;
+      if (this.batteryInterval) {
+        clearInterval(this.batteryInterval);
+        this.batteryInterval = null;
+      }
+    } else if (questId === 'no_screens') {
+      this.isDraggingLever = false;
+      this.leverPos = 0;
+      this.isScreenOff = false;
+    } else if (questId === 'meditation') {
+      this.isBreathing = false;
+      this.breathPhase = 'inhale';
+      this.breathProgress = 0;
+      this.meditationCycles = 0;
+      this.balloonY = 0;
+      if (this.meditationInterval) {
+        clearInterval(this.meditationInterval);
+        this.meditationInterval = null;
+      }
     }
   }
 
@@ -173,6 +218,14 @@ export class DailyQuestsComponent implements OnInit {
     if (this.particlesInterval) {
       clearInterval(this.particlesInterval);
       this.particlesInterval = null;
+    }
+    if (this.batteryInterval) {
+      clearInterval(this.batteryInterval);
+      this.batteryInterval = null;
+    }
+    if (this.meditationInterval) {
+      clearInterval(this.meditationInterval);
+      this.meditationInterval = null;
     }
     this.particles = [];
     this.activeGame = null;
@@ -221,7 +274,7 @@ export class DailyQuestsComponent implements OnInit {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       try {
         navigator.vibrate(pattern);
-      } catch (e) {
+      } catch {
         // Ignore haptic failures (e.g. on iframe restrictions or desktop)
       }
     }
@@ -244,6 +297,10 @@ export class DailyQuestsComponent implements OnInit {
       this.handleWeightMove(event);
     } else if (this.isDraggingIngredient) {
       this.handleIngredientMove(event);
+    } else if (this.isDraggingPlug) {
+      this.handlePlugMove(event);
+    } else if (this.isDraggingLever) {
+      this.handleLeverMove(event);
     }
   }
 
@@ -268,6 +325,14 @@ export class DailyQuestsComponent implements OnInit {
     
     if (this.isDraggingIngredient) {
       this.handleIngredientRelease();
+    }
+    
+    if (this.isDraggingPlug) {
+      this.handlePlugRelease();
+    }
+    
+    if (this.isDraggingLever) {
+      this.handleLeverRelease();
     }
   }
 
@@ -910,5 +975,188 @@ export class DailyQuestsComponent implements OnInit {
   claimShield() {
     if (this.gameCompletedSuccess) return;
     this.triggerSuccess();
+  }
+
+  // --- 9. Sleep (Charge Body Battery) helper methods ---
+
+  startPlugDrag(event: MouseEvent | TouchEvent) {
+    if (this.gameCompletedSuccess || this.isPluggedIn) return;
+    event.preventDefault();
+    this.isDraggingPlug = true;
+    this.updatePlugDragPos(event);
+  }
+
+  private handlePlugMove(event: MouseEvent | TouchEvent) {
+    this.updatePlugDragPos(event);
+  }
+
+  private updatePlugDragPos(event: MouseEvent | TouchEvent) {
+    const arena = document.querySelector('.sleep-arena') as HTMLElement;
+    if (!arena) return;
+    const rect = arena.getBoundingClientRect();
+    this.plugX = this.getEventX(event) - rect.left - 20;
+    this.plugY = this.getEventY(event) - rect.top - 20;
+  }
+
+  private handlePlugRelease() {
+    this.isDraggingPlug = false;
+    
+    const socket = document.querySelector('.wall-socket-box') as HTMLElement;
+    const arena = document.querySelector('.sleep-arena') as HTMLElement;
+    if (socket && arena) {
+      const socketRect = socket.getBoundingClientRect();
+      const arenaRect = arena.getBoundingClientRect();
+      const currentX = this.plugX + arenaRect.left + 20;
+      const currentY = this.plugY + arenaRect.top + 20;
+
+      if (
+        currentX >= socketRect.left - 25 &&
+        currentX <= socketRect.right + 25 &&
+        currentY >= socketRect.top - 25 &&
+        currentY <= socketRect.bottom + 25
+      ) {
+        this.isPluggedIn = true;
+        this.vibrate([100, 50, 100]);
+        this.startChargingBattery();
+      } else {
+        this.plugX = 30;
+        this.plugY = 120;
+      }
+    }
+  }
+
+  private startChargingBattery() {
+    if (this.batteryInterval) clearInterval(this.batteryInterval);
+    
+    this.batteryInterval = setInterval(() => {
+      if (this.batteryCharge < 100) {
+        this.batteryCharge += 5;
+        this.vibrate(30);
+        this.cdr.detectChanges();
+      } else {
+        clearInterval(this.batteryInterval);
+        this.batteryInterval = null;
+        this.triggerSuccess();
+        this.cdr.detectChanges();
+      }
+    }, 120);
+  }
+
+  // --- 10. No Screens (Power Down Screen) helper methods ---
+
+  startLeverDrag(event: MouseEvent | TouchEvent) {
+    if (this.gameCompletedSuccess || this.isScreenOff) return;
+    event.preventDefault();
+    this.isDraggingLever = true;
+    this.updateLeverDragPos(event);
+  }
+
+  private handleLeverMove(event: MouseEvent | TouchEvent) {
+    this.updateLeverDragPos(event);
+  }
+
+  private updateLeverDragPos(event: MouseEvent | TouchEvent) {
+    const slot = document.querySelector('.lever-track-slot') as HTMLElement;
+    if (!slot) return;
+    const rect = slot.getBoundingClientRect();
+    const currentY = this.getEventY(event) - rect.top;
+    this.leverPos = Math.max(0, Math.min(60, currentY));
+  }
+
+  private handleLeverRelease() {
+    this.isDraggingLever = false;
+    
+    if (this.leverPos >= 50) {
+      this.leverPos = 60;
+      this.isScreenOff = true;
+      this.vibrate([50, 30, 80]);
+      this.triggerSuccess();
+    } else {
+      this.leverPos = 0;
+    }
+    this.cdr.detectChanges();
+  }
+
+  // --- 11. Meditation (Float the Balloon) helper methods ---
+
+  startInhale(event: MouseEvent | TouchEvent) {
+    if (this.gameCompletedSuccess || this.isBreathing) return;
+    event.preventDefault();
+    this.isBreathing = true;
+    this.breathPhase = 'inhale';
+    this.breathProgress = 0;
+    
+    if (this.meditationInterval) clearInterval(this.meditationInterval);
+    
+    const releaseHandler = () => {
+      this.stopInhale();
+      window.removeEventListener('mouseup', releaseHandler);
+      window.removeEventListener('touchend', releaseHandler);
+    };
+    window.addEventListener('mouseup', releaseHandler);
+    window.addEventListener('touchend', releaseHandler);
+
+    this.meditationInterval = setInterval(() => {
+      if (this.breathPhase === 'inhale') {
+        if (this.breathProgress < 100) {
+          this.breathProgress += 4;
+          this.vibrate(20);
+          this.cdr.detectChanges();
+        } else {
+          this.breathPhase = 'hold';
+          this.vibrate([80, 40]);
+          this.cdr.detectChanges();
+          
+          setTimeout(() => {
+            if (this.isBreathing && this.breathPhase === 'hold') {
+              this.breathPhase = 'exhale';
+              this.cdr.detectChanges();
+            }
+          }, 1200);
+        }
+      } else if (this.breathPhase === 'exhale') {
+        if (this.breathProgress > 0) {
+          this.breathProgress -= 4;
+          this.cdr.detectChanges();
+        } else {
+          this.meditationCycles++;
+          this.vibrate([100, 30, 100]);
+          this.balloonY = this.meditationCycles * 40;
+          this.cdr.detectChanges();
+          
+          if (this.meditationCycles >= 2) {
+            clearInterval(this.meditationInterval);
+            this.meditationInterval = null;
+            this.isBreathing = false;
+            this.balloonY = 150;
+            
+            setTimeout(() => {
+              this.triggerSuccess();
+              this.cdr.detectChanges();
+            }, 500);
+          } else {
+            this.breathPhase = 'inhale';
+          }
+        }
+      }
+    }, 100);
+  }
+
+  private stopInhale() {
+    if (!this.isBreathing || this.gameCompletedSuccess) return;
+    
+    if (this.breathPhase === 'inhale' || this.breathPhase === 'hold') {
+      this.isBreathing = false;
+      this.breathProgress = 0;
+      this.breathPhase = 'inhale';
+      if (this.meditationInterval) {
+        clearInterval(this.meditationInterval);
+        this.meditationInterval = null;
+      }
+      this.cdr.detectChanges();
+    } else {
+      this.isBreathing = false;
+      this.cdr.detectChanges();
+    }
   }
 }
