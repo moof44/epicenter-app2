@@ -33,5 +33,28 @@
             ]
         }
     ],
-    "fieldOverrides": []
+    "fieldOverrides": [
+        {
+            "collectionGroup": "transactions",
+            "fieldPath": "timestamp",
+            "indexes": [
+                {
+                    "queryScope": "COLLECTION",
+                    "order": "ASCENDING"
+                },
+                {
+                    "queryScope": "COLLECTION",
+                    "order": "DESCENDING"
+                },
+                {
+                    "queryScope": "COLLECTION_GROUP",
+                    "order": "ASCENDING"
+                },
+                {
+                    "queryScope": "COLLECTION_GROUP",
+                    "order": "DESCENDING"
+                }
+            ]
+        }
+    ]
 }
