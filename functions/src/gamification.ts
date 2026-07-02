@@ -371,26 +371,46 @@ export const purchaseStoreReward = functions.https.onCall(async (data: any, cont
     }
 });
 
-export const refreshGlobalCoinPool = functions.pubsub.schedule('0 0 1 * *').onRun(async (context) => {
+export const refreshGlobalCoinPool = functions.pubsub.schedule('0 0 1 * *')
+    .timeZone('Asia/Manila')
+    .onRun(async (context) => {
     const db = admin.firestore();
     
-    // Calculate last month's bounds
-    const now = new Date();
-    // E.g., if now is July 1, firstDayLastMonth is June 1.
-    const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    // Calculate last month's bounds in Manila timezone
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: 'numeric'
+    });
+    const parts = formatter.formatToParts(new Date());
+    const currentYear = parseInt(parts.find(p => p.type === 'year')!.value, 10);
+    const currentMonth = parseInt(parts.find(p => p.type === 'month')!.value, 10); // 1-12
+    
+    let prevMonth = currentMonth - 1;
+    let prevYear = currentYear;
+    if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear -= 1;
+    }
+    
+    const prevMonthStr = String(prevMonth).padStart(2, '0');
+    const firstDayLastMonth = new Date(`${prevYear}-${prevMonthStr}-01T00:00:00+08:00`);
+    
+    const currentMonthStr = String(currentMonth).padStart(2, '0');
+    const firstDayCurrentMonth = new Date(`${currentYear}-${currentMonthStr}-01T00:00:00+08:00`);
+    const lastDayLastMonth = new Date(firstDayCurrentMonth.getTime() - 1000);
     
     const txRef = db.collection('transactions');
     const snapshot = await txRef
-        .where('timestamp', '>=', firstDayLastMonth)
-        .where('timestamp', '<=', lastDayLastMonth)
+        .where('date', '>=', firstDayLastMonth)
+        .where('date', '<=', lastDayLastMonth)
         .get();
         
     let totalSales = 0;
     snapshot.forEach(doc => {
         const data = doc.data();
-        // Only sum actual store sales
-        if (data.transactionType === 'STORE_SALE' && data.totalAmount) {
+        // Only sum completed store sales
+        if (data.status === 'COMPLETED' && data.totalAmount) {
             totalSales += data.totalAmount;
         }
     });

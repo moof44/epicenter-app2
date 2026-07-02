@@ -2,7 +2,9 @@ import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import { logGamificationError } from './gamification';
 
-export const auditGamificationEconomy = functions.pubsub.schedule('0 1 * * *').onRun(async (context) => {
+export const auditGamificationEconomy = functions.pubsub.schedule('0 1 * * *')
+    .timeZone('Asia/Manila')
+    .onRun(async (context) => {
     const db = admin.firestore();
     
     try {
@@ -20,9 +22,16 @@ export const auditGamificationEconomy = functions.pubsub.schedule('0 1 * * *').o
         const globalExpectedDrain = poolData.initialBudget - poolData.balance;
         
         // 2. Sum up all transaction ledgers for the current month
-        // We only want to compare against the *current* pool, which is reset monthly.
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        // Calculate the start of the current month in Manila timezone explicitly
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Asia/Manila',
+            year: 'numeric',
+            month: '2-digit'
+        });
+        const parts = formatter.formatToParts(new Date());
+        const year = parts.find(p => p.type === 'year')?.value;
+        const month = parts.find(p => p.type === 'month')?.value;
+        const firstDayOfMonth = new Date(`${year}-${month}-01T00:00:00+08:00`);
         
         const txRef = db.collectionGroup('transactions');
         const snapshot = await txRef.where('timestamp', '>=', firstDayOfMonth).get();
