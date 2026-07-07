@@ -6,8 +6,13 @@
     min-height: 80vh;
 }
 
-.header {
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 /* Avatar Placeholder */
@@ -65,12 +70,7 @@
     background-color: #fafafa;
 }
 
-.fab-add {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 100;
-}
+
 
 /* Responsive Logic */
 .desktop-table {

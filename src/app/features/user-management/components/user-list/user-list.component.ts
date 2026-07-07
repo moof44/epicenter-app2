@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { map } from 'rxjs';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -33,7 +34,11 @@ export class UserListComponent {
     private dialog = inject(MatDialog);
     private snackBar = inject(MatSnackBar);
 
-    users$ = this.userService.getUsers();
+    users$ = this.userService.getUsers().pipe(
+        map(users => users.filter(user => 
+            user.roles && user.roles.some(role => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(role))
+        ))
+    );
 
     displayedColumns: string[] = ['photo', 'displayName', 'roles', 'status', 'actions'];
 

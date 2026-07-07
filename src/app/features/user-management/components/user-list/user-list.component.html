@@ -1,6 +1,11 @@
 <div class="container">
-    <div class="header">
+    <div class="page-header">
         <h1>Staff Management</h1>
+        <div class="action-buttons">
+            <button mat-raised-button color="primary" (click)="openAddUserDialog()">
+                <mat-icon>add</mat-icon> Add Staff
+            </button>
+        </div>
     </div>
 
     <ng-container *ngIf="users$ | async as users">
@@ -112,9 +117,6 @@
 
     </ng-container>
 
-    <button mat-fab color="primary" class="fab-add" (click)="openAddUserDialog()">
-        <mat-icon>add</mat-icon>
-    </button>
 </div>
 
 <mat-menu #menu="matMenu">
