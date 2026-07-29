@@ -1,0 +1,130 @@
+<div class="redemption-history-container" @fadeIn>
+
+  <!-- Top Header Section -->
+  <div class="header-section">
+    <div class="title-area">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">card_giftcard</mat-icon>
+        Reward Claims Audit History
+      </h1>
+      <p class="subtitle">Exclusive monitoring log for gamification coin redemptions and staff counter fulfillments.</p>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="kpi-cards-container">
+      <div class="kpi-card">
+        <mat-icon class="kpi-icon">inventory_2</mat-icon>
+        <div class="kpi-info">
+          <span class="kpi-label">Fulfilled Claims</span>
+          <span class="kpi-value">{{ totalFulfilledCount() }} Items</span>
+        </div>
+      </div>
+
+      <div class="kpi-card gold-kpi">
+        <mat-icon class="kpi-icon">monetization_on</mat-icon>
+        <div class="kpi-info">
+          <span class="kpi-label">Coins Burned</span>
+          <span class="kpi-value">🪙 {{ totalCoinsBurned() | number }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="filters-card mat-elevation-z1">
+    <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+      <mat-label>Search Claim Code, Member, or Product...</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [(ngModel)]="searchQuery" placeholder="e.g. CLAIM-8492, Whey, John...">
+    </mat-form-field>
+    
+    <div class="count-badge">
+      <mat-icon class="count-icon">filter_list</mat-icon>
+      <span>Showing {{ filteredClaims().length }} record(s)</span>
+    </div>
+  </div>
+
+  <!-- Main Claims Table -->
+  <div class="table-card mat-elevation-z2">
+    <table mat-table [dataSource]="filteredClaims()" class="claims-table">
+
+      <!-- Voucher Code Column -->
+      <ng-container matColumnDef="voucherCode">
+        <th mat-header-cell *matHeaderCellDef> Voucher Code </th>
+        <td mat-cell *matCellDef="let c">
+          <span class="voucher-code-chip">{{ c.voucherCode }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Member Name Column -->
+      <ng-container matColumnDef="memberName">
+        <th mat-header-cell *matHeaderCellDef> Member Name </th>
+        <td mat-cell *matCellDef="let c" class="member-cell">
+          <mat-icon class="cell-icon">person</mat-icon>
+          <strong>{{ c.memberName }}</strong>
+        </td>
+      </ng-container>
+
+      <!-- Product Issued Column -->
+      <ng-container matColumnDef="productName">
+        <th mat-header-cell *matHeaderCellDef> Product Issued </th>
+        <td mat-cell *matCellDef="let c" class="product-cell">
+          {{ c.productName }}
+        </td>
+      </ng-container>
+
+      <!-- Coins Spent Column -->
+      <ng-container matColumnDef="coinsSpent">
+        <th mat-header-cell *matHeaderCellDef class="text-right"> Coins Spent </th>
+        <td mat-cell *matCellDef="let c" class="text-right coins-cell">
+          🪙 {{ c.coinsSpent | number }}
+        </td>
+      </ng-container>
+
+      <!-- Staff Member Column -->
+      <ng-container matColumnDef="fulfilledBy">
+        <th mat-header-cell *matHeaderCellDef> Fulfilled By </th>
+        <td mat-cell *matCellDef="let c" class="staff-cell">
+          {{ c.fulfilledByStaffName || '—' }}
+        </td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef> Status </th>
+        <td mat-cell *matCellDef="let c">
+          <mat-chip-set>
+            <mat-chip *ngIf="c.status === 'FULFILLED'" class="status-fulfilled" selected>
+              ✓ FULFILLED
+            </mat-chip>
+            <mat-chip *ngIf="c.status === 'PENDING_CLAIM'" class="status-pending" selected>
+              ⏳ PENDING
+            </mat-chip>
+            <mat-chip *ngIf="c.status === 'EXPIRED'" class="status-expired" selected>
+              ❌ EXPIRED
+            </mat-chip>
+          </mat-chip-set>
+        </td>
+      </ng-container>
+
+      <!-- Claim Date Column -->
+      <ng-container matColumnDef="fulfilledAt">
+        <th mat-header-cell *matHeaderCellDef> Claim Date </th>
+        <td mat-cell *matCellDef="let c" class="date-cell">
+          {{ formatDate(c.fulfilledAt || c.createdAt) }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+    </table>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredClaims().length === 0" class="empty-state">
+      <mat-icon class="empty-icon">inbox</mat-icon>
+      <h3>No Reward Claims Found</h3>
+      <p>Redeemed vouchers and counter claims will appear here in real-time.</p>
+    </div>
+  </div>
+
+</div>

@@ -107,7 +107,7 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
                     <span class="text-sm font-bold text-gold-primary flex items-center gap-1"><span class="text-[10px]">🪙</span> {{ item.cost | number }}</span>
                     <button 
                       [disabled]="!canAfford(item.cost) || !hasActiveSubscription() || purchasing()"
-                      (click)="purchase(item)"
+                      (click)="buyItem(item)"
                       class="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
                       [class.bg-gold-primary]="canAfford(item.cost) && hasActiveSubscription()"
                       [class.text-bg-surface]="canAfford(item.cost) && hasActiveSubscription()"
@@ -146,7 +146,7 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
                     <span class="text-sm font-bold text-gold-primary flex items-center gap-1"><span class="text-[10px]">🪙</span> {{ item.cost | number }}</span>
                     <button 
                       [disabled]="!canAfford(item.cost) || !hasActiveSubscription() || !meetsLevel(item.reqLevel) || purchasing()"
-                      (click)="purchase(item)"
+                      (click)="buyItem(item)"
                       class="px-3 py-1.5 bg-gold-primary text-bg-surface rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-gold-light transition-colors disabled:opacity-50 disabled:bg-bg-surface-alt disabled:text-text-muted relative z-20"
                     >
                       Purchase
@@ -165,8 +165,8 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               @for (item of tier3Items; track item.id) {
-                <div class="bg-gradient-to-br from-bg-surface to-bg-surface-alt border border-purple-900/30 p-4 rounded-xl flex flex-col gap-3 relative overflow-hidden" [class.opacity-60]="!meetsLevel(item.reqLevel) || !meetsBadge(item.reqBadge)">
-                  @if (!meetsLevel(item.reqLevel) || !meetsBadge(item.reqBadge)) {
+                <div class="bg-gradient-to-br from-bg-surface to-bg-surface-alt border border-purple-900/30 p-4 rounded-xl flex flex-col gap-3 relative overflow-hidden" [class.opacity-60]="!meetsLevel(item.reqLevel) || !hasBadge(item.reqBadge)">
+                  @if (!meetsLevel(item.reqLevel) || !hasBadge(item.reqBadge)) {
                     <div class="absolute inset-0 bg-bg-base/70 backdrop-blur-[3px] z-10 flex flex-col items-center justify-center gap-2">
                       <span class="text-3xl">🔒</span>
                       <span class="text-[10px] font-bold text-text-primary uppercase tracking-widest bg-bg-surface px-2 py-1 rounded-md border border-bg-surface-alt shadow-lg text-center">
@@ -183,8 +183,8 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
                   <div class="mt-auto pt-3 border-t border-purple-900/30 flex items-center justify-between">
                     <span class="text-sm font-bold text-gold-primary flex items-center gap-1"><span class="text-[10px]">🪙</span> {{ item.cost | number }}</span>
                     <button 
-                      [disabled]="!canAfford(item.cost) || !hasActiveSubscription() || !meetsLevel(item.reqLevel) || !meetsBadge(item.reqBadge) || purchasing()"
-                      (click)="purchase(item)"
+                      [disabled]="!canAfford(item.cost) || !hasActiveSubscription() || !meetsLevel(item.reqLevel) || !hasBadge(item.reqBadge) || purchasing()"
+                      (click)="buyItem(item)"
                       class="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 relative z-20 shadow-lg shadow-purple-900/20"
                     >
                       Purchase
@@ -233,6 +233,35 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
           </div>
         </div>
       }
+
+      <!-- Digital Claim Pass Modal Overlay -->
+      @if (activeVoucher()) {
+        <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div class="bg-bg-surface border border-gold-primary/50 p-6 rounded-2xl max-w-sm w-full flex flex-col items-center gap-4 text-center shadow-2xl animate-fade-in">
+            <span class="text-4xl">🎟️</span>
+            <h3 class="text-lg font-black font-oswald text-gold-primary uppercase">Digital Reward Claim Pass</h3>
+            <p class="text-xs text-text-muted">Show this code to the front-desk staff at the gym counter to receive your {{ activeVoucher()?.itemName }}.</p>
+            
+            <div class="bg-bg-surface-alt p-4 rounded-xl border border-gold-primary/30 w-full my-2">
+              <span class="text-[10px] text-gold-light font-bold uppercase tracking-widest block mb-1">Voucher Claim Code</span>
+              <span class="text-3xl font-black font-mono tracking-wider text-gold-primary select-all">{{ activeVoucher()?.voucherCode }}</span>
+            </div>
+
+            <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
+              <span>⏳ Status:</span> Pending Claim at Counter
+            </span>
+
+            <div class="flex flex-col gap-2 w-full mt-2">
+              <button (click)="activeVoucher.set(null)" class="w-full py-2.5 bg-gold-primary text-bg-surface font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-gold-light transition-colors">
+                Close Pass
+              </button>
+              <button (click)="cancelVoucher()" [disabled]="purchasing()" class="w-full py-2 bg-red-950/60 border border-red-500/30 text-red-400 font-bold text-[10px] uppercase tracking-wider rounded-xl hover:bg-red-900/50 transition-colors disabled:opacity-50">
+                ✖ Cancel & Refund Coins
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `
 })
@@ -265,17 +294,41 @@ export class GamificationLedger {
     { id: 'freemonth', name: '1 Free Month', description: 'A massive reward for ultimate loyalty.', icon: '👑', cost: 700000, reqLevel: 30, reqBadge: 'gold-legend' },
   ];
 
+  activeVoucher = signal<{ voucherCode: string, itemName: string, cost: number } | null>(null);
+
+  async cancelVoucher() {
+    const v = this.activeVoucher();
+    if (!v) return;
+    if (!confirm(`Are you sure you want to cancel this voucher and refund ${v.cost.toLocaleString()} coins back to your wallet?`)) return;
+
+    this.purchasing.set(true);
+    try {
+      const cancelFn = httpsCallable(this.functions, 'cancelRedemptionVoucher');
+      const res = await cancelFn({ voucherCode: v.voucherCode });
+      const data = res.data as any;
+
+      alert(data?.message || 'Voucher cancelled and coins refunded!');
+      this.activeVoucher.set(null);
+    } catch (err: any) {
+      console.error('Cancel voucher error:', err);
+      alert(`Unable to cancel voucher: ${err.message}`);
+    } finally {
+      this.purchasing.set(false);
+    }
+  }
+
   canAfford(cost: number): boolean {
     const balance = this.dashboardService.gamification()?.coins || 0;
     return balance >= cost;
   }
+
 
   meetsLevel(req: number): boolean {
     const level = this.dashboardService.gamification()?.level || 1;
     return level >= req;
   }
 
-  meetsBadge(reqBadge?: string): boolean {
+  hasBadge(reqBadge?: string): boolean {
     if (!reqBadge) return true;
     const data = this.dashboardService.memberData();
     if (!data) return false;
@@ -284,7 +337,7 @@ export class GamificationLedger {
     return earned.includes(reqBadge) || equipped.includes(reqBadge);
   }
 
-  async purchase(item: any) {
+  async buyItem(item: any) {
     if (!confirm(`Are you sure you want to purchase ${item.name} for ${item.cost} coins?`)) return;
     
     this.purchasing.set(true);
@@ -292,15 +345,23 @@ export class GamificationLedger {
     
     try {
       const buyFn = httpsCallable(this.functions, 'purchaseStoreReward');
-      const result = await buyFn({
+      const res = await buyFn({
         itemName: item.name,
         cost: item.cost,
         requiredLevel: item.reqLevel,
         requiredBadge: item.reqBadge
       });
       
-      this.purchaseMessage.set({ text: (result.data as any).message || 'Purchase successful!', type: 'success' });
-      alert('Purchase Successful! Show this to the front desk to claim your reward.');
+      const data = res.data as any;
+      const voucherCode = data?.voucherCode || 'CLAIM-SUCCESS';
+
+      this.activeVoucher.set({
+        voucherCode,
+        itemName: item.name,
+        cost: item.cost
+      });
+
+      this.purchaseMessage.set({ text: `Redeemed ${item.name}! Show Voucher ${voucherCode} to staff counter.`, type: 'success' });
     } catch (err: any) {
       console.error(err);
       this.purchaseMessage.set({ text: err.message || 'Purchase failed', type: 'error' });
@@ -310,3 +371,4 @@ export class GamificationLedger {
     }
   }
 }
+

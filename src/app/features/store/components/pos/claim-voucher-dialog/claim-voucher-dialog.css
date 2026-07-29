@@ -1,0 +1,239 @@
+.claim-dialog-container {
+  padding: 24px;
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-radius: 16px;
+  border: 1px solid #334155;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #334155;
+}
+
+.header-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.header-text h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  color: #fbbf24 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.header-text p {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: #94a3b8 !important;
+}
+
+.close-btn {
+  margin-left: auto;
+  color: #94a3b8 !important;
+}
+
+.dialog-content {
+  padding: 24px 0 !important;
+}
+
+.claim-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* HIGH CONTRAST MAT FORM FIELD OVERRIDES */
+::ng-deep .claim-dialog-container .mat-mdc-form-field {
+  width: 100%;
+}
+
+::ng-deep .claim-dialog-container .mdc-text-field--outlined {
+  background-color: #0f172a !important;
+  border-radius: 12px !important;
+}
+
+::ng-deep .claim-dialog-container .mat-mdc-form-field-focus-overlay {
+  background-color: transparent !important;
+}
+
+::ng-deep .claim-dialog-container input.mat-mdc-input-element {
+  color: #ffffff !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  letter-spacing: 3px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-transform: uppercase !important;
+}
+
+::ng-deep .claim-dialog-container input.mat-mdc-input-element::placeholder {
+  color: #64748b !important;
+  letter-spacing: 1px !important;
+}
+
+::ng-deep .claim-dialog-container .mat-mdc-floating-label,
+::ng-deep .claim-dialog-container .mdc-floating-label {
+  color: #cbd5e1 !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+::ng-deep .claim-dialog-container .mdc-text-field--focused .mdc-floating-label {
+  color: #fbbf24 !important;
+}
+
+::ng-deep .claim-dialog-container .mat-mdc-form-field-hint {
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+  margin-top: 6px !important;
+}
+
+::ng-deep .claim-dialog-container .mat-mdc-form-field-icon-prefix {
+  color: #fbbf24 !important;
+}
+
+::ng-deep .claim-dialog-container .mdc-notched-outline__leading,
+::ng-deep .claim-dialog-container .mdc-notched-outline__notch,
+::ng-deep .claim-dialog-container .mdc-notched-outline__trailing {
+  border-color: #475569 !important;
+}
+
+::ng-deep .claim-dialog-container .mdc-text-field--focused .mdc-notched-outline__leading,
+::ng-deep .claim-dialog-container .mdc-text-field--focused .mdc-notched-outline__notch,
+::ng-deep .claim-dialog-container .mdc-text-field--focused .mdc-notched-outline__trailing {
+  border-color: #f59e0b !important;
+  border-width: 2px !important;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5 !important;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.success-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 24px;
+  border-radius: 16px;
+}
+
+.success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #0f172a;
+  font-size: 28px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.5);
+}
+
+.success-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #34d399 !important;
+  font-weight: 900;
+}
+
+.voucher-details {
+  width: 100%;
+  background: #0f172a;
+  border: 1px solid #334155;
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-row span {
+  color: #94a3b8;
+}
+
+.detail-row strong {
+  color: #f8fafc;
+}
+
+.highlight-item {
+  color: #fbbf24 !important;
+  font-weight: 900;
+}
+
+.fulfilled-note {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 14px;
+}
+
+.dialog-actions {
+  padding-top: 16px;
+  border-top: 1px solid #334155;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cancel-btn {
+  color: #cbd5e1 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  padding: 0 18px !important;
+  font-weight: 700 !important;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.fulfill-btn {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #0f172a !important;
+  font-weight: 900 !important;
+  font-size: 14px !important;
+  border-radius: 10px !important;
+  padding: 0 24px !important;
+  height: 44px !important;
+  box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3) !important;
+}
+
+.fulfill-btn:disabled {
+  background: #334155 !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+}
+
+.btn-spinner {
+  display: inline-block;
+  vertical-align: middle;
+}

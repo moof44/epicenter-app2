@@ -34,6 +34,12 @@
           </mat-autocomplete>
         </mat-form-field>
 
+        <button mat-flat-button color="accent" (click)="openClaimVoucher()" matTooltip="Fulfill Member Reward Claim Code" style="height: 56px; border-radius: 12px; font-weight: 700; white-space: nowrap;">
+          <mat-icon>confirmation_number</mat-icon>
+          🎁 Claim Voucher
+        </button>
+
+
         <!-- Selected member chip & badges -->
         <div class="selected-member-container" *ngIf="selectedMember()">
           <div class="selected-member-chip">

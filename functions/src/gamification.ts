@@ -362,6 +362,32 @@ export const purchaseStoreReward = functions.https.onCall(async (data: any, cont
                 timestamp: admin.firestore.FieldValue.serverTimestamp(),
                 balanceAfter: g.coins
             });
+
+            // 7. Create Redemption Claim Voucher for Staff Counter Fulfillment
+            const voucherRef = db.collection('redemption_claims').doc();
+            const voucherCode = `CLAIM-${Math.floor(100000 + Math.random() * 900000)}`;
+            const memberName = memberData.name || 'Member';
+            
+            t.set(voucherRef, {
+                id: voucherRef.id,
+                voucherCode,
+                memberId: uid,
+                memberName,
+                productId: data.itemId || itemName.toLowerCase().replace(/\s+/g, '_'),
+                productName: itemName,
+                coinsSpent: cost,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000), // Valid 48 hours
+                status: 'PENDING_CLAIM'
+            });
+
+            return {
+                success: true,
+                message: `Successfully purchased ${itemName}!`,
+                voucherCode,
+                itemName,
+                cost
+            };
         });
         
         return { success: true, message: `Successfully purchased ${itemName}!` };
@@ -370,6 +396,220 @@ export const purchaseStoreReward = functions.https.onCall(async (data: any, cont
         console.error('Purchase error:', error);
         await logGamificationError('PURCHASE_STORE_REWARD', uid, { itemName, cost }, error);
         throw new functions.https.HttpsError(error.code || 'internal', error.message || 'Unable to process purchase.');
+    }
+});
+
+/**
+ * Callable Function for Staff POS to Fulfill a Reward Redemption Claim Pass.
+ * Verifies voucher code, marks FULFILLED, decrements stock, and logs inventory.
+ */
+export const fulfillRedemptionVoucher = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    // 1. Security Check: Auth & Staff Role
+    if (!context.auth || !context.auth.token.roles || 
+        !context.auth.token.roles.some((r: string) => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(r))) {
+        throw new functions.https.HttpsError(
+            'permission-denied',
+            'Only gym staff can fulfill reward claim vouchers.'
+        );
+    }
+
+    const { voucherCode } = data;
+    if (!voucherCode) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing voucherCode.');
+    }
+
+    const staffUid = context.auth.uid;
+    const db = admin.firestore();
+
+    try {
+        const staffSnap = await db.collection('users').doc(staffUid).get();
+        const staffName = staffSnap.exists ? (staffSnap.data()?.displayName || 'Staff') : 'Staff';
+
+        // 2. Query voucher
+        const cleanCode = voucherCode.trim().toUpperCase();
+        const claimsSnap = await db.collection('redemption_claims')
+            .where('voucherCode', '==', cleanCode)
+            .where('status', '==', 'PENDING_CLAIM')
+            .limit(1)
+            .get();
+
+        if (claimsSnap.empty) {
+            throw new functions.https.HttpsError('not-found', `No active pending voucher found for code "${cleanCode}".`);
+        }
+
+        const claimDoc = claimsSnap.docs[0];
+        const claimData = claimDoc.data();
+
+        // Check expiration
+        if (claimData.expiresAt && claimData.expiresAt.toDate) {
+            if (claimData.expiresAt.toDate() < new Date()) {
+                await claimDoc.ref.update({ status: 'EXPIRED' });
+                throw new functions.https.HttpsError('failed-precondition', 'This voucher code has expired.');
+            }
+        }
+
+        // Check active shift
+        const openShiftSnap = await db.collection('shifts')
+            .where('status', '==', 'OPEN')
+            .limit(1)
+            .get();
+        
+        const openShiftId = !openShiftSnap.empty ? openShiftSnap.docs[0].id : null;
+
+        // Execute fulfillment
+        await claimDoc.ref.update({
+            status: 'FULFILLED',
+            fulfilledByStaffId: staffUid,
+            fulfilledByStaffName: staffName,
+            fulfilledAt: admin.firestore.FieldValue.serverTimestamp(),
+            shiftId: openShiftId
+        });
+
+        // Try decrement product stock if matching product exists
+        const productName = claimData.productName;
+        const productsSnap = await db.collection('products')
+            .where('name', '==', productName)
+            .limit(1)
+            .get();
+
+        if (!productsSnap.empty) {
+            const productDoc = productsSnap.docs[0];
+            const productRef = productDoc.ref;
+            const currentStock = productDoc.data().stock || 0;
+            const newStock = Math.max(0, currentStock - 1);
+            
+            await productRef.update({ stock: newStock });
+
+            // Create inventory log
+            await db.collection('inventory_logs').add({
+                productId: productDoc.id,
+                productName,
+                changeQuantity: -1,
+                currentStock: newStock,
+                type: 'REMOVAL',
+                reason: `REWARD_REDEMPTION (Voucher: ${cleanCode})`,
+                performedBy: staffName,
+                timestamp: admin.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        // Create transaction record for sales tracking
+        await db.collection('transactions').add({
+            transactionType: 'STORE_SALE',
+            paymentMethod: 'COINS',
+            totalAmount: 0,
+            coinsSpent: claimData.coinsSpent || 0,
+            isRewardRedemption: true,
+            voucherCode: cleanCode,
+            memberName: claimData.memberName || 'Member',
+            items: [{
+                name: productName,
+                quantity: 1,
+                price: 0,
+                coinsCost: claimData.coinsSpent || 0
+            }],
+            performedBy: staffName,
+            shiftId: openShiftId,
+            status: 'COMPLETED',
+            date: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return {
+            success: true,
+            message: `Successfully fulfilled voucher ${cleanCode} for ${claimData.memberName}!`,
+            claim: {
+                voucherCode: cleanCode,
+                memberName: claimData.memberName,
+                productName: claimData.productName,
+                coinsSpent: claimData.coinsSpent
+            }
+        };
+
+    } catch (error: any) {
+        console.error('Error fulfilling voucher:', error);
+        throw new functions.https.HttpsError(error.code || 'internal', error.message || 'Failed to fulfill voucher.');
+    }
+});
+
+/**
+ * Callable Function to Cancel a Pending Redemption Voucher and Refund Coins to Member.
+ * Can be invoked by the Member (owner) or by Staff/Admin.
+ */
+export const cancelRedemptionVoucher = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated.');
+    }
+
+    const { voucherCode } = data;
+    if (!voucherCode) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing voucherCode.');
+    }
+
+    const uid = context.auth.uid;
+    const isStaff = context.auth.token.roles && 
+        context.auth.token.roles.some((r: string) => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(r));
+    
+    const db = admin.firestore();
+    const cleanCode = voucherCode.trim().toUpperCase();
+
+    try {
+        const claimsSnap = await db.collection('redemption_claims')
+            .where('voucherCode', '==', cleanCode)
+            .where('status', '==', 'PENDING_CLAIM')
+            .limit(1)
+            .get();
+
+        if (claimsSnap.empty) {
+            throw new functions.https.HttpsError('not-found', `No active pending voucher found for code "${cleanCode}".`);
+        }
+
+        const claimDoc = claimsSnap.docs[0];
+        const claimData = claimDoc.data();
+
+        // Permission check: Must be voucher owner or staff
+        if (claimData.memberId !== uid && !isStaff) {
+            throw new functions.https.HttpsError('permission-denied', 'You do not have permission to cancel this voucher.');
+        }
+
+        const memberRef = db.collection('members').doc(claimData.memberId);
+        const refundCoins = claimData.coinsSpent || 0;
+
+        await db.runTransaction(async (t) => {
+            const memberDoc = await t.get(memberRef);
+            if (memberDoc.exists) {
+                const memberData = memberDoc.data() || {};
+                const g = memberData.gamification || { coins: 0, xp: 0, level: 1 };
+                g.coins = (g.coins || 0) + refundCoins;
+                
+                t.update(memberRef, { gamification: g });
+
+                const ledgerRef = memberRef.collection('transactions').doc();
+                t.set(ledgerRef, {
+                    type: 'STORE_REFUND',
+                    description: `Refunded Voucher (${cleanCode}): ${claimData.productName}`,
+                    amount: refundCoins,
+                    xpAdded: 0,
+                    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                    balanceAfter: g.coins
+                });
+            }
+
+            t.update(claimDoc.ref, {
+                status: 'CANCELLED',
+                cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+                cancelledBy: uid
+            });
+        });
+
+        return {
+            success: true,
+            message: `Voucher ${cleanCode} cancelled. ${refundCoins.toLocaleString()} coins refunded to wallet!`,
+            refundCoins
+        };
+
+    } catch (error: any) {
+        console.error('Error cancelling voucher:', error);
+        throw new functions.https.HttpsError(error.code || 'internal', error.message || 'Failed to cancel voucher.');
     }
 });
 

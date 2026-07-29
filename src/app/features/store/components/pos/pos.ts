@@ -36,6 +36,10 @@ import { ViewChild } from '@angular/core';
 import { PreventDoubleClickDirective } from '../../../../shared/directives/prevent-double-click.directive';
 import { ProductCatalogComponent } from '../product-catalog/product-catalog';
 
+import { Functions, httpsCallable } from '@angular/fire/functions';
+
+import { ClaimVoucherDialog } from './claim-voucher-dialog/claim-voucher-dialog';
+
 @Component({
   selector: 'app-pos',
   imports: [
@@ -49,18 +53,19 @@ import { ProductCatalogComponent } from '../product-catalog/product-catalog';
   animations: [fadeIn],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class POS {
+export class PosComponent {
   @ViewChild('stepper') stepper!: MatStepper;
 
   private checkoutService = inject(CheckoutService);
   private productService = inject(ProductService);
-  private cartStore = inject(CartStore);
+  private memberService = inject(MemberService);
+  public cartStore = inject(CartStore);
+  public authService = inject(AuthService);
+  public cashRegisterService = inject(CashRegisterService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
-  private authService = inject(AuthService);
-  private memberService = inject(MemberService);
-  private cashRegisterService = inject(CashRegisterService);
   private badgeService = inject(BadgeService);
+  private functions = inject(Functions);
 
   badgeDefinitions = toSignal(this.badgeService.getBadges().pipe(
     map(badges => {
@@ -86,6 +91,18 @@ export class POS {
 
   toggleCart(): void {
     this.cartExpanded.update(v => !v);
+  }
+
+  openClaimVoucher(): void {
+    const dialogRef = this.dialog.open(ClaimVoucherDialog, {
+      width: '480px'
+    });
+
+    dialogRef.afterClosed().subscribe(fulfilled => {
+      if (fulfilled) {
+        this.snackBar.open('Voucher fulfilled! Inventory & shift log updated.', 'Close', { duration: 4000 });
+      }
+    });
   }
 
   addToCart(product: Product): void {
@@ -291,3 +308,6 @@ export class POS {
     return product.id || index.toString();
   }
 }
+
+export const POS = PosComponent;
+

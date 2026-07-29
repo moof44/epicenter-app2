@@ -104,7 +104,13 @@
             <mat-icon matListItemIcon>history</mat-icon>
             <span matListItemTitle>Purchase History</span>
           </a>
+          <a mat-list-item routerLink="/store/redemption-history" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>card_giftcard</mat-icon>
+            <span matListItemTitle>Reward Claims</span>
+          </a>
         </ng-container>
+
 
         <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">
           <a mat-list-item routerLink="/store/history" routerLinkActive="active"

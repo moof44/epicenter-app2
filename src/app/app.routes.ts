@@ -111,4 +111,11 @@ export const routes: Routes = [
         canActivate: [authGuard, roleGuard],
         data: { animation: 'DashboardPage', roles: ['ADMIN', 'MANAGER'] }
     },
+    {
+        path: 'store/redemption-history',
+        loadComponent: () => import('./features/store/components/redemption-history/redemption-history').then(m => m.RedemptionHistoryComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'ListPage', roles: ['ADMIN', 'MANAGER'] }
+    },
 ];
+

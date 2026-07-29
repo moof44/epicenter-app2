@@ -58,15 +58,36 @@ export interface InventoryLog {
     id?: string;
     productId: string;
     productName: string;
-    type: StockMovementReason;
-    changeAmount: number;
-    previousStock: number;
-    newStock: number;
-    timestamp: Date;
-    performedBy: string;
+    changeQuantity?: number;
+    changeAmount?: number;
+    currentStock?: number;
+    previousStock?: number;
+    newStock?: number;
+    type: StockMovementReason | 'ADDITION' | 'REMOVAL' | string;
+    reason?: StockMovementReason | string;
+    performedBy?: string;
     staffId?: string | null;
     staffName?: string | null;
     notes?: string;
+    timestamp: any;
+}
+
+
+export interface RedemptionClaim {
+    id?: string;
+    voucherCode: string;
+    memberId: string;
+    memberName: string;
+    productId?: string;
+    productName: string;
+    coinsSpent: number;
+    createdAt?: any;
+    expiresAt?: any;
+    fulfilledAt?: any;
+    fulfilledByStaffId?: string;
+    fulfilledByStaffName?: string;
+    shiftId?: string | null;
+    status: 'PENDING_CLAIM' | 'FULFILLED' | 'EXPIRED' | 'CANCELLED';
 }
 
 export interface StockMovement {
