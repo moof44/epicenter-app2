@@ -26,13 +26,20 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
           </div>
         </div>
         
-        <!-- Active Subscription Warning -->
+        <!-- Locked Reward Vault Banner -->
         @if (!hasActiveSubscription()) {
-          <div class="mt-2 bg-red-950/40 border border-red-500/30 p-3 rounded-xl flex items-start gap-3">
-            <span class="text-red-400 text-lg">⚠️</span>
-            <div class="flex flex-col">
-              <span class="text-xs font-bold text-red-400 uppercase tracking-widest">Store Locked</span>
-              <span class="text-xs text-text-muted">You must have an Active Monthly Membership to spend Somatic Coins.</span>
+          <div class="mt-2 bg-gradient-to-r from-amber-950/60 via-red-950/50 to-amber-950/60 border border-gold-primary/40 p-4 rounded-xl flex items-start gap-3 shadow-lg">
+            <span class="text-gold-primary text-2xl">🔒</span>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs font-bold text-gold-light uppercase tracking-widest flex items-center gap-1.5">
+                Rewards Vault Locked
+                <span class="text-[9px] bg-gold-primary/20 text-gold-primary px-2 py-0.5 rounded-full border border-gold-primary/30">
+                  {{ (dashboardService.gamification()?.coins || 0) | number }} Coins in Vault
+                </span>
+              </span>
+              <span class="text-xs text-text-secondary leading-relaxed">
+                You are accumulating cashback coins on store purchases! Upgrade to an <strong class="text-gold-light">Active Monthly Membership</strong> or <strong class="text-gold-light">PT Plan</strong> to unlock your vault and redeem free rewards in the Store.
+              </span>
             </div>
           </div>
         }
@@ -58,20 +65,37 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
           [class.border-transparent]="activeTab() !== 'LEDGER'"
           class="pb-2 px-2 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors hover:text-gold-light"
         >
-          Transaction History
+          Ledger
         </button>
       </div>
 
-      <!-- STORE VIEW -->
+      <!-- Store Tab -->
       @if (activeTab() === 'STORE') {
         <div class="mt-6 flex flex-col gap-8">
           
-          <!-- Tier 1: Common -->
+          <!-- Purchase Feedback Message -->
+          @if (purchaseMessage()) {
+            <div 
+              [class.bg-emerald-950/50]="purchaseMessage()?.type === 'success'"
+              [class.border-emerald-500/30]="purchaseMessage()?.type === 'success'"
+              [class.text-emerald-400]="purchaseMessage()?.type === 'success'"
+              [class.bg-red-950/50]="purchaseMessage()?.type === 'error'"
+              [class.border-red-500/30]="purchaseMessage()?.type === 'error'"
+              [class.text-red-400]="purchaseMessage()?.type === 'error'"
+              class="p-4 rounded-xl border flex items-center justify-between text-xs font-bold animate-fade-in"
+            >
+              <span>{{ purchaseMessage()?.text }}</span>
+              <button (click)="purchaseMessage.set(null)" class="text-text-muted hover:text-text-primary font-mono text-sm">✕</button>
+            </div>
+          }
+
+          <!-- Tier 1: Quick Rewards -->
           <div>
-            <h2 class="text-lg font-bold font-oswald text-text-primary uppercase tracking-wide mb-3 flex items-center gap-2">
-              <span class="text-emerald-400">●</span> Tier 1: Common Essentials
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xs font-bold text-gold-light uppercase tracking-widest">Tier 1: Daily Refreshers</span>
+              <span class="h-[1px] bg-bg-surface-alt flex-1"></span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               @for (item of tier1Items; track item.id) {
                 <div class="bg-bg-surface border border-bg-surface-alt p-4 rounded-xl flex flex-col gap-3 transition-transform hover:-translate-y-1">
                   <div class="text-3xl">{{ item.icon }}</div>

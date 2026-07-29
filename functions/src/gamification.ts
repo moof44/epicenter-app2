@@ -12,14 +12,9 @@ const COIN_SOMATIC = 30000;
 const XP_SOMATIC = 5000;
 
 function calculateLevel(xp: number): number {
-    if (xp < 2000) return 1;
-    if (xp < 15000) return 2;
-    if (xp < 40000) return 5;
-    if (xp < 80000) return 10;
-    if (xp < 120000) return 15;
-    if (xp < 240000) return 20;
-    if (xp < 500000) return 30;
-    return 50; // Max level for now
+    if (!xp || xp <= 0) return 1;
+    const lvl = Math.floor(0.1 * Math.sqrt(xp));
+    return Math.max(1, Math.min(100, lvl));
 }
 
 export async function logGamificationError(action: string, uid: string, data: any, error: any) {
@@ -29,12 +24,11 @@ export async function logGamificationError(action: string, uid: string, data: an
             action,
             uid,
             data,
-            errorMessage: error.message || String(error),
-            stack: error.stack || null,
+            error: error?.message || String(error),
             timestamp: admin.firestore.FieldValue.serverTimestamp()
         });
     } catch (e) {
-        console.error('CRITICAL: Failed to log gamification error', e);
+        console.error('Failed to log gamification error:', e);
     }
 }
 
@@ -145,6 +139,13 @@ export const onAttendanceCreatedGamification = functions.firestore
         const memberRef = db.collection('members').doc(data.memberId);
         const memberDoc = await memberRef.get();
         const memberData = memberDoc.data() || {};
+        
+        // Gatekeeper: Only Active Monthly Subscribers or Active PT members earn check-in coins & XP
+        const isEligible = memberData.membershipStatus === 'Active' || memberData.hasActivePT === true;
+        if (!isEligible) {
+            console.log(`Check-in reward skipped for non-subscriber / walk-in: ${data.memberId}`);
+            return;
+        }
         
         let coins = COIN_CHECKIN;
         let desc = 'Gym Check-in Bonus';
@@ -322,10 +323,11 @@ export const purchaseStoreReward = functions.https.onCall(async (data: any, cont
             const memberData = doc.data() || {};
             const g = memberData.gamification || { coins: 0, xp: 0, level: 1 };
             
-            // 2. The Sunk Cost Fallacy Gatekeeper (Must have active membership)
+            // 2. The Sunk Cost Fallacy Gatekeeper (Must have active membership or active PT)
             const membershipStatus = memberData.membershipStatus || 'Inactive';
-            if (membershipStatus !== 'Active') {
-                throw new functions.https.HttpsError('permission-denied', 'You must have an Active Monthly Membership to use the Rewards Store.');
+            const hasActivePT = memberData.hasActivePT || false;
+            if (membershipStatus !== 'Active' && !hasActivePT) {
+                throw new functions.https.HttpsError('permission-denied', 'You must have an Active Monthly Membership or PT Plan to unlock your Rewards Vault and spend Somatic Coins.');
             }
             
             // 3. Level Check
