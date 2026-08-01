@@ -14,12 +14,18 @@ export class DashboardService {
   readonly measurements = signal<any[]>([]);
   readonly attendanceRecords = signal<any[]>([]);
   readonly recentTransactions = signal<any[]>([]);
+  readonly userVouchers = signal<any[]>([]);
   readonly loading = signal<boolean>(false);
 
   private docSub?: Subscription;
   private measurementsSub?: Subscription;
   private attendanceSub?: Subscription;
   private transactionsSub?: Subscription;
+  private vouchersSub?: Subscription;
+
+  readonly pendingVouchers = computed(() => {
+    return this.userVouchers().filter(v => v.status === 'PENDING_CLAIM');
+  });
 
   readonly dailyQuests = computed(() => {
     const data = this.memberData();
@@ -72,11 +78,13 @@ export class DashboardService {
     this.measurementsSub?.unsubscribe();
     this.attendanceSub?.unsubscribe();
     this.transactionsSub?.unsubscribe();
+    this.vouchersSub?.unsubscribe();
 
     this.memberData.set(null);
     this.measurements.set([]);
     this.attendanceRecords.set([]);
     this.recentTransactions.set([]);
+    this.userVouchers.set([]);
     this.loading.set(false);
   }
 
@@ -169,6 +177,30 @@ export class DashboardService {
       },
       error: (err) => {
         console.error('Error fetching transactions:', err);
+      }
+    });
+
+    // 5. Fetch Redemption Claim Vouchers
+    const vouchersRef = collection(this.firestore, 'redemption_claims');
+    const vouchersQuery = query(
+      vouchersRef,
+      where('memberId', '==', memberId),
+      limit(50)
+    );
+    this.vouchersSub = (collectionData(vouchersQuery, { idField: 'id' }) as Observable<any[]>).subscribe({
+      next: (data) => {
+        const parsed = (data || [])
+          .map(v => ({
+            ...v,
+            createdAt: v.createdAt?.toDate ? v.createdAt.toDate() : new Date(v.createdAt),
+            expiresAt: v.expiresAt?.toDate ? v.expiresAt.toDate() : (v.expiresAt ? new Date(v.expiresAt) : null)
+          }))
+          .sort((a, b) => (b.createdAt?.getTime ? b.createdAt.getTime() : 0) - (a.createdAt?.getTime ? a.createdAt.getTime() : 0));
+
+        this.userVouchers.set(parsed);
+      },
+      error: (err) => {
+        console.error('Error fetching vouchers:', err);
       }
     });
   }

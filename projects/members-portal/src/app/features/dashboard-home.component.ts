@@ -123,9 +123,10 @@ import { AttendanceCalendarComponent } from '../shared/components/attendance-cal
         <div class="bg-bg-surface border border-bg-surface-alt p-4 rounded-2xl mt-6 flex flex-col gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.2)] animate-fade-in-up [animation-delay:50ms]">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-gold-primary via-gold-light to-gold-primary p-[2px] flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(212,175,55,0.3)]">
-                <div class="w-full h-full rounded-full bg-bg-surface-alt flex items-center justify-center text-gold-primary text-sm font-black font-oswald uppercase">
-                  LVL {{ dashboardService.gamification()?.level || 1 }}
+              <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-gold-primary via-gold-light to-gold-primary p-[2px] flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(212,175,55,0.35)]">
+                <div class="w-full h-full rounded-full bg-bg-surface-alt flex flex-col items-center justify-center text-gold-primary font-oswald leading-none text-center p-0.5">
+                  <span class="text-[7.5px] font-bold tracking-widest text-gold-light opacity-90 uppercase">LVL</span>
+                  <span class="text-sm font-black text-gold-primary leading-tight mt-0.5">{{ dashboardService.gamification()?.level || 1 }}</span>
                 </div>
               </div>
               <div class="flex flex-col">

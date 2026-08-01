@@ -313,46 +313,68 @@ export const purchaseStoreReward = functions.https.onCall(async (data: any, cont
     }
 
     const db = admin.firestore();
-    const memberRef = db.collection('members').doc(uid);
+    let memberRef = db.collection('members').doc(uid);
+    let initialDoc = await memberRef.get();
+
+    if (!initialDoc.exists) {
+        const snap = await db.collection('members').where('portalUid', '==', uid).get();
+        if (!snap.empty) {
+            memberRef = snap.docs[0].ref;
+        } else if (data.memberId) {
+            const fallbackRef = db.collection('members').doc(data.memberId);
+            const fallbackDoc = await fallbackRef.get();
+            if (fallbackDoc.exists) {
+                memberRef = fallbackRef;
+                await memberRef.update({ portalUid: uid });
+            }
+        }
+    }
     
     try {
-        await db.runTransaction(async (t) => {
-            const doc = await t.get(memberRef);
-            if (!doc.exists) throw new functions.https.HttpsError('not-found', 'Member not found.');
-            
-            const memberData = doc.data() || {};
+        const result = await db.runTransaction(async (t) => {
+            // 1. Fetch member document by doc ID or portalUid
+            const memberDoc = await t.get(memberRef);
+            if (!memberDoc.exists) {
+                throw new functions.https.HttpsError('not-found', 'Member profile not found.');
+            }
+
+            const memberData = memberDoc.data() || {};
             const g = memberData.gamification || { coins: 0, xp: 0, level: 1 };
-            
-            // 2. The Sunk Cost Fallacy Gatekeeper (Must have active membership or active PT)
-            const membershipStatus = memberData.membershipStatus || 'Inactive';
-            const hasActivePT = memberData.hasActivePT || false;
-            if (membershipStatus !== 'Active' && !hasActivePT) {
-                throw new functions.https.HttpsError('permission-denied', 'You must have an Active Monthly Membership or PT Plan to unlock your Rewards Vault and spend Somatic Coins.');
+
+            // 2. Enforce active subscription
+            if (memberData.membershipStatus !== 'Active') {
+                throw new functions.https.HttpsError('failed-precondition', 'An active membership is required to redeem rewards.');
             }
-            
-            // 3. Level Check
-            if (requiredLevel && g.level < requiredLevel) {
-                throw new functions.https.HttpsError('permission-denied', `Must be Level ${requiredLevel} to purchase this item.`);
+
+            // 3. Enforce Level Requirement
+            if (requiredLevel && (g.level || 1) < requiredLevel) {
+                throw new functions.https.HttpsError('failed-precondition', `Level ${requiredLevel} is required for this reward.`);
             }
-            
-            // 4. Badge Check
+
+            // 4. Enforce Badge Requirement
             if (requiredBadge) {
-                const earnedBadges = memberData.earnedMonthlyBadges || [];
+                const earned = memberData.earnedMonthlyBadges || [];
                 const equipped = memberData.equippedBadges || [];
-                if (!earnedBadges.includes(requiredBadge) && !equipped.includes(requiredBadge)) {
-                    throw new functions.https.HttpsError('permission-denied', `Missing required badge ID: ${requiredBadge}`);
+                if (!earned.includes(requiredBadge) && !equipped.includes(requiredBadge)) {
+                    throw new functions.https.HttpsError('failed-precondition', `The ${requiredBadge} badge is required for this reward.`);
                 }
             }
-            
-            // 5. Balance Check
-            if (g.coins < cost) {
-                throw new functions.https.HttpsError('failed-precondition', 'Insufficient Somatic Coins.');
+
+            // 5. Enforce Coin Balance
+            if ((g.coins || 0) < cost) {
+                throw new functions.https.HttpsError('failed-precondition', `Insufficient coins balance. Required: 🪙${cost}, Available: 🪙${g.coins || 0}.`);
             }
-            
-            // 6. Deduct and Write Ledger
+
+            // 6. Deduct coins and record ledger entry
             g.coins -= cost;
             t.update(memberRef, { gamification: g });
-            
+
+            // Return spent coins to global economy pool balance
+            const poolRef = db.doc('system_config/gamification_pool');
+            t.update(poolRef, {
+                balance: admin.firestore.FieldValue.increment(cost)
+            });
+
             const ledgerRef = memberRef.collection('transactions').doc();
             t.set(ledgerRef, {
                 type: 'STORE_PURCHASE',
@@ -371,7 +393,8 @@ export const purchaseStoreReward = functions.https.onCall(async (data: any, cont
             t.set(voucherRef, {
                 id: voucherRef.id,
                 voucherCode,
-                memberId: uid,
+                memberId: memberRef.id,
+                portalUid: uid,
                 memberName,
                 productId: data.itemId || itemName.toLowerCase().replace(/\s+/g, '_'),
                 productName: itemName,
@@ -390,7 +413,7 @@ export const purchaseStoreReward = functions.https.onCall(async (data: any, cont
             };
         });
         
-        return { success: true, message: `Successfully purchased ${itemName}!` };
+        return result;
         
     } catch (error: any) {
         console.error('Purchase error:', error);
@@ -540,9 +563,9 @@ export const cancelRedemptionVoucher = functions.https.onCall(async (data: any, 
         throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated.');
     }
 
-    const { voucherCode } = data;
-    if (!voucherCode) {
-        throw new functions.https.HttpsError('invalid-argument', 'Missing voucherCode.');
+    const { voucherCode, voucherId } = data;
+    if (!voucherCode && !voucherId) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing voucherCode or voucherId.');
     }
 
     const uid = context.auth.uid;
@@ -550,49 +573,88 @@ export const cancelRedemptionVoucher = functions.https.onCall(async (data: any, 
         context.auth.token.roles.some((r: string) => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(r));
     
     const db = admin.firestore();
-    const cleanCode = voucherCode.trim().toUpperCase();
+    let claimDoc: any = null;
 
     try {
-        const claimsSnap = await db.collection('redemption_claims')
-            .where('voucherCode', '==', cleanCode)
-            .where('status', '==', 'PENDING_CLAIM')
-            .limit(1)
-            .get();
-
-        if (claimsSnap.empty) {
-            throw new functions.https.HttpsError('not-found', `No active pending voucher found for code "${cleanCode}".`);
+        if (voucherId) {
+            const docById = await db.collection('redemption_claims').doc(voucherId).get();
+            if (docById.exists && docById.data()?.status === 'PENDING_CLAIM') {
+                claimDoc = docById;
+            }
         }
 
-        const claimDoc = claimsSnap.docs[0];
+        if (!claimDoc && voucherCode) {
+            const cleanCode = voucherCode.trim().toUpperCase();
+            const claimsSnap = await db.collection('redemption_claims')
+                .where('voucherCode', '==', cleanCode)
+                .where('status', '==', 'PENDING_CLAIM')
+                .limit(1)
+                .get();
+
+            if (!claimsSnap.empty) {
+                claimDoc = claimsSnap.docs[0];
+            }
+        }
+
+        if (!claimDoc || !claimDoc.exists) {
+            throw new functions.https.HttpsError('not-found', 'No active pending voucher found for cancellation.');
+        }
+
         const claimData = claimDoc.data();
+        const cleanCode = claimData.voucherCode || voucherCode || 'VOUCHER';
 
-        // Permission check: Must be voucher owner or staff
-        if (claimData.memberId !== uid && !isStaff) {
-            throw new functions.https.HttpsError('permission-denied', 'You do not have permission to cancel this voucher.');
+        // Permission check: Must be voucher owner (by doc ID or portalUid) or staff
+        let isOwner = (claimData.memberId === uid || claimData.portalUid === uid);
+        let resolvedMemberRef = db.collection('members').doc(claimData.memberId);
+        let mDoc = await resolvedMemberRef.get();
+
+        if (!mDoc.exists) {
+            const searchUid = claimData.portalUid || claimData.memberId || uid;
+            const mSnap = await db.collection('members').where('portalUid', '==', searchUid).get();
+            if (!mSnap.empty) {
+                resolvedMemberRef = mSnap.docs[0].ref;
+                mDoc = mSnap.docs[0];
+                isOwner = true;
+            }
+        } else {
+            if (mDoc.data()?.portalUid === uid) {
+                isOwner = true;
+            }
         }
 
-        const memberRef = db.collection('members').doc(claimData.memberId);
+        if (!isOwner && !isStaff) {
+            throw new functions.https.HttpsError('permission-denied', 'You can only cancel your own vouchers.');
+        }
+
         const refundCoins = claimData.coinsSpent || 0;
 
         await db.runTransaction(async (t) => {
-            const memberDoc = await t.get(memberRef);
-            if (memberDoc.exists) {
-                const memberData = memberDoc.data() || {};
-                const g = memberData.gamification || { coins: 0, xp: 0, level: 1 };
-                g.coins = (g.coins || 0) + refundCoins;
-                
-                t.update(memberRef, { gamification: g });
-
-                const ledgerRef = memberRef.collection('transactions').doc();
-                t.set(ledgerRef, {
-                    type: 'STORE_REFUND',
-                    description: `Refunded Voucher (${cleanCode}): ${claimData.productName}`,
-                    amount: refundCoins,
-                    xpAdded: 0,
-                    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                    balanceAfter: g.coins
-                });
+            const memberDoc = await t.get(resolvedMemberRef);
+            if (!memberDoc.exists) {
+                throw new functions.https.HttpsError('not-found', 'Member profile not found for coin refund.');
             }
+
+            const memberData = memberDoc.data() || {};
+            const g = memberData.gamification || { coins: 0, xp: 0, level: 1 };
+            g.coins = (g.coins || 0) + refundCoins;
+            
+            t.update(resolvedMemberRef, { gamification: g });
+
+            // Re-deduct refunded coins from global economy pool balance
+            const poolRef = db.doc('system_config/gamification_pool');
+            t.update(poolRef, {
+                balance: admin.firestore.FieldValue.increment(-refundCoins)
+            });
+
+            const ledgerRef = resolvedMemberRef.collection('transactions').doc();
+            t.set(ledgerRef, {
+                type: 'STORE_REFUND',
+                description: `Refunded Voucher (${cleanCode}): ${claimData.productName}`,
+                amount: refundCoins,
+                xpAdded: 0,
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                balanceAfter: g.coins
+            });
 
             t.update(claimDoc.ref, {
                 status: 'CANCELLED',
