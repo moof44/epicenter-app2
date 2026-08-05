@@ -41,20 +41,29 @@ The primary objective is to make both `gym-app` and `members-portal` blazingly f
 
 ## 📂 Architecture Documents Index
 
-1. [**01. Scope & Security Boundaries**](dexie-architecture/01_SCOPE_AND_SECURITY_BOUNDARIES.md)  
+1. [**AI Agent Personas & Mandatory Execution Protocol**](dexie-architecture/AGENTS_AND_WORKFLOW.md)  
+   *Defined AI Agent roles (Architect, Database Specialist, UI Specialist, QA) and 5-step execution protocol.*
+2. [**01. Scope & Security Boundaries**](dexie-architecture/01_SCOPE_AND_SECURITY_BOUNDARIES.md)  
    *What is cached locally vs what must remain server-side / direct.*
-2. [**02. Isolation & Repository Architecture**](dexie-architecture/02_ISOLATION_AND_REPOSITORIES.md)  
+3. [**02. Isolation & Repository Architecture**](dexie-architecture/02_ISOLATION_AND_REPOSITORIES.md)  
    *Single-responsibility abstraction layers, RxJS/Signal integration, non-breaking design.*
-3. [**03. Cloud Functions & Mutation Outbox**](dexie-architecture/03_CLOUD_FUNCTIONS_AND_MUTATION_OUTBOX.md)  
+4. [**03. Cloud Functions & Mutation Outbox**](dexie-architecture/03_CLOUD_FUNCTIONS_AND_MUTATION_OUTBOX.md)  
    *Offline mutations, idempotency keys, and queue-based execution for `httpsCallable`.*
-4. [**04. Conflict Resolution & Multi-Tab Sync**](dexie-architecture/04_CONFLICT_RESOLUTION_AND_MULTI_TAB.md)  
+5. [**04. Conflict Resolution & Multi-Tab Sync**](dexie-architecture/04_CONFLICT_RESOLUTION_AND_MULTI_TAB.md)  
    *Handling offline write collisions, server timestamp reconciliation, and Dexie BroadcastChannel sync.*
-5. [**05. Phased Rollout Plan**](dexie-architecture/05_PHASED_ROLLOUT_PLAN.md)  
+6. [**05. Phased Rollout Plan**](dexie-architecture/05_PHASED_ROLLOUT_PLAN.md)  
    *Safe, incremental deployment plan for live production environments.*
-6. [**06. Gym App vs. Members Portal Differences**](dexie-architecture/06_GYM_APP_VS_MEMBERS_PORTAL_DIFFERENCES.md)  
+7. [**06. Gym App vs. Members Portal Differences**](dexie-architecture/06_GYM_APP_VS_MEMBERS_PORTAL_DIFFERENCES.md)  
    *Security constraints, data density, multi-user staff vs single-user member data handling.*
-7. [**Workflow & Sequence Diagrams**](dexie-architecture/WORKFLOW_AND_SEQUENCE.md)  
+8. [**Workflow & Sequence Diagrams**](dexie-architecture/WORKFLOW_AND_SEQUENCE.md)  
    *Visual diagrams detailing Read-through, Write-through, and Outbox Sync workflows.*
+
+---
+
+## 📋 Active Implementation Plans
+
+- [**Phase 1 Implementation Plan: Core Infrastructure**](dexie-architecture/plans/PHASE_1_CORE_INFRASTRUCTURE.md)
+- [**Phase 2 Implementation Plan: Pilot Store/Products Page**](dexie-architecture/plans/PHASE_2_PRODUCTS_PILOT.md)
 
 ---
 
