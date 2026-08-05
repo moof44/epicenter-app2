@@ -339,7 +339,7 @@ export class ChatComponent implements OnInit {
     });
 
     // Fetch active users list for mentions dropdown (excluding current user)
-    this.userService.getUsers().subscribe(users => {
+    this.userService.getStaffUsers().subscribe(users => {
       const currentUser = (this.chatService as any).authService.userProfile();
       const currentUid = currentUser ? currentUser.uid : '';
       const activeStaff = (users || []).filter(u => u.isActive !== false && u.uid !== currentUid);

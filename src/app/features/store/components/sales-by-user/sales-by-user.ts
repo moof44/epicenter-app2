@@ -149,7 +149,7 @@ export class SalesByUserComponent {
   private router = inject(Router);
 
   // Users
-  users$ = this.userService.getUsers();
+  users$ = this.userService.getStaffUsers();
   users = toSignal(this.users$, { initialValue: [] });
 
   // State

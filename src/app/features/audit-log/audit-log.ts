@@ -103,7 +103,7 @@ export class AuditLogComponent {
 
     private async loadStaffList(): Promise<void> {
         try {
-            const users = await firstValueFrom(this.userService.getUsers());
+            const users = await firstValueFrom(this.userService.getStaffUsers());
             this.staffList.set(users.map(u => ({ uid: u.uid, name: u.displayName })));
         } catch (err) {
             console.error('Failed to load staff list:', err);

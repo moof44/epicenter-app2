@@ -34,11 +34,7 @@ export class UserListComponent {
     private dialog = inject(MatDialog);
     private snackBar = inject(MatSnackBar);
 
-    users$ = this.userService.getUsers().pipe(
-        map(users => users.filter(user => 
-            user.roles && user.roles.some(role => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(role))
-        ))
-    );
+    users$ = this.userService.getStaffUsers();
 
     displayedColumns: string[] = ['photo', 'displayName', 'roles', 'status', 'actions'];
 

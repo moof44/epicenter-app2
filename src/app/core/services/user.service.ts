@@ -1,8 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { Functions, httpsCallable } from '@angular/fire/functions';
-import { from, Observable } from 'rxjs';
+import { from, Observable, map } from 'rxjs';
 import { Firestore, collection, collectionData } from '@angular/fire/firestore';
 import { CreateUserDto, User } from '../models/user.model';
+
+export const STAFF_ROLES = ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'];
 
 @Injectable({
     providedIn: 'root'
@@ -28,6 +30,40 @@ export class UserService {
     getUsers(): Observable<User[]> {
         const usersCol = collection(this.firestore, 'users');
         return collectionData(usersCol, { idField: 'uid' }) as Observable<User[]>;
+    }
+
+    /**
+     * Checks if a user is an internal staff user (ADMIN, MANAGER, STAFF, TRAINER).
+     */
+    isStaffUser(user: User): boolean {
+        if (!user) return false;
+        return !!(user.roles && user.roles.some(role => STAFF_ROLES.includes(role)));
+    }
+
+    /**
+     * Checks if a user is a member portal user.
+     */
+    isMemberPortalUser(user: User): boolean {
+        if (!user) return false;
+        return user.roles?.includes('MEMBER') || !!(user as any).memberId;
+    }
+
+    /**
+     * Fetches only internal staff users (ADMIN, MANAGER, STAFF, TRAINER).
+     */
+    getStaffUsers(): Observable<User[]> {
+        return this.getUsers().pipe(
+            map(users => (users || []).filter(user => this.isStaffUser(user)))
+        );
+    }
+
+    /**
+     * Fetches only member portal users.
+     */
+    getMemberPortalUsers(): Observable<User[]> {
+        return this.getUsers().pipe(
+            map(users => (users || []).filter(user => this.isMemberPortalUser(user)))
+        );
     }
 
     /**
