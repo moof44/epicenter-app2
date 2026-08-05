@@ -20,7 +20,8 @@ The primary objective is to make both `gym-app` and `members-portal` blazingly f
 | Phase | Description | Scope / Focus | Status | Target Date |
 | :--- | :--- | :--- | :--- | :--- |
 | **Phase 0** | **Architecture & Documentation** | Complete specification, sequence diagrams, security boundaries, git push | 🟢 **COMPLETED** | Aug 5, 2026 |
-| **Phase 1** | **Core Dexie Infrastructure** | Dexie Database instance, SyncEngine Service, Outbox Queue, RxJS Adapters | 🟡 **ONGOING DISCUSSION** | Pending Approval |
+| **Phase 1-M** | **Gym-App Member Data Cache** | Local IndexedDB cache & delta sync for `gym-app` members retrieval | 🟡 **IN EXECUTION** | Aug 5, 2026 |
+| **Phase 1** | **Core Dexie Infrastructure** | Dexie Database instance, SyncEngine Service, Outbox Queue, RxJS Adapters | 🟡 **PLANNED** | TBD |
 | **Phase 2** | **Pilot Read-Only Migration (gym-app)** | Products & Categories catalog cache in `gym-app` (low-risk verification) | 🔴 **PLANNED** | TBD |
 | **Phase 3** | **Mutation Outbox & POS (gym-app)** | Offline POS Sales, Member Check-ins & Cloud Functions Outbox Queue | 🔴 **PLANNED** | TBD |
 | **Phase 4** | **Members Portal Integration** | User-scoped Dexie cache for workouts, attendance, and member profile | 🔴 **PLANNED** | TBD |
@@ -62,6 +63,7 @@ The primary objective is to make both `gym-app` and `members-portal` blazingly f
 
 ## 📋 Active Implementation Plans
 
+- [**Phase 1-M Implementation Plan: Gym-App Member Data Cache**](dexie-architecture/plans/PHASE_MEMBERS_RETRIEVAL_GYM_APP.md)
 - [**Phase 1 Implementation Plan: Core Infrastructure**](dexie-architecture/plans/PHASE_1_CORE_INFRASTRUCTURE.md)
 - [**Phase 2 Implementation Plan: Pilot Store/Products Page**](dexie-architecture/plans/PHASE_2_PRODUCTS_PILOT.md)
 
