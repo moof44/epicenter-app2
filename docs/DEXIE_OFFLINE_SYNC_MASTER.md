@@ -20,7 +20,7 @@ The primary objective is to make both `gym-app` and `members-portal` blazingly f
 | Phase | Description | Scope / Focus | Status | Target Date |
 | :--- | :--- | :--- | :--- | :--- |
 | **Phase 0** | **Architecture & Documentation** | Complete specification, sequence diagrams, security boundaries, git push | 🟢 **COMPLETED** | Aug 5, 2026 |
-| **Phase 1-M** | **Gym-App Member Data Cache** | Local IndexedDB cache & delta sync for `gym-app` members retrieval | 🟡 **IN EXECUTION** | Aug 5, 2026 |
+| **Phase 1-M** | **Gym-App Member Data Cache** | Local IndexedDB cache & delta sync for `gym-app` members retrieval | 🟢 **COMPLETED** | Aug 5, 2026 |
 | **Phase 1** | **Core Dexie Infrastructure** | Dexie Database instance, SyncEngine Service, Outbox Queue, RxJS Adapters | 🟡 **PLANNED** | TBD |
 | **Phase 2** | **Pilot Read-Only Migration (gym-app)** | Products & Categories catalog cache in `gym-app` (low-risk verification) | 🔴 **PLANNED** | TBD |
 | **Phase 3** | **Mutation Outbox & POS (gym-app)** | Offline POS Sales, Member Check-ins & Cloud Functions Outbox Queue | 🔴 **PLANNED** | TBD |

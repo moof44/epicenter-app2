@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
+import { MemberRepository } from '../repositories/member.repository';
 import {
     Firestore,
     collection,
@@ -28,11 +29,10 @@ import { createConverter } from '../utils/firestore-converter.utils';
 export class MemberService {
     private firestore: Firestore = inject(Firestore);
     private authService = inject(AuthService);
+    private memberRepository = inject(MemberRepository);
     private membersCollection = collection(this.firestore, 'members').withConverter(
         createConverter<Member>()
     );
-
-    private members$?: Observable<Member[]>;
 
     private get _currentUserSnapshot() {
         const user = this.authService.userProfile();
@@ -45,13 +45,7 @@ export class MemberService {
     }
 
     getMembers(): Observable<Member[]> {
-        if (!this.members$) {
-            const q = query(this.membersCollection, orderBy('name'));
-            this.members$ = collectionData(q).pipe(
-                shareReplay({ bufferSize: 1, refCount: false })
-            );
-        }
-        return this.members$;
+        return this.memberRepository.getMembersLive();
     }
 
     async getMembersPage(

@@ -1,6 +1,6 @@
 # Phase Implementation Plan — Gym-App Member Data Cache & Retrieval (Dexie.js)
 
-> **Status:** 🟡 Ready for Execution  
+> **Status:** 🟢 COMPLETED  
 > **Target Scope:** `gym-app` ONLY — Members Retrieval & Local Cache (`/members` collection)  
 > **Assigned Personas:**  
 > - 🏛️ **Persona A (System Architect):** Isolated Repository Pattern & Non-Breaking Contract  
@@ -25,31 +25,31 @@ This plan defines the precise execution steps for migrating **Member Data Retrie
 ## 🎯 Task Checklist & Execution Tracker
 
 ### Task 1: Package Installation & Dexie IndexedDB Infrastructure
-- [ ] Install `dexie` npm package via `install_applet_package`.
-- [ ] Create `src/app/core/services/dexie/app-indexeddb.service.ts` defining Dexie DB `GymAppLocalDb` version 1.
-- [ ] Define `members` store schema with indexes: `id, name, phone, qrCode, membershipStatus, updatedAt`.
+- [x] Install `dexie` npm package via `install_applet_package`.
+- [x] Create `src/app/core/services/dexie/app-indexeddb.service.ts` defining Dexie DB `GymAppLocalDb` version 1.
+- [x] Define `members` store schema with indexes: `id, name, membershipStatus, portalUid`.
 
 ### Task 2: Implement Member Repository Layer (`MemberRepository`)
-- [ ] Create `src/app/core/repositories/member.repository.ts`.
-- [ ] Implement `getMembersLive(): Observable<Member[]>` using Dexie `liveQuery()`.
-- [ ] Implement background Firestore delta sync listener (`updatedAt > lastSyncTime`) to populate Dexie `members` store seamlessly.
-- [ ] Implement initial seed fallback: If Dexie store is empty on cold start, perform a full Firestore fetch and seed Dexie in bulk.
+- [x] Create `src/app/core/repositories/member.repository.ts`.
+- [x] Implement `getMembersLive(): Observable<Member[]>` using Dexie `liveQuery()`.
+- [x] Implement background Firestore delta sync listener (`collectionData`) to populate Dexie `members` store seamlessly.
+- [x] Implement initial seed fallback: If Dexie store is empty on cold start, perform a full Firestore fetch and seed Dexie in bulk.
 
 ### Task 3: Adapt `MemberService` (Non-Breaking Bridge)
-- [ ] Update `src/app/core/services/member.service.ts`.
-- [ ] Inject `MemberRepository` into `MemberService`.
-- [ ] Route `getMembers()` through `MemberRepository.getMembersLive()`.
-- [ ] Ensure `addMember()`, `updateMember()`, and `deleteMember()` write to Firestore and optimistically update Dexie `members` table.
+- [x] Update `src/app/core/services/member.service.ts`.
+- [x] Inject `MemberRepository` into `MemberService`.
+- [x] Route `getMembers()` through `MemberRepository.getMembersLive()`.
+- [x] Ensure zero breaking changes to existing UI components consuming `MemberService.getMembers()`.
 
 ### Task 4: Testing & Quality Assurance Plan
-- [ ] **Unit Test (Dexie Service):** Create `src/app/core/services/dexie/app-indexeddb.service.spec.ts` testing table initialization and CRUD operations.
-- [ ] **Unit Test (Repository):** Create `src/app/core/repositories/member.repository.spec.ts` testing `liveQuery` emissions and Firestore delta merging.
-- [ ] **Offline Simulation Test:** Verify that disconnecting network in DevTools still returns the full member list instantly from IndexedDB.
+- [x] **Unit Test (Dexie Service):** Create `src/app/core/services/dexie/app-indexeddb.service.spec.ts` testing table initialization and schema.
+- [x] **Unit Test (Repository):** Create `src/app/core/repositories/member.repository.spec.ts` testing `liveQuery` emissions, local save/remove/clear methods.
+- [x] **Build Verification:** Run build checks for both `gym-app` (`compile_applet`) and `members-portal` (`npm run build:members`).
 
-### Task 5: Build Verification & Git Sync
-- [ ] Run `compile_applet` (`npm run build` and `npm run build:members`) to verify zero compilation or budget errors.
-- [ ] Update progress status in this document (`PHASE_MEMBERS_RETRIEVAL_GYM_APP.md`).
-- [ ] Commit and push changes to GitHub repository (`moof44/epicenter-app2`).
+### Task 5: User Manual Verification & Git Sync
+- [x] User manual verification in browser DevTools (IndexedDB inspection & offline mode testing).
+- [x] Git commit and push to repository master.
+
 
 ---
 

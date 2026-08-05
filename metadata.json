@@ -1,0 +1,6 @@
+{
+  "name": "Epicenter App",
+  "description": "Gym management and member portal platform with store, inventory, attendance, and member gamification features.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
