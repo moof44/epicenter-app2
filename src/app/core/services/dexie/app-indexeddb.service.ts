@@ -1,4 +1,4 @@
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject, isDevMode } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import Dexie, { Table } from 'dexie';
 import { Member } from '../../models/member.model';
@@ -7,7 +7,7 @@ export class GymAppLocalDb extends Dexie {
     members!: Table<Member, string>;
 
     constructor() {
-        super('GymAppLocalDb');
+        super(isDevMode() ? 'GymApp_dev' : 'GymApp');
         this.version(1).stores({
             members: 'id, name, membershipStatus, portalUid',
         });
