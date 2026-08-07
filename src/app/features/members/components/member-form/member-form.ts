@@ -119,7 +119,9 @@ export class MemberForm implements OnInit {
       const result: any = await tokenFn({ memberId: this.memberId });
       if (result.data?.success && result.data?.token) {
         const token = result.data.token;
-        const loginUrl = `http://localhost:4201/login?token=${token}`;
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const baseUrl = isLocalhost ? 'http://localhost:4201' : 'https://epicenter-members-portal.web.app';
+        const loginUrl = `${baseUrl}/login?token=${token}`;
         
         this.dialog.open(QRDialog, {
           data: {
