@@ -22,12 +22,17 @@ import { AttendanceRecord } from '../models/attendance.model';
 import { Member } from '../models/member.model';
 import { createConverter } from '../utils/firestore-converter.utils';
 
+import { SyncEngineService } from './dexie/sync-engine.service';
+import { OutboxQueueService } from './dexie/outbox-queue.service';
+
 @Injectable({
     providedIn: 'root',
 })
 export class AttendanceService {
     private firestore: Firestore = inject(Firestore);
     private authService = inject(AuthService);
+    private syncEngineService = inject(SyncEngineService);
+    private outboxQueueService = inject(OutboxQueueService);
     private collectionPath = 'attendance';
     private attendanceCollection = collection(this.firestore, this.collectionPath).withConverter(
         createConverter<AttendanceRecord>()
@@ -185,6 +190,18 @@ export class AttendanceService {
             memberRemarks: member.remarks || null,
             checkedInBy: this._currentUserSnapshot,
         };
+
+        const isOnline = this.syncEngineService.isOnlineSignal();
+        if (!isOnline) {
+            const clientTxId = 'chk_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+            await this.outboxQueueService.addToOutbox({
+                clientTxId,
+                type: 'CHECKIN',
+                payload: record,
+            });
+            this._refreshHistory$.next();
+            return;
+        }
 
         await addDoc(this.attendanceCollection, record as AttendanceRecord);
         this._refreshHistory$.next();

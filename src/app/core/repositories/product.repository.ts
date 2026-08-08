@@ -112,6 +112,19 @@ export class ProductRepository {
     }
 
     /**
+     * Deducts stock of a product in the local Dexie cache for optimistic UI rendering
+     */
+    async deductStockLocal(productId: string, quantity: number): Promise<void> {
+        if (this.dbService.products) {
+            const product = await this.dbService.products.get(productId);
+            if (product) {
+                const newStock = Math.max(0, product.stock - quantity);
+                await this.dbService.products.update(productId, { stock: newStock });
+            }
+        }
+    }
+
+    /**
      * Clear local Dexie cache for products
      */
     async clearLocal(): Promise<void> {

@@ -18,6 +18,10 @@ import { CashRegisterService } from './cash-register.service';
 import { ReportStateService } from './report.state.service';
 import { toLocalDateStr } from '../utils/date.utils';
 
+import { SyncEngineService } from './dexie/sync-engine.service';
+import { OutboxQueueService } from './dexie/outbox-queue.service';
+import { ProductRepository } from '../repositories/product.repository';
+
 export function cleanUndefined(obj: any): any {
     if (obj === null || typeof obj !== 'object') {
         return obj;
@@ -49,6 +53,10 @@ export class CheckoutService {
     private authService = inject(AuthService);
     private cartStore = inject(CartStore);
     private reportStateService = inject(ReportStateService);
+    private syncEngineService = inject(SyncEngineService);
+    private outboxQueueService = inject(OutboxQueueService);
+    private productRepository = inject(ProductRepository);
+
     private productsCollection = collection(this.firestore, 'products');
     private transactionsCollection = collection(this.firestore, 'transactions');
     private inventoryLogsCollection = collection(this.firestore, 'inventory_logs');
@@ -75,6 +83,39 @@ export class CheckoutService {
         const cartItems = customItems || this.cartStore.items();
 
         if (cartItems.length === 0) throw new Error('Cart is empty');
+
+        const clientTxId = 'tx_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+        const isOnline = this.syncEngineService.isOnlineSignal();
+
+        // OFFLINE OUTBOX FALLBACK
+        if (!isOnline) {
+            // 1. Optimistically deduct local stock in Dexie
+            for (const item of cartItems) {
+                await this.productRepository.deductStockLocal(item.productId, item.quantity);
+            }
+
+            // 2. Queue transaction payload into Dexie Outbox Queue
+            await this.outboxQueueService.addToOutbox({
+                clientTxId,
+                type: 'POS_SALE',
+                payload: {
+                    cartItems,
+                    performedBy,
+                    paymentMethod,
+                    referenceNumber: referenceNumber || null,
+                    amountTendered: amountTendered || null,
+                    changeDue: changeDue || null,
+                    memberId: memberId || null,
+                    memberName: memberName || 'Walk-in',
+                },
+            });
+
+            if (!isCustomTransaction) {
+                this.cartStore.clear();
+            }
+
+            return clientTxId;
+        }
 
         const batch = writeBatch(this.firestore);
         const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0);

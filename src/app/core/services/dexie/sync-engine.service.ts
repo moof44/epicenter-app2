@@ -5,12 +5,15 @@ import { map, shareReplay } from 'rxjs/operators';
 import { OutboxQueueService } from './outbox-queue.service';
 import { OutboxItem } from '../../models/outbox.model';
 
+import { Firestore, collection, addDoc, doc, writeBatch, increment, arrayUnion } from '@angular/fire/firestore';
+
 @Injectable({
     providedIn: 'root',
 })
 export class SyncEngineService {
     private platformId = inject(PLATFORM_ID);
     private outboxQueueService = inject(OutboxQueueService);
+    private firestore = inject(Firestore);
 
     private isBrowser = isPlatformBrowser(this.platformId);
     private onlineSubject = new BehaviorSubject<boolean>(
@@ -37,6 +40,7 @@ export class SyncEngineService {
                 // Auto-trigger queue flush when returning online
                 if (status) {
                     this.notifyTabs('NETWORK_ONLINE');
+                    this.flushOutboxQueue();
                 }
             });
 
@@ -92,6 +96,8 @@ export class SyncEngineService {
                 try {
                     if (processor) {
                         await processor(item);
+                    } else {
+                        await this.defaultProcessItem(item);
                     }
                     await this.outboxQueueService.markSuccess(item.id);
                     processedCount++;
@@ -108,5 +114,12 @@ export class SyncEngineService {
         }
 
         return { processed: processedCount, failed: failedCount };
+    }
+
+    private async defaultProcessItem(item: OutboxItem): Promise<void> {
+        if (item.type === 'CHECKIN' && item.payload) {
+            const attendanceCollection = collection(this.firestore, 'attendance');
+            await addDoc(attendanceCollection, item.payload);
+        }
     }
 }
