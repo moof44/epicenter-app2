@@ -5,7 +5,6 @@ import { ProgressDashboard } from './features/progress/components/progress-dashb
 import { ProgressForm } from './features/progress/components/progress-form/progress-form';
 
 import { authGuard } from './core/guards/auth.guard';
-import { adminGuard } from './core/guards/admin.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
@@ -84,6 +83,12 @@ export const routes: Routes = [
     {
         path: 'audit-log',
         loadComponent: () => import('./features/audit-log/audit-log').then(m => m.AuditLogComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'ListPage', roles: ['ADMIN'] }
+    },
+    {
+        path: 'error-logs',
+        loadComponent: () => import('./features/error-logs/error-logs.component').then(m => m.ErrorLogsComponent),
         canActivate: [authGuard, roleGuard],
         data: { animation: 'ListPage', roles: ['ADMIN'] }
     },

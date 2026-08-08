@@ -1,0 +1,183 @@
+<div class="error-logs-container">
+  <!-- Page Header -->
+  <div class="header-section">
+    <div>
+      <h1 class="page-title">
+        <mat-icon class="title-icon">bug_report</mat-icon>
+        System Error & Audit Logs
+      </h1>
+      <p class="page-subtitle">
+        Real-time tracking of unhandled exceptions and application errors. Copy error logs directly to your AI Assistant for immediate fixes.
+      </p>
+    </div>
+    <button mat-flat-button color="warn" (click)="clearAll()" [disabled]="logs().length === 0">
+      <mat-icon>delete_sweep</mat-icon> Clear All Logs
+    </button>
+  </div>
+
+  <!-- KPI Metric Summary Cards -->
+  <div class="kpi-grid">
+    <mat-card class="kpi-card total">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Total Recorded Logs</span>
+          <span class="kpi-value">{{ totalCount() }}</span>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>list_alt</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card unresolved">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Unresolved Errors</span>
+          <span class="kpi-value">{{ unresolvedCount() }}</span>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>error_outline</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card fatal">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Fatal Exceptions</span>
+          <span class="kpi-value">{{ fatalCount() }}</span>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>warning</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filter & Search Controls -->
+  <mat-card class="filter-card">
+    <mat-card-content class="filter-bar">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search error message, URL, or user...</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="e.g. Cannot read properties" />
+        <button mat-icon-button matSuffix *ngIf="searchQuery()" (click)="searchQuery.set('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="select-field">
+        <mat-label>Severity</mat-label>
+        <mat-select [ngModel]="severityFilter()" (ngModelChange)="severityFilter.set($event)">
+          <mat-option value="ALL">All Severities</mat-option>
+          <mat-option value="FATAL">FATAL</mat-option>
+          <mat-option value="ERROR">ERROR</mat-option>
+          <mat-option value="WARNING">WARNING</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="select-field">
+        <mat-label>Status</mat-label>
+        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+          <mat-option value="ALL">All Statuses</mat-option>
+          <mat-option value="UNRESOLVED">Unresolved Only</mat-option>
+          <mat-option value="RESOLVED">Resolved Only</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Logs Accordion List -->
+  <div class="logs-section">
+    <div *ngIf="filteredLogs().length === 0" class="empty-state">
+      <mat-icon class="empty-icon">verified_user</mat-icon>
+      <h3>No matching error logs found</h3>
+      <p>Your application is running smoothly with zero unresolved error logs matching your filter criteria.</p>
+    </div>
+
+    <mat-accordion multi class="logs-accordion" *ngIf="filteredLogs().length > 0">
+      <mat-expansion-panel *ngFor="let log of filteredLogs()" class="log-panel" [class.resolved-panel]="log.status === 'RESOLVED'">
+        <mat-expansion-panel-header class="log-header">
+          <mat-panel-title class="panel-title">
+            <span class="severity-badge" [class]="log.severity.toLowerCase()">
+              {{ log.severity }}
+            </span>
+            <span class="error-name" *ngIf="log.name">{{ log.name }}:</span>
+            <span class="error-msg">{{ log.message }}</span>
+            <span class="count-chip" *ngIf="log.count > 1" matTooltip="Occurred {{ log.count }} times">
+              x{{ log.count }}
+            </span>
+          </mat-panel-title>
+
+          <mat-panel-description class="panel-description">
+            <span class="url-chip">
+              <mat-icon>link</mat-icon> {{ log.url }}
+            </span>
+            <span class="user-chip" *ngIf="log.user">
+              <mat-icon>person</mat-icon> {{ log.user.displayName }}
+            </span>
+            <span class="time-chip">
+              <mat-icon>schedule</mat-icon> {{ log.lastOccurredAt | date:'medium' }}
+            </span>
+
+            <!-- Quick Action Buttons on Header -->
+            <div class="header-actions">
+              <button mat-raised-button color="primary" class="copy-ai-btn" (click)="copyForAi(log, $event)" matTooltip="Format & Copy Error Report for AI Assistant">
+                <mat-icon>smart_toy</mat-icon> Copy for AI
+              </button>
+
+              <button mat-icon-button [color]="log.status === 'RESOLVED' ? 'primary' : 'accent'" (click)="toggleStatus(log, $event)" [matTooltip]="log.status === 'RESOLVED' ? 'Mark as Unresolved' : 'Mark as Resolved'">
+                <mat-icon>{{ log.status === 'RESOLVED' ? 'undo' : 'check_circle' }}</mat-icon>
+              </button>
+
+              <button mat-icon-button color="warn" (click)="deleteLog(log, $event)" matTooltip="Delete Error Log">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <!-- Detailed Log Body -->
+        <div class="log-detail-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Status</span>
+              <span class="status-tag" [class.resolved]="log.status === 'RESOLVED'">
+                {{ log.status }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Affected Route / URL</span>
+              <code class="code-inline">{{ log.url }}</code>
+            </div>
+            <div class="detail-item" *ngIf="log.user">
+              <span class="detail-label">Logged-In User</span>
+              <span>{{ log.user.displayName }} (ID: {{ log.user.uid }})</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Total Occurrences</span>
+              <span>{{ log.count }} times</span>
+            </div>
+          </div>
+
+          <!-- Stack Trace Code Box -->
+          <div class="stack-section">
+            <div class="stack-header">
+              <span>Stack Trace</span>
+              <button mat-stroked-button color="accent" class="sm-btn" (click)="copyForAi(log, $event)">
+                <mat-icon>content_copy</mat-icon> Copy Full Prompt
+              </button>
+            </div>
+            <pre class="stack-box"><code>{{ log.stack || 'No stack trace recorded.' }}</code></pre>
+          </div>
+
+          <!-- User Agent Info -->
+          <div class="user-agent-section">
+            <span class="detail-label">Browser / User Agent:</span>
+            <code class="ua-text">{{ log.userAgent }}</code>
+          </div>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </div>
+</div>
