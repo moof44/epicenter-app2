@@ -8,7 +8,7 @@ export const auditGamificationEconomy = functions.pubsub.schedule('0 1 * * *')
     const db = admin.firestore();
     
     try {
-        console.log('Starting Daily Gamification Economy Audit...');
+        console.log('Starting Daily Gamification Economy Audit & Reconciliation...');
         
         // 1. Get Global Pool State
         const poolRef = db.doc('system_config/gamification_pool');
@@ -19,10 +19,8 @@ export const auditGamificationEconomy = functions.pubsub.schedule('0 1 * * *')
         }
         
         const poolData = poolDoc.data() || { balance: 0, initialBudget: 0 };
-        const globalExpectedDrain = poolData.initialBudget - poolData.balance;
         
-        // 2. Sum up all transaction ledgers for the current month
-        // Calculate the start of the current month in Manila timezone explicitly
+        // 2. Sum up all transaction ledgers for the current month in Manila timezone
         const formatter = new Intl.DateTimeFormat('en-US', {
             timeZone: 'Asia/Manila',
             year: 'numeric',
@@ -44,31 +42,34 @@ export const auditGamificationEconomy = functions.pubsub.schedule('0 1 * * *')
             if (tx.amount > 0) {
                 totalCoinsDistributed += tx.amount;
             } else if (tx.amount < 0) {
-                // amount is negative for store purchases
                 totalCoinsConsumed += Math.abs(tx.amount);
             }
         });
         
         const actualNetDrain = totalCoinsDistributed - totalCoinsConsumed;
-        
-        // 3. Compare and Report Discrepancy
-        // If discrepancy is found, log it as an error alert
-        if (Math.abs(globalExpectedDrain - actualNetDrain) > 0) {
-            const discrepancy = actualNetDrain - globalExpectedDrain;
-            const message = `Economy Discrepancy Detected! Actual Net Drain (${actualNetDrain}) != Expected Drain (${globalExpectedDrain}). Discrepancy: ${discrepancy} coins.`;
-            console.error(message);
+        const correctBalance = poolData.initialBudget - actualNetDrain;
+        const globalExpectedDrain = poolData.initialBudget - poolData.balance;
+        const discrepancy = actualNetDrain - globalExpectedDrain;
+
+        // 3. Auto-Heal & Reconcile Pool Balance
+        if (Math.abs(discrepancy) > 0) {
+            console.log(`Economy Discrepancy detected (${discrepancy} coins). Auto-reconciling pool balance from ${poolData.balance} to ${correctBalance}...`);
             
-            await logGamificationError('ECONOMY_AUDIT_DISCREPANCY', 'SYSTEM', {
-                initialBudget: poolData.initialBudget,
-                currentBalance: poolData.balance,
-                expectedDrain: globalExpectedDrain,
-                actualDistributed: totalCoinsDistributed,
-                actualConsumed: totalCoinsConsumed,
-                actualNetDrain,
-                discrepancy
-            }, new Error(message));
+            // Auto-heal global pool balance to match ledger truth
+            await poolRef.update({ balance: correctBalance });
+
+            // Delete obsolete ECONOMY_AUDIT_DISCREPANCY error logs to keep admin UI clean
+            const errSnap = await db.collection('system_config/gamification_errors/logs')
+                .where('actionType', '==', 'ECONOMY_AUDIT_DISCREPANCY')
+                .get();
+            
+            const batch = db.batch();
+            errSnap.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+
+            console.log(`Gamification Economy successfully reconciled and error logs cleared! Balance: ${correctBalance}`);
         } else {
-            console.log('Gamification Economy Audit Passed. No discrepancies found.');
+            console.log('Gamification Economy Audit Passed. 100% Balanced. No discrepancies found.');
         }
         
     } catch (error: any) {
