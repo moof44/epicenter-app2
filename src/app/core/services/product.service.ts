@@ -20,12 +20,15 @@ import { Product } from '../models/store.model';
 import { AuthService } from './auth.service';
 import { createConverter } from '../utils/firestore-converter.utils';
 
+import { ProductRepository } from '../repositories/product.repository';
+
 @Injectable({
     providedIn: 'root',
 })
 export class ProductService {
     private firestore = inject(Firestore);
     private authService = inject(AuthService);
+    private productRepository = inject(ProductRepository);
     private productsCollection = collection(this.firestore, 'products').withConverter(
         createConverter<Product>()
     );
@@ -40,17 +43,8 @@ export class ProductService {
         };
     }
 
-    private readonly products$ = (() => {
-        const q = query(this.productsCollection, orderBy('name'), limit(100));
-        return collectionData(q).pipe(shareReplay({ bufferSize: 1, refCount: false }));
-    })();
-
     getProducts(limitCount = 100): Observable<Product[]> {
-        if (limitCount !== 100) {
-            const q = query(this.productsCollection, orderBy('name'), limit(limitCount));
-            return collectionData(q);
-        }
-        return this.products$;
+        return this.productRepository.getProductsLive();
     }
 
     async getProductsPage(
