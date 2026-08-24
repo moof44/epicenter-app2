@@ -22,7 +22,14 @@ export const appConfig: ApplicationConfig = {
     })),
     provideFunctions(() => getFunctions()),
     provideAuth(() => getAuth()),
-    provideMessaging(() => getMessaging()),
+    provideMessaging(() => {
+      try {
+        return getMessaging();
+      } catch (e) {
+        console.warn('[Messaging] Push messaging is not supported in this browser environment:', e);
+        return null as any;
+      }
+    }),
     provideAnimationsAsync()
   ]
 };

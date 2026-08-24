@@ -30,48 +30,30 @@ export class MemberHealthWidget {
     private attendanceService = inject(AttendanceService);
     private router = inject(Router);
 
-    private members = toSignal(this.memberService.getMembers(), { initialValue: [] });
+    private summary = toSignal(
+        this.memberService.getMemberHealthSummary(),
+        {
+            initialValue: {
+                activeCount: 0,
+                inactiveCount: 0,
+                expiringCount: 0,
+                expiringNames: [],
+                newThisMonth: 0,
+            }
+        }
+    );
 
     todayCheckIns = signal(0);
     isCheckInsLoaded = signal(false);
 
-    activeCount = computed(() =>
-        this.members().filter(m => m.membershipStatus === 'Active').length
-    );
-
-    inactiveCount = computed(() =>
-        this.members().filter(m => m.membershipStatus === 'Inactive').length
-    );
-
-    expiringThisWeek = computed(() => {
-        const now = new Date();
-        const weekFromNow = new Date(now);
-        weekFromNow.setDate(weekFromNow.getDate() + 7);
-
-        return this.members().filter(m => {
-            if (!m.membershipExpiration) return false;
-            const exp = safeToDate(m.membershipExpiration);
-            if (!exp) return false;
-            return exp > now && exp <= weekFromNow;
-        });
-    });
-
-    newThisMonth = computed(() => {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        return this.members().filter(m => {
-            const created = safeToDate(m.createdBy?.timestamp);
-            if (!created) return false;
-            return created >= startOfMonth;
-        }).length;
-    });
-
-    expiringCount = computed(() => this.expiringThisWeek().length);
-    expiringNames = computed(() => this.expiringThisWeek().slice(0, 3).map(m => m.name));
+    activeCount = computed(() => this.summary().activeCount);
+    inactiveCount = computed(() => this.summary().inactiveCount);
+    expiringCount = computed(() => this.summary().expiringCount);
+    expiringNames = computed(() => this.summary().expiringNames);
+    newThisMonth = computed(() => this.summary().newThisMonth);
     expiringExtra = computed(() => Math.max(this.expiringCount() - 3, 0));
 
-    isLoaded = computed(() => this.members().length > 0 || this.isCheckInsLoaded());
+    isLoaded = computed(() => (this.summary().activeCount > 0 || this.summary().inactiveCount > 0) || this.isCheckInsLoaded());
 
     constructor() {
         this.loadTodayCheckIns();

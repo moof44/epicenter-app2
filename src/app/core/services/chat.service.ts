@@ -23,6 +23,7 @@ export class ChatService implements OnDestroy {
   private messagesSub: Subscription | null = null;
   private lastReadDate: Date | null = null;
   private previewTimeout: any = null;
+  private isInitialSnapshot = true;
 
   constructor() {
     effect(() => {
@@ -44,12 +45,13 @@ export class ChatService implements OnDestroy {
           this.unreadCount.set(0);
           this.lastReadDate = null;
         }
-      });
+      }, 1500); // Stagger background socket listener by 1.5s to let main page render first
     });
   }
 
   private setupMessagesListener(userId: string) {
     this.cleanupListener();
+    this.isInitialSnapshot = true;
     
     const q = query(
       this.messagesCollection,
@@ -89,7 +91,8 @@ export class ChatService implements OnDestroy {
           
           this.unreadCount.set(count);
           
-          if (newestNewMsg) {
+          // Only trigger floating preview popup & sounds for NEW incoming messages (not historical startup load)
+          if (newestNewMsg && !this.isInitialSnapshot) {
             let isMention = false;
             
             // Check for @everyone mention
@@ -128,6 +131,7 @@ export class ChatService implements OnDestroy {
           this.unreadCount.set(0);
         }
       }
+      this.isInitialSnapshot = false;
     });
   }
 

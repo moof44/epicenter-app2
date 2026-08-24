@@ -7,15 +7,55 @@
     <div class="sparkline-card" (click)="navigateToReports()" (keydown.enter)="navigateToReports()" tabindex="0" role="button">
         <div class="card-header">
             <span class="card-title">Daily Sales This Month</span>
-            <span class="card-total">₱{{ monthlyTotal() | number:'1.2-2' }}</span>
+            <div class="header-right">
+                @if (activePoint()) {
+                    <span class="hover-info">
+                        {{ activePoint()?.date }}: <strong>₱{{ (activePoint()?.sales || 0) | number:'1.2-2' }}</strong>
+                    </span>
+                }
+                <span class="card-total">₱{{ monthlyTotal() | number:'1.2-2' }}</span>
+            </div>
         </div>
-        <apx-chart
-            [series]="chartSeries()"
-            [chart]="chartOptions()"
-            [stroke]="strokeOptions"
-            [tooltip]="tooltipOptions"
-            [grid]="gridOptions"
-            [yaxis]="yaxisOptions"
-        ></apx-chart>
+
+        <div class="svg-container" (mouseleave)="onLeave()">
+            <svg viewBox="0 0 500 75" preserveAspectRatio="none" class="sparkline-svg">
+                <defs>
+                    <linearGradient id="salesSparkGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"/>
+                        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- Area Fill -->
+                @if (areaPath()) {
+                    <path [attr.d]="areaPath()" fill="url(#salesSparkGradient)"/>
+                }
+
+                <!-- Line Stroke -->
+                @if (linePath()) {
+                    <path [attr.d]="linePath()" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                }
+
+                <!-- Interactive Points / Hover Targets -->
+                @for (pt of sparkPoints(); track pt.day) {
+                    <circle
+                        [attr.cx]="pt.x"
+                        [attr.cy]="pt.y"
+                        r="5"
+                        class="hover-target"
+                        (mouseenter)="onHover(pt)"
+                        (touchstart)="onHover(pt)"
+                    />
+                    @if (activePoint()?.day === pt.day) {
+                        <circle
+                            [attr.cx]="pt.x"
+                            [attr.cy]="pt.y"
+                            r="4"
+                            class="active-dot"
+                        />
+                    }
+                }
+            </svg>
+        </div>
     </div>
 }

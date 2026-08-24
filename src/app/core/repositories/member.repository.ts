@@ -62,6 +62,84 @@ export class MemberRepository {
     }
 
     /**
+     * Aggregated Member Health Summary stream.
+     * Computes active, inactive, expiring, and new counts directly inside Dexie
+     * without loading or emitting 3,600+ member objects into Angular memory.
+     */
+    getMemberHealthSummaryLive(): Observable<{
+        activeCount: number;
+        inactiveCount: number;
+        expiringCount: number;
+        expiringNames: string[];
+        newThisMonth: number;
+    }> {
+        if (!isPlatformBrowser(this.platformId)) {
+            return of({
+                activeCount: 0,
+                inactiveCount: 0,
+                expiringCount: 0,
+                expiringNames: [],
+                newThisMonth: 0,
+            });
+        }
+
+        return from(
+            liveQuery(async () => {
+                const db = this.dbService.db;
+                if (!db) {
+                    return {
+                        activeCount: 0,
+                        inactiveCount: 0,
+                        expiringCount: 0,
+                        expiringNames: [],
+                        newThisMonth: 0,
+                    };
+                }
+
+                // Fast index counts on IndexedDB
+                const activeCount = await db.members.where('membershipStatus').equals('Active').count();
+                const inactiveCount = await db.members.where('membershipStatus').equals('Inactive').count();
+
+                const now = new Date();
+                const weekFromNow = new Date(now);
+                weekFromNow.setDate(weekFromNow.getDate() + 7);
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+                let newThisMonth = 0;
+                const expiringMembers: string[] = [];
+
+                // Fast cursor scan to collect only expiring soon and new members
+                await db.members.each((m) => {
+                    if (m.membershipExpiration) {
+                        const raw = m.membershipExpiration as any;
+                        const exp = raw instanceof Date ? raw : (raw.toDate ? raw.toDate() : new Date(raw));
+                        if (exp && exp > now && exp <= weekFromNow) {
+                            expiringMembers.push(m.name || 'Member');
+                        }
+                    }
+                    if (m.createdBy?.timestamp) {
+                        const rawCreated = m.createdBy.timestamp as any;
+                        const created = rawCreated instanceof Date ? rawCreated : (rawCreated.toDate ? rawCreated.toDate() : new Date(rawCreated));
+                        if (created && created >= startOfMonth) {
+                            newThisMonth++;
+                        }
+                    }
+                });
+
+                return {
+                    activeCount,
+                    inactiveCount,
+                    expiringCount: expiringMembers.length,
+                    expiringNames: expiringMembers.slice(0, 3),
+                    newThisMonth,
+                };
+            })
+        ).pipe(
+            shareReplay({ bufferSize: 1, refCount: false })
+        );
+    }
+
+    /**
      * Starts background real-time Firestore listener to keep Dexie in sync.
      */
     private startBackgroundSync(): void {

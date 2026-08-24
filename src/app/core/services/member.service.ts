@@ -48,6 +48,16 @@ export class MemberService {
         return this.memberRepository.getMembersLive();
     }
 
+    getMemberHealthSummary(): Observable<{
+        activeCount: number;
+        inactiveCount: number;
+        expiringCount: number;
+        expiringNames: string[];
+        newThisMonth: number;
+    }> {
+        return this.memberRepository.getMemberHealthSummaryLive();
+    }
+
     async getMembersPage(
         limitCount = 50,
         lastDoc?: QueryDocumentSnapshot<Member>

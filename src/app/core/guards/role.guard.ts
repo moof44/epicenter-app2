@@ -2,7 +2,8 @@ import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../services/auth.service';
-import { map, take } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { map, take, filter, timeout, catchError } from 'rxjs/operators';
 
 export const roleGuard: CanActivateFn = (route, _state) => {
     const authService = inject(AuthService);
@@ -17,7 +18,15 @@ export const roleGuard: CanActivateFn = (route, _state) => {
     }
 
     return authService.user$.pipe(
+        filter((user): user is Record<string, any> => !!user),
         take(1),
+        timeout({
+            each: 2000,
+            with: () => {
+                const cached = authService.userProfile();
+                return of(cached as Record<string, any>);
+            }
+        }),
         map(user => {
             // Block deactivated users
             if (user && user['isActive'] === false) {
@@ -30,7 +39,6 @@ export const roleGuard: CanActivateFn = (route, _state) => {
             }
 
             // Permission denied handling
-            // Only show snackbar if user is actually logged in but lacks permission
             if (user) {
                 snackBar.open('Access Denied: You do not have permission to view this page.', 'Close', {
                     duration: 5000,
@@ -40,6 +48,7 @@ export const roleGuard: CanActivateFn = (route, _state) => {
 
             // Redirect to home or pos
             return router.createUrlTree(['/']);
-        })
+        }),
+        catchError(() => of(true))
     );
 };

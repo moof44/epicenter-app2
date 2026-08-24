@@ -23,7 +23,7 @@ export interface NotificationItem {
 export class NotificationService implements OnDestroy {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
-  private messaging = inject(Messaging);
+  private messaging = inject(Messaging, { optional: true });
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
 
@@ -40,8 +40,10 @@ export class NotificationService implements OnDestroy {
     effect(() => {
       const user = this.authService.userProfile();
       if (user) {
-        this.setupNotificationsListener(user.uid);
-        this.requestPushPermission();
+        setTimeout(() => {
+          this.setupNotificationsListener(user.uid);
+          this.requestPushPermission();
+        }, 1000);
       } else {
         this.cleanup();
       }
@@ -65,7 +67,7 @@ export class NotificationService implements OnDestroy {
     const user = this.authService.userProfile();
     if (!user) return;
 
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !this.messaging) {
       console.warn('Web Push Notifications are not supported in this browser.');
       return;
     }
@@ -73,7 +75,7 @@ export class NotificationService implements OnDestroy {
     try {
       // 1. Request Browser Permission
       const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
+      if (permission === 'granted' && this.messaging) {
         // 2. Fetch FCM Token
         const token = await getToken(this.messaging, {
           vapidKey: this.vapidKey
@@ -124,6 +126,7 @@ export class NotificationService implements OnDestroy {
   }
 
   private setupForegroundListener() {
+    if (!this.messaging) return;
     if (this.messageUnsubscribe) {
       this.messageUnsubscribe();
     }
