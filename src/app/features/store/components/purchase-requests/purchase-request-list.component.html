@@ -1,0 +1,241 @@
+<div class="pr-container">
+  <!-- Page Header -->
+  <div class="header-section">
+    <div>
+      <h1 class="page-title">
+        <mat-icon class="title-icon">shopping_cart_checkout</mat-icon>
+        Purchase & Refill Requests
+      </h1>
+      <p class="page-subtitle">
+        Manage inventory refill requests, facility procurement, and outgoing expenses with automated stock intake.
+      </p>
+    </div>
+
+    <button mat-flat-button color="primary" class="new-pr-btn" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon> New Purchase Request
+    </button>
+  </div>
+
+  <!-- KPI Metric Summary Cards -->
+  <div class="kpi-grid">
+    <mat-card class="kpi-card pending">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Pending Approval</span>
+          <span class="kpi-value">{{ pendingCount() }}</span>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>pending_actions</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card in-transit">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Approved & Ordered</span>
+          <span class="kpi-value">{{ inTransitCount() }}</span>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>local_shipping</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card fulfilled">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Fulfilled & Restocked</span>
+          <span class="kpi-value">{{ fulfilledCount() }}</span>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card outgoing">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Est. Outgoing Pipeline</span>
+          <span class="kpi-value">₱{{ totalEstimatedPending() | number:'1.0-0' }}</span>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>payments</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filter & Search Controls -->
+  <mat-card class="filter-card">
+    <mat-card-content class="filter-bar">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search PR number, title, product, requester...</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="e.g. PR-2026-0001, Creatine" />
+        <button mat-icon-button matSuffix *ngIf="searchQuery()" (click)="searchQuery.set('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="select-field">
+        <mat-label>Status</mat-label>
+        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+          <mat-option value="ALL">All Statuses</mat-option>
+          <mat-option value="PENDING">🟡 Pending Approval</mat-option>
+          <mat-option value="APPROVED">🔵 Approved</mat-option>
+          <mat-option value="ORDERED">🟣 Ordered / In Transit</mat-option>
+          <mat-option value="RECEIVED">🟢 Received & Restocked</mat-option>
+          <mat-option value="REJECTED">🔴 Rejected</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="select-field">
+        <mat-label>Priority</mat-label>
+        <mat-select [ngModel]="priorityFilter()" (ngModelChange)="priorityFilter.set($event)">
+          <mat-option value="ALL">All Priorities</mat-option>
+          <mat-option value="URGENT">🔴 Urgent</mat-option>
+          <mat-option value="HIGH">🟠 High</mat-option>
+          <mat-option value="NORMAL">🔵 Normal</mat-option>
+          <mat-option value="LOW">🟢 Low</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Requests Accordion List -->
+  <div class="requests-section">
+    <div *ngIf="filteredRequests().length === 0" class="empty-state">
+      <mat-icon class="empty-icon">inventory_2</mat-icon>
+      <h3>No purchase requests found</h3>
+      <p>Click "New Purchase Request" above to request inventory refills or gym supplies.</p>
+    </div>
+
+    <mat-accordion multi class="requests-accordion" *ngIf="filteredRequests().length > 0">
+      <mat-expansion-panel *ngFor="let req of filteredRequests()" class="pr-panel" [class.received-panel]="req.status === 'RECEIVED'">
+        <mat-expansion-panel-header class="pr-header">
+          <mat-panel-title class="panel-title">
+            <span class="status-badge" [class]="req.status.toLowerCase()">
+              {{ req.status }}
+            </span>
+            <span class="pr-number">{{ req.requestNumber }}</span>
+            <span class="pr-title">{{ req.title }}</span>
+            <span class="priority-badge" [class]="req.priority.toLowerCase()">
+              {{ req.priority }}
+            </span>
+          </mat-panel-title>
+
+          <mat-panel-description class="panel-description">
+            <span class="requester-chip">
+              <mat-icon>person</mat-icon> {{ req.requestedBy.displayName }}
+            </span>
+            <span class="cost-chip">
+              <mat-icon>payments</mat-icon>
+              ₱{{ (req.actualTotalAmount || req.estimatedTotalAmount) | number:'1.2-2' }}
+            </span>
+            <span class="time-chip">
+              <mat-icon>schedule</mat-icon> {{ req.requestedAt | date:'mediumDate' }}
+            </span>
+
+            <!-- Quick Action Buttons on Header (for Admins) -->
+            <div class="header-actions" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
+              <!-- If PENDING: Approve / Reject -->
+              <ng-container *ngIf="req.status === 'PENDING'">
+                <button mat-flat-button color="primary" class="sm-action-btn" (click)="approve(req, $event)" matTooltip="Approve Purchase Request">
+                  <mat-icon>check</mat-icon> Approve
+                </button>
+                <button mat-stroked-button color="warn" class="sm-action-btn" (click)="reject(req, $event)" matTooltip="Reject Request">
+                  <mat-icon>close</mat-icon> Reject
+                </button>
+              </ng-container>
+
+              <!-- If APPROVED: Mark Ordered or Fulfill -->
+              <ng-container *ngIf="req.status === 'APPROVED'">
+                <button mat-stroked-button color="accent" class="sm-action-btn" (click)="markOrdered(req, $event)" matTooltip="Mark as Ordered with Supplier">
+                  <mat-icon>local_shipping</mat-icon> Order
+                </button>
+                <button mat-flat-button color="primary" class="sm-action-btn fulfill-btn" (click)="openFulfillDialog(req, $event)" matTooltip="Receive Goods & Restock">
+                  <mat-icon>inventory</mat-icon> Receive & Restock
+                </button>
+              </ng-container>
+
+              <!-- If ORDERED: Fulfill -->
+              <ng-container *ngIf="req.status === 'ORDERED'">
+                <button mat-flat-button color="primary" class="sm-action-btn fulfill-btn" (click)="openFulfillDialog(req, $event)" matTooltip="Receive Goods & Restock">
+                  <mat-icon>inventory</mat-icon> Receive & Restock
+                </button>
+              </ng-container>
+            </div>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <!-- Detailed Request Body -->
+        <div class="pr-detail-body">
+          <!-- Item Breakdown Table -->
+          <div class="items-table-wrapper">
+            <table class="detail-items-table">
+              <thead>
+                <tr>
+                  <th>Item / Product Name</th>
+                  <th>Category</th>
+                  <th class="text-center">Requested Qty</th>
+                  <th class="text-center">Approved Qty</th>
+                  <th class="text-center">Received Qty</th>
+                  <th class="text-right">Unit Cost</th>
+                  <th class="text-right">Total Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of req.items">
+                  <td>
+                    <span class="item-name-bold">{{ item.name }}</span>
+                    <span class="type-pill" [class.cat]="item.itemType === 'CATALOG_PRODUCT'">
+                      {{ item.itemType === 'CATALOG_PRODUCT' ? '📦 Retail Catalog' : '🧹 Facility Supply' }}
+                    </span>
+                  </td>
+                  <td class="text-muted">{{ item.category || 'General' }}</td>
+                  <td class="text-center font-bold">{{ item.requestedQuantity }} {{ item.unit }}</td>
+                  <td class="text-center text-muted">{{ (item.approvedQuantity ?? item.requestedQuantity) }} {{ item.unit }}</td>
+                  <td class="text-center" [class.text-green]="item.receivedQuantity !== null && item.receivedQuantity !== undefined">
+                    {{ item.receivedQuantity !== null && item.receivedQuantity !== undefined ? item.receivedQuantity + ' ' + item.unit : '—' }}
+                  </td>
+                  <td class="text-right">₱{{ (item.actualUnitCost || item.estimatedUnitCost || 0) | number:'1.2-2' }}</td>
+                  <td class="text-right font-bold">
+                    ₱{{ ((item.receivedQuantity ?? item.approvedQuantity ?? item.requestedQuantity) * (item.actualUnitCost || item.estimatedUnitCost || 0)) | number:'1.2-2' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Metadata Grid -->
+          <div class="meta-details-grid">
+            <div class="meta-card">
+              <span class="meta-label">Requester Notes</span>
+              <span class="meta-text">{{ req.notes || 'No additional notes provided.' }}</span>
+            </div>
+
+            <div class="meta-card" *ngIf="req.reviewedBy">
+              <span class="meta-label">Reviewer Details</span>
+              <span class="meta-text">
+                Reviewed by <strong>{{ req.reviewedBy.displayName }}</strong> on {{ req.reviewedAt | date:'medium' }}
+              </span>
+              <span class="meta-subtext" *ngIf="req.approvalNotes">Note: "{{ req.approvalNotes }}"</span>
+              <span class="meta-subtext text-warn" *ngIf="req.rejectionReason">Reason: "{{ req.rejectionReason }}"</span>
+            </div>
+
+            <div class="meta-card" *ngIf="req.paidVia || req.supplierName">
+              <span class="meta-label">Procurement & Payment Source</span>
+              <span class="meta-text" *ngIf="req.supplierName">Supplier: <strong>{{ req.supplierName }}</strong></span>
+              <span class="meta-text" *ngIf="req.paidVia">
+                Paid via: <strong>{{ req.paidVia }}</strong>
+                {{ req.paymentReference ? '(' + req.paymentReference + ')' : '' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </div>
+</div>

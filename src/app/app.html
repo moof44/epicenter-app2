@@ -84,6 +84,14 @@
           </a>
         </ng-container>
 
+        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])">
+          <a mat-list-item routerLink="/store/purchase-requests" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>shopping_cart_checkout</mat-icon>
+            <span matListItemTitle>Purchase Requests</span>
+          </a>
+        </ng-container>
+
         <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
           <a mat-list-item routerLink="/store/manage" routerLinkActive="active"
             (click)="mobileQuery.matches ? snav.close() : null">

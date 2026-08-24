@@ -62,6 +62,12 @@ export const storeRoutes: Routes = [
     data: { animation: 'PurchaseHistoryPage', roles: ['ADMIN', 'MANAGER'] }
   },
   {
+    path: 'purchase-requests',
+    loadComponent: () => import('./components/purchase-requests/purchase-request-list.component').then(m => m.PurchaseRequestListComponent),
+    canActivate: [roleGuard],
+    data: { animation: 'PurchaseRequestsPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
+  },
+  {
     path: 'inventory-history',
     loadComponent: () => import('./components/inventory-history/inventory-history').then(m => m.InventoryHistoryComponent),
     canActivate: [roleGuard],
