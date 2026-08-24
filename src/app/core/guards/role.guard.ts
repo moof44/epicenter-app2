@@ -17,6 +17,22 @@ export const roleGuard: CanActivateFn = (route, _state) => {
         return true;
     }
 
+    // Fast-path: Instant synchronous role validation if profile is already in memory
+    const cachedProfile = authService.userProfile();
+    if (cachedProfile) {
+        if (cachedProfile.isActive === false) {
+            return router.createUrlTree(['/login']);
+        }
+        if (cachedProfile.roles && requiredRoles.some(role => cachedProfile.roles.includes(role))) {
+            return true;
+        }
+        snackBar.open('Access Denied: You do not have permission to view this page.', 'Close', {
+            duration: 5000,
+            panelClass: ['error-snackbar']
+        });
+        return router.createUrlTree(['/']);
+    }
+
     return authService.user$.pipe(
         filter((user): user is Record<string, any> => !!user),
         take(1),

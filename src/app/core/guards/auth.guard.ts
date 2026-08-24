@@ -10,7 +10,16 @@ export const authGuard: CanActivateFn = (_route, _state) => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
-    // Step 1: Fast Firebase Auth check (resolves immediately after login)
+    // Fast-path: Instant synchronous check if already authenticated and profile is in memory
+    if (auth.currentUser && authService.userProfile()) {
+        const profile = authService.userProfile();
+        if (profile && profile.isActive === false) {
+            return router.createUrlTree(['/login']);
+        }
+        return true;
+    }
+
+    // Fallback on initial cold boot/page reload: Fast Firebase Auth stream check
     return user(auth).pipe(
         take(1),
         switchMap(currentUser => {

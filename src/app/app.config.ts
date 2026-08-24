@@ -1,5 +1,5 @@
 import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withPreloading, PreloadAllModules, withComponentInputBinding } from '@angular/router';
 import { initializeApp, provideFirebaseApp, getApp } from '@angular/fire/app';
 import { provideFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from '@angular/fire/firestore';
 import { getFunctions, provideFunctions } from '@angular/fire/functions';
@@ -15,7 +15,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
-    provideRouter(routes),
+    provideRouter(routes, withPreloading(PreloadAllModules), withComponentInputBinding()),
     provideFirebaseApp(() => initializeApp(firebaseConfig)),
     provideFirestore(() => initializeFirestore(getApp(), {
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })

@@ -1,9 +1,4 @@
 import { Routes } from '@angular/router';
-import { MemberList } from './features/members/components/member-list/member-list';
-import { MemberForm } from './features/members/components/member-form/member-form';
-import { ProgressDashboard } from './features/progress/components/progress-dashboard/progress-dashboard';
-import { ProgressForm } from './features/progress/components/progress-form/progress-form';
-
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
@@ -22,37 +17,37 @@ export const routes: Routes = [
     },
     {
         path: 'members',
-        component: MemberList,
+        loadComponent: () => import('./features/members/components/member-list/member-list').then(m => m.MemberList),
         canActivate: [authGuard, roleGuard],
         data: { animation: 'ListPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
     },
     {
         path: 'members/add',
-        component: MemberForm,
+        loadComponent: () => import('./features/members/components/member-form/member-form').then(m => m.MemberForm),
         canActivate: [authGuard, roleGuard],
         data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF'] }
     },
     {
         path: 'members/edit/:id',
-        component: MemberForm,
+        loadComponent: () => import('./features/members/components/member-form/member-form').then(m => m.MemberForm),
         canActivate: [authGuard, roleGuard],
         data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF'] }
     },
     {
         path: 'members/:id/progress',
-        component: ProgressDashboard,
+        loadComponent: () => import('./features/progress/components/progress-dashboard/progress-dashboard').then(m => m.ProgressDashboard),
         canActivate: [authGuard, roleGuard],
         data: { animation: 'DashboardPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
     },
     {
         path: 'members/:id/progress/new',
-        component: ProgressForm,
+        loadComponent: () => import('./features/progress/components/progress-form/progress-form').then(m => m.ProgressForm),
         canActivate: [authGuard, roleGuard],
         data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
     },
     {
         path: 'members/:id/progress/edit/:entryId',
-        component: ProgressForm,
+        loadComponent: () => import('./features/progress/components/progress-form/progress-form').then(m => m.ProgressForm),
         canActivate: [authGuard, roleGuard],
         data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
     },
