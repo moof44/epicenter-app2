@@ -73,8 +73,8 @@
           <span matListItemTitle>Staff</span>
         </a>
 
-        <mat-divider *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])"></mat-divider>
-        <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">Store</div>
+        <mat-divider *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])"></mat-divider>
+        <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])">Store</div>
 
         <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">
           <a mat-list-item routerLink="/store/pos" routerLinkActive="active"

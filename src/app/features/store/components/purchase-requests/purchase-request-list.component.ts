@@ -103,6 +103,10 @@ export class PurchaseRequestListComponent implements OnInit {
 
     openFulfillDialog(request: PurchaseRequest, event?: Event): void {
         if (event) event.stopPropagation();
+        if (!this.authService.hasAnyRole(['ADMIN', 'MANAGER'])) {
+            this.snackBar.open('Access Denied: Only Admins and Managers can fulfill and restock purchases.', 'Close', { duration: 3000 });
+            return;
+        }
         this.dialog.open(FulfillRequestModalComponent, {
             width: '850px',
             data: request,
@@ -112,6 +116,10 @@ export class PurchaseRequestListComponent implements OnInit {
 
     async approve(request: PurchaseRequest, event?: Event): Promise<void> {
         if (event) event.stopPropagation();
+        if (!this.authService.hasAnyRole(['ADMIN', 'MANAGER'])) {
+            this.snackBar.open('Access Denied: Only Admins and Managers can approve requests.', 'Close', { duration: 3000 });
+            return;
+        }
         if (!request.id) return;
         const notes = prompt('Approval Notes / Instructions (Optional):', '');
         if (notes === null) return; // User cancelled prompt
@@ -129,6 +137,10 @@ export class PurchaseRequestListComponent implements OnInit {
 
     async reject(request: PurchaseRequest, event?: Event): Promise<void> {
         if (event) event.stopPropagation();
+        if (!this.authService.hasAnyRole(['ADMIN', 'MANAGER'])) {
+            this.snackBar.open('Access Denied: Only Admins and Managers can reject requests.', 'Close', { duration: 3000 });
+            return;
+        }
         if (!request.id) return;
         const reason = prompt('Please enter the reason for rejection:');
         if (!reason || !reason.trim()) {
@@ -146,6 +158,10 @@ export class PurchaseRequestListComponent implements OnInit {
 
     async markOrdered(request: PurchaseRequest, event?: Event): Promise<void> {
         if (event) event.stopPropagation();
+        if (!this.authService.hasAnyRole(['ADMIN', 'MANAGER'])) {
+            this.snackBar.open('Access Denied: Only Admins and Managers can mark requests as ordered.', 'Close', { duration: 3000 });
+            return;
+        }
         if (!request.id) return;
         const supplier = prompt('Supplier Name / Store (e.g. Wheyl, SM Store):', request.supplierName || '');
         if (supplier === null) return;
