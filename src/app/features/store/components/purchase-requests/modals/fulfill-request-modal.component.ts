@@ -127,9 +127,10 @@ interface FulfillLineItem extends PurchaseRequestItem {
     `,
     styles: [`
         .fulfill-modal-container {
-            padding: 8px 12px;
-            min-width: 700px;
+            padding: 4px;
+            width: 100%;
             max-width: 900px;
+            box-sizing: border-box;
         }
         .dialog-title {
             display: flex;
@@ -149,8 +150,9 @@ interface FulfillLineItem extends PurchaseRequestItem {
             display: flex;
             flex-direction: column;
             gap: 16px;
-            max-height: 70vh;
+            max-height: 75vh;
             overflow-y: auto;
+            padding: 0 4px;
         }
         .meta-grid {
             display: flex;
@@ -162,12 +164,14 @@ interface FulfillLineItem extends PurchaseRequestItem {
         .table-wrapper {
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .fulfill-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
+            min-width: 520px;
 
             th {
                 background: #f8fafc;
@@ -175,6 +179,7 @@ interface FulfillLineItem extends PurchaseRequestItem {
                 color: #475569;
                 font-weight: 600;
                 border-bottom: 1px solid #e2e8f0;
+                white-space: nowrap;
             }
             td {
                 padding: 10px 12px;
@@ -219,6 +224,33 @@ interface FulfillLineItem extends PurchaseRequestItem {
         }
         .dialog-actions {
             padding: 16px 0 8px;
+        }
+
+        @media (max-width: 600px) {
+            .dialog-title {
+                font-size: 17px;
+            }
+            .meta-grid {
+                flex-direction: column;
+                gap: 0;
+            }
+            .flex-1 {
+                width: 100% !important;
+                min-width: 0;
+            }
+            .total-summary-card .total-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            .dialog-actions {
+                flex-direction: column-reverse;
+                gap: 8px;
+                button {
+                    width: 100%;
+                    height: 44px;
+                }
+            }
         }
     `],
 })

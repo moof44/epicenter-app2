@@ -150,9 +150,10 @@ interface FormLineItem {
     `,
     styles: [`
         .pr-modal-container {
-            padding: 8px 12px;
-            min-width: 650px;
+            padding: 4px;
+            width: 100%;
             max-width: 800px;
+            box-sizing: border-box;
         }
         .dialog-title {
             display: flex;
@@ -167,8 +168,9 @@ interface FormLineItem {
             display: flex;
             flex-direction: column;
             gap: 16px;
-            max-height: 70vh;
+            max-height: 75vh;
             overflow-y: auto;
+            padding: 0 4px;
         }
         .form-row {
             display: flex;
@@ -184,6 +186,7 @@ interface FormLineItem {
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 8px;
             margin-top: 8px;
+            gap: 8px;
             h3 {
                 margin: 0;
                 font-size: 15px;
@@ -207,6 +210,8 @@ interface FormLineItem {
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .item-fields-grid {
             display: flex;
@@ -214,7 +219,7 @@ interface FormLineItem {
             align-items: center;
             flex-wrap: wrap;
         }
-        .field-product { flex: 3; min-width: 220px; }
+        .field-product { flex: 3; min-width: 200px; }
         .field-qty { width: 85px; }
         .field-unit { width: 95px; }
         .field-cost { width: 130px; }
@@ -240,6 +245,46 @@ interface FormLineItem {
         }
         .dialog-actions {
             padding: 16px 0 8px;
+        }
+
+        @media (max-width: 600px) {
+            .dialog-title {
+                font-size: 18px;
+            }
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            .item-fields-grid {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+            }
+            .field-product,
+            .field-qty,
+            .field-unit,
+            .field-cost {
+                width: 100% !important;
+                min-width: 0;
+            }
+            .field-subtotal {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 4px;
+                border-top: 1px dashed #cbd5e1;
+            }
+            .total-bar {
+                justify-content: space-between;
+            }
+            .dialog-actions {
+                flex-direction: column-reverse;
+                gap: 8px;
+                button {
+                    width: 100%;
+                    height: 44px;
+                }
+            }
         }
     `],
 })
