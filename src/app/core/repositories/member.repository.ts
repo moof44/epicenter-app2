@@ -46,9 +46,8 @@ export class MemberRepository {
                 liveQuery(async () => {
                     const db = this.dbService.db;
                     if (!db) return [];
-                    const members = await db.members.toArray();
-                    // Sort by name alphabetically to match standard MemberService order
-                    return members.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    // Use Dexie's native B-tree index for instant 0ms pre-sorted retrieval
+                    return await db.members.orderBy('name').toArray();
                 })
             ).pipe(
                 shareReplay({ bufferSize: 1, refCount: false })

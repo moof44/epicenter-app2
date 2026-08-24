@@ -168,7 +168,15 @@ export class MemberService {
 
     isMembershipExpired(member: Member): boolean {
         if (!member.membershipExpiration) return false;
-        return member.membershipExpiration < new Date();
+        const exp = member.membershipExpiration as any;
+        const expMs = exp.seconds
+            ? exp.seconds * 1000
+            : exp instanceof Date
+              ? exp.getTime()
+              : exp.toDate
+                ? exp.toDate().getTime()
+                : new Date(exp).getTime();
+        return expMs > 0 && expMs < Date.now();
     }
 
     async findPotentialDuplicates(): Promise<Member[][]> {

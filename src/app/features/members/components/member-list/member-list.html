@@ -42,7 +42,7 @@
          Spinner can be conditional on an 'isLoading' flag if we added one. 
          For simplicity, keeping it simple. -->
 
-    <table mat-table [dataSource]="dataSource" class="full-width-table mobile-card-table" [@staggerList]
+    <table mat-table [dataSource]="dataSource" [trackBy]="trackByMemberId" class="full-width-table mobile-card-table"
         *ngIf="dataSource.data.length > 0; else emptyState">
 
         <!-- Name Column -->

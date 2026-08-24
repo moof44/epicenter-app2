@@ -50,6 +50,12 @@ This plan defines the precise execution steps for migrating **Member Data Retrie
 - [x] User manual verification in browser DevTools (IndexedDB inspection & offline mode testing).
 - [x] Git commit and push to repository master.
 
+### Task 6: Member List UI Navigation & Rendering Performance Optimization
+- [x] **Pre-Sorted Index Retrieval**: Query Dexie directly via B-tree index `orderBy('name')` to avoid main-thread JS sorting.
+- [x] **In-Memory Cache Preservation**: Retain latest sorted members in RAM via `shareReplay({ bufferSize: 1, refCount: false })` for instant 0ms back-and-forth navigation.
+- [x] **Subscription Lifecycle Protection**: Guard component subscriptions with `takeUntilDestroyed(this.destroyRef)` to eliminate memory leaks and GC freezes.
+- [x] **Optimized Filter Predicate**: Hoist and cache filter state parameters (`nowTimestamp`, search string) outside the row loop, avoiding redundant allocations.
+- [x] **Fast Numeric Expiration Comparison**: Compare numeric millisecond timestamps in `isExpired` / `isMembershipExpired` to eliminate `new Date()` object churn during rendering.
 
 ---
 
@@ -60,6 +66,8 @@ This plan defines the precise execution steps for migrating **Member Data Retrie
 | `package.json` | Modify | Add `dexie` dependency |
 | `src/app/core/services/dexie/app-indexeddb.service.ts` | **NEW** | Core Dexie.js IndexedDB service & schema |
 | `src/app/core/repositories/member.repository.ts` | **NEW** | Isolated Member Repository (Dexie + Firestore Sync) |
-| `src/app/core/services/member.service.ts` | Modify | Bridge `getMembers()` to `MemberRepository` |
+| `src/app/core/services/member.service.ts` | Modify | Bridge `getMembers()` to `MemberRepository` & optimize `isMembershipExpired` |
+| `src/app/features/members/components/member-list/member-list.ts` | Modify | Navigation lifecycle, cached filter state, and fast expiration checks |
+| `src/app/features/members/components/member-list/member-list.html` | Modify | Paginator binding, lightweight animation, and timestamp rendering |
 | `src/app/core/repositories/member.repository.spec.ts` | **NEW** | Unit test suite for Member Repository |
 | `docs/dexie-architecture/plans/PHASE_MEMBERS_RETRIEVAL_GYM_APP.md` | Modify | Self-updating execution tracker |

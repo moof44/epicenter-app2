@@ -1,4 +1,5 @@
-import { Component, inject, ViewChild, AfterViewInit, OnInit } from '@angular/core';
+import { Component, inject, ViewChild, OnInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -14,8 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../../core/services/member.service';
 import { Member } from '../../../../core/models/member.model';
-import { Observable } from 'rxjs';
-import { fadeIn, staggerList } from '../../../../core/animations/animations';
+import { fadeIn } from '../../../../core/animations/animations';
 import { MatDialog } from '@angular/material/dialog';
 import { MemberDuplicateResolver } from '../member-duplicate-resolver/member-duplicate-resolver';
 
@@ -28,13 +28,15 @@ import { MemberDuplicateResolver } from '../member-duplicate-resolver/member-dup
   ],
   templateUrl: './member-list.html',
   styleUrl: './member-list.css',
-  animations: [fadeIn, staggerList]
+  animations: [fadeIn],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MemberList implements AfterViewInit, OnInit {
+export class MemberList implements OnInit {
   private memberService = inject(MemberService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private dialog = inject(MatDialog);
+  private destroyRef = inject(DestroyRef);
 
   dataSource = new MatTableDataSource<Member>([]);
   displayedColumns: string[] = ['name', 'remarks', 'membershipStatus', 'membershipExpiration', 'actions'];
@@ -43,7 +45,17 @@ export class MemberList implements AfterViewInit, OnInit {
   statusFilter = 'All';
   subscriptionFilter = 'All';
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  // Cached filter state to avoid allocations inside the 3,600+ row predicate
+  private searchFilterLower = '';
+  private nowTimestamp = Date.now();
+
+  @ViewChild(MatPaginator) set paginator(p: MatPaginator | undefined) {
+    if (p) {
+      this.dataSource.paginator = p;
+    }
+  }
+
+  trackByMemberId = (_index: number, item: Member): string => item.id || String(_index);
 
   constructor() { }
 
@@ -62,41 +74,42 @@ export class MemberList implements AfterViewInit, OnInit {
     });
   }
 
+  private getExpMs(exp: any): number {
+    if (!exp) return 0;
+    if (exp.seconds) return exp.seconds * 1000;
+    if (exp instanceof Date) return exp.getTime();
+    if (exp.toDate) return exp.toDate().getTime();
+    const d = new Date(exp);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  }
+
   setupFilterPredicate() {
-    this.dataSource.filterPredicate = (data: Member, filter: string) => {
-
-      const search = this.searchQuery.toLowerCase();
-      const matchesSearch = data.name.toLowerCase().includes(search) ||
-        data.contactNumber.includes(search);
-
-      const matchesStatus = this.statusFilter === 'All' || data.membershipStatus === this.statusFilter;
-
-      let matchesSubscription = true;
-      if (this.subscriptionFilter !== 'All') {
-        const now = new Date();
-        const toDate = (d: any) => d ? (d.toDate ? d.toDate() : new Date(d)) : null;
-
-        const memExp = toDate(data.membershipExpiration);
-        const trainExp = toDate(data.trainingExpiration);
-
-        // Check if either expiration date is in the future
-        const hasActiveSub = (memExp && memExp > now) || (trainExp && trainExp > now);
-
-        if (this.subscriptionFilter === 'HasSubscription') {
-          matchesSubscription = !!hasActiveSub;
-        } else if (this.subscriptionFilter === 'NoSubscription') {
-          matchesSubscription = !hasActiveSub;
-        }
+    this.dataSource.filterPredicate = (data: Member, _filter: string) => {
+      if (this.searchFilterLower) {
+        const nameMatch = data.name ? data.name.toLowerCase().includes(this.searchFilterLower) : false;
+        const contactMatch = data.contactNumber ? data.contactNumber.includes(this.searchFilterLower) : false;
+        if (!nameMatch && !contactMatch) return false;
       }
 
-      return matchesSearch && matchesStatus && matchesSubscription;
+      if (this.statusFilter !== 'All' && data.membershipStatus !== this.statusFilter) {
+        return false;
+      }
+
+      if (this.subscriptionFilter !== 'All') {
+        const memExpMs = this.getExpMs(data.membershipExpiration);
+        const trainExpMs = this.getExpMs(data.trainingExpiration);
+        const hasActiveSub = memExpMs > this.nowTimestamp || trainExpMs > this.nowTimestamp;
+
+        if (this.subscriptionFilter === 'HasSubscription' && !hasActiveSub) return false;
+        if (this.subscriptionFilter === 'NoSubscription' && hasActiveSub) return false;
+      }
+
+      return true;
     };
   }
 
   setupUrlPersistence() {
-    this.route.queryParams.subscribe(params => {
-
-      // Only update if changed to avoid cursor jumps / cycles
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const newSearch = params['search'] || '';
       const newStatus = params['status'] || 'All';
       const newSub = params['subscription'] || 'All';
@@ -115,23 +128,26 @@ export class MemberList implements AfterViewInit, OnInit {
         changed = true;
       }
 
-      // Always trigger filter if params changed
       if (changed) {
-        this.dataSource.filter = '' + Math.random();
+        this.triggerFilter();
       }
     });
   }
 
   setupDataLoading() {
-    this.memberService.getMembers().subscribe(members => {
+    this.memberService.getMembers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(members => {
       this.dataSource.data = members;
-      // Re-apply filter in case data comes after params
-      this.dataSource.filter = '' + Math.random();
+      this.triggerFilter();
     });
   }
 
+  private triggerFilter() {
+    this.searchFilterLower = this.searchQuery.trim().toLowerCase();
+    this.nowTimestamp = Date.now();
+    this.dataSource.filter = `${this.searchFilterLower}|${this.statusFilter}|${this.subscriptionFilter}|${this.nowTimestamp}`;
+  }
+
   applyFilters() {
-    // 2. Update URL on filter change
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
@@ -143,11 +159,7 @@ export class MemberList implements AfterViewInit, OnInit {
       replaceUrl: true
     });
 
-    // Trigger local filter
-    this.dataSource.filter = '' + Math.random();
-  }
-  ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
+    this.triggerFilter();
   }
 
   async toggleStatus(member: Member) {
@@ -157,6 +169,8 @@ export class MemberList implements AfterViewInit, OnInit {
   }
 
   isExpired(member: Member): boolean {
-    return this.memberService.isMembershipExpired(member);
+    if (!member.membershipExpiration) return false;
+    const expMs = this.getExpMs(member.membershipExpiration);
+    return expMs > 0 && expMs < this.nowTimestamp;
   }
 }
