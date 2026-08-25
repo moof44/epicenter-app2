@@ -237,17 +237,25 @@ export class StaffAttendanceService {
         const dateStr = toLocalDateStr(manilaNow);
         const deviceId = this.getOrCreateLocalDeviceId();
 
-        // Check if already checked in today on this shift
+        // Auto-resolve older open checkouts first
+        await this.autoResolveMissedCheckouts();
+
+        // Check if user already has an attendance record for today (Disallow multiple check-ins per day)
         const existingQ = query(
             this.attendanceCol,
             where('staffId', '==', staffUser.uid),
-            where('date', '==', dateStr),
-            where('shiftId', '==', shift.id),
-            where('status', '==', 'CHECKED_IN')
+            where('date', '==', dateStr)
         );
         const existingSnap = await getDocs(existingQ);
         if (!existingSnap.empty) {
-            throw new Error(`You are already checked in for ${shift.name} today.`);
+            const existingRecord = this.parseRecord({ id: existingSnap.docs[0].id, ...existingSnap.docs[0].data() });
+            const loginTimeStr = existingRecord.checkInTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+            if (existingRecord.status === 'CHECKED_IN') {
+                throw new Error(`You are already logged in today at ${loginTimeStr} (${existingRecord.shiftName}).`);
+            } else {
+                throw new Error(`You have already completed your shift today (Logged in at ${loginTimeStr}). Multiple logins per day are not allowed.`);
+            }
         }
 
         // Calculate Scheduled Start Date in Manila Time
@@ -402,12 +410,82 @@ export class StaffAttendanceService {
         };
     }
 
+    /**
+     * Automatically resolves missed check-outs:
+     * If an employee checked in on a previous day or a past shift and never checked out,
+     * defaults their check-out time to the shift's scheduled closing time and flags the record with 'Failure to check-out'.
+     */
+    async autoResolveMissedCheckouts(): Promise<void> {
+        try {
+            const manilaNow = this.getManilaNow();
+            const todayStr = toLocalDateStr(manilaNow);
+
+            // Query all open CHECKED_IN records
+            const q = query(
+                this.attendanceCol,
+                where('status', '==', 'CHECKED_IN')
+            );
+            const snap = await getDocs(q);
+
+            for (const d of snap.docs) {
+                const data = d.data();
+                const recordDate = data['date'];
+                const scheduledEndTime = data['scheduledEndTime'] || '22:00';
+
+                // Resolve if record is from a previous calendar day, OR if today and past the scheduled end time
+                let shouldResolve = false;
+                if (recordDate < todayStr) {
+                    shouldResolve = true;
+                } else if (recordDate === todayStr) {
+                    const [endH, endM] = scheduledEndTime.split(':').map(Number);
+                    const shiftEnd = new Date(manilaNow);
+                    shiftEnd.setHours(endH, endM, 0, 0);
+
+                    // If current Manila time is past the scheduled shift end time by at least 1 hour
+                    if (manilaNow.getTime() > (shiftEnd.getTime() + 3600000)) {
+                        shouldResolve = true;
+                    }
+                }
+
+                if (shouldResolve) {
+                    const checkInTime = data['checkInTime']?.toDate ? data['checkInTime'].toDate() : new Date(data['checkInTime']);
+                    
+                    // Default checkout time to scheduledEndTime on record's date
+                    const [endH, endM] = scheduledEndTime.split(':').map(Number);
+                    const [year, month, day] = recordDate.split('-').map(Number);
+                    const resolvedCheckOut = new Date(year, month - 1, day, endH, endM, 0, 0);
+
+                    const workedMs = resolvedCheckOut.getTime() - checkInTime.getTime();
+                    const workedMinutes = Math.max(0, Math.round(workedMs / 60000));
+                    const REQUIRED_MINS = 420;
+                    const deficitMinutes = workedMinutes < REQUIRED_MINS ? (REQUIRED_MINS - workedMinutes) : 0;
+                    const overtimeHours = workedMinutes >= 600 ? Math.round(((workedMinutes - REQUIRED_MINS) / 60) * 100) / 100 : 0;
+
+                    await updateDoc(doc(this.firestore, `staff_attendance/${d.id}`), {
+                        checkOutTime: Timestamp.fromDate(resolvedCheckOut),
+                        status: 'CHECKED_OUT',
+                        workedMinutes,
+                        deficitMinutes,
+                        overtimeHours,
+                        missedCheckout: true,
+                        remarks: 'Failure to check-out (Defaulted to shift closing time)'
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('Error auto-resolving missed checkouts:', err);
+        }
+    }
+
     // ==========================================
     // 5. ATTENDANCE HISTORY & REPORTS
     // ==========================================
 
     /** Gets personal attendance history for a single staff user (Read-only). */
     getStaffAttendanceHistory(staffId: string, limitNum = 100): Observable<StaffAttendanceRecord[]> {
+        // Trigger background resolution of past open records
+        this.autoResolveMissedCheckouts().catch(err => console.error(err));
+
         const q = query(
             this.attendanceCol,
             where('staffId', '==', staffId),
@@ -517,6 +595,9 @@ export class StaffAttendanceService {
     ): Promise<StaffWeeklyAttendanceSummary[]> {
         const startStr = toLocalDateStr(startDate);
         const endStr = toLocalDateStr(endDate);
+
+        // Auto-resolve any missed check-outs prior to computing weekly payroll summary
+        await this.autoResolveMissedCheckouts();
 
         // Query all attendance records in this date range
         const q = query(
