@@ -13,6 +13,19 @@ import { Member } from '../models/member.model';
 import { AppIndexedDbService } from '../services/dexie/app-indexeddb.service';
 import { createConverter } from '../utils/firestore-converter.utils';
 
+export interface MemberQueryOptions {
+    search?: string;
+    status?: string;
+    subscription?: string;
+    pageIndex: number;
+    pageSize: number;
+}
+
+export interface PagedMembersResult {
+    items: Member[];
+    totalCount: number;
+}
+
 @Injectable({
     providedIn: 'root',
 })
@@ -27,6 +40,84 @@ export class MemberRepository {
 
     private syncStarted = false;
     private liveMembers$?: Observable<Member[]>;
+
+    /**
+     * Returns a paginated Observable slice directly from Dexie IndexedDB (0ms latency),
+     * only loading pageSize (10-20) records into Angular memory at a time.
+     */
+    getMembersPagedLive(options: MemberQueryOptions): Observable<PagedMembersResult> {
+        if (!isPlatformBrowser(this.platformId)) {
+            return of({ items: [], totalCount: 0 });
+        }
+
+        this.startBackgroundSync();
+
+        return from(
+            liveQuery(async () => {
+                const db = this.dbService.db;
+                if (!db) return { items: [], totalCount: 0 };
+
+                const search = (options.search || '').trim().toLowerCase();
+                const status = options.status || 'All';
+                const subscription = options.subscription || 'All';
+                const pageIndex = options.pageIndex || 0;
+                const pageSize = options.pageSize || 10;
+                const nowMs = Date.now();
+
+                const getExpMs = (exp: any): number => {
+                    if (!exp) return 0;
+                    if (exp.seconds) return exp.seconds * 1000;
+                    if (exp instanceof Date) return exp.getTime();
+                    if (exp.toDate) return exp.toDate().getTime();
+                    const d = new Date(exp);
+                    return isNaN(d.getTime()) ? 0 : d.getTime();
+                };
+
+                const isFiltered = search !== '' || status !== 'All' || subscription !== 'All';
+
+                if (!isFiltered) {
+                    const totalCount = await db.members.count();
+                    const items = await db.members
+                        .orderBy('name')
+                        .offset(pageIndex * pageSize)
+                        .limit(pageSize)
+                        .toArray();
+                    return { items, totalCount };
+                }
+
+                const filtered = db.members.orderBy('name').filter((m) => {
+                    if (search) {
+                        const nameMatch = m.name ? m.name.toLowerCase().includes(search) : false;
+                        const contactMatch = m.contactNumber ? m.contactNumber.includes(search) : false;
+                        if (!nameMatch && !contactMatch) return false;
+                    }
+                    if (status !== 'All' && m.membershipStatus !== status) {
+                        return false;
+                    }
+                    if (subscription !== 'All') {
+                        const memExpMs = getExpMs(m.membershipExpiration);
+                        const trainExpMs = getExpMs(dataTrainingExp(m));
+                        const hasActive = memExpMs > nowMs || trainExpMs > nowMs;
+                        if (subscription === 'HasSubscription' && !hasActive) return false;
+                        if (subscription === 'NoSubscription' && hasActive) return false;
+                    }
+                    return true;
+                });
+
+                function dataTrainingExp(m: Member) {
+                    return m.trainingExpiration;
+                }
+
+                const totalCount = await filtered.count();
+                const items = await filtered
+                    .offset(pageIndex * pageSize)
+                    .limit(pageSize)
+                    .toArray();
+
+                return { items, totalCount };
+            })
+        );
+    }
 
     /**
      * Returns an Observable of members directly from local Dexie IndexedDB cache (0ms latency),

@@ -51,6 +51,7 @@ This plan defines the precise execution steps for migrating **Member Data Retrie
 - [x] Git commit and push to repository master.
 
 ### Task 6: Member List UI Navigation & Rendering Performance Optimization
+- [x] **Dexie-Level Paginated Streaming**: Implemented `getMembersPagedLive()` querying Dexie's indexed B-tree cursor directly with `offset()` and `limit()` so Angular only ever handles 10–20 DOM elements at a time.
 - [x] **Pre-Sorted Index Retrieval**: Query Dexie directly via B-tree index `orderBy('name')` to avoid main-thread JS sorting.
 - [x] **In-Memory Cache Preservation**: Retain latest sorted members in RAM via `shareReplay({ bufferSize: 1, refCount: false })` for instant 0ms back-and-forth navigation.
 - [x] **Subscription Lifecycle Protection**: Guard component subscriptions with `takeUntilDestroyed(this.destroyRef)` to eliminate memory leaks and GC freezes.

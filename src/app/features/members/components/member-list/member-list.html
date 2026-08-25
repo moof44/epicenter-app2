@@ -43,7 +43,7 @@
          For simplicity, keeping it simple. -->
 
     <table mat-table [dataSource]="dataSource" [trackBy]="trackByMemberId" class="full-width-table mobile-card-table"
-        *ngIf="dataSource.data.length > 0; else emptyState">
+        *ngIf="totalMembers > 0; else emptyState">
 
         <!-- Name Column -->
         <ng-container matColumnDef="name">
@@ -122,6 +122,13 @@
         </div>
     </ng-template>
 
-    <mat-paginator [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons aria-label="Select page of members">
+    <mat-paginator
+        [length]="totalMembers"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+        aria-label="Select page of members">
     </mat-paginator>
 </div>

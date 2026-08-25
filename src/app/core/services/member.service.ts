@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from './auth.service';
-import { MemberRepository } from '../repositories/member.repository';
+import { MemberRepository, MemberQueryOptions, PagedMembersResult } from '../repositories/member.repository';
 import {
     Firestore,
     collection,
@@ -46,6 +46,10 @@ export class MemberService {
 
     getMembers(): Observable<Member[]> {
         return this.memberRepository.getMembersLive();
+    }
+
+    getMembersPaged(options: MemberQueryOptions): Observable<PagedMembersResult> {
+        return this.memberRepository.getMembersPagedLive(options);
     }
 
     getMemberHealthSummary(): Observable<{

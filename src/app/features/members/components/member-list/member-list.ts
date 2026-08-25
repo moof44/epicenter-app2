@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, OnInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy, DestroyRef, ChangeDetectorRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
@@ -8,13 +8,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
+import { BehaviorSubject, switchMap } from 'rxjs';
 import { MemberService } from '../../../../core/services/member.service';
 import { Member } from '../../../../core/models/member.model';
+import { MemberQueryOptions } from '../../../../core/repositories/member.repository';
 import { fadeIn } from '../../../../core/animations/animations';
 import { MatDialog } from '@angular/material/dialog';
 import { MemberDuplicateResolver } from '../member-duplicate-resolver/member-duplicate-resolver';
@@ -37,6 +39,7 @@ export class MemberList implements OnInit {
   private route = inject(ActivatedRoute);
   private dialog = inject(MatDialog);
   private destroyRef = inject(DestroyRef);
+  private cdr = inject(ChangeDetectorRef);
 
   dataSource = new MatTableDataSource<Member>([]);
   displayedColumns: string[] = ['name', 'remarks', 'membershipStatus', 'membershipExpiration', 'actions'];
@@ -45,22 +48,22 @@ export class MemberList implements OnInit {
   statusFilter = 'All';
   subscriptionFilter = 'All';
 
-  // Cached filter state to avoid allocations inside the 3,600+ row predicate
-  private searchFilterLower = '';
-  private nowTimestamp = Date.now();
+  pageIndex = 0;
+  pageSize = 10;
+  totalMembers = 0;
 
-  @ViewChild(MatPaginator) set paginator(p: MatPaginator | undefined) {
-    if (p) {
-      this.dataSource.paginator = p;
-    }
-  }
+  private nowTimestamp = Date.now();
+  private query$ = new BehaviorSubject<MemberQueryOptions>({
+    search: '',
+    status: 'All',
+    subscription: 'All',
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   trackByMemberId = (_index: number, item: Member): string => item.id || String(_index);
 
-  constructor() { }
-
   ngOnInit() {
-    this.setupFilterPredicate();
     this.setupUrlPersistence();
     this.setupDataLoading();
   }
@@ -83,36 +86,13 @@ export class MemberList implements OnInit {
     return isNaN(d.getTime()) ? 0 : d.getTime();
   }
 
-  setupFilterPredicate() {
-    this.dataSource.filterPredicate = (data: Member, _filter: string) => {
-      if (this.searchFilterLower) {
-        const nameMatch = data.name ? data.name.toLowerCase().includes(this.searchFilterLower) : false;
-        const contactMatch = data.contactNumber ? data.contactNumber.includes(this.searchFilterLower) : false;
-        if (!nameMatch && !contactMatch) return false;
-      }
-
-      if (this.statusFilter !== 'All' && data.membershipStatus !== this.statusFilter) {
-        return false;
-      }
-
-      if (this.subscriptionFilter !== 'All') {
-        const memExpMs = this.getExpMs(data.membershipExpiration);
-        const trainExpMs = this.getExpMs(data.trainingExpiration);
-        const hasActiveSub = memExpMs > this.nowTimestamp || trainExpMs > this.nowTimestamp;
-
-        if (this.subscriptionFilter === 'HasSubscription' && !hasActiveSub) return false;
-        if (this.subscriptionFilter === 'NoSubscription' && hasActiveSub) return false;
-      }
-
-      return true;
-    };
-  }
-
   setupUrlPersistence() {
     this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const newSearch = params['search'] || '';
       const newStatus = params['status'] || 'All';
       const newSub = params['subscription'] || 'All';
+      const newPage = params['page'] ? parseInt(params['page'], 10) : 0;
+      const newPageSize = params['pageSize'] ? parseInt(params['pageSize'], 10) : this.pageSize;
 
       let changed = false;
       if (this.searchQuery !== newSearch) {
@@ -127,39 +107,71 @@ export class MemberList implements OnInit {
         this.subscriptionFilter = newSub;
         changed = true;
       }
+      if (this.pageIndex !== newPage) {
+        this.pageIndex = newPage;
+        changed = true;
+      }
+      if (this.pageSize !== newPageSize) {
+        this.pageSize = newPageSize;
+        changed = true;
+      }
 
       if (changed) {
-        this.triggerFilter();
+        this.emitQuery();
       }
     });
   }
 
   setupDataLoading() {
-    this.memberService.getMembers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(members => {
-      this.dataSource.data = members;
-      this.triggerFilter();
+    this.query$
+      .pipe(
+        switchMap(options => this.memberService.getMembersPaged(options)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(res => {
+        this.nowTimestamp = Date.now();
+        this.dataSource.data = res.items;
+        this.totalMembers = res.totalCount;
+        this.cdr.markForCheck();
+      });
+  }
+
+  private emitQuery() {
+    this.query$.next({
+      search: this.searchQuery,
+      status: this.statusFilter,
+      subscription: this.subscriptionFilter,
+      pageIndex: this.pageIndex,
+      pageSize: this.pageSize,
     });
   }
 
-  private triggerFilter() {
-    this.searchFilterLower = this.searchQuery.trim().toLowerCase();
-    this.nowTimestamp = Date.now();
-    this.dataSource.filter = `${this.searchFilterLower}|${this.statusFilter}|${this.subscriptionFilter}|${this.nowTimestamp}`;
+  applyFilters() {
+    this.pageIndex = 0;
+    this.updateUrlAndEmit();
   }
 
-  applyFilters() {
+  onPageChange(event: PageEvent) {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.updateUrlAndEmit();
+  }
+
+  private updateUrlAndEmit() {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
         search: this.searchQuery || null,
         status: this.statusFilter !== 'All' ? this.statusFilter : null,
-        subscription: this.subscriptionFilter !== 'All' ? this.subscriptionFilter : null
+        subscription: this.subscriptionFilter !== 'All' ? this.subscriptionFilter : null,
+        page: this.pageIndex > 0 ? this.pageIndex : null,
+        pageSize: this.pageSize !== 10 ? this.pageSize : null,
       },
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
 
-    this.triggerFilter();
+    this.emitQuery();
   }
 
   async toggleStatus(member: Member) {
