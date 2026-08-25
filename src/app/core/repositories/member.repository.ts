@@ -236,29 +236,31 @@ export class MemberRepository {
         if (this.syncStarted || !isPlatformBrowser(this.platformId)) return;
         this.syncStarted = true;
 
-        const q = query(this.membersCollection, orderBy('name'));
+        setTimeout(() => {
+            const q = query(this.membersCollection, orderBy('name'));
 
-        collectionData(q, { idField: 'id' })
-            .pipe(
-                catchError((err) => {
-                    console.warn('[MemberRepository] Background sync error (offline?):', err);
-                    return of([]);
-                })
-            )
-            .subscribe({
-                next: async (remoteMembers) => {
-                    if (remoteMembers && remoteMembers.length > 0) {
-                        try {
-                            const db = this.dbService.db;
-                            if (db) {
-                                await db.members.bulkPut(remoteMembers);
+            collectionData(q, { idField: 'id' })
+                .pipe(
+                    catchError((err) => {
+                        console.warn('[MemberRepository] Background sync error (offline?):', err);
+                        return of([]);
+                    })
+                )
+                .subscribe({
+                    next: async (remoteMembers) => {
+                        if (remoteMembers && remoteMembers.length > 0) {
+                            try {
+                                const db = this.dbService.db;
+                                if (db) {
+                                    await db.members.bulkPut(remoteMembers);
+                                }
+                            } catch (err) {
+                                console.error('[MemberRepository] Error seeding/updating Dexie:', err);
                             }
-                        } catch (err) {
-                            console.error('[MemberRepository] Error seeding/updating Dexie:', err);
                         }
-                    }
-                },
-            });
+                    },
+                });
+        }, 4000); // Defer by 4s so Dexie serves initial UI in 0ms without thread contention
     }
 
     /**

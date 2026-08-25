@@ -68,29 +68,31 @@ export class ProductRepository {
         if (this.syncStarted || !isPlatformBrowser(this.platformId)) return;
         this.syncStarted = true;
 
-        const q = query(this.productsCollection, orderBy('name'));
+        setTimeout(() => {
+            const q = query(this.productsCollection, orderBy('name'));
 
-        collectionData(q, { idField: 'id' })
-            .pipe(
-                catchError((err) => {
-                    console.warn('[ProductRepository] Background sync error (offline?):', err);
-                    return of([]);
-                })
-            )
-            .subscribe({
-                next: async (remoteProducts) => {
-                    if (remoteProducts && remoteProducts.length > 0) {
-                        try {
-                            const db = this.dbService.db;
-                            if (db) {
-                                await db.products.bulkPut(remoteProducts);
+            collectionData(q, { idField: 'id' })
+                .pipe(
+                    catchError((err) => {
+                        console.warn('[ProductRepository] Background sync error (offline?):', err);
+                        return of([]);
+                    })
+                )
+                .subscribe({
+                    next: async (remoteProducts) => {
+                        if (remoteProducts && remoteProducts.length > 0) {
+                            try {
+                                const db = this.dbService.db;
+                                if (db) {
+                                    await db.products.bulkPut(remoteProducts);
+                                }
+                            } catch (err) {
+                                console.error('[ProductRepository] Error seeding/updating Dexie:', err);
                             }
-                        } catch (err) {
-                            console.error('[ProductRepository] Error seeding/updating Dexie:', err);
                         }
-                    }
-                },
-            });
+                    },
+                });
+        }, 4000); // Defer by 4s so Dexie serves initial UI without thread contention
     }
 
     /**

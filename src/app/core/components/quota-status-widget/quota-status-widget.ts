@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, interval, filter, switchMap, map } from 'rxjs';
+import { BehaviorSubject, interval, filter, switchMap, map, delay } from 'rxjs';
 import { SettingsService } from '../../services/settings.service';
 import { AuthService } from '../../services/auth.service';
 import { ReportStateService } from '../../services/report.state.service';
@@ -27,6 +27,7 @@ export class QuotaStatusWidget {
     private currentDate$ = new BehaviorSubject<Date>(new Date());
 
     report$ = this.currentDate$.pipe(
+        delay(1500),
         switchMap(date => this.reportStateService.getMonthlyReport(date.getFullYear(), date.getMonth()))
     );
     settings$ = this.settingsService.getSettings();
