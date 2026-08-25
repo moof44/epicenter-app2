@@ -15,8 +15,9 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { StaffAttendanceService } from '../../../../core/services/staff-attendance.service';
+import { StaffAttendanceService, DEFAULT_STAFF_SHIFTS } from '../../../../core/services/staff-attendance.service';
 import { UserService } from '../../../../core/services/user.service';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -26,9 +27,9 @@ import {
     KioskDevice
 } from '../../../../core/models/staff-attendance.model';
 import { User } from '../../../../core/models/user.model';
-import { GeneralSettings } from '../../../../core/models/settings.model';
 import { fadeIn } from '../../../../core/animations/animations';
 import { firstValueFrom, Observable } from 'rxjs';
+import { AttendanceRecordDialogComponent } from '../../components/attendance-record-dialog/attendance-record-dialog';
 
 @Component({
     selector: 'app-staff-attendance-admin',
@@ -50,7 +51,8 @@ import { firstValueFrom, Observable } from 'rxjs';
         MatChipsModule,
         MatTooltipModule,
         MatSlideToggleModule,
-        MatSnackBarModule
+        MatSnackBarModule,
+        MatDialogModule
     ],
     templateUrl: './staff-attendance-admin.html',
     styleUrl: './staff-attendance-admin.css',
@@ -62,8 +64,11 @@ export class StaffAttendanceAdminComponent implements OnInit {
     private settingsService = inject(SettingsService);
     private authService = inject(AuthService);
     private snackBar = inject(MatSnackBar);
+    private dialog = inject(MatDialog);
     private fb = inject(FormBuilder);
     private router = inject(Router);
+
+    shifts = DEFAULT_STAFF_SHIFTS;
 
     openKioskTerminal() {
         window.open('/staff-kiosk', '_blank');
@@ -205,6 +210,75 @@ export class StaffAttendanceAdminComponent implements OnInit {
             this.expandedStaffId.set(null);
         } else {
             this.expandedStaffId.set(staffId);
+        }
+    }
+
+    // ==========================================
+    // MANUAL ATTENDANCE ENTRY & EDIT / DELETE
+    // ==========================================
+
+    openAddRecordDialog(preselectedStaffId?: string, preselectedDate?: string | Date) {
+        const dialogRef = this.dialog.open(AttendanceRecordDialogComponent, {
+            width: '460px',
+            data: {
+                mode: 'CREATE',
+                staffUsers: this.allUsers(),
+                shifts: this.shifts
+            }
+        });
+
+        if (preselectedStaffId || preselectedDate) {
+            setTimeout(() => {
+                if (dialogRef.componentInstance) {
+                    if (preselectedStaffId) {
+                        dialogRef.componentInstance.recordForm.patchValue({ staffId: preselectedStaffId });
+                    }
+                    if (preselectedDate) {
+                        const dateObj = typeof preselectedDate === 'string'
+                            ? new Date(preselectedDate + 'T00:00:00')
+                            : preselectedDate;
+                        dialogRef.componentInstance.recordForm.patchValue({ date: dateObj });
+                    }
+                }
+            }, 50);
+        }
+
+        dialogRef.afterClosed().subscribe(async (result) => {
+            if (result) {
+                await this.loadWeeklyReport();
+            }
+        });
+    }
+
+    openEditRecordDialog(record: StaffAttendanceRecord) {
+        const dialogRef = this.dialog.open(AttendanceRecordDialogComponent, {
+            width: '460px',
+            data: {
+                mode: 'EDIT',
+                record,
+                staffUsers: this.allUsers(),
+                shifts: this.shifts
+            }
+        });
+
+        dialogRef.afterClosed().subscribe(async (result) => {
+            if (result) {
+                await this.loadWeeklyReport();
+            }
+        });
+    }
+
+    async deleteRecord(record: StaffAttendanceRecord) {
+        const confirmMsg = `Are you sure you want to delete the attendance log for ${record.staffName} on ${record.date} (${record.shiftName})?`;
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            await this.attendanceService.deleteAttendanceRecord(record.id!);
+            this.snackBar.open('Attendance record deleted successfully.', 'Close', { duration: 3000 });
+            await this.loadWeeklyReport();
+        } catch (err: any) {
+            console.error('Error deleting record:', err);
+            this.snackBar.open(err.message || 'Failed to delete attendance record.', 'Close', { duration: 4000 });
         }
     }
 

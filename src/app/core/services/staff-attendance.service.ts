@@ -585,6 +585,136 @@ export class StaffAttendanceService {
     }
 
     /**
+     * Admin operation: Deletes an attendance record.
+     */
+    async deleteAttendanceRecord(recordId: string): Promise<void> {
+        const recordRef = doc(this.firestore, `staff_attendance/${recordId}`);
+        await deleteDoc(recordRef);
+    }
+
+    /**
+     * Admin operation: Updates an existing attendance record and recalculates metrics.
+     */
+    async updateAttendanceRecord(
+        recordId: string,
+        data: {
+            date: string;
+            shift: StaffShiftDefinition;
+            checkInTime: Date;
+            checkOutTime?: Date | null;
+            status: 'CHECKED_IN' | 'CHECKED_OUT';
+            remarks?: string;
+        },
+        adminName: string
+    ): Promise<void> {
+        const recordRef = doc(this.firestore, `staff_attendance/${recordId}`);
+
+        // Recalculate scheduled start
+        const [startH, startM] = data.shift.startTime.split(':').map(Number);
+        const scheduledStart = new Date(data.checkInTime);
+        scheduledStart.setHours(startH, startM, 0, 0);
+
+        const diffMs = data.checkInTime.getTime() - scheduledStart.getTime();
+        const diffMins = Math.round(diffMs / 60000);
+
+        const earlyMinutes = diffMins < 0 ? Math.abs(diffMins) : 0;
+        const lateMinutes = diffMins > 0 ? diffMins : 0;
+
+        let workedMinutes = 0;
+        let deficitMinutes = 0;
+        let overtimeHours = 0;
+
+        if (data.checkOutTime) {
+            const workedMs = data.checkOutTime.getTime() - data.checkInTime.getTime();
+            workedMinutes = Math.max(0, Math.round(workedMs / 60000));
+            const REQUIRED_MINS = 420;
+            deficitMinutes = workedMinutes < REQUIRED_MINS ? (REQUIRED_MINS - workedMinutes) : 0;
+            overtimeHours = workedMinutes >= 600 ? Math.round(((workedMinutes - REQUIRED_MINS) / 60) * 100) / 100 : 0;
+        }
+
+        const updates: any = {
+            date: data.date,
+            shiftId: data.shift.id,
+            shiftName: data.shift.name,
+            scheduledStartTime: data.shift.startTime,
+            scheduledEndTime: data.shift.endTime,
+            checkInTime: Timestamp.fromDate(data.checkInTime),
+            checkOutTime: data.checkOutTime ? Timestamp.fromDate(data.checkOutTime) : null,
+            status: data.status,
+            earlyMinutes,
+            lateMinutes,
+            workedMinutes,
+            deficitMinutes,
+            overtimeHours,
+            remarks: data.remarks || `Manually modified by Admin (${adminName})`
+        };
+
+        await updateDoc(recordRef, this.cleanFirestoreData(updates));
+    }
+
+    /**
+     * Admin operation: Manually creates an attendance record for a staff member.
+     */
+    async createManualAttendanceRecord(
+        staffUser: User,
+        data: {
+            date: string;
+            shift: StaffShiftDefinition;
+            checkInTime: Date;
+            checkOutTime?: Date | null;
+            status: 'CHECKED_IN' | 'CHECKED_OUT';
+            remarks?: string;
+        },
+        adminName: string
+    ): Promise<void> {
+        // Recalculate scheduled start
+        const [startH, startM] = data.shift.startTime.split(':').map(Number);
+        const scheduledStart = new Date(data.checkInTime);
+        scheduledStart.setHours(startH, startM, 0, 0);
+
+        const diffMs = data.checkInTime.getTime() - scheduledStart.getTime();
+        const diffMins = Math.round(diffMs / 60000);
+
+        const earlyMinutes = diffMins < 0 ? Math.abs(diffMins) : 0;
+        const lateMinutes = diffMins > 0 ? diffMins : 0;
+
+        let workedMinutes = 0;
+        let deficitMinutes = 0;
+        let overtimeHours = 0;
+
+        if (data.checkOutTime) {
+            const workedMs = data.checkOutTime.getTime() - data.checkInTime.getTime();
+            workedMinutes = Math.max(0, Math.round(workedMs / 60000));
+            const REQUIRED_MINS = 420;
+            deficitMinutes = workedMinutes < REQUIRED_MINS ? (REQUIRED_MINS - workedMinutes) : 0;
+            overtimeHours = workedMinutes >= 600 ? Math.round(((workedMinutes - REQUIRED_MINS) / 60) * 100) / 100 : 0;
+        }
+
+        const newRecord = {
+            staffId: staffUser.uid,
+            staffName: staffUser.displayName || 'Staff Member',
+            date: data.date,
+            shiftId: data.shift.id,
+            shiftName: data.shift.name,
+            scheduledStartTime: data.shift.startTime,
+            scheduledEndTime: data.shift.endTime,
+            checkInTime: Timestamp.fromDate(data.checkInTime),
+            checkOutTime: data.checkOutTime ? Timestamp.fromDate(data.checkOutTime) : null,
+            status: data.status,
+            earlyMinutes,
+            lateMinutes,
+            workedMinutes,
+            deficitMinutes,
+            overtimeHours,
+            missedCheckout: false,
+            adjustmentRequested: false,
+            remarks: data.remarks || `Manually created by Admin (${adminName})`
+        };
+
+        await addDoc(this.attendanceCol, this.cleanFirestoreData(newRecord));
+    }
+
+    /**
      * Generates Weekly Attendance Matrix & Payroll Summary (Sunday to Saturday).
      */
     async getWeeklyAttendanceReport(

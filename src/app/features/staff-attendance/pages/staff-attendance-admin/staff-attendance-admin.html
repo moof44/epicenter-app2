@@ -58,6 +58,10 @@
                             <mat-datepicker #picker></mat-datepicker>
                         </mat-form-field>
 
+                        <button mat-flat-button color="primary" (click)="openAddRecordDialog()">
+                            <mat-icon>add_circle</mat-icon> Add Manual Entry
+                        </button>
+
                         <button mat-stroked-button color="primary" (click)="exportToCSV()">
                             <mat-icon>download</mat-icon> Export Payroll CSV
                         </button>
@@ -198,10 +202,21 @@
                                         <div class="remarks-chips" *ngIf="day.remarks.length > 0">
                                             <span class="mini-chip" *ngFor="let rem of day.remarks">{{ rem }}</span>
                                         </div>
+                                        <div class="day-card-actions">
+                                            <button mat-icon-button class="card-mini-btn" (click)="openEditRecordDialog(day.record)" title="Edit Record">
+                                                <mat-icon>edit</mat-icon>
+                                            </button>
+                                            <button mat-icon-button class="card-mini-btn warn-btn" (click)="deleteRecord(day.record)" title="Delete Record">
+                                                <mat-icon>delete_outline</mat-icon>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div class="day-body absent-body" *ngIf="!day.isPresent">
                                         <span class="absent-label">Absent / Off</span>
+                                        <button mat-button class="add-log-btn" (click)="openAddRecordDialog(s.staffId, day.date)">
+                                            <mat-icon>add</mat-icon> Log Entry
+                                        </button>
                                     </div>
                                 </div>
                             </div>

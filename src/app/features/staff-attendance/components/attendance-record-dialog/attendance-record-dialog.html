@@ -1,0 +1,80 @@
+<div class="dialog-container">
+    <h2 mat-dialog-title class="dialog-header">
+        <mat-icon color="primary">{{ isEdit() ? 'edit' : 'add_circle' }}</mat-icon>
+        {{ isEdit() ? 'Edit Attendance Record' : 'Manual Attendance Entry' }}
+    </h2>
+
+    <form [formGroup]="recordForm" (ngSubmit)="onSubmit()">
+        <mat-dialog-content class="dialog-content">
+            <div class="form-grid">
+                <!-- Staff Member -->
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Staff Member</mat-label>
+                    <mat-select formControlName="staffId" required>
+                        @for (user of data.staffUsers; track user.uid) {
+                            <mat-option [value]="user.uid">{{ user.displayName || user.email }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <!-- Shift -->
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Shift</mat-label>
+                    <mat-select formControlName="shiftId" required>
+                        @for (s of data.shifts; track s.id) {
+                            <mat-option [value]="s.id">{{ s.name }} ({{ s.startTime }} - {{ s.endTime }})</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <!-- Date -->
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Attendance Date</mat-label>
+                    <input matInput [matDatepicker]="picker" formControlName="date" required>
+                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+
+                <!-- Times Row -->
+                <div class="time-row">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Check-In Time</mat-label>
+                        <input matInput type="time" formControlName="checkInTime" required>
+                        <mat-icon matPrefix>login</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Check-Out Time</mat-label>
+                        <input matInput type="time" formControlName="checkOutTime">
+                        <mat-icon matPrefix>logout</mat-icon>
+                    </mat-form-field>
+                </div>
+
+                <!-- Status -->
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Status</mat-label>
+                    <mat-select formControlName="status" required>
+                        <mat-option value="CHECKED_OUT">Checked Out (Completed)</mat-option>
+                        <mat-option value="CHECKED_IN">Checked In (In Progress)</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <!-- Remarks -->
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Admin Remarks / Reason</mat-label>
+                    <textarea matInput formControlName="remarks" rows="2" placeholder="e.g. Manual override due to power outage"></textarea>
+                    <mat-icon matPrefix>notes</mat-icon>
+                </mat-form-field>
+            </div>
+        </mat-dialog-content>
+
+        <mat-dialog-actions align="end" class="dialog-actions">
+            <button mat-button type="button" (click)="onCancel()" [disabled]="isSubmitting()">Cancel</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="recordForm.invalid || isSubmitting()">
+                <mat-icon *ngIf="!isSubmitting()">save</mat-icon>
+                <span *ngIf="!isSubmitting()">{{ isEdit() ? 'Save Changes' : 'Create Record' }}</span>
+                <span *ngIf="isSubmitting()">Saving...</span>
+            </button>
+        </mat-dialog-actions>
+    </form>
+</div>
