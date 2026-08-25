@@ -5,6 +5,9 @@
         <p class="greeting-date">{{ todayDate() }}</p>
     </div>
 
+    <!-- Authorized Staff Attendance Terminal Banner (Top of Dashboard) -->
+    <app-staff-kiosk-widget></app-staff-kiosk-widget>
+
     @if (isManagerView()) {
         <!-- ==================== MANAGER / ADMIN DASHBOARD ==================== -->
         <div class="dashboard-grid">
@@ -128,6 +131,9 @@
                             <div class="widget-slot">
                                 <app-personal-bests></app-personal-bests>
                             </div>
+                            <div class="widget-slot">
+                                <app-my-attendance-widget></app-my-attendance-widget>
+                            </div>
                         </div>
                     </mat-expansion-panel>
                 </div>
@@ -170,9 +176,12 @@
                     </div>
                 }
 
-                <!-- Row 3: People + Commendation -->
+                <!-- Row 3: People + Commendation + Attendance -->
                 <div class="widget-slot">
                     <app-members-checked-in></app-members-checked-in>
+                </div>
+                <div class="widget-slot">
+                    <app-my-attendance-widget></app-my-attendance-widget>
                 </div>
                 <div class="widget-slot commendation-slot">
                     <app-commendation></app-commendation>

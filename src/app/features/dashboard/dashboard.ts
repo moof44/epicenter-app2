@@ -24,6 +24,8 @@ import { PaymentSplitWidget } from './widgets/payment-split/payment-split';
 import { PeakHoursWidget } from './widgets/peak-hours/peak-hours';
 import { RecentVoidsWidget } from './widgets/recent-voids/recent-voids';
 import { CashDiscrepanciesWidget } from './widgets/cash-discrepancies/cash-discrepancies';
+import { MyAttendanceWidgetComponent } from './widgets/my-attendance-widget/my-attendance-widget';
+import { StaffKioskWidgetComponent } from './widgets/staff-kiosk-widget/staff-kiosk-widget';
 
 @Component({
     selector: 'app-dashboard',
@@ -35,7 +37,7 @@ import { CashDiscrepanciesWidget } from './widgets/cash-discrepancies/cash-discr
         BadgeRowWidget, LowStockAlertsWidget, ActivityFeedWidget, PersonalBestsWidget,
         GymRevenueTodayWidget, MembersInGymWidget, StaffLeaderboardWidget,
         MemberHealthWidget, SalesSparklineWidget, PaymentSplitWidget, PeakHoursWidget,
-        RecentVoidsWidget, CashDiscrepanciesWidget
+        RecentVoidsWidget, CashDiscrepanciesWidget, MyAttendanceWidgetComponent, StaffKioskWidgetComponent
     ],
     templateUrl: './dashboard.html',
     styleUrl: './dashboard.css',

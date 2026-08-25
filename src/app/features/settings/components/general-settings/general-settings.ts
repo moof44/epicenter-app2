@@ -61,7 +61,8 @@ export class GeneralSettingsComponent implements OnInit {
 
     // General Settings Form
     settingsForm: FormGroup = this.fb.group({
-        monthlyQuota: [0, [Validators.required, Validators.min(0)]]
+        monthlyQuota: [0, [Validators.required, Validators.min(0)]],
+        defaultDailySalaryRate: [500, [Validators.required, Validators.min(0)]]
     });
 
     // Badge Form

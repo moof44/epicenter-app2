@@ -117,5 +117,22 @@ export const routes: Routes = [
         canActivate: [authGuard, roleGuard],
         data: { animation: 'ListPage', roles: ['ADMIN', 'MANAGER'] }
     },
+    {
+        path: 'staff-kiosk',
+        loadComponent: () => import('./features/staff-attendance/components/staff-kiosk/staff-kiosk').then(m => m.StaffKioskComponent),
+        data: { animation: 'FormPage' }
+    },
+    {
+        path: 'staff-attendance',
+        loadComponent: () => import('./features/staff-attendance/pages/staff-attendance-admin/staff-attendance-admin').then(m => m.StaffAttendanceAdminComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'DashboardPage', roles: ['ADMIN', 'MANAGER'] }
+    },
+    {
+        path: 'staff-attendance/my-history',
+        loadComponent: () => import('./features/staff-attendance/pages/my-attendance-history/my-attendance-history').then(m => m.MyAttendanceHistoryComponent),
+        canActivate: [authGuard],
+        data: { animation: 'ListPage' }
+    },
 ];
 

@@ -15,6 +15,7 @@ export interface User {
     address?: string;
     isActive?: boolean;
     monthlyTarget?: number;
+    dailySalaryRate?: number;
 }
 
 export interface CreateUserDto {
@@ -23,4 +24,5 @@ export interface CreateUserDto {
     displayName: string;
     roles: string[];
     profileData?: UserProfile;
+    dailySalaryRate?: number;
 }

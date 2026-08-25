@@ -47,7 +47,8 @@ export class UserFormDialogComponent implements OnInit {
         password: [''],
         displayName: ['', [Validators.required]],
         roles: [[], [Validators.required]],
-        phone: ['', [Validators.required]]
+        phone: ['', [Validators.required]],
+        dailySalaryRate: [null, [Validators.min(0)]]
     });
 
     ngOnInit() {
@@ -58,7 +59,8 @@ export class UserFormDialogComponent implements OnInit {
                 email: user.email,
                 displayName: user.displayName,
                 roles: user.roles,
-                phone: user.phone
+                phone: user.phone,
+                dailySalaryRate: user.dailySalaryRate ?? null
             });
 
             // Disable email in edit mode (usually email is immutable for Auth ID)
@@ -87,6 +89,7 @@ export class UserFormDialogComponent implements OnInit {
             const updateData: Partial<CreateUserDto> = {
                 displayName: this.userForm.value.displayName,
                 roles: this.userForm.value.roles,
+                dailySalaryRate: this.userForm.value.dailySalaryRate != null ? Number(this.userForm.value.dailySalaryRate) : undefined,
                 profileData: {
                     phone: this.userForm.value.phone
                 }
@@ -125,6 +128,7 @@ export class UserFormDialogComponent implements OnInit {
             password: formValue.password,
             displayName: formValue.displayName,
             roles: formValue.roles,
+            dailySalaryRate: formValue.dailySalaryRate != null ? Number(formValue.dailySalaryRate) : undefined,
             profileData: {
                 phone: formValue.phone
             }

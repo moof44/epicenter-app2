@@ -55,6 +55,12 @@
             </mat-error>
         </mat-form-field>
 
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Daily Salary Rate (₱)</mat-label>
+            <input matInput formControlName="dailySalaryRate" type="number" min="0" placeholder="Leave empty for global default rate">
+            <mat-hint>Overrides global daily rate in Settings when calculated for payroll.</mat-hint>
+        </mat-form-field>
+
     </form>
 </mat-dialog-content>
 

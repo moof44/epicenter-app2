@@ -1,0 +1,115 @@
+<div class="history-container" [@fadeIn]>
+    
+    <div class="page-header">
+        <div>
+            <h1>My Attendance History</h1>
+            <p class="subtitle">Read-only history of your staff attendance clock-in/out records and working hours.</p>
+        </div>
+    </div>
+
+    <mat-card class="history-card">
+        <ng-container *ngIf="historyRecords$ | async as records">
+            <table mat-table [dataSource]="records" class="history-table" *ngIf="records.length > 0; else noRecords">
+                
+                <!-- Date -->
+                <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef> Date </th>
+                    <td mat-cell *matCellDef="let r"> <strong>{{ r.date }}</strong> </td>
+                </ng-container>
+
+                <!-- Shift Name -->
+                <ng-container matColumnDef="shiftName">
+                    <th mat-header-cell *matHeaderCellDef> Shift </th>
+                    <td mat-cell *matCellDef="let r"> {{ r.shiftName }} </td>
+                </ng-container>
+
+                <!-- Scheduled Times -->
+                <ng-container matColumnDef="scheduledTimes">
+                    <th mat-header-cell *matHeaderCellDef> Schedule </th>
+                    <td mat-cell *matCellDef="let r"> {{ r.scheduledStartTime }} – {{ r.scheduledEndTime }} </td>
+                </ng-container>
+
+                <!-- Check-in Time -->
+                <ng-container matColumnDef="checkInTime">
+                    <th mat-header-cell *matHeaderCellDef> Check-In </th>
+                    <td mat-cell *matCellDef="let r">
+                        <div class="time-col">
+                            <span>{{ r.checkInTime | date:'shortTime' }}</span>
+                            <small class="warn-text" *ngIf="r.lateMinutes > 0">Late {{ r.lateMinutes }}m</small>
+                            <small class="success-text" *ngIf="r.earlyMinutes > 0">Early {{ r.earlyMinutes }}m</small>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Check-out Time -->
+                <ng-container matColumnDef="checkOutTime">
+                    <th mat-header-cell *matHeaderCellDef> Check-Out </th>
+                    <td mat-cell *matCellDef="let r">
+                        <span *ngIf="r.checkOutTime">{{ r.checkOutTime | date:'shortTime' }}</span>
+                        <span *ngIf="!r.checkOutTime" class="warn-text">In Progress</span>
+                    </td>
+                </ng-container>
+
+                <!-- Worked Time -->
+                <ng-container matColumnDef="workedTime">
+                    <th mat-header-cell *matHeaderCellDef> Worked Time </th>
+                    <td mat-cell *matCellDef="let r">
+                        <span *ngIf="r.workedMinutes > 0">{{ (r.workedMinutes / 60) | number:'1.1-1' }}h ({{ r.workedMinutes }}m)</span>
+                        <span *ngIf="r.workedMinutes === 0">-</span>
+                    </td>
+                </ng-container>
+
+                <!-- Deficit -->
+                <ng-container matColumnDef="deficit">
+                    <th mat-header-cell *matHeaderCellDef> Deficit (from 7h) </th>
+                    <td mat-cell *matCellDef="let r">
+                        <span [class.danger-text]="r.deficitMinutes > 0">
+                            {{ r.deficitMinutes > 0 ? (r.deficitMinutes + 'm') : '-' }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <!-- Overtime -->
+                <ng-container matColumnDef="overtime">
+                    <th mat-header-cell *matHeaderCellDef matTooltip="Valid only when worked >= 10 hours"> Overtime </th>
+                    <td mat-cell *matCellDef="let r">
+                        <strong class="ot-text" *ngIf="r.overtimeHours > 0">{{ r.overtimeHours }}h</strong>
+                        <span *ngIf="r.overtimeHours === 0">-</span>
+                    </td>
+                </ng-container>
+
+                <!-- Adjustment Status -->
+                <ng-container matColumnDef="adjustmentStatus">
+                    <th mat-header-cell *matHeaderCellDef> Time Adjustment </th>
+                    <td mat-cell *matCellDef="let r">
+                        <mat-chip-set *ngIf="r.adjustmentRequested">
+                            <mat-chip [ngClass]="r.adjustmentStatus?.toLowerCase() || 'pending'">
+                                {{ r.adjustmentStatus || 'PENDING' }}
+                            </mat-chip>
+                        </mat-chip-set>
+                        <span *ngIf="!r.adjustmentRequested">-</span>
+                    </td>
+                </ng-container>
+
+                <!-- Remarks -->
+                <ng-container matColumnDef="remarks">
+                    <th mat-header-cell *matHeaderCellDef> Remarks </th>
+                    <td mat-cell *matCellDef="let r">
+                        <span *ngIf="r.remarks" class="remarks-text">{{ r.remarks }}</span>
+                        <span *ngIf="!r.remarks">-</span>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+
+            <ng-template #noRecords>
+                <div class="empty-state">
+                    <mat-icon class="empty-icon">history</mat-icon>
+                    <p>No attendance records found.</p>
+                </div>
+            </ng-template>
+        </ng-container>
+    </mat-card>
+</div>

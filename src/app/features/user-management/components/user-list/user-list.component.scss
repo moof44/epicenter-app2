@@ -15,6 +15,22 @@
     flex-wrap: wrap;
 }
 
+.filter-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+
+    .search-field {
+        flex: 1;
+        min-width: 260px;
+    }
+
+    .status-field {
+        width: 200px;
+    }
+}
+
 /* Avatar Placeholder */
 .avatar-placeholder {
     width: 40px;

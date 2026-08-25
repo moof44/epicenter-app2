@@ -1,0 +1,15 @@
+<div class="kiosk-header-banner" *ngIf="isAuthorized()">
+    <div class="banner-info">
+        <div class="icon-wrap">
+            <mat-icon class="terminal-icon">touch_app</mat-icon>
+        </div>
+        <div>
+            <h3 class="banner-title">Staff Attendance Terminal</h3>
+            <span class="banner-subtitle">🟢 {{ deviceName() }} (Authorized Terminal)</span>
+        </div>
+    </div>
+    
+    <button mat-raised-button color="accent" class="launch-btn" (click)="openKioskModal()">
+        <mat-icon>schedule</mat-icon> Open Terminal Modal
+    </button>
+</div>

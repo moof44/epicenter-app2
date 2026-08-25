@@ -1,0 +1,285 @@
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatCardModule } from '@angular/material/card';
+import { MatTableModule } from '@angular/material/table';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { StaffAttendanceService } from '../../../../core/services/staff-attendance.service';
+import { UserService } from '../../../../core/services/user.service';
+import { SettingsService } from '../../../../core/services/settings.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import {
+    StaffWeeklyAttendanceSummary,
+    StaffAttendanceRecord,
+    KioskDevice
+} from '../../../../core/models/staff-attendance.model';
+import { User } from '../../../../core/models/user.model';
+import { GeneralSettings } from '../../../../core/models/settings.model';
+import { fadeIn } from '../../../../core/animations/animations';
+import { firstValueFrom, Observable } from 'rxjs';
+
+@Component({
+    selector: 'app-staff-attendance-admin',
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatTabsModule,
+        MatCardModule,
+        MatTableModule,
+        MatButtonModule,
+        MatIconModule,
+        MatDatepickerModule,
+        MatNativeDateModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        MatChipsModule,
+        MatTooltipModule,
+        MatSlideToggleModule,
+        MatSnackBarModule
+    ],
+    templateUrl: './staff-attendance-admin.html',
+    styleUrl: './staff-attendance-admin.css',
+    animations: [fadeIn]
+})
+export class StaffAttendanceAdminComponent implements OnInit {
+    private attendanceService = inject(StaffAttendanceService);
+    private userService = inject(UserService);
+    private settingsService = inject(SettingsService);
+    private authService = inject(AuthService);
+    private snackBar = inject(MatSnackBar);
+    private fb = inject(FormBuilder);
+    private router = inject(Router);
+
+    openKioskTerminal() {
+        window.open('/staff-kiosk', '_blank');
+    }
+
+    // Date range for Weekly Sunday-to-Saturday report
+    currentSunday = signal<Date>(this.getSundayOfWeek(new Date()));
+    currentSaturday = signal<Date>(this.getSaturdayOfWeek(new Date()));
+
+    dateForm: FormGroup = this.fb.group({
+        selectedDate: [new Date()]
+    });
+
+    // Report Summaries & Filtering
+    statusFilter = signal<'ACTIVE' | 'INACTIVE' | 'ALL'>('ACTIVE');
+    allUsers = signal<User[]>([]);
+    weeklySummaries = signal<StaffWeeklyAttendanceSummary[]>([]);
+    expandedStaffId = signal<string | null>(null);
+    isLoadingReport = signal(false);
+
+    displayedSummaries = computed(() => {
+        const summaries = this.weeklySummaries();
+        const filter = this.statusFilter();
+        const users = this.allUsers();
+
+        if (filter === 'ALL') return summaries;
+
+        return summaries.filter(s => {
+            const user = users.find(u => u.uid === s.staffId);
+            if (!user) return true;
+            return filter === 'ACTIVE' ? user.isActive !== false : user.isActive === false;
+        });
+    });
+
+    // Pending Adjustments
+    pendingAdjustments$: Observable<StaffAttendanceRecord[]> = this.attendanceService.getPendingAdjustments();
+
+    // Registered Devices
+    registeredDevices$: Observable<KioskDevice[]> = this.attendanceService.getRegisteredDevices();
+
+    // Table Columns
+    reportColumns = [
+        'staffName',
+        'roles',
+        'daysPresent',
+        'lateMins',
+        'earlyMins',
+        'deficitMins',
+        'otHours',
+        'dailyRate',
+        'totalComp',
+        'actions'
+    ];
+
+    adjustmentColumns = [
+        'staffName',
+        'date',
+        'shiftName',
+        'systemCheckIn',
+        'requestedTime',
+        'reason',
+        'actions'
+    ];
+
+    deviceColumns = [
+        'deviceName',
+        'deviceId',
+        'registeredBy',
+        'registeredAt',
+        'status',
+        'actions'
+    ];
+
+    ngOnInit() {
+        this.loadWeeklyReport();
+    }
+
+    private getSundayOfWeek(d: Date): Date {
+        const date = new Date(d);
+        const day = date.getDay();
+        const diff = date.getDate() - day; // Adjust to Sunday
+        const sunday = new Date(date.setDate(diff));
+        sunday.setHours(0, 0, 0, 0);
+        return sunday;
+    }
+
+    private getSaturdayOfWeek(d: Date): Date {
+        const sunday = this.getSundayOfWeek(d);
+        const saturday = new Date(sunday);
+        saturday.setDate(saturday.getDate() + 6);
+        saturday.setHours(23, 59, 59, 999);
+        return saturday;
+    }
+
+    async onDateChange() {
+        const selected = this.dateForm.value.selectedDate;
+        if (selected) {
+            this.currentSunday.set(this.getSundayOfWeek(selected));
+            this.currentSaturday.set(this.getSaturdayOfWeek(selected));
+            await this.loadWeeklyReport();
+        }
+    }
+
+    async navigateWeek(direction: number) {
+        const curr = new Date(this.currentSunday());
+        curr.setDate(curr.getDate() + (direction * 7));
+        this.currentSunday.set(this.getSundayOfWeek(curr));
+        this.currentSaturday.set(this.getSaturdayOfWeek(curr));
+        this.dateForm.patchValue({ selectedDate: this.currentSunday() });
+        await this.loadWeeklyReport();
+    }
+
+    async loadWeeklyReport() {
+        this.isLoadingReport.set(true);
+        try {
+            const staffUsers = await firstValueFrom(this.userService.getStaffUsers());
+            this.allUsers.set(staffUsers || []);
+
+            const settings = await this.settingsService.getSettingsOnce();
+
+            const summaries = await this.attendanceService.getWeeklyAttendanceReport(
+                this.currentSunday(),
+                this.currentSaturday(),
+                staffUsers || [],
+                settings
+            );
+
+            this.weeklySummaries.set(summaries);
+        } catch (err) {
+            console.error('Error loading weekly report:', err);
+            this.snackBar.open('Failed to load weekly report.', 'Close', { duration: 3000 });
+        } finally {
+            this.isLoadingReport.set(false);
+        }
+    }
+
+    toggleExpand(staffId: string) {
+        if (this.expandedStaffId() === staffId) {
+            this.expandedStaffId.set(null);
+        } else {
+            this.expandedStaffId.set(staffId);
+        }
+    }
+
+    // ==========================================
+    // CHECK-IN ADJUSTMENT APPROVALS
+    // ==========================================
+
+    async reviewAdjustment(record: StaffAttendanceRecord, status: 'APPROVED' | 'DENIED') {
+        const user = this.authService.userProfile();
+        const reviewerName = user?.displayName || 'Admin';
+
+        try {
+            await this.attendanceService.reviewAdjustment(record.id!, status, reviewerName);
+            this.snackBar.open(`Check-in adjustment ${status.toLowerCase()} successfully.`, 'Close', { duration: 3000 });
+            await this.loadWeeklyReport();
+        } catch (err: any) {
+            console.error('Error reviewing adjustment:', err);
+            this.snackBar.open(err.message || 'Failed to update adjustment request.', 'Close', { duration: 4000 });
+        }
+    }
+
+    // ==========================================
+    // REGISTERED DEVICES ACTIONS
+    // ==========================================
+
+    async toggleDevice(device: KioskDevice) {
+        try {
+            await this.attendanceService.toggleDeviceStatus(device.id!, !device.isActive);
+            this.snackBar.open(`Device ${!device.isActive ? 'activated' : 'deactivated'}`, 'Close', { duration: 2000 });
+        } catch (err) {
+            console.error('Error toggling device status:', err);
+            this.snackBar.open('Failed to update device status.', 'Close', { duration: 3000 });
+        }
+    }
+
+    async revokeDevice(device: KioskDevice) {
+        if (!confirm(`Are you sure you want to revoke registration for "${device.deviceName}"?`)) return;
+
+        try {
+            await this.attendanceService.revokeDevice(device.id!);
+            this.snackBar.open('Device registration revoked.', 'Close', { duration: 2000 });
+        } catch (err) {
+            console.error('Error revoking device:', err);
+            this.snackBar.open('Failed to revoke device.', 'Close', { duration: 3000 });
+        }
+    }
+
+    // ==========================================
+    // EXPORT TO CSV
+    // ==========================================
+
+    exportToCSV() {
+        const summaries = this.weeklySummaries();
+        if (!summaries || summaries.length === 0) return;
+
+        const headers = ['Staff Name', 'Roles', 'Days Present', 'Late (mins)', 'Early (mins)', 'Deficit (mins)', 'Overtime (hrs)', 'Daily Rate (PHP)', 'Total Compensation (PHP)'];
+        const rows = summaries.map(s => [
+            `"${s.staffName}"`,
+            `"${s.roles.join(', ')}"`,
+            s.daysPresent,
+            s.totalLateMinutes,
+            s.totalEarlyMinutes,
+            s.totalDeficitMinutes,
+            s.totalOvertimeHours,
+            s.dailySalaryRate,
+            s.totalCompensation
+        ]);
+
+        const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `Staff_Payroll_Attendance_${this.currentSunday().toISOString().substring(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}

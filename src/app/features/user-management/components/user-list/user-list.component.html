@@ -8,7 +8,29 @@
         </div>
     </div>
 
-    <ng-container *ngIf="users$ | async as users">
+    <!-- Filter & Search Bar -->
+    <div class="filter-bar">
+        <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Search Staff</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput 
+                   [ngModel]="searchQuery$.value" 
+                   (ngModelChange)="searchQuery$.next($event)" 
+                   placeholder="Search by name, email, or phone...">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="status-field">
+            <mat-label>Status Filter</mat-label>
+            <mat-icon matPrefix>filter_list</mat-icon>
+            <mat-select [ngModel]="statusFilter$.value" (ngModelChange)="statusFilter$.next($event)">
+                <mat-option value="ACTIVE">Active Only</mat-option>
+                <mat-option value="INACTIVE">Deactivated Only</mat-option>
+                <mat-option value="ALL">All Statuses</mat-option>
+            </mat-select>
+        </mat-form-field>
+    </div>
+
+    <ng-container *ngIf="filteredUsers$ | async as users">
         <!-- Desktop Table View -->
         <table mat-table [dataSource]="users" class="desktop-table">
             <!-- Photo Column -->
@@ -41,6 +63,14 @@
                         <mat-chip [color]="getRoleColor(role)" highlighted>{{ role }}</mat-chip>
                         }
                     </mat-chip-set>
+                </td>
+            </ng-container>
+
+            <!-- Daily Salary Rate Column -->
+            <ng-container matColumnDef="dailySalaryRate">
+                <th mat-header-cell *matHeaderCellDef> Daily Salary </th>
+                <td mat-cell *matCellDef="let user" [class.dimmed]="user.isActive === false">
+                    {{ user.dailySalaryRate ? ('₱' + (user.dailySalaryRate | number:'1.2-2')) : 'Default' }}
                 </td>
             </ng-container>
 

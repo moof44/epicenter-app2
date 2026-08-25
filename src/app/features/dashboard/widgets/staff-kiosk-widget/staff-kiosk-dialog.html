@@ -1,0 +1,160 @@
+<div class="kiosk-modal-container">
+    <!-- Header -->
+    <div class="dialog-header">
+        <div class="header-info">
+            <mat-icon color="primary" class="header-icon">schedule</mat-icon>
+            <div>
+                <h2>Staff Attendance Terminal</h2>
+                <span class="device-badge">{{ deviceName() }}</span>
+            </div>
+        </div>
+        <div class="header-time">
+            <div class="time-text">{{ manilaTimeStr() }}</div>
+            <div class="date-text">{{ manilaDateStr() }}</div>
+        </div>
+        <button mat-icon-button class="close-btn" (click)="closeDialog()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <!-- 1️⃣ STEP 1: INITIAL CHOICE (Only 2 Options) -->
+    <div class="step-content choice-step" *ngIf="step() === 'CHOICE'" [@fadeIn]>
+        <h3>Select Action</h3>
+        <div class="choice-grid">
+            <button type="button" class="choice-card clock-in" (click)="selectMode('CLOCK_IN')">
+                <mat-icon class="card-icon">login</mat-icon>
+                <span class="card-title">Clock In</span>
+                <span class="card-subtitle">Arrival & Shift Registration</span>
+            </button>
+
+            <button type="button" class="choice-card clock-out" (click)="selectMode('CLOCK_OUT')">
+                <mat-icon class="card-icon">logout</mat-icon>
+                <span class="card-title">Clock Out</span>
+                <span class="card-subtitle">End Shift & Log Time</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2️⃣ STEP 2A: CLOCK IN FORM -->
+    <div class="step-content form-step" *ngIf="step() === 'CLOCK_IN'" [@fadeIn]>
+        <div class="step-nav">
+            <button mat-icon-button (click)="backToChoice()" [disabled]="isSubmitting()">
+                <mat-icon>arrow_back</mat-icon>
+            </button>
+            <h3>Clock In</h3>
+        </div>
+
+        <form [formGroup]="clockInForm" (ngSubmit)="submitClockIn()" class="kiosk-form">
+            <!-- Staff Name Selection -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Select Your Name</mat-label>
+                <mat-icon matPrefix>person</mat-icon>
+                <mat-select formControlName="staffId" placeholder="Choose staff account">
+                    <mat-option *ngFor="let staff of staffList()" [value]="staff.uid">
+                        {{ staff.displayName }} ({{ staff.roles.join(', ') }})
+                    </mat-option>
+                </mat-select>
+                <mat-error *ngIf="clockInForm.get('staffId')?.hasError('required')">Select your staff name</mat-error>
+            </mat-form-field>
+
+            <!-- Shift Selection (Default pre-selected based on Manila time) -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Shift (Default Pre-selected)</mat-label>
+                <mat-icon matPrefix>access_time</mat-icon>
+                <mat-select formControlName="shiftId">
+                    <mat-option *ngFor="let shift of shiftsList()" [value]="shift.id">
+                        {{ shift.name }} ({{ shift.startTime }} - {{ shift.endTime }})
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <!-- Password Verification -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Password / PIN</mat-label>
+                <mat-icon matPrefix>lock</mat-icon>
+                <input matInput type="password" formControlName="password" placeholder="••••••••">
+                <mat-error *ngIf="clockInForm.get('password')?.hasError('required')">Password is required</mat-error>
+            </mat-form-field>
+
+            <!-- Time Adjustment Request Checkbox -->
+            <div class="adjustment-box">
+                <mat-checkbox formControlName="requestAdjustment" color="primary">
+                    Request Check-In Time Adjustment (if arrived earlier/forgot to clock in)
+                </mat-checkbox>
+
+                <div class="adjustment-fields" *ngIf="clockInForm.value.requestAdjustment" [@fadeIn]>
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Actual Arrival Time</mat-label>
+                        <input matInput type="time" formControlName="requestedTime">
+                        <mat-hint>Actual time you arrived at work today</mat-hint>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Reason for Adjustment</mat-label>
+                        <input matInput formControlName="adjustmentReason" placeholder="e.g. Attended to opening member immediately">
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button mat-button type="button" (click)="backToChoice()" [disabled]="isSubmitting()">Cancel</button>
+                <button mat-raised-button color="primary" type="submit" [disabled]="clockInForm.invalid || isSubmitting()">
+                    <mat-icon>{{ isSubmitting() ? 'sync' : 'login' }}</mat-icon>
+                    {{ isSubmitting() ? 'Processing...' : 'Confirm Clock In' }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 3️⃣ STEP 2B: CLOCK OUT FORM -->
+    <div class="step-content form-step" *ngIf="step() === 'CLOCK_OUT'" [@fadeIn]>
+        <div class="step-nav">
+            <button mat-icon-button (click)="backToChoice()" [disabled]="isSubmitting()">
+                <mat-icon>arrow_back</mat-icon>
+            </button>
+            <h3>Clock Out</h3>
+        </div>
+
+        <form [formGroup]="clockOutForm" (ngSubmit)="submitClockOut()" class="kiosk-form">
+            <!-- Staff Name Selection -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Select Your Name</mat-label>
+                <mat-icon matPrefix>person</mat-icon>
+                <mat-select formControlName="staffId" placeholder="Choose staff account">
+                    <mat-option *ngFor="let staff of staffList()" [value]="staff.uid">
+                        {{ staff.displayName }} ({{ staff.roles.join(', ') }})
+                    </mat-option>
+                </mat-select>
+                <mat-error *ngIf="clockOutForm.get('staffId')?.hasError('required')">Select your staff name</mat-error>
+            </mat-form-field>
+
+            <!-- Password Verification -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Password / PIN</mat-label>
+                <mat-icon matPrefix>lock</mat-icon>
+                <input matInput type="password" formControlName="password" placeholder="••••••••">
+                <mat-error *ngIf="clockOutForm.get('password')?.hasError('required')">Password is required</mat-error>
+            </mat-form-field>
+
+            <div class="form-actions">
+                <button mat-button type="button" (click)="backToChoice()" [disabled]="isSubmitting()">Cancel</button>
+                <button mat-raised-button color="warn" type="submit" [disabled]="clockOutForm.invalid || isSubmitting()">
+                    <mat-icon>{{ isSubmitting() ? 'sync' : 'logout' }}</mat-icon>
+                    {{ isSubmitting() ? 'Processing...' : 'Confirm Clock Out' }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 4️⃣ RESULT FEEDBACK STEP -->
+    <div class="step-content result-step" *ngIf="step() === 'RESULT'" [@fadeIn]>
+        <div class="result-card" [ngClass]="resultMessage()?.type">
+            <mat-icon class="result-icon">{{ resultMessage()?.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+            <p class="result-text">{{ resultMessage()?.text }}</p>
+        </div>
+
+        <div class="dialog-actions">
+            <button mat-raised-button color="primary" (click)="closeDialog()">Done</button>
+        </div>
+    </div>
+</div>

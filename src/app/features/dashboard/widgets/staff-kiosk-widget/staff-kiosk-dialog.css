@@ -1,0 +1,220 @@
+.kiosk-modal-container {
+    padding: 24px;
+    max-width: 520px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e4e6ef;
+    margin-bottom: 20px;
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+}
+
+.header-info h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.device-badge {
+    font-size: 0.72rem;
+    background: #eef2f7;
+    color: #495057;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.header-time {
+    text-align: right;
+}
+
+.time-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2e7d32;
+    font-family: monospace;
+}
+
+.date-text {
+    font-size: 0.75rem;
+    color: #7e8299;
+}
+
+.close-btn {
+    margin-left: 8px;
+}
+
+/* Step 1: Initial Choice */
+.choice-step h3 {
+    margin: 0 0 16px;
+    font-size: 1rem;
+    color: #7e8299;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 12px 0 20px;
+}
+
+.choice-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    border-radius: 12px;
+    border: 2px solid #e4e6ef;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.choice-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.choice-card.clock-in {
+    border-color: #c8e6c9;
+}
+
+.choice-card.clock-in:hover {
+    background: #e8f5e9;
+    border-color: #4caf50;
+}
+
+.choice-card.clock-in .card-icon {
+    color: #2e7d32;
+}
+
+.choice-card.clock-out {
+    border-color: #ffcdd2;
+}
+
+.choice-card.clock-out:hover {
+    background: #ffebee;
+    border-color: #f44336;
+}
+
+.choice-card.clock-out .card-icon {
+    color: #c62828;
+}
+
+.card-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 8px;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e1e2d;
+}
+
+.card-subtitle {
+    font-size: 0.75rem;
+    color: #7e8299;
+    margin-top: 4px;
+}
+
+/* Forms */
+.step-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.step-nav h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.full-width {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.adjustment-box {
+    background: #f8f9fa;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px dashed #d1d5db;
+    margin-bottom: 16px;
+}
+
+.adjustment-fields {
+    margin-top: 12px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+/* Result Step */
+.result-card {
+    padding: 24px;
+    border-radius: 12px;
+    text-align: center;
+    margin: 16px 0;
+}
+
+.result-card.success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #c8e6c9;
+}
+
+.result-card.error {
+    background: #ffebee;
+    color: #b71c1c;
+    border: 1px solid #ffcdd2;
+}
+
+.result-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+}
+
+.result-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}

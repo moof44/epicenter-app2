@@ -1,0 +1,165 @@
+<div class="kiosk-container" [@fadeIn]>
+
+    <!-- HEADER / CLOCK BAR -->
+    <div class="kiosk-header">
+        <div class="header-left">
+            <mat-icon class="kiosk-logo-icon">schedule</mat-icon>
+            <div>
+                <h1 class="kiosk-title">Staff Attendance Terminal</h1>
+                <span class="device-name-badge">{{ deviceName() }}</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="philippine-time">{{ manilaTimeStr() }}</div>
+            <div class="philippine-date">{{ manilaDateStr() }} (PHT)</div>
+        </div>
+    </div>
+
+    <!-- 🔒 UNAUTHORIZED DEVICE SCREEN -->
+    <mat-card class="unauthorized-card" *ngIf="isAuthorized() === false" [@fadeIn]>
+        <mat-icon class="lock-icon" color="warn">lock</mat-icon>
+        <h2>Device Not Authorized</h2>
+        <p>This terminal is not currently registered for Staff Attendance clock-in/out.</p>
+        <p class="sub-text">An Administrator must authorize this device before staff members can use it.</p>
+        
+        <button mat-raised-button color="primary" class="auth-btn" (click)="openAdminAuth()">
+            <mat-icon>admin_panel_settings</mat-icon> Authorize This Device
+        </button>
+    </mat-card>
+
+    <!-- 🟢 AUTHORIZED KIOSK CLOCK-IN / OUT FORM -->
+    <div class="kiosk-content" *ngIf="isAuthorized() === true" [@fadeIn]>
+
+        <!-- Result Feedback Banner -->
+        <div class="result-banner" *ngIf="resultMessage()" [ngClass]="resultMessage()?.type" [@fadeIn]>
+            <mat-icon>{{ resultMessage()?.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+            <span>{{ resultMessage()?.text }}</span>
+            <mat-icon class="close-banner" (click)="resultMessage.set(null)">close</mat-icon>
+        </div>
+
+        <mat-card class="kiosk-card">
+            <form [formGroup]="kioskForm" (ngSubmit)="submitKioskAction()" class="kiosk-form">
+                
+                <!-- Action Mode Selection (Check In vs Check Out) -->
+                <div class="mode-selector">
+                    <button type="button" 
+                            class="mode-btn check-in" 
+                            [class.active]="kioskForm.value.mode === 'CHECK_IN'"
+                            (click)="kioskForm.patchValue({ mode: 'CHECK_IN' })">
+                        <mat-icon>login</mat-icon>
+                        <span>CLOCK IN</span>
+                    </button>
+                    <button type="button" 
+                            class="mode-btn check-out" 
+                            [class.active]="kioskForm.value.mode === 'CHECK_OUT'"
+                            (click)="kioskForm.patchValue({ mode: 'CHECK_OUT' })">
+                        <mat-icon>logout</mat-icon>
+                        <span>CLOCK OUT</span>
+                    </button>
+                </div>
+
+                <!-- Staff Member Selection -->
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Select Your Name</mat-label>
+                    <mat-icon matPrefix>person</mat-icon>
+                    <mat-select formControlName="staffId" placeholder="Choose staff account">
+                        <mat-option *ngFor="let staff of staffList()" [value]="staff.uid">
+                            {{ staff.displayName }} ({{ staff.roles.join(', ') }})
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="kioskForm.get('staffId')?.hasError('required')">Please select your staff name</mat-error>
+                </mat-form-field>
+
+                <!-- Shift Selection (Check In Mode) -->
+                <mat-form-field appearance="outline" class="full-width" *ngIf="kioskForm.value.mode === 'CHECK_IN'">
+                    <mat-label>Shift</mat-label>
+                    <mat-icon matPrefix>access_time</mat-icon>
+                    <mat-select formControlName="shiftId">
+                        <mat-option *ngFor="let shift of shiftsList()" [value]="shift.id">
+                            {{ shift.name }} ({{ shift.startTime }} - {{ shift.endTime }})
+                        </mat-option>
+                    </mat-select>
+                    <mat-hint>Auto-detected based on current Manila time</mat-hint>
+                </mat-form-field>
+
+                <!-- Password Verification Input -->
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Enter Account Password / PIN</mat-label>
+                    <mat-icon matPrefix>lock</mat-icon>
+                    <input matInput type="password" formControlName="password" placeholder="••••••••">
+                    <mat-error *ngIf="kioskForm.get('password')?.hasError('required')">Password is required to verify identity</mat-error>
+                </mat-form-field>
+
+                <!-- Check-in Time Adjustment Option -->
+                <div class="adjustment-section" *ngIf="kioskForm.value.mode === 'CHECK_IN'">
+                    <mat-checkbox formControlName="requestAdjustment" color="primary">
+                        Request Check-In Time Adjustment (e.g. forgot to clock in upon arrival)
+                    </mat-checkbox>
+
+                    <div class="adjustment-fields" *ngIf="kioskForm.value.requestAdjustment" [@fadeIn]>
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Actual Arrival Time (HH:mm)</mat-label>
+                            <input matInput type="time" formControlName="requestedTime">
+                            <mat-hint>Specify the actual time you arrived at the gym today</mat-hint>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Reason for Adjustment Request</mat-label>
+                            <input matInput formControlName="adjustmentReason" placeholder="e.g. Attended to opening member immediately">
+                        </mat-form-field>
+                    </div>
+                </div>
+
+                <!-- Submit Action Button -->
+                <button mat-raised-button 
+                        color="primary" 
+                        type="submit" 
+                        class="submit-action-btn"
+                        [disabled]="kioskForm.invalid || isSubmitting()">
+                    <span *ngIf="!isSubmitting()">
+                        <mat-icon>{{ kioskForm.value.mode === 'CHECK_IN' ? 'login' : 'logout' }}</mat-icon>
+                        CONFIRM {{ kioskForm.value.mode === 'CHECK_IN' ? 'CLOCK IN' : 'CLOCK OUT' }}
+                    </span>
+                    <span *ngIf="isSubmitting()">Processing...</span>
+                </button>
+            </form>
+        </mat-card>
+    </div>
+
+    <!-- 🛠️ ADMIN DEVICE REGISTRATION MODAL -->
+    <div class="modal-overlay" *ngIf="showAdminAuthModal()" [@fadeIn]>
+        <mat-card class="modal-card">
+            <mat-card-header>
+                <mat-icon mat-card-avatar color="primary">admin_panel_settings</mat-icon>
+                <mat-card-title>Device Authorization</mat-card-title>
+                <mat-card-subtitle>Admin credentials required to authorize this terminal</mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+                <form [formGroup]="adminAuthForm" (ngSubmit)="submitAdminAuth()" class="admin-form">
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Terminal Name</mat-label>
+                        <input matInput formControlName="deviceName" placeholder="e.g. Front Desk iPad">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Admin Email</mat-label>
+                        <input matInput formControlName="email" type="email" placeholder="admin@epicenter.com">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Admin Password</mat-label>
+                        <input matInput formControlName="password" type="password">
+                    </mat-form-field>
+
+                    <div class="modal-actions">
+                        <button mat-button type="button" (click)="closeAdminAuth()" [disabled]="isSubmitting()">Cancel</button>
+                        <button mat-raised-button color="primary" type="submit" [disabled]="adminAuthForm.invalid || isSubmitting()">
+                            Authorize Device
+                        </button>
+                    </div>
+                </form>
+            </mat-card-content>
+        </mat-card>
+    </div>
+</div>

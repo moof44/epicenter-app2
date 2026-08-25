@@ -38,10 +38,21 @@
             <mat-icon matListItemIcon>event_available</mat-icon>
             <span matListItemTitle>Attendance</span>
           </a>
+          <a mat-list-item routerLink="/staff-attendance/my-history" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>schedule</mat-icon>
+            <span matListItemTitle>My Attendance</span>
+          </a>
         </ng-container>
 
-        <mat-divider *ngIf="authService.hasAnyRole(['ADMIN'])"></mat-divider>
-        <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN'])">Admin</div>
+        <mat-divider *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])"></mat-divider>
+        <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">Admin</div>
+
+        <a mat-list-item routerLink="/staff-attendance" routerLinkActive="active"
+          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
+          <mat-icon matListItemIcon>badge</mat-icon>
+          <span matListItemTitle>Staff Attendance & Payroll</span>
+        </a>
 
         <a mat-list-item routerLink="/reports" routerLinkActive="active"
           (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
@@ -69,8 +80,8 @@
 
         <a mat-list-item routerLink="/users" routerLinkActive="active"
           (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
-          <mat-icon matListItemIcon>badge</mat-icon>
-          <span matListItemTitle>Staff</span>
+          <mat-icon matListItemIcon>people</mat-icon>
+          <span matListItemTitle>Staff Accounts</span>
         </a>
 
         <mat-divider *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])"></mat-divider>

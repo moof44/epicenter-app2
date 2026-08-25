@@ -1,0 +1,362 @@
+<div class="admin-attendance-container" [@fadeIn]>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1>Staff Time & Attendance</h1>
+            <p class="subtitle">Weekly attendance reports, deficit & overtime tracking, payroll calculations, and kiosk devices.</p>
+        </div>
+        
+        <button mat-raised-button color="accent" (click)="openKioskTerminal()">
+            <mat-icon>launch</mat-icon> Open Kiosk Terminal
+        </button>
+    </div>
+
+    <!-- TABS -->
+    <mat-tab-group animationDuration="200ms" class="admin-tabs">
+        
+        <!-- ════════════════ TAB 1: WEEKLY PAYROLL & ATTENDANCE ════════════════ -->
+        <mat-tab>
+            <ng-template matTabLabel>
+                <mat-icon class="tab-icon">calendar_view_week</mat-icon> Weekly Attendance & Payroll
+            </ng-template>
+
+            <div class="tab-content">
+                
+                <!-- Week Navigator Bar -->
+                <mat-card class="filter-card">
+                    <div class="week-navigator">
+                        <button mat-icon-button (click)="navigateWeek(-1)" title="Previous Week">
+                            <mat-icon>chevron_left</mat-icon>
+                        </button>
+                        
+                        <div class="week-range-text">
+                            <mat-icon>date_range</mat-icon>
+                            <span>{{ currentSunday() | date:'mediumDate' }} &nbsp;–&nbsp; {{ currentSaturday() | date:'mediumDate' }}</span>
+                            <span class="week-label">(Sunday to Saturday)</span>
+                        </div>
+
+                        <button mat-icon-button (click)="navigateWeek(1)" title="Next Week">
+                            <mat-icon>chevron_right</mat-icon>
+                        </button>
+                    </div>
+
+                    <div class="filter-actions" [formGroup]="dateForm">
+                        <mat-form-field appearance="outline" class="status-select-field">
+                            <mat-label>Employee Status</mat-label>
+                            <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
+                                <mat-option value="ACTIVE">Active Employees Only</mat-option>
+                                <mat-option value="INACTIVE">Deactivated Only</mat-option>
+                                <mat-option value="ALL">All Employees</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="date-picker-field">
+                            <mat-label>Jump to Week</mat-label>
+                            <input matInput [matDatepicker]="picker" formControlName="selectedDate" (dateChange)="onDateChange()">
+                            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                            <mat-datepicker #picker></mat-datepicker>
+                        </mat-form-field>
+
+                        <button mat-stroked-button color="primary" (click)="exportToCSV()">
+                            <mat-icon>download</mat-icon> Export Payroll CSV
+                        </button>
+                    </div>
+                </mat-card>
+
+                <!-- Weekly Summary Matrix Table -->
+                <mat-card class="matrix-card">
+                    <table mat-table [dataSource]="displayedSummaries()" class="summary-table">
+                        
+                        <!-- Staff Name -->
+                        <ng-container matColumnDef="staffName">
+                            <th mat-header-cell *matHeaderCellDef> Employee </th>
+                            <td mat-cell *matCellDef="let s">
+                                <div class="staff-info">
+                                    <span class="staff-name">{{ s.staffName }}</span>
+                                    <span class="flags-row">
+                                        <span class="flag-chip missed" *ngIf="s.hasMissedCheckout" matTooltip="Has missed check-out this week">Missed Checkout</span>
+                                        <span class="flag-chip pending" *ngIf="s.hasPendingAdjustment" matTooltip="Has pending check-in adjustment">Pending Adjustment</span>
+                                    </span>
+                                </div>
+                            </td>
+                        </ng-container>
+
+                        <!-- Roles -->
+                        <ng-container matColumnDef="roles">
+                            <th mat-header-cell *matHeaderCellDef> Role </th>
+                            <td mat-cell *matCellDef="let s">
+                                <mat-chip-set>
+                                    <mat-chip *ngFor="let r of s.roles">{{ r }}</mat-chip>
+                                </mat-chip-set>
+                            </td>
+                        </ng-container>
+
+                        <!-- Days Present -->
+                        <ng-container matColumnDef="daysPresent">
+                            <th mat-header-cell *matHeaderCellDef> Days Present </th>
+                            <td mat-cell *matCellDef="let s" class="center-align">
+                                <strong class="present-count">{{ s.daysPresent }} / 7</strong>
+                            </td>
+                        </ng-container>
+
+                        <!-- Late Mins -->
+                        <ng-container matColumnDef="lateMins">
+                            <th mat-header-cell *matHeaderCellDef> Late (mins) </th>
+                            <td mat-cell *matCellDef="let s" class="center-align">
+                                <span [class.warn-text]="s.totalLateMinutes > 0">{{ s.totalLateMinutes }}m</span>
+                            </td>
+                        </ng-container>
+
+                        <!-- Early Mins -->
+                        <ng-container matColumnDef="earlyMins">
+                            <th mat-header-cell *matHeaderCellDef> Early (mins) </th>
+                            <td mat-cell *matCellDef="let s" class="center-align">
+                                <span class="success-text" *ngIf="s.totalEarlyMinutes > 0">+{{ s.totalEarlyMinutes }}m</span>
+                                <span *ngIf="s.totalEarlyMinutes === 0">0m</span>
+                            </td>
+                        </ng-container>
+
+                        <!-- Deficit Mins -->
+                        <ng-container matColumnDef="deficitMins">
+                            <th mat-header-cell *matHeaderCellDef> Deficit (from 7h) </th>
+                            <td mat-cell *matCellDef="let s" class="center-align">
+                                <span [class.danger-text]="s.totalDeficitMinutes > 0">
+                                    {{ s.totalDeficitMinutes > 0 ? (s.totalDeficitMinutes + 'm') : '-' }}
+                                </span>
+                            </td>
+                        </ng-container>
+
+                        <!-- Overtime Hours -->
+                        <ng-container matColumnDef="otHours">
+                            <th mat-header-cell *matHeaderCellDef matTooltip="Earned only when worked >= 10 hours in a shift"> Overtime (hrs) </th>
+                            <td mat-cell *matCellDef="let s" class="center-align">
+                                <strong class="ot-text" *ngIf="s.totalOvertimeHours > 0">{{ s.totalOvertimeHours }}h</strong>
+                                <span *ngIf="s.totalOvertimeHours === 0">-</span>
+                            </td>
+                        </ng-container>
+
+                        <!-- Daily Rate -->
+                        <ng-container matColumnDef="dailyRate">
+                            <th mat-header-cell *matHeaderCellDef> Daily Rate </th>
+                            <td mat-cell *matCellDef="let s" class="right-align">
+                                ₱{{ s.dailySalaryRate | number:'1.2-2' }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Total Compensation -->
+                        <ng-container matColumnDef="totalComp">
+                            <th mat-header-cell *matHeaderCellDef> Total Compensation </th>
+                            <td mat-cell *matCellDef="let s" class="right-align highlight-pay">
+                                ₱{{ s.totalCompensation | number:'1.2-2' }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Actions (Expand Row) -->
+                        <ng-container matColumnDef="actions">
+                            <th mat-header-cell *matHeaderCellDef> Details </th>
+                            <td mat-cell *matCellDef="let s" class="center-align">
+                                <button mat-icon-button (click)="toggleExpand(s.staffId)" title="View 7-day breakdown">
+                                    <mat-icon>{{ expandedStaffId() === s.staffId ? 'expand_less' : 'expand_more' }}</mat-icon>
+                                </button>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="reportColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: reportColumns;"></tr>
+                    </table>
+
+                    <!-- Expandable Daily Breakdown Matrix -->
+                    <div class="expanded-details" *ngFor="let s of displayedSummaries()">
+                        <div class="daily-matrix-container" *ngIf="expandedStaffId() === s.staffId" [@fadeIn]>
+                            <h4>7-Day Attendance Matrix: {{ s.staffName }}</h4>
+                            <div class="matrix-grid">
+                                <div class="day-card" *ngFor="let day of s.dailyMatrix" [class.absent]="!day.isPresent">
+                                    <div class="day-header">
+                                        <span class="day-name">{{ day.dayName }}</span>
+                                        <span class="day-date">{{ day.date | date:'shortDate' }}</span>
+                                    </div>
+
+                                    <div class="day-body" *ngIf="day.isPresent && day.record">
+                                        <div class="shift-name">{{ day.record.shiftName }}</div>
+                                        <div class="time-row">
+                                            <span>In:</span> <strong>{{ day.record.checkInTime | date:'shortTime' }}</strong>
+                                        </div>
+                                        <div class="time-row">
+                                            <span>Out:</span> 
+                                            <strong *ngIf="day.record.checkOutTime">{{ day.record.checkOutTime | date:'shortTime' }}</strong>
+                                            <span *ngIf="!day.record.checkOutTime" class="warn-text">Missing</span>
+                                        </div>
+                                        <div class="metrics-row">
+                                            <span *ngIf="day.record.lateMinutes > 0" class="warn-text">Late {{ day.record.lateMinutes }}m</span>
+                                            <span *ngIf="day.record.earlyMinutes > 0" class="success-text">Early {{ day.record.earlyMinutes }}m</span>
+                                        </div>
+                                        <div class="ot-deficit-row">
+                                            <span *ngIf="day.deficitMinutes > 0" class="danger-text">Deficit {{ day.deficitMinutes }}m</span>
+                                            <span *ngIf="day.overtimeHours > 0" class="ot-text">OT {{ day.overtimeHours }}h</span>
+                                        </div>
+                                        <div class="remarks-chips" *ngIf="day.remarks.length > 0">
+                                            <span class="mini-chip" *ngFor="let rem of day.remarks">{{ rem }}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="day-body absent-body" *ngIf="!day.isPresent">
+                                        <span class="absent-label">Absent / Off</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </mat-card>
+
+            </div>
+        </mat-tab>
+
+        <!-- ════════════════ TAB 2: ADJUSTMENT REQUESTS ════════════════ -->
+        <mat-tab>
+            <ng-template matTabLabel>
+                <mat-icon class="tab-icon">assignment_late</mat-icon> Check-In Adjustments
+            </ng-template>
+
+            <div class="tab-content" *ngIf="pendingAdjustments$ | async as pending">
+                <mat-card class="admin-card">
+                    <mat-card-header>
+                        <mat-icon mat-card-avatar color="warn">pending_actions</mat-icon>
+                        <mat-card-title>Pending Check-In Adjustments</mat-card-title>
+                        <mat-card-subtitle>Approve or deny staff check-in arrival time adjustment requests</mat-card-subtitle>
+                    </mat-card-header>
+
+                    <mat-card-content>
+                        <table mat-table [dataSource]="pending" class="admin-table" *ngIf="pending.length > 0; else noPending">
+                            
+                            <ng-container matColumnDef="staffName">
+                                <th mat-header-cell *matHeaderCellDef> Employee </th>
+                                <td mat-cell *matCellDef="let p"> <strong>{{ p.staffName }}</strong> </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="date">
+                                <th mat-header-cell *matHeaderCellDef> Date </th>
+                                <td mat-cell *matCellDef="let p"> {{ p.date }} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="shiftName">
+                                <th mat-header-cell *matHeaderCellDef> Shift </th>
+                                <td mat-cell *matCellDef="let p"> {{ p.shiftName }} ({{ p.scheduledStartTime }}) </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="systemCheckIn">
+                                <th mat-header-cell *matHeaderCellDef> System Check-In </th>
+                                <td mat-cell *matCellDef="let p"> {{ p.checkInTime | date:'mediumTime' }} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="requestedTime">
+                                <th mat-header-cell *matHeaderCellDef> Requested Arrival </th>
+                                <td mat-cell *matCellDef="let p" class="highlight-time">
+                                    {{ p.requestedCheckInTime | date:'mediumTime' }}
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="reason">
+                                <th mat-header-cell *matHeaderCellDef> Reason </th>
+                                <td mat-cell *matCellDef="let p"> <em>{{ p.adjustmentReason || 'No reason provided' }}</em> </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="actions">
+                                <th mat-header-cell *matHeaderCellDef> Review </th>
+                                <td mat-cell *matCellDef="let p">
+                                    <button mat-flat-button color="primary" class="mini-btn" (click)="reviewAdjustment(p, 'APPROVED')">
+                                        <mat-icon>check</mat-icon> Approve
+                                    </button>
+                                    <button mat-stroked-button color="warn" class="mini-btn" (click)="reviewAdjustment(p, 'DENIED')">
+                                        <mat-icon>close</mat-icon> Deny
+                                    </button>
+                                </td>
+                            </ng-container>
+
+                            <tr mat-header-row *matHeaderRowDef="adjustmentColumns"></tr>
+                            <tr mat-row *matRowDef="let row; columns: adjustmentColumns;"></tr>
+                        </table>
+
+                        <ng-template #noPending>
+                            <div class="empty-state">
+                                <mat-icon class="empty-icon">check_circle</mat-icon>
+                                <p>No pending check-in adjustment requests.</p>
+                            </div>
+                        </ng-template>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+        </mat-tab>
+
+        <!-- ════════════════ TAB 3: REGISTERED KIOSK DEVICES ════════════════ -->
+        <mat-tab>
+            <ng-template matTabLabel>
+                <mat-icon class="tab-icon">tablet_mac</mat-icon> Kiosk Devices
+            </ng-template>
+
+            <div class="tab-content" *ngIf="registeredDevices$ | async as devices">
+                <mat-card class="admin-card">
+                    <mat-card-header>
+                        <mat-icon mat-card-avatar color="primary">devices</mat-icon>
+                        <mat-card-title>Authorized Attendance Terminals</mat-card-title>
+                        <mat-card-subtitle>Manage hardware terminals authorized for employee clock-in/out</mat-card-subtitle>
+                    </mat-card-header>
+
+                    <mat-card-content>
+                        <table mat-table [dataSource]="devices" class="admin-table" *ngIf="devices.length > 0; else noDevices">
+                            
+                            <ng-container matColumnDef="deviceName">
+                                <th mat-header-cell *matHeaderCellDef> Terminal Name </th>
+                                <td mat-cell *matCellDef="let d"> <strong>{{ d.deviceName }}</strong> </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="deviceId">
+                                <th mat-header-cell *matHeaderCellDef> Device Identifier </th>
+                                <td mat-cell *matCellDef="let d"> <code>{{ d.deviceId }}</code> </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="registeredBy">
+                                <th mat-header-cell *matHeaderCellDef> Registered By </th>
+                                <td mat-cell *matCellDef="let d"> {{ d.registeredByName }} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="registeredAt">
+                                <th mat-header-cell *matHeaderCellDef> Registration Date </th>
+                                <td mat-cell *matCellDef="let d"> {{ d.registeredAt | date:'mediumDate' }} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="status">
+                                <th mat-header-cell *matHeaderCellDef> Status </th>
+                                <td mat-cell *matCellDef="let d">
+                                    <mat-slide-toggle [checked]="d.isActive" (change)="toggleDevice(d)" color="primary">
+                                        {{ d.isActive ? 'Active' : 'Disabled' }}
+                                    </mat-slide-toggle>
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="actions">
+                                <th mat-header-cell *matHeaderCellDef> Actions </th>
+                                <td mat-cell *matCellDef="let d">
+                                    <button mat-icon-button color="warn" (click)="revokeDevice(d)" title="Revoke Device Registration">
+                                        <mat-icon>delete_forever</mat-icon>
+                                    </button>
+                                </td>
+                            </ng-container>
+
+                            <tr mat-header-row *matHeaderRowDef="deviceColumns"></tr>
+                            <tr mat-row *matRowDef="let row; columns: deviceColumns;"></tr>
+                        </table>
+
+                        <ng-template #noDevices>
+                            <div class="empty-state">
+                                <mat-icon class="empty-icon">devices_other</mat-icon>
+                                <p>No kiosk devices registered yet.</p>
+                            </div>
+                        </ng-template>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+        </mat-tab>
+
+    </mat-tab-group>
+</div>

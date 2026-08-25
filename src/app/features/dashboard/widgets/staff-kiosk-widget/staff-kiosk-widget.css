@@ -1,0 +1,55 @@
+.kiosk-header-banner {
+    background: linear-gradient(135deg, #1e1e2d 0%, #2d2d44 100%);
+    color: white;
+    padding: 14px 20px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    margin-bottom: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.banner-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon-wrap {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.terminal-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: #ff9800;
+}
+
+.banner-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.banner-subtitle {
+    font-size: 0.78rem;
+    color: #4caf50;
+    font-weight: 500;
+}
+
+.launch-btn {
+    padding: 8px 20px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 8px;
+}

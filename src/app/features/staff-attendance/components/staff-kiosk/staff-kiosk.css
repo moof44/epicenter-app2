@@ -1,0 +1,211 @@
+.kiosk-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.kiosk-header {
+    background: #1e1e2d;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.kiosk-logo-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: #3f51b5;
+}
+
+.kiosk-title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.device-name-badge {
+    background: rgba(255, 255, 255, 0.15);
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.header-right {
+    text-align: right;
+}
+
+.philippine-time {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4caf50;
+    font-family: monospace;
+}
+
+.philippine-date {
+    font-size: 0.8rem;
+    color: #b5b5c3;
+}
+
+/* Unauthorized Card */
+.unauthorized-card {
+    text-align: center;
+    padding: 40px 24px;
+    border-radius: 12px;
+}
+
+.lock-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+}
+
+.sub-text {
+    color: #7e8299;
+    margin-bottom: 24px;
+}
+
+.auth-btn {
+    padding: 12px 24px;
+}
+
+/* Kiosk Content & Mode Selector */
+.kiosk-card {
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.mode-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.mode-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 8px;
+    border: 2px solid #e4e6ef;
+    background: #f5f8fa;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-btn.check-in.active {
+    background: #e8f5e9;
+    border-color: #4caf50;
+    color: #2e7d32;
+}
+
+.mode-btn.check-out.active {
+    background: #ffebee;
+    border-color: #f44336;
+    color: #c62828;
+}
+
+.full-width {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.adjustment-section {
+    background: #f9f9fc;
+    padding: 16px;
+    border-radius: 8px;
+    margin: 12px 0 24px;
+    border: 1px dashed #d1d5db;
+}
+
+.adjustment-fields {
+    margin-top: 16px;
+}
+
+.submit-action-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 8px;
+}
+
+/* Result Feedback Banner */
+.result-banner {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    position: relative;
+}
+
+.result-banner.success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #c8e6c9;
+}
+
+.result-banner.error {
+    background: #ffebee;
+    color: #b71c1c;
+    border: 1px solid #ffcdd2;
+}
+
+.close-banner {
+    margin-left: auto;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.close-banner:hover {
+    opacity: 1;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-card {
+    width: 90%;
+    max-width: 440px;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+}

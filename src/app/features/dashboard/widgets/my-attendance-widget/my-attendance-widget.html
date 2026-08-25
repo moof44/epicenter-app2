@@ -1,0 +1,39 @@
+<mat-card class="widget-card">
+    <mat-card-header>
+        <mat-icon mat-card-avatar color="primary">event_available</mat-icon>
+        <mat-card-title>My Staff Attendance</mat-card-title>
+        <mat-card-subtitle>Today's status & weekly hours</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content class="widget-content">
+        <div class="status-row">
+            <span class="status-label">Today's Status:</span>
+            <span class="status-badge checked-in" *ngIf="todayRecord() && todayRecord()?.status === 'CHECKED_IN'">
+                <mat-icon>login</mat-icon> Checked In ({{ todayRecord()?.checkInTime | date:'shortTime' }})
+            </span>
+            <span class="status-badge checked-out" *ngIf="todayRecord() && todayRecord()?.status === 'CHECKED_OUT'">
+                <mat-icon>check_circle</mat-icon> Checked Out
+            </span>
+            <span class="status-badge not-checked-in" *ngIf="!todayRecord()">
+                <mat-icon>schedule</mat-icon> Not Checked In
+            </span>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <span class="stat-value">{{ daysPresentThisWeek() }}</span>
+                <span class="stat-label">Days Present (This Week)</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value">{{ totalWorkedHoursThisWeek() }}h</span>
+                <span class="stat-label">Hours Worked (This Week)</span>
+            </div>
+        </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+        <a mat-button color="primary" routerLink="/staff-attendance/my-history">
+            View Full History <mat-icon>arrow_forward</mat-icon>
+        </a>
+    </mat-card-actions>
+</mat-card>
