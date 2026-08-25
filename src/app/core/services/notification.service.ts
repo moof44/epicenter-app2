@@ -43,7 +43,7 @@ export class NotificationService implements OnDestroy {
         setTimeout(() => {
           this.setupNotificationsListener(user.uid);
           this.requestPushPermission();
-        }, 1000);
+        }, 2500);
       } else {
         this.cleanup();
       }

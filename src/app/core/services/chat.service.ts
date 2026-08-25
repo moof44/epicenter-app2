@@ -24,6 +24,7 @@ export class ChatService implements OnDestroy {
   private lastReadDate: Date | null = null;
   private previewTimeout: any = null;
   private isInitialSnapshot = true;
+  private sessionStartTime = new Date();
 
   constructor() {
     effect(() => {
@@ -45,7 +46,7 @@ export class ChatService implements OnDestroy {
           this.unreadCount.set(0);
           this.lastReadDate = null;
         }
-      }, 1500); // Stagger background socket listener by 1.5s to let main page render first
+      }, 3000); // Stagger background socket listener by 3s to let main page render first
     });
   }
 
@@ -91,8 +92,13 @@ export class ChatService implements OnDestroy {
           
           this.unreadCount.set(count);
           
-          // Only trigger floating preview popup & sounds for NEW incoming messages (not historical startup load)
-          if (newestNewMsg && !this.isInitialSnapshot) {
+          // Only trigger floating preview popup & sounds for fresh live incoming messages created during active session
+          const msgDate = newestNewMsg?.timestamp
+            ? (newestNewMsg.timestamp.toDate ? newestNewMsg.timestamp.toDate() : new Date(newestNewMsg.timestamp))
+            : null;
+          const isFreshMessage = msgDate && msgDate.getTime() > this.sessionStartTime.getTime();
+
+          if (newestNewMsg && !this.isInitialSnapshot && isFreshMessage) {
             let isMention = false;
             
             // Check for @everyone mention

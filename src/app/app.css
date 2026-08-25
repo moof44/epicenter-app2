@@ -138,12 +138,14 @@ mat-sidenav[position="end"] {
   align-items: center;
   gap: 12px;
   pointer-events: none;
+  contain: layout style;
 }
 
 .chat-fab-launcher {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
   pointer-events: auto;
+  will-change: transform, box-shadow;
 }
 
 .chat-fab-launcher.has-unread {
@@ -157,20 +159,21 @@ mat-sidenav[position="end"] {
 .launcher-shake-wrapper {
   display: inline-block;
   animation: shake-effect 0.5s infinite ease-in-out;
+  will-change: transform;
 }
 
-/* Intense Multi-layered Gold-Red Glow & Breathing Scale for Mentions */
+/* Intense Multi-layered Gold-Red Glow & Breathing Scale for Mentions (GPU-Composited) */
 @keyframes intense-mention-glow {
   0% {
-    filter: drop-shadow(0 0 4px #ff3d00);
+    box-shadow: 0 0 6px #ff3d00, 0 0 10px #ffd600;
     transform: scale(1);
   }
   50% {
-    filter: drop-shadow(0 0 14px #ffd600);
+    box-shadow: 0 0 16px #ff3d00, 0 0 24px #ffd600;
     transform: scale(1.08);
   }
   100% {
-    filter: drop-shadow(0 0 4px #ff3d00);
+    box-shadow: 0 0 6px #ff3d00, 0 0 10px #ffd600;
     transform: scale(1);
   }
 }
@@ -184,18 +187,18 @@ mat-sidenav[position="end"] {
   animation: wobble-effect 0.8s ease-in-out !important;
 }
 
-/* Intense Multi-layered Neon Glow & Breathing Scale */
+/* Intense Multi-layered Neon Glow & Breathing Scale (GPU-Composited) */
 @keyframes intense-neon-glow {
   0% {
-    filter: drop-shadow(0 0 4px #ff007f);
+    box-shadow: 0 0 6px #ff007f, 0 0 10px #e040fb;
     transform: scale(1);
   }
   50% {
-    filter: drop-shadow(0 0 12px #e040fb);
+    box-shadow: 0 0 16px #ff007f, 0 0 24px #e040fb;
     transform: scale(1.06);
   }
   100% {
-    filter: drop-shadow(0 0 4px #ff007f);
+    box-shadow: 0 0 6px #ff007f, 0 0 10px #e040fb;
     transform: scale(1);
   }
 }
