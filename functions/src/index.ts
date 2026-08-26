@@ -449,13 +449,55 @@ export const onTransactionUpdated = functions.firestore.document('/transactions/
 
 /**
  * Triggered when a shift is opened.
- * Writes an opening log message to the global chat room.
+ * Reconciles starting float with the last closed shift, alerts ADMIN/MANAGER on mismatch, and writes an opening log message to the global chat.
  */
 export const onShiftCreated = functions.firestore.document('/shifts/{shiftId}').onCreate(async (snapshot, context) => {
     const shift = snapshot.data() || {};
     if (shift.status === 'OPEN') {
-        const content = `🔓 **Shift Opened** by **${shift.openedBy || 'Staff'}**. Starting Float: **₱${shift.openingBalance}**.`;
         const db = admin.firestore();
+        const openingBalance = Number(shift.openingBalance) || 0;
+
+        // Query the most recently closed shift to verify handover continuity
+        const lastClosedQuery = await db.collection('shifts')
+            .where('status', '==', 'CLOSED')
+            .orderBy('endTime', 'desc')
+            .limit(1)
+            .get();
+
+        let handoverNote = '';
+        let hasHandoverMismatch = false;
+
+        if (!lastClosedQuery.empty) {
+            const prevDoc = lastClosedQuery.docs[0].data();
+            const prevClosingBalance = Number(prevDoc.actualClosingBalance !== null && prevDoc.actualClosingBalance !== undefined ? prevDoc.actualClosingBalance : prevDoc.expectedClosingBalance) || 0;
+            const prevClosedBy = prevDoc.closedBy || 'Staff';
+
+            const handoverDiff = Math.round((openingBalance - prevClosingBalance) * 100) / 100;
+
+            if (Math.abs(handoverDiff) > 0.01) {
+                hasHandoverMismatch = true;
+                const diffStr = handoverDiff > 0 ? `+₱${handoverDiff.toFixed(2)}` : `-₱${Math.abs(handoverDiff).toFixed(2)}`;
+                handoverNote = ` ⚠️ *Note: Mismatches previous shift close of ₱${prevClosingBalance.toFixed(2)} (${diffStr})*`;
+
+                // Send instant warning notification to ADMIN and MANAGER
+                await sendNotificationsToRoles(['ADMIN', 'MANAGER'], {
+                    title: '⚠️ Shift Handover Mismatch Alert',
+                    body: `Shift opened by ${shift.openedBy || 'Staff'} with ₱${openingBalance.toFixed(2)}, but previous shift (${prevClosedBy}) closed with ₱${prevClosingBalance.toFixed(2)} (Diff: ${diffStr}).`,
+                    type: 'warning',
+                    actionUrl: '/store/reports',
+                    metadata: {
+                        triggeredBy: shift.openedBy || 'Staff',
+                        itemId: context.params.shiftId,
+                        prevShiftId: lastClosedQuery.docs[0].id,
+                        handoverDiff
+                    }
+                });
+            } else {
+                handoverNote = ' *(✓ Matches previous shift close)*';
+            }
+        }
+
+        const content = `🔓 **Shift Opened** by **${shift.openedBy || 'Staff'}**. Starting Float: **₱${openingBalance.toFixed(2)}**.${handoverNote}`;
         await db.collection('chats/global/messages').add({
             senderId: 'system',
             senderName: 'GymBot',
@@ -466,7 +508,8 @@ export const onShiftCreated = functions.firestore.document('/shifts/{shiftId}').
             metadata: {
                 transactionType: 'SHIFT_OPENED',
                 referencedId: context.params.shiftId,
-                amount: shift.openingBalance
+                amount: openingBalance,
+                hasHandoverMismatch
             }
         });
     }
@@ -504,7 +547,7 @@ export const onShiftUpdated = functions.firestore.document('/shifts/{shiftId}').
                 title: 'Shift Closed - Discrepancy Alert',
                 body: `Shift closed by ${after.closedBy || 'Staff'} with a discrepancy of ₱${after.discrepancy}.`,
                 type: 'alert',
-                actionUrl: '/store/shifts',
+                actionUrl: '/store/reports',
                 metadata: {
                     triggeredBy: after.closedBy,
                     itemId: context.params.shiftId
