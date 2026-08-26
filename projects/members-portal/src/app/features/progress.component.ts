@@ -86,293 +86,279 @@ import { DashboardService } from '../core/services/dashboard.service';
             <span class="text-[10px] text-text-secondary">
               Showing past {{ chartData().length }} checkups
             </span>
-          </div>
-
-          <!-- Chart Area -->
-          <div class="relative w-full h-[260px] sm:h-[300px] bg-bg-surface-alt/20 rounded-2xl border border-bg-surface-alt/30 p-2 overflow-hidden">
+          </div>          <!-- Chart Area -->
+          <div class="relative w-full min-h-[200px] sm:min-h-[260px] bg-bg-surface-alt/20 rounded-2xl border border-bg-surface-alt/30 p-2 overflow-hidden flex items-center justify-center">
             
-            <svg viewBox="0 0 600 220" width="100%" height="100%" class="select-none overflow-visible">
-              <!-- Chart Gradient Defs -->
-              <defs>
-                <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#D4AF37" stop-opacity="0.15"/>
-                  <stop offset="100%" stop-color="#D4AF37" stop-opacity="0.0"/>
-                </linearGradient>
-                <linearGradient id="muscleGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#10B981" stop-opacity="0.15"/>
-                  <stop offset="100%" stop-color="#10B981" stop-opacity="0.0"/>
-                </linearGradient>
-                <linearGradient id="fatGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#EC4899" stop-opacity="0.15"/>
-                  <stop offset="100%" stop-color="#EC4899" stop-opacity="0.0"/>
-                </linearGradient>
-              </defs>
+            @if (chartData().length > 0) {
+              <svg viewBox="0 0 600 220" width="100%" height="100%" class="select-none overflow-visible">
+                <!-- Chart Gradient Defs -->
+                <defs>
+                  <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#D4AF37" stop-opacity="0.15"/>
+                    <stop offset="100%" stop-color="#D4AF37" stop-opacity="0.0"/>
+                  </linearGradient>
+                  <linearGradient id="muscleGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#10B981" stop-opacity="0.15"/>
+                    <stop offset="100%" stop-color="#10B981" stop-opacity="0.0"/>
+                  </linearGradient>
+                  <linearGradient id="fatGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#EC4899" stop-opacity="0.15"/>
+                    <stop offset="100%" stop-color="#EC4899" stop-opacity="0.0"/>
+                  </linearGradient>
+                </defs>
 
-              <!-- Y-Axis Labels & Reference Gridlines (for selected metric) -->
-              @for (tick of yAxisTicks(); track tick.y) {
-                <g class="transition-all duration-300">
-                  <!-- Subtle horizontal reference line across the chart width -->
-                  <line 
-                    x1="50" 
-                    [attr.y1]="tick.y" 
-                    x2="580" 
-                    [attr.y2]="tick.y" 
-                    stroke="#222" 
-                    stroke-dasharray="3 3"
-                    stroke-width="1"
-                  />
-                  <!-- Tick mark on the Y-Axis line -->
-                  <line 
-                    x1="45" 
-                    [attr.y1]="tick.y" 
-                    x2="50" 
-                    [attr.y2]="tick.y" 
-                    stroke="#555" 
-                    stroke-width="1"
-                  />
-                  <!-- Tick text label -->
-                  <text 
-                    x="40" 
-                    [attr.y]="tick.y + 4" 
-                    fill="#bbb" 
-                    font-size="12" 
-                    font-weight="600"
-                    font-family="sans-serif"
-                    text-anchor="end"
-                  >
-                    {{ tick.text }}
-                  </text>
-                </g>
-              }
+                <!-- Y-Axis Labels & Reference Gridlines (for selected metric) -->
+                @for (tick of yAxisTicks(); track tick.y) {
+                  <g class="transition-all duration-300">
+                    <line 
+                      x1="50" 
+                      [attr.y1]="tick.y" 
+                      x2="580" 
+                      [attr.y2]="tick.y" 
+                      stroke="#222" 
+                      stroke-dasharray="3 3"
+                      stroke-width="1"
+                    />
+                    <line 
+                      x1="45" 
+                      [attr.y1]="tick.y" 
+                      x2="50" 
+                      [attr.y2]="tick.y" 
+                      stroke="#555" 
+                      stroke-width="1"
+                    />
+                    <text 
+                      x="40" 
+                      [attr.y]="tick.y + 4" 
+                      fill="#bbb" 
+                      font-size="12" 
+                      font-weight="600"
+                      font-family="sans-serif"
+                      text-anchor="end"
+                    >
+                      {{ tick.text }}
+                    </text>
+                  </g>
+                }
 
-              <!-- Axis Lines -->
-              <!-- Vertical Axis Line (Y-axis at x=50) -->
-              <line 
-                x1="50" 
-                y1="15" 
-                x2="50" 
-                y2="180" 
-                stroke="#555" 
-                stroke-width="1.5" 
-                stroke-linecap="round"
-              />
-              <!-- Horizontal Axis Line (X-axis at y=180) -->
-              <line 
-                x1="50" 
-                y1="180" 
-                x2="585" 
-                y2="180" 
-                stroke="#555" 
-                stroke-width="1.5" 
-                stroke-linecap="round"
-              />
-
-              <!-- Filled Area Under Chart -->
-              <!-- 1. Weight Area -->
-              @if (weightAreaPath() && (focusedMetric() === null || focusedMetric() === 'weight')) {
-                <path [attr.d]="weightAreaPath()" fill="url(#weightGradient)" class="chart-area transition-all duration-300" />
-              }
-              <!-- 2. Muscle Mass Area -->
-              @if (muscleMassAreaPath() && (focusedMetric() === null || focusedMetric() === 'muscleMass')) {
-                <path [attr.d]="muscleMassAreaPath()" fill="url(#muscleGradient)" class="chart-area transition-all duration-300" />
-              }
-              <!-- 3. Body Fat Area -->
-              @if (bodyFatAreaPath() && (focusedMetric() === null || focusedMetric() === 'bodyFat')) {
-                <path [attr.d]="bodyFatAreaPath()" fill="url(#fatGradient)" class="chart-area transition-all duration-300" />
-              }
-
-              <!-- Main Plot Lines -->
-              <!-- 1. Weight Line -->
-              @if (weightPath()) {
-                <path 
-                  [attr.d]="weightPath()" 
-                  fill="none" 
-                  stroke="#D4AF37" 
-                  stroke-width="3" 
-                  stroke-linecap="round" 
-                  stroke-linejoin="round"
-                  class="chart-line-weight glow-weight transition-all duration-300"
-                  [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'weight'"
+                <!-- Axis Lines -->
+                <line 
+                  x1="50" 
+                  y1="15" 
+                  x2="50" 
+                  y2="180" 
+                  stroke="#555" 
+                  stroke-width="1.5" 
+                  stroke-linecap="round"
                 />
-              }
-
-              <!-- 2. Muscle Mass Line -->
-              @if (muscleMassPath()) {
-                <path 
-                  [attr.d]="muscleMassPath()" 
-                  fill="none" 
-                  stroke="#10B981" 
-                  stroke-width="3" 
-                  stroke-linecap="round" 
-                  stroke-linejoin="round"
-                  class="chart-line-muscle glow-muscle transition-all duration-300"
-                  [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'muscleMass'"
+                <line 
+                  x1="50" 
+                  y1="180" 
+                  x2="585" 
+                  y2="180" 
+                  stroke="#555" 
+                  stroke-width="1.5" 
+                  stroke-linecap="round"
                 />
-              }
 
-              <!-- 3. Body Fat Line -->
-              @if (bodyFatPath()) {
-                <path 
-                  [attr.d]="bodyFatPath()" 
-                  fill="none" 
-                  stroke="#EC4899" 
-                  stroke-width="3" 
-                  stroke-linecap="round" 
-                  stroke-linejoin="round"
-                  class="chart-line-fat glow-fat transition-all duration-300"
-                  [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'bodyFat'"
-                />
-              }
+                <!-- Filled Area Under Chart -->
+                @if (weightAreaPath() && (focusedMetric() === null || focusedMetric() === 'weight')) {
+                  <path [attr.d]="weightAreaPath()" fill="url(#weightGradient)" class="chart-area transition-all duration-300" />
+                }
+                @if (muscleMassAreaPath() && (focusedMetric() === null || focusedMetric() === 'muscleMass')) {
+                  <path [attr.d]="muscleMassAreaPath()" fill="url(#muscleGradient)" class="chart-area transition-all duration-300" />
+                }
+                @if (bodyFatAreaPath() && (focusedMetric() === null || focusedMetric() === 'bodyFat')) {
+                  <path [attr.d]="bodyFatAreaPath()" fill="url(#fatGradient)" class="chart-area transition-all duration-300" />
+                }
 
-              <!-- Node Points (Grouped by Line) -->
-              <!-- Weight Nodes -->
-              @for (point of chartPoints().weight; track point.x; let idx = $index) {
-                <g class="group chart-node transition-all duration-300" [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'weight'">
-                  <!-- Touch/Hover Pulse Glow -->
-                  <circle 
-                    [attr.cx]="point.x" 
-                    [attr.cy]="point.y" 
-                    r="12" 
-                    fill="#FFD700" 
-                    class="opacity-0 group-hover:opacity-20 transition-opacity duration-150 cursor-pointer"
-                  />
-                  <!-- Solid Node -->
-                  <circle 
-                    [attr.cx]="point.x" 
-                    [attr.cy]="point.y" 
-                    r="5.5" 
-                    fill="#000" 
+                <!-- Main Plot Lines -->
+                @if (weightPath()) {
+                  <path 
+                    [attr.d]="weightPath()" 
+                    fill="none" 
                     stroke="#D4AF37" 
                     stroke-width="3" 
-                    class="cursor-pointer"
+                    stroke-linecap="round" 
+                    stroke-linejoin="round"
+                    class="chart-line-weight glow-weight transition-all duration-300"
+                    [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'weight'"
                   />
-                  <!-- Value Text Label (Visible permanently if Weight is selected or on Hover) -->
-                  <text 
-                    [attr.x]="point.x" 
-                    [attr.y]="point.y - 14" 
-                    fill="#FFD700" 
-                    font-size="13" 
-                    font-weight="bold" 
-                    text-anchor="middle"
-                    font-family="Oswald"
-                    class="pointer-events-none filter drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.95)] transition-opacity duration-200"
-                    [class.opacity-100]="selectedMetric() === 'weight'"
-                    [class.opacity-0]="selectedMetric() !== 'weight'"
-                    [class.group-hover:opacity-100]="selectedMetric() !== 'weight'"
-                  >
-                    {{ point.val.toFixed(1) }} kg
-                  </text>
-                </g>
-              }
+                }
 
-              <!-- Muscle Mass Nodes -->
-              @for (point of chartPoints().muscleMass; track point.x; let idx = $index) {
-                <g class="group chart-node transition-all duration-300" [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'muscleMass'">
-                  <!-- Touch/Hover Pulse Glow -->
-                  <circle 
-                    [attr.cx]="point.x" 
-                    [attr.cy]="point.y" 
-                    r="12" 
-                    fill="#34D399" 
-                    class="opacity-0 group-hover:opacity-20 transition-opacity duration-150 cursor-pointer"
-                  />
-                  <!-- Solid Node -->
-                  <circle 
-                    [attr.cx]="point.x" 
-                    [attr.cy]="point.y" 
-                    r="5.5" 
-                    fill="#000" 
+                @if (muscleMassPath()) {
+                  <path 
+                    [attr.d]="muscleMassPath()" 
+                    fill="none" 
                     stroke="#10B981" 
                     stroke-width="3" 
-                    class="cursor-pointer"
+                    stroke-linecap="round" 
+                    stroke-linejoin="round"
+                    class="chart-line-muscle glow-muscle transition-all duration-300"
+                    [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'muscleMass'"
                   />
-                  <!-- Value Text Label (Visible permanently if Muscle Mass is selected or on Hover) -->
-                  <text 
-                    [attr.x]="point.x" 
-                    [attr.y]="point.y - 14" 
-                    fill="#34D399" 
-                    font-size="13" 
-                    font-weight="bold" 
-                    text-anchor="middle"
-                    font-family="Oswald"
-                    class="pointer-events-none filter drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.95)] transition-opacity duration-200"
-                    [class.opacity-100]="selectedMetric() === 'muscleMass'"
-                    [class.opacity-0]="selectedMetric() !== 'muscleMass'"
-                    [class.group-hover:opacity-100]="selectedMetric() !== 'muscleMass'"
-                  >
-                    {{ point.val.toFixed(1) }}%
-                  </text>
-                </g>
-              }
+                }
 
-              <!-- Body Fat Nodes -->
-              @for (point of chartPoints().bodyFat; track point.x; let idx = $index) {
-                <g class="group chart-node transition-all duration-300" [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'bodyFat'">
-                  <!-- Touch/Hover Pulse Glow -->
-                  <circle 
-                    [attr.cx]="point.x" 
-                    [attr.cy]="point.y" 
-                    r="12" 
-                    fill="#F472B6" 
-                    class="opacity-0 group-hover:opacity-20 transition-opacity duration-150 cursor-pointer"
-                  />
-                  <!-- Solid Node -->
-                  <circle 
-                    [attr.cx]="point.x" 
-                    [attr.cy]="point.y" 
-                    r="5.5" 
-                    fill="#000" 
+                @if (bodyFatPath()) {
+                  <path 
+                    [attr.d]="bodyFatPath()" 
+                    fill="none" 
                     stroke="#EC4899" 
                     stroke-width="3" 
-                    class="cursor-pointer"
+                    stroke-linecap="round" 
+                    stroke-linejoin="round"
+                    class="chart-line-fat glow-fat transition-all duration-300"
+                    [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'bodyFat'"
                   />
-                  <!-- Value Text Label (Visible permanently if Body Fat is selected or on Hover) -->
-                  <text 
-                    [attr.x]="point.x" 
-                    [attr.y]="point.y - 14" 
-                    fill="#F472B6" 
-                    font-size="13" 
-                    font-weight="bold" 
-                    text-anchor="middle"
-                    font-family="Oswald"
-                    class="pointer-events-none filter drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.95)] transition-opacity duration-200"
-                    [class.opacity-100]="selectedMetric() === 'bodyFat'"
-                    [class.opacity-0]="selectedMetric() !== 'bodyFat'"
-                    [class.group-hover:opacity-100]="selectedMetric() !== 'bodyFat'"
-                  >
-                    {{ point.val.toFixed(1) }}%
-                  </text>
-                </g>
-              }
-
-              <!-- Date labels on horizontal axis -->
-              @if (chartPoints().weight.length > 0) {
-                @for (point of chartPoints().weight; track point.x) {
-                  <!-- Axis Tick mark -->
-                  <line 
-                    [attr.x1]="point.x" 
-                    y1="180" 
-                    [attr.x2]="point.x" 
-                    y2="185" 
-                    stroke="#555" 
-                    stroke-width="1"
-                  />
-                  <!-- Date Text label -->
-                  <text 
-                    [attr.x]="point.x" 
-                    y="204" 
-                    fill="#aaa" 
-                    font-size="12" 
-                    font-weight="600"
-                    text-anchor="middle"
-                    font-family="sans-serif"
-                    class="pointer-events-none"
-                  >
-                    {{ formatDateShort(point.date) }}
-                  </text>
                 }
-              }
-            </svg>
+
+                <!-- Node Points (Weight) -->
+                @for (point of chartPoints().weight; track point.x; let idx = $index) {
+                  <g class="group chart-node transition-all duration-300" [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'weight'">
+                    <circle 
+                      [attr.cx]="point.x" 
+                      [attr.cy]="point.y" 
+                      r="12" 
+                      fill="#FFD700" 
+                      class="opacity-0 group-hover:opacity-20 transition-opacity duration-150 cursor-pointer"
+                    />
+                    <circle 
+                      [attr.cx]="point.x" 
+                      [attr.cy]="point.y" 
+                      r="5.5" 
+                      fill="#000" 
+                      stroke="#D4AF37" 
+                      stroke-width="3" 
+                      class="cursor-pointer"
+                    />
+                    <text 
+                      [attr.x]="point.x" 
+                      [attr.y]="point.y - 14" 
+                      fill="#FFD700" 
+                      font-size="13" 
+                      font-weight="bold" 
+                      text-anchor="middle"
+                      font-family="Oswald"
+                      class="pointer-events-none filter drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.95)] transition-opacity duration-200"
+                      [class.opacity-100]="selectedMetric() === 'weight'"
+                      [class.opacity-0]="selectedMetric() !== 'weight'"
+                      [class.group-hover:opacity-100]="selectedMetric() !== 'weight'"
+                    >
+                      {{ point.val.toFixed(1) }}kg
+                    </text>
+                  </g>
+                }
+
+                <!-- Node Points (Muscle Mass) -->
+                @for (point of chartPoints().muscleMass; track point.x; let idx = $index) {
+                  <g class="group chart-node transition-all duration-300" [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'muscleMass'">
+                    <circle 
+                      [attr.cx]="point.x" 
+                      [attr.cy]="point.y" 
+                      r="12" 
+                      fill="#34D399" 
+                      class="opacity-0 group-hover:opacity-20 transition-opacity duration-150 cursor-pointer"
+                    />
+                    <circle 
+                      [attr.cx]="point.x" 
+                      [attr.cy]="point.y" 
+                      r="5.5" 
+                      fill="#000" 
+                      stroke="#10B981" 
+                      stroke-width="3" 
+                      class="cursor-pointer"
+                    />
+                    <text 
+                      [attr.x]="point.x" 
+                      [attr.y]="point.y - 14" 
+                      fill="#34D399" 
+                      font-size="13" 
+                      font-weight="bold" 
+                      text-anchor="middle"
+                      font-family="Oswald"
+                      class="pointer-events-none filter drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.95)] transition-opacity duration-200"
+                      [class.opacity-100]="selectedMetric() === 'muscleMass'"
+                      [class.opacity-0]="selectedMetric() !== 'muscleMass'"
+                      [class.group-hover:opacity-100]="selectedMetric() !== 'muscleMass'"
+                    >
+                      {{ point.val.toFixed(1) }}%
+                    </text>
+                  </g>
+                }
+
+                <!-- Node Points (Body Fat) -->
+                @for (point of chartPoints().bodyFat; track point.x; let idx = $index) {
+                  <g class="group chart-node transition-all duration-300" [class.opacity-15]="focusedMetric() !== null && focusedMetric() !== 'bodyFat'">
+                    <circle 
+                      [attr.cx]="point.x" 
+                      [attr.cy]="point.y" 
+                      r="12" 
+                      fill="#F472B6" 
+                      class="opacity-0 group-hover:opacity-20 transition-opacity duration-150 cursor-pointer"
+                    />
+                    <circle 
+                      [attr.cx]="point.x" 
+                      [attr.cy]="point.y" 
+                      r="5.5" 
+                      fill="#000" 
+                      stroke="#EC4899" 
+                      stroke-width="3" 
+                      class="cursor-pointer"
+                    />
+                    <text 
+                      [attr.x]="point.x" 
+                      [attr.y]="point.y - 14" 
+                      fill="#F472B6" 
+                      font-size="13" 
+                      font-weight="bold" 
+                      text-anchor="middle"
+                      font-family="Oswald"
+                      class="pointer-events-none filter drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.95)] transition-opacity duration-200"
+                      [class.opacity-100]="selectedMetric() === 'bodyFat'"
+                      [class.opacity-0]="selectedMetric() !== 'bodyFat'"
+                      [class.group-hover:opacity-100]="selectedMetric() !== 'bodyFat'"
+                    >
+                      {{ point.val.toFixed(1) }}%
+                    </text>
+                  </g>
+                }
+
+                <!-- Date labels on horizontal axis -->
+                @if (chartPoints().weight.length > 0) {
+                  @for (point of chartPoints().weight; track point.x) {
+                    <line 
+                      [attr.x1]="point.x" 
+                      y1="180" 
+                      [attr.x2]="point.x" 
+                      y2="185" 
+                      stroke="#555" 
+                      stroke-width="1"
+                    />
+                    <text 
+                      [attr.x]="point.x" 
+                      y="204" 
+                      fill="#aaa" 
+                      font-size="12" 
+                      font-weight="600" 
+                      text-anchor="middle" 
+                      font-family="sans-serif" 
+                      class="pointer-events-none"
+                    >
+                      {{ formatDateShort(point.date) }}
+                    </text>
+                  }
+                }
+              </svg>
+            } @else {
+              <!-- Fallback message if all uploaded entries are image scans without numeric stats yet -->
+              <div class="flex flex-col items-center justify-center text-center p-6 gap-2">
+                <span class="text-3xl">📄</span>
+                <span class="text-xs font-bold font-oswald text-gold-light uppercase tracking-wider">Scan Report(s) Available Below</span>
+                <p class="text-[11px] text-text-secondary max-w-sm">
+                  Your high-resolution body scale reports are displayed in the section below. Interactive trend curves will plot here automatically once stats are transcribed.
+                </p>
+              </div>
+            }
 
           </div>
         </div>
