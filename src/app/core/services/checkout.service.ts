@@ -64,12 +64,15 @@ export class CheckoutService {
     async checkout(
         customItems?: CartItem[],
         performedBy = 'SYSTEM_POS',
-        paymentMethod: 'CASH' | 'GCASH' = 'CASH',
+        paymentMethod: 'CASH' | 'GCASH' | 'SPLIT' = 'CASH',
         referenceNumber?: string,
         amountTendered?: number,
         changeDue?: number,
         memberId?: string | null,
-        memberName?: string
+        memberName?: string,
+        cashAmount?: number,
+        gcashAmount?: number,
+        splitDetails?: any
     ): Promise<string> {
         // Enforce Open Register — lazy-resolve to avoid circular DI
         const cashRegisterService = this.injector.get(CashRegisterService);
@@ -107,6 +110,9 @@ export class CheckoutService {
                     changeDue: changeDue || null,
                     memberId: memberId || null,
                     memberName: memberName || 'Walk-in',
+                    cashAmount: cashAmount || null,
+                    gcashAmount: gcashAmount || null,
+                    splitDetails: splitDetails || null
                 },
             });
 
@@ -120,6 +126,10 @@ export class CheckoutService {
         const batch = writeBatch(this.firestore);
         const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
         const timestamp = new Date();
+
+        // Resolve cash and gcash portion amounts
+        const resolvedCashAmount = paymentMethod === 'CASH' ? total : (paymentMethod === 'GCASH' ? 0 : (cashAmount ?? 0));
+        const resolvedGcashAmount = paymentMethod === 'GCASH' ? total : (paymentMethod === 'CASH' ? 0 : (gcashAmount ?? (total - resolvedCashAmount)));
 
         // 1. Fetch current product states for stock deduction + audit log
         const productIds = [...new Set(cartItems.map(i => i.productId))];
@@ -175,6 +185,15 @@ export class CheckoutService {
             referenceNumber: referenceNumber || null,
             amountTendered: amountTendered || null,
             changeDue: changeDue || null,
+            cashAmount: resolvedCashAmount,
+            gcashAmount: resolvedGcashAmount,
+            splitDetails: splitDetails || (paymentMethod === 'SPLIT' ? {
+                cashAmount: resolvedCashAmount,
+                gcashAmount: resolvedGcashAmount,
+                referenceNumber: referenceNumber || null,
+                cashTendered: amountTendered || resolvedCashAmount,
+                changeDue: changeDue || 0
+            } : null),
             memberId: memberId || null,
             memberName: memberName || 'Walk-in',
         };
@@ -216,13 +235,20 @@ export class CheckoutService {
                 .map(item => (item.quantity > 1 ? `${item.productName} (x${item.quantity})` : item.productName))
                 .join(', ');
 
-            const cashTx = {
+            let reason = `POS Sale #${transactionRef.id.slice(0, 8)}`;
+            if (paymentMethod === 'SPLIT') {
+                reason += ` (Cash: ₱${resolvedCashAmount.toFixed(2)}, GCash: ₱${resolvedGcashAmount.toFixed(2)})`;
+            }
+
+            const cashTx: any = {
                 type: 'Sale',
                 amount: total,
-                reason: `POS Sale #${transactionRef.id.slice(0, 8)}`,
+                reason,
                 performedBy: staff?.displayName || performedBy,
                 relatedTransactionId: transactionRef.id,
                 paymentMethod,
+                cashAmount: resolvedCashAmount,
+                gcashAmount: resolvedGcashAmount,
                 timestamp,
                 productsSummary: productSummary,
                 memberName: memberName || 'Walk-in',
@@ -236,6 +262,10 @@ export class CheckoutService {
 
             if (paymentMethod === 'GCASH') {
                 shiftUpdates.totalGcashSales = increment(total);
+            } else if (paymentMethod === 'SPLIT') {
+                shiftUpdates.totalCashSales = increment(resolvedCashAmount);
+                shiftUpdates.totalGcashSales = increment(resolvedGcashAmount);
+                shiftUpdates.expectedClosingBalance = increment(resolvedCashAmount);
             } else {
                 shiftUpdates.totalCashSales = increment(total);
                 shiftUpdates.expectedClosingBalance = increment(total);

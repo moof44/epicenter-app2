@@ -8,7 +8,9 @@ export interface CashTransaction {
     timestamp: Date;
     performedBy: string;
     relatedTransactionId?: string;
-    paymentMethod?: 'CASH' | 'GCASH';
+    paymentMethod?: 'CASH' | 'GCASH' | 'SPLIT';
+    cashAmount?: number;
+    gcashAmount?: number;
     productsSummary?: string;
     voided?: boolean;
     memberName?: string;

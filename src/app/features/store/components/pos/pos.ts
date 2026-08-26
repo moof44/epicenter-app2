@@ -256,7 +256,10 @@ export class PosComponent {
         result.amountTendered,
         result.changeDue,
         currentMember?.id || null, // Pass memberId
-        currentMember?.name || 'Walk-in' // Pass memberName
+        currentMember?.name || 'Walk-in', // Pass memberName
+        result.cashAmount,
+        result.gcashAmount,
+        result.splitDetails
       );
 
       const commendation = getRandomCommendation('SALES');

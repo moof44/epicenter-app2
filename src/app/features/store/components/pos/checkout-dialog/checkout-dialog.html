@@ -6,27 +6,32 @@
 
     <div class="payment-method-selector">
         <div class="label">Select Payment Method:</div>
-        <mat-button-toggle-group [value]="paymentMethod()" (change)="paymentMethod.set($event.value)"
-            name="paymentMethod" aria-labelledby="payment-method-label">
+        <mat-button-toggle-group [value]="paymentMethod()" (change)="onPaymentMethodChange($event.value)"
+            name="paymentMethod" aria-labelledby="payment-method-label" class="method-toggle-group">
             <mat-button-toggle value="CASH">
                 <mat-icon>payments</mat-icon> Cash
             </mat-button-toggle>
             <mat-button-toggle value="GCASH">
                 <mat-icon>qr_code</mat-icon> GCash
             </mat-button-toggle>
+            <mat-button-toggle value="SPLIT">
+                <mat-icon>call_split</mat-icon> Split (Cash + GCash)
+            </mat-button-toggle>
         </mat-button-toggle-group>
     </div>
 
-    <div *ngIf="paymentMethod() === 'GCASH'" class="payment-details" [@fadeIn]>
+    <!-- 1. FULL GCASH PAYMENT -->
+    <div *ngIf="paymentMethod() === 'GCASH'" class="payment-details">
         <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Reference Number</mat-label>
+            <mat-label>GCash Reference Number</mat-label>
             <input matInput [value]="referenceNumber()" (input)="referenceNumber.set($event.target.value)" required
                 placeholder="Last 4 digits or Ref No.">
             <mat-icon matSuffix>confirmation_number</mat-icon>
-            <mat-hint>Enter the GCash reference number</mat-hint>
+            <mat-hint>Enter the GCash transaction reference number</mat-hint>
         </mat-form-field>
     </div>
 
+    <!-- 2. FULL CASH PAYMENT -->
     <div *ngIf="paymentMethod() === 'CASH'" class="payment-details cash-calculator">
         <div class="calculator-row">
             <mat-form-field appearance="outline" class="tendered-input">
@@ -51,12 +56,83 @@
             <button mat-stroked-button (click)="addCash(1000)">₱1,000</button>
         </div>
     </div>
+
+    <!-- 3. SPLIT / COMBINED PAYMENT (CASH + GCASH) -->
+    <div *ngIf="paymentMethod() === 'SPLIT'" class="payment-details split-container">
+        <!-- Division of Payment Inputs -->
+        <div class="split-row">
+            <mat-form-field appearance="outline" class="split-field">
+                <mat-label>Cash Portion</mat-label>
+                <span matPrefix>₱&nbsp;</span>
+                <input matInput type="number" [ngModel]="splitCashAmount()" (ngModelChange)="onSplitCashInput($event)"
+                    placeholder="0.00" min="0.01" [max]="data.total" step="0.01" required>
+                <mat-icon matSuffix>payments</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="split-field">
+                <mat-label>GCash Portion</mat-label>
+                <span matPrefix>₱&nbsp;</span>
+                <input matInput type="number" [ngModel]="splitGcashAmount()" (ngModelChange)="onSplitGcashInput($event)"
+                    placeholder="0.00" min="0.01" [max]="data.total" step="0.01" required>
+                <mat-icon matSuffix>qr_code</mat-icon>
+            </mat-form-field>
+        </div>
+
+        <!-- Real-time Split Balance Indicator -->
+        <div class="split-status-bar" [class.balanced]="isSplitBalanced()" [class.unbalanced]="!isSplitBalanced()">
+            <div class="status-icon">
+                <mat-icon>{{ isSplitBalanced() ? 'check_circle' : 'info' }}</mat-icon>
+            </div>
+            <div class="status-text" *ngIf="isSplitBalanced()">
+                <strong>Perfect Allocation:</strong> ₱{{ splitCashAmount() | number:'1.2-2' }} Cash + ₱{{ splitGcashAmount() | number:'1.2-2' }} GCash = ₱{{ data.total | number:'1.2-2' }} Total
+            </div>
+            <div class="status-text" *ngIf="!isSplitBalanced()">
+                <span *ngIf="splitRemainingBalance() > 0">Remaining to allocate: <strong>₱{{ splitRemainingBalance() | number:'1.2-2' }}</strong></span>
+                <span *ngIf="splitRemainingBalance() < 0">Overallocated by: <strong>₱{{ -splitRemainingBalance() | number:'1.2-2' }}</strong></span>
+            </div>
+        </div>
+
+        <!-- GCash Reference Number for Split -->
+        <mat-form-field appearance="outline" class="full-width gcash-ref-field">
+            <mat-label>GCash Reference Number</mat-label>
+            <input matInput [value]="splitGcashRef()" (input)="splitGcashRef.set($event.target.value)" required
+                placeholder="Reference No. for ₱{{ splitGcashAmount() | number:'1.2-2' }}">
+            <mat-icon matSuffix>confirmation_number</mat-icon>
+            <mat-hint>Required for the GCash portion</mat-hint>
+        </mat-form-field>
+
+        <!-- Cash Portion Tendered & Change Due Calculator -->
+        <div class="split-cash-calc" *ngIf="splitCashAmount() && splitCashAmount()! > 0">
+            <div class="calc-header">Cash Tendered for ₱{{ splitCashAmount() | number:'1.2-2' }} Cash Portion:</div>
+            <div class="calculator-row">
+                <mat-form-field appearance="outline" class="tendered-input">
+                    <mat-label>Cash Received</mat-label>
+                    <input matInput type="number" [ngModel]="splitCashTendered()" (ngModelChange)="splitCashTendered.set($event)"
+                        [placeholder]="(splitCashAmount() || 0) + ''" min="0">
+                    <span matPrefix>₱&nbsp;</span>
+                </mat-form-field>
+
+                <div class="change-display">
+                    <div class="label">CHANGE</div>
+                    <div class="amount" [class.has-change]="splitCashChangeDue() > 0">
+                        {{ splitCashChangeDue() | currency:'PHP' }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-cash-buttons">
+                <button mat-stroked-button type="button" (click)="setSplitExactCash()">Exact (₱{{ splitCashAmount() | number:'1.0-0' }})</button>
+                <button mat-stroked-button type="button" (click)="setSplitCashPreset(100)">₱100</button>
+                <button mat-stroked-button type="button" (click)="setSplitCashPreset(500)">₱500</button>
+                <button mat-stroked-button type="button" (click)="setSplitCashPreset(1000)">₱1,000</button>
+            </div>
+        </div>
+    </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
     <button mat-button (click)="cancel()">Cancel</button>
-    <button mat-raised-button color="primary" (click)="confirm()"
-        [disabled]="(paymentMethod() === 'GCASH' && !referenceNumber().trim()) || (paymentMethod() === 'CASH' && (amountTendered() === null || amountTendered()! < data.total))">
+    <button mat-raised-button color="primary" (click)="confirm()" [disabled]="isConfirmDisabled">
         Confirm Payment
     </button>
 </mat-dialog-actions>

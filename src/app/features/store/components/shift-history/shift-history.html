@@ -317,8 +317,10 @@
                     <span class="tx-member" *ngIf="tx.memberName">{{ tx.memberName }}</span>
                   </div>
                   <div class="tx-right">
-                    <span class="tx-amount positive">+₱{{ tx.amount | number:'1.2-2' }}</span>
-                    <span class="tx-method" *ngIf="tx.paymentMethod" [class.gcash]="tx.paymentMethod === 'GCASH'">{{ tx.paymentMethod }}</span>
+                    <span class="tx-method" *ngIf="tx.paymentMethod" [class.gcash]="tx.paymentMethod === 'GCASH'" [class.split]="tx.paymentMethod === 'SPLIT'"
+                      [matTooltip]="tx.paymentMethod === 'SPLIT' ? '💵 Cash: ₱' + ((tx.cashAmount || 0) | number:'1.2-2') + ' | 📱 GCash: ₱' + ((tx.gcashAmount || 0) | number:'1.2-2') : ''">
+                      {{ tx.paymentMethod }}
+                    </span>
                     <span class="tx-void-badge" *ngIf="tx.voided">VOIDED</span>
                   </div>
                 </div>

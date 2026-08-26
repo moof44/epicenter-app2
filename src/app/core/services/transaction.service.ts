@@ -17,7 +17,7 @@ import {
     getAggregateFromServer,
 } from '@angular/fire/firestore';
 import { Observable, map } from 'rxjs';
-import { Product, Transaction, ProductSalesData, InventoryLog } from '../models/store.model';
+import { Product, Transaction, ProductSalesData, InventoryLog, PaymentMethod } from '../models/store.model';
 import { AuthService } from './auth.service';
 import { CashRegisterService } from './cash-register.service';
 import { toLocalDateStr } from '../utils/date.utils';
@@ -42,7 +42,7 @@ export class TransactionService {
             limit?: number;
             startDate?: Date;
             endDate?: Date;
-            paymentMethod?: 'CASH' | 'GCASH';
+            paymentMethod?: PaymentMethod;
             memberId?: string;
             referenceNumber?: string;
             staffName?: string;

@@ -61,8 +61,16 @@ export class PaymentSplitWidget {
             transactions
                 .filter(tx => tx.status !== 'VOID')
                 .forEach(tx => {
-                    if (tx.paymentMethod === 'GCASH') gcash += tx.totalAmount;
-                    else cash += tx.totalAmount;
+                    if (tx.paymentMethod === 'GCASH') {
+                        gcash += tx.totalAmount;
+                    } else if (tx.paymentMethod === 'SPLIT') {
+                        const cashPart = tx.cashAmount !== undefined && tx.cashAmount !== null ? Number(tx.cashAmount) : 0;
+                        const gcashPart = tx.gcashAmount !== undefined && tx.gcashAmount !== null ? Number(tx.gcashAmount) : (tx.totalAmount - cashPart);
+                        cash += cashPart;
+                        gcash += gcashPart;
+                    } else {
+                        cash += tx.totalAmount;
+                    }
                 });
 
             this.cashTotal.set(cash);

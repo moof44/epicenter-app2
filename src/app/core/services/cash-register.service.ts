@@ -395,6 +395,11 @@ export class CashRegisterService {
           totalSales += tx.amount; // Legacy
           if (tx.paymentMethod === 'GCASH') {
             totalGcashSales += tx.amount;
+          } else if (tx.paymentMethod === 'SPLIT') {
+            const cashPart = (tx as any).cashAmount !== undefined && (tx as any).cashAmount !== null ? Number((tx as any).cashAmount) : 0;
+            const gcashPart = (tx as any).gcashAmount !== undefined && (tx as any).gcashAmount !== null ? Number((tx as any).gcashAmount) : (tx.amount - cashPart);
+            totalCashSales += cashPart;
+            totalGcashSales += gcashPart;
           } else {
             totalCashSales += tx.amount;
           }
@@ -507,6 +512,12 @@ export class CashRegisterService {
 
       if (tx.paymentMethod === 'GCASH') {
         updates.totalGcashSales = increment(-amount);
+      } else if (tx.paymentMethod === 'SPLIT') {
+        const cashPart = (tx as any).cashAmount !== undefined && (tx as any).cashAmount !== null ? Number((tx as any).cashAmount) : 0;
+        const gcashPart = (tx as any).gcashAmount !== undefined && (tx as any).gcashAmount !== null ? Number((tx as any).gcashAmount) : (amount - cashPart);
+        updates.totalCashSales = increment(-cashPart);
+        updates.totalGcashSales = increment(-gcashPart);
+        updates.expectedClosingBalance = increment(-cashPart);
       } else {
         updates.totalCashSales = increment(-amount);
         updates.expectedClosingBalance = increment(-amount);
@@ -586,6 +597,12 @@ export class CashRegisterService {
 
       if (tx.paymentMethod === 'GCASH') {
         updates.totalGcashSales = increment(-amount);
+      } else if (tx.paymentMethod === 'SPLIT') {
+        const cashPart = (tx as any).cashAmount !== undefined && (tx as any).cashAmount !== null ? Number((tx as any).cashAmount) : 0;
+        const gcashPart = (tx as any).gcashAmount !== undefined && (tx as any).gcashAmount !== null ? Number((tx as any).gcashAmount) : (amount - cashPart);
+        updates.totalCashSales = increment(-cashPart);
+        updates.totalGcashSales = increment(-gcashPart);
+        updates.expectedClosingBalance = increment(-cashPart);
       } else {
         updates.totalCashSales = increment(-amount);
         updates.expectedClosingBalance = increment(-amount);

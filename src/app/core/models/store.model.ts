@@ -35,6 +35,16 @@ export interface CartItem {
     appliedDiscountName?: string;
 }
 
+export type PaymentMethod = 'CASH' | 'GCASH' | 'SPLIT';
+
+export interface SplitPaymentDetails {
+    cashAmount: number;
+    gcashAmount: number;
+    referenceNumber?: string | null;
+    cashTendered?: number | null;
+    changeDue?: number | null;
+}
+
 export interface Transaction {
     id?: string;
     date: Date;
@@ -42,10 +52,13 @@ export interface Transaction {
     items: CartItem[];
     staffId?: string | null;
     staffName?: string | null;
-    paymentMethod: 'CASH' | 'GCASH';
+    paymentMethod: PaymentMethod;
     referenceNumber?: string | null;
     amountTendered?: number | null;
     changeDue?: number | null;
+    cashAmount?: number;
+    gcashAmount?: number;
+    splitDetails?: SplitPaymentDetails | null;
     memberId?: string | null;
     memberName?: string;
     status?: 'COMPLETED' | 'VOID';

@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { TransactionService } from '../../../../core/services/transaction.service';
 import { Transaction } from '../../../../core/models/store.model';
@@ -21,7 +22,8 @@ import { Observable, firstValueFrom } from 'rxjs';
   selector: 'app-transaction-history',
   imports: [
     CommonModule, MatTableModule, MatPaginatorModule, MatIconModule, MatExpansionModule,
-    MatDatepickerModule, MatNativeDateModule, MatInputModule, MatSelectModule, MatButtonModule, MatChipsModule, FormsModule
+    MatDatepickerModule, MatNativeDateModule, MatInputModule, MatSelectModule, MatButtonModule,
+    MatChipsModule, MatTooltipModule, FormsModule
   ],
   templateUrl: './transaction-history.html',
   styleUrl: './transaction-history.css',
@@ -39,7 +41,7 @@ export class TransactionHistory implements AfterViewInit, OnInit {
   // Filters
   startDate: Date | null = null;
   endDate: Date | null = null;
-  paymentMethod: 'CASH' | 'GCASH' | '' = '';
+  paymentMethod: 'CASH' | 'GCASH' | 'SPLIT' | '' = '';
   referenceNumber = '';
   staffName = '';
 

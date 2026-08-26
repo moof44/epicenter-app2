@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { TransactionService } from '../../../../core/services/transaction.service';
@@ -23,7 +24,7 @@ import { fadeIn } from '../../../../core/animations/animations';
   imports: [
     CommonModule, FormsModule, MatTableModule, MatButtonModule, MatIconModule,
     MatInputModule, MatFormFieldModule, MatSelectModule, MatCardModule,
-    MatChipsModule, MatSnackBarModule, MatDialogModule
+    MatChipsModule, MatSnackBarModule, MatDialogModule, MatTooltipModule
   ],
   templateUrl: './cash-management.html',
   styleUrl: './cash-management.css',

@@ -27,20 +27,90 @@
 
 mat-button-toggle-group {
     width: 100%;
+    display: flex;
 }
 
 mat-button-toggle {
-    width: 50%;
-    font-weight: bold;
+    flex: 1 1 0;
+    font-weight: 600;
+    font-size: 0.88rem;
 }
 
 mat-button-toggle mat-icon {
-    margin-right: 8px;
+    margin-right: 6px;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+/* Split Payment Container Styles */
+.split-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.split-row {
+    display: flex;
+    gap: 12px;
+}
+
+.split-field {
+    flex: 1;
+}
+
+.split-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.split-status-bar.balanced {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    color: #166534;
+}
+
+.split-status-bar.unbalanced {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #b45309;
+}
+
+.split-status-bar .status-icon mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.split-cash-calc {
+    background: #fafafa;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 4px;
+}
+
+.calc-header {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.gcash-ref-field {
+    margin-top: 4px;
 }
 
 /* New styles for calculator layout */
 .summary h3 {
-    margin: 8px 0 24px 0;
+    margin: 8px 0 20px 0;
     font-size: 24px;
     font-weight: 700;
     color: #1976d2;
@@ -131,6 +201,20 @@ mat-button-toggle mat-icon {
 @media (max-width: 600px) {
     :host {
         min-width: 100%;
+    }
+
+    .split-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    mat-button-toggle {
+        font-size: 0.75rem;
+        padding: 0 4px;
+    }
+
+    mat-button-toggle mat-icon {
+        display: none;
     }
 
     .calculator-row {

@@ -279,6 +279,12 @@
   color: white;
 }
 
+.method-badge.split {
+  background: rgba(124, 58, 237, 0.15);
+  color: #6d28d9;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
 .text-muted {
   color: #999;
 }
