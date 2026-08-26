@@ -216,6 +216,165 @@ export const emergencyLogoutAll = functions.https.onCall(async (data: any, conte
 });
 
 /**
+ * Core helper to provision or link a Member Portal account for a member.
+ * Shared by both automated triggers (onCreate/onUpdate) and the callable function.
+ */
+export async function provisionMemberPortalAccount(memberId: string, memberData: any): Promise<{ success: boolean; uid?: string; alreadyExisted?: boolean }> {
+    const phone = memberData.contactNumber;
+    const birthdayVal = memberData.birthday;
+
+    if (!phone) {
+        throw new Error('Member does not have a contact number registered.');
+    }
+    if (!birthdayVal) {
+        throw new Error('Member does not have a birthdate registered.');
+    }
+
+    // Normalize Phone Number (strip non-digits, replace starting +63 or 63 with 0)
+    let cleanPhone = String(phone).replace(/\D/g, '');
+    if (cleanPhone.startsWith('63')) {
+        cleanPhone = '0' + cleanPhone.substring(2);
+    } else if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
+        cleanPhone = '0' + cleanPhone;
+    }
+
+    if (cleanPhone.length !== 11) {
+        throw new Error(`Invalid phone number format: "${phone}". Must be an 11-digit mobile number.`);
+    }
+
+    // Format Birthday PIN (from Firestore Date/Timestamp to MMDDYYYY string in GMT+8)
+    let birthdayDate: Date;
+    if (birthdayVal.toDate && typeof birthdayVal.toDate === 'function') {
+        birthdayDate = birthdayVal.toDate();
+    } else {
+        birthdayDate = new Date(birthdayVal);
+    }
+
+    if (isNaN(birthdayDate.getTime())) {
+        throw new Error('Invalid birthdate format registered.');
+    }
+
+    // Adjust to GMT+8 (Philippines timezone) to prevent UTC date shift
+    const phOffset = 8 * 60 * 60 * 1000; 
+    const localDate = new Date(birthdayDate.getTime() + phOffset);
+
+    const mm = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(localDate.getUTCDate()).padStart(2, '0');
+    const yyyy = String(localDate.getUTCFullYear());
+    const birthdayPin = `${mm}${dd}${yyyy}`; // MMDDYYYY PIN
+
+    const email = `${cleanPhone}@epicentergym.ph`;
+    const db = admin.firestore();
+    const memberRef = db.collection('members').doc(memberId);
+
+    // Check if user already exists in Auth
+    let userRecord: admin.auth.UserRecord;
+    try {
+        userRecord = await admin.auth().getUserByEmail(email);
+        
+        // If user exists, link portalUid in member doc
+        const portalUid = userRecord.uid;
+        await memberRef.update({ portalUid, portalStatus: 'Active' });
+        
+        // Ensure the user's Firestore profile exists
+        const userDocRef = db.collection('users').doc(portalUid);
+        const userDocSnap = await userDocRef.get();
+        if (!userDocSnap.exists) {
+            await userDocRef.set({
+                uid: portalUid,
+                email,
+                displayName: memberData.name || '',
+                roles: ['MEMBER'],
+                memberId,
+                isActive: true,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        return { success: true, uid: portalUid, alreadyExisted: true };
+    } catch (authError: any) {
+        if (authError.code !== 'auth/user-not-found') {
+            throw authError;
+        }
+        
+        // Create a new Firebase Auth user
+        userRecord = await admin.auth().createUser({
+            email,
+            password: birthdayPin,
+            displayName: memberData.name || '',
+        });
+
+        const uid = userRecord.uid;
+
+        // Set MEMBER custom claim
+        await admin.auth().setCustomUserClaims(uid, { roles: ['MEMBER'] });
+
+        // Create Firestore users document
+        await db.collection('users').doc(uid).set({
+            uid,
+            email,
+            displayName: memberData.name || '',
+            roles: ['MEMBER'],
+            memberId,
+            isActive: true,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        // Backlink portalUid in members doc
+        await memberRef.update({ portalUid: uid, portalStatus: 'Active' });
+
+        return { success: true, uid };
+    }
+}
+
+/**
+ * Automatically provisions a Member Portal account whenever a new member is created.
+ */
+export const onMemberCreatedAutoPortal = functions.firestore
+    .document('/members/{memberId}')
+    .onCreate(async (snapshot, context) => {
+        const memberId = context.params.memberId;
+        const memberData = snapshot.data() || {};
+
+        if (!memberData.contactNumber || !memberData.birthday) {
+            console.log(`[onMemberCreatedAutoPortal] Member ${memberId} is missing phone or birthday. Skipping portal account auto-creation.`);
+            return;
+        }
+
+        try {
+            const result = await provisionMemberPortalAccount(memberId, memberData);
+            console.log(`[onMemberCreatedAutoPortal] Successfully auto-provisioned portal account for member ${memberId} (UID: ${result.uid}).`);
+        } catch (err: any) {
+            console.error(`[onMemberCreatedAutoPortal] Failed to auto-provision portal account for member ${memberId}:`, err);
+        }
+    });
+
+/**
+ * Automatically provisions a Member Portal account if a member's phone or birthday was updated and they lack a portal account.
+ */
+export const onMemberUpdatedAutoPortal = functions.firestore
+    .document('/members/{memberId}')
+    .onUpdate(async (change, context) => {
+        const after = change.after.data() || {};
+        const memberId = context.params.memberId;
+
+        // If member already has an active portal account, skip
+        if (after.portalUid && after.portalStatus === 'Active') {
+            return;
+        }
+
+        // Check if phone and birthday are now present
+        if (after.contactNumber && after.birthday) {
+            try {
+                const result = await provisionMemberPortalAccount(memberId, after);
+                console.log(`[onMemberUpdatedAutoPortal] Successfully auto-provisioned portal account on update for member ${memberId} (UID: ${result.uid}).`);
+            } catch (err: any) {
+                console.error(`[onMemberUpdatedAutoPortal] Failed to auto-provision portal account on update for member ${memberId}:`, err);
+            }
+        }
+    });
+
+/**
  * Creates a new portal account for a member.
  * Only callable by authenticated staff members (ADMIN, MANAGER, STAFF, TRAINER).
  */
@@ -236,8 +395,6 @@ export const createMemberPortalAccount = functions.https.onCall(async (data: any
 
     try {
         const db = admin.firestore();
-
-        // 2. Fetch the member doc
         const memberRef = db.collection('members').doc(memberId);
         const memberSnap = await memberRef.get();
         if (!memberSnap.exists) {
@@ -245,109 +402,7 @@ export const createMemberPortalAccount = functions.https.onCall(async (data: any
         }
 
         const memberData = memberSnap.data() || {};
-        const phone = memberData.contactNumber;
-        const birthdayVal = memberData.birthday;
-
-        if (!phone) {
-            throw new functions.https.HttpsError('failed-precondition', 'Member does not have a contact number registered.');
-        }
-        if (!birthdayVal) {
-            throw new functions.https.HttpsError('failed-precondition', 'Member does not have a birthdate registered.');
-        }
-
-        // Normalize Phone Number (strip non-digits, replace starting +63 or 63 with 0)
-        let cleanPhone = phone.replace(/\D/g, '');
-        if (cleanPhone.startsWith('63')) {
-            cleanPhone = '0' + cleanPhone.substring(2);
-        } else if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
-            cleanPhone = '0' + cleanPhone;
-        }
-
-        if (cleanPhone.length !== 11) {
-            throw new functions.https.HttpsError('failed-precondition', `Invalid phone number format: "${phone}". Must be an 11-digit mobile number.`);
-        }
-
-        // Format Birthday PIN (from Firestore Date/Timestamp to MMDDYYYY string in GMT+8)
-        let birthdayDate: Date;
-        if (birthdayVal.toDate && typeof birthdayVal.toDate === 'function') {
-            birthdayDate = birthdayVal.toDate();
-        } else {
-            birthdayDate = new Date(birthdayVal);
-        }
-
-        if (isNaN(birthdayDate.getTime())) {
-            throw new functions.https.HttpsError('failed-precondition', 'Invalid birthdate format registered.');
-        }
-
-        // Adjust to GMT+8 (Philippines timezone) to prevent UTC date shift
-        const phOffset = 8 * 60 * 60 * 1000; 
-        const localDate = new Date(birthdayDate.getTime() + phOffset);
-
-        const mm = String(localDate.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(localDate.getUTCDate()).padStart(2, '0');
-        const yyyy = String(localDate.getUTCFullYear());
-        const birthdayPin = `${mm}${dd}${yyyy}`; // MMDDYYYY PIN
-
-        const email = `${cleanPhone}@epicentergym.ph`;
-
-        // Check if user already exists in Auth
-        let userRecord: admin.auth.UserRecord;
-        try {
-            userRecord = await admin.auth().getUserByEmail(email);
-            
-            // If user exists, we check if they already have portalUid set in member doc
-            const portalUid = userRecord.uid;
-            await memberRef.update({ portalUid, portalStatus: 'Active' });
-            
-            // Ensure the user's Firestore profile exists
-            const userDocRef = db.collection('users').doc(portalUid);
-            const userDocSnap = await userDocRef.get();
-            if (!userDocSnap.exists) {
-                await userDocRef.set({
-                    uid: portalUid,
-                    email,
-                    displayName: memberData.name || '',
-                    roles: ['MEMBER'],
-                    memberId,
-                    isActive: true,
-                    createdAt: admin.firestore.FieldValue.serverTimestamp()
-                });
-            }
-
-            return { success: true, uid: portalUid, alreadyExisted: true };
-        } catch (authError: any) {
-            if (authError.code !== 'auth/user-not-found') {
-                throw authError;
-            }
-            
-            // Create a new Firebase Auth user
-            userRecord = await admin.auth().createUser({
-                email,
-                password: birthdayPin,
-                displayName: memberData.name || '',
-            });
-
-            const uid = userRecord.uid;
-
-            // Set MEMBER custom claim
-            await admin.auth().setCustomUserClaims(uid, { roles: ['MEMBER'] });
-
-            // Create Firestore users document
-            await db.collection('users').doc(uid).set({
-                uid,
-                email,
-                displayName: memberData.name || '',
-                roles: ['MEMBER'],
-                memberId,
-                isActive: true,
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
-
-            // Backlink portalUid in members doc
-            await memberRef.update({ portalUid: uid, portalStatus: 'Active' });
-
-            return { success: true, uid };
-        }
+        return await provisionMemberPortalAccount(memberId, memberData);
     } catch (error: any) {
         console.error('Error creating member portal account:', error);
         throw new functions.https.HttpsError('internal', error.message || 'Unable to create member portal account.', error);
