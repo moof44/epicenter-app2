@@ -17,7 +17,12 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { StaffAttendanceService, DEFAULT_STAFF_SHIFTS } from '../../../../core/services/staff-attendance.service';
+import {
+    StaffAttendanceService,
+    DEFAULT_STAFF_SHIFTS,
+    formatShiftSchedule,
+    formatTime12Hour
+} from '../../../../core/services/staff-attendance.service';
 import { UserService } from '../../../../core/services/user.service';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -69,6 +74,8 @@ export class StaffAttendanceAdminComponent implements OnInit {
     private router = inject(Router);
 
     shifts = DEFAULT_STAFF_SHIFTS;
+    formatShiftSchedule = formatShiftSchedule;
+    formatTime12Hour = formatTime12Hour;
 
     openKioskTerminal() {
         window.open('/staff-kiosk', '_blank');

@@ -26,7 +26,7 @@
                 <!-- Scheduled Times -->
                 <ng-container matColumnDef="scheduledTimes">
                     <th mat-header-cell *matHeaderCellDef> Schedule </th>
-                    <td mat-cell *matCellDef="let r"> {{ r.scheduledStartTime }} – {{ r.scheduledEndTime }} </td>
+                    <td mat-cell *matCellDef="let r"> {{ formatShiftSchedule({ startTime: r.scheduledStartTime, endTime: r.scheduledEndTime }) }} </td>
                 </ng-container>
 
                 <!-- Check-in Time -->
@@ -34,7 +34,7 @@
                     <th mat-header-cell *matHeaderCellDef> Check-In </th>
                     <td mat-cell *matCellDef="let r">
                         <div class="time-col">
-                            <span>{{ r.checkInTime | date:'shortTime' }}</span>
+                            <span>{{ r.checkInTime | date:'h:mm a':'Asia/Manila' }}</span>
                             <small class="warn-text" *ngIf="r.lateMinutes > 0">Late {{ r.lateMinutes }}m</small>
                             <small class="success-text" *ngIf="r.earlyMinutes > 0">Early {{ r.earlyMinutes }}m</small>
                         </div>
@@ -45,7 +45,7 @@
                 <ng-container matColumnDef="checkOutTime">
                     <th mat-header-cell *matHeaderCellDef> Check-Out </th>
                     <td mat-cell *matCellDef="let r">
-                        <span *ngIf="r.checkOutTime">{{ r.checkOutTime | date:'shortTime' }}</span>
+                        <span *ngIf="r.checkOutTime">{{ r.checkOutTime | date:'h:mm a':'Asia/Manila' }}</span>
                         <span *ngIf="!r.checkOutTime" class="warn-text">In Progress</span>
                     </td>
                 </ng-container>

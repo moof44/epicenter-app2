@@ -1,8 +1,9 @@
 export interface StaffShiftDefinition {
-    id: string; // e.g. 'morning' | 'mid' | 'night'
+    id: string; // e.g. 'morning' | 'flexible' | 'night'
     name: string; // e.g. 'Morning Shift'
-    startTime: string; // '06:00' 24-hr format
-    endTime: string; // '13:00' 24-hr format
+    startTime: string; // '08:00' or 'Flexible'
+    endTime: string; // '15:00' or 'Flexible'
+    isFlexible?: boolean;
     requiredHours: number; // 7
 }
 

@@ -184,11 +184,11 @@
                                     <div class="day-body" *ngIf="day.isPresent && day.record">
                                         <div class="shift-name">{{ day.record.shiftName }}</div>
                                         <div class="time-row">
-                                            <span>In:</span> <strong>{{ day.record.checkInTime | date:'shortTime' }}</strong>
+                                            <span>In:</span> <strong>{{ day.record.checkInTime | date:'h:mm a':'Asia/Manila' }}</strong>
                                         </div>
                                         <div class="time-row">
                                             <span>Out:</span> 
-                                            <strong *ngIf="day.record.checkOutTime">{{ day.record.checkOutTime | date:'shortTime' }}</strong>
+                                            <strong *ngIf="day.record.checkOutTime">{{ day.record.checkOutTime | date:'h:mm a':'Asia/Manila' }}</strong>
                                             <span *ngIf="!day.record.checkOutTime" class="warn-text">Missing</span>
                                         </div>
                                         <div class="metrics-row">
@@ -256,18 +256,18 @@
 
                             <ng-container matColumnDef="shiftName">
                                 <th mat-header-cell *matHeaderCellDef> Shift </th>
-                                <td mat-cell *matCellDef="let p"> {{ p.shiftName }} ({{ p.scheduledStartTime }}) </td>
+                                <td mat-cell *matCellDef="let p"> {{ p.shiftName }} ({{ formatTime12Hour(p.scheduledStartTime) }}) </td>
                             </ng-container>
 
                             <ng-container matColumnDef="systemCheckIn">
                                 <th mat-header-cell *matHeaderCellDef> System Check-In </th>
-                                <td mat-cell *matCellDef="let p"> {{ p.checkInTime | date:'mediumTime' }} </td>
+                                <td mat-cell *matCellDef="let p"> {{ p.checkInTime | date:'h:mm a':'Asia/Manila' }} </td>
                             </ng-container>
 
                             <ng-container matColumnDef="requestedTime">
                                 <th mat-header-cell *matHeaderCellDef> Requested Arrival </th>
                                 <td mat-cell *matCellDef="let p" class="highlight-time">
-                                    {{ p.requestedCheckInTime | date:'mediumTime' }}
+                                    {{ p.requestedCheckInTime | date:'h:mm a':'Asia/Manila' }}
                                 </td>
                             </ng-container>
 

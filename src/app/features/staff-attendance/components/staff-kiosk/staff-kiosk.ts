@@ -10,7 +10,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { StaffAttendanceService, DEFAULT_STAFF_SHIFTS } from '../../../../core/services/staff-attendance.service';
+import {
+    StaffAttendanceService,
+    DEFAULT_STAFF_SHIFTS,
+    formatShiftSchedule,
+    formatTime12Hour
+} from '../../../../core/services/staff-attendance.service';
 import { UserService } from '../../../../core/services/user.service';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -47,6 +52,8 @@ export class StaffKioskComponent implements OnInit, OnDestroy {
     private authService = inject(AuthService);
     private snackBar = inject(MatSnackBar);
     private fb = inject(FormBuilder);
+
+    formatShiftSchedule = formatShiftSchedule;
 
     // Kiosk Registration State
     isAuthorized = signal<boolean | null>(null);

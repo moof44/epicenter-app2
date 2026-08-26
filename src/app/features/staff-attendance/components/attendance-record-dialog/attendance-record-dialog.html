@@ -22,7 +22,7 @@
                     <mat-label>Shift</mat-label>
                     <mat-select formControlName="shiftId" required>
                         @for (s of data.shifts; track s.id) {
-                            <mat-option [value]="s.id">{{ s.name }} ({{ s.startTime }} - {{ s.endTime }})</mat-option>
+                            <mat-option [value]="s.id">{{ s.name }} ({{ formatShiftSchedule(s) }})</mat-option>
                         }
                     </mat-select>
                 </mat-form-field>

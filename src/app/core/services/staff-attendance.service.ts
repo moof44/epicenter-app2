@@ -36,15 +36,16 @@ export const DEFAULT_STAFF_SHIFTS: StaffShiftDefinition[] = [
     {
         id: 'morning',
         name: 'Morning Shift',
-        startTime: '06:00',
-        endTime: '13:00',
+        startTime: '08:00',
+        endTime: '15:00',
         requiredHours: 7
     },
     {
-        id: 'mid',
-        name: 'Mid Shift',
-        startTime: '13:00',
-        endTime: '20:00',
+        id: 'flexible',
+        name: 'Flexible Shift',
+        startTime: 'Flexible',
+        endTime: 'Flexible',
+        isFlexible: true,
         requiredHours: 7
     },
     {
@@ -55,6 +56,28 @@ export const DEFAULT_STAFF_SHIFTS: StaffShiftDefinition[] = [
         requiredHours: 7
     }
 ];
+
+export function formatTime12Hour(time24?: string): string {
+    if (!time24 || time24 === 'Flexible' || time24 === '-') return time24 || '-';
+    const parts = time24.split(':');
+    if (parts.length < 2) return time24;
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    const mStr = m.toString().padStart(2, '0');
+    return `${h12}:${mStr} ${period}`;
+}
+
+export function formatShiftSchedule(shift?: { startTime?: string; endTime?: string; isFlexible?: boolean } | null): string {
+    if (!shift) return '-';
+    if (shift.isFlexible || shift.startTime === 'Flexible' || shift.endTime === 'Flexible') {
+        return 'Flexible (7 hrs)';
+    }
+    const start = formatTime12Hour(shift.startTime);
+    const end = formatTime12Hour(shift.endTime);
+    return `${start} – ${end}`;
+}
 
 const KIOSK_DEVICE_STORAGE_KEY = 'staff_kiosk_device_id';
 const KIOSK_DEVICE_NAME_KEY = 'staff_kiosk_device_name';
@@ -160,39 +183,32 @@ export class StaffAttendanceService {
     // 2. SHIFT AUTO-DETECTION & MANILA TIME UTILS
     // ==========================================
 
-    /** Gets Manila current time string (HH:mm) and Date object. */
+    /** Gets current time Date object. */
     getManilaNow(): Date {
-        // Create Date representing current time in Asia/Manila (UTC+8)
-        const now = new Date();
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        return new Date(utc + (3600000 * 8));
+        return new Date();
     }
 
     getManilaTodayStr(): string {
-        return toLocalDateStr(this.getManilaNow());
+        return toLocalDateStr(new Date());
     }
 
     /** Automatically pre-selects the shift closest to current Manila time. */
     autoDetectCurrentShift(shifts: StaffShiftDefinition[] = DEFAULT_STAFF_SHIFTS): StaffShiftDefinition {
         const now = this.getManilaNow();
-        const currentMins = now.getHours() * 60 + now.getMinutes();
+        const currentHours = now.getHours();
 
-        let bestShift = shifts[0];
-        let smallestDiff = Infinity;
+        const morningShift = shifts.find(s => s.id === 'morning') || shifts[0];
+        const nightShift = shifts.find(s => s.id === 'night') || shifts[shifts.length - 1];
 
-        for (const shift of shifts) {
-            const [sh, sm] = shift.startTime.split(':').map(Number);
-            const shiftStartMins = sh * 60 + sm;
-
-            // Difference between current time and shift start time
-            const diff = Math.abs(currentMins - shiftStartMins);
-            if (diff < smallestDiff) {
-                smallestDiff = diff;
-                bestShift = shift;
-            }
+        // 4:00 AM to 1:59 PM -> Morning Shift (08:00 - 15:00)
+        // 2:00 PM to 11:59 PM -> Night Shift (15:00 - 22:00)
+        if (currentHours >= 4 && currentHours < 14) {
+            return morningShift;
+        } else if (currentHours >= 14 && currentHours <= 23) {
+            return nightShift;
         }
 
-        return bestShift || DEFAULT_STAFF_SHIFTS[0];
+        return morningShift;
     }
 
     // ==========================================
@@ -258,22 +274,23 @@ export class StaffAttendanceService {
             }
         }
 
-        // Calculate Scheduled Start Date in Manila Time
-        const [startH, startM] = shift.startTime.split(':').map(Number);
-        const scheduledStart = new Date(manilaNow);
-        scheduledStart.setHours(startH, startM, 0, 0);
-
-        // Early / Late Mins Calculation
-        const diffMs = manilaNow.getTime() - scheduledStart.getTime();
-        const diffMins = Math.round(diffMs / 60000);
-
+        // Early / Late Mins Calculation (Only for fixed-schedule shifts)
         let earlyMinutes = 0;
         let lateMinutes = 0;
 
-        if (diffMins < 0) {
-            earlyMinutes = Math.abs(diffMins);
-        } else if (diffMins > 0) {
-            lateMinutes = diffMins;
+        if (!shift.isFlexible && shift.startTime && shift.startTime.includes(':')) {
+            const [startH, startM] = shift.startTime.split(':').map(Number);
+            const scheduledStart = new Date(manilaNow);
+            scheduledStart.setHours(startH, startM, 0, 0);
+
+            const diffMs = manilaNow.getTime() - scheduledStart.getTime();
+            const diffMins = Math.round(diffMs / 60000);
+
+            if (diffMins < 0) {
+                earlyMinutes = Math.abs(diffMins);
+            } else if (diffMins > 0) {
+                lateMinutes = diffMins;
+            }
         }
 
         // Handle Check-in Time Adjustment Request
@@ -430,14 +447,15 @@ export class StaffAttendanceService {
             for (const d of snap.docs) {
                 const data = d.data();
                 const recordDate = data['date'];
-                const scheduledEndTime = data['scheduledEndTime'] || '22:00';
+                const scheduledEndTime = data['scheduledEndTime'];
+                const endTimeStr = (scheduledEndTime && scheduledEndTime.includes(':')) ? scheduledEndTime : '22:00';
 
                 // Resolve if record is from a previous calendar day, OR if today and past the scheduled end time
                 let shouldResolve = false;
                 if (recordDate < todayStr) {
                     shouldResolve = true;
                 } else if (recordDate === todayStr) {
-                    const [endH, endM] = scheduledEndTime.split(':').map(Number);
+                    const [endH, endM] = endTimeStr.split(':').map(Number);
                     const shiftEnd = new Date(manilaNow);
                     shiftEnd.setHours(endH, endM, 0, 0);
 
@@ -450,8 +468,8 @@ export class StaffAttendanceService {
                 if (shouldResolve) {
                     const checkInTime = data['checkInTime']?.toDate ? data['checkInTime'].toDate() : new Date(data['checkInTime']);
                     
-                    // Default checkout time to scheduledEndTime on record's date
-                    const [endH, endM] = scheduledEndTime.split(':').map(Number);
+                    // Default checkout time to scheduled closing on record's date
+                    const [endH, endM] = endTimeStr.split(':').map(Number);
                     const [year, month, day] = recordDate.split('-').map(Number);
                     const resolvedCheckOut = new Date(year, month - 1, day, endH, endM, 0, 0);
 
@@ -609,16 +627,20 @@ export class StaffAttendanceService {
     ): Promise<void> {
         const recordRef = doc(this.firestore, `staff_attendance/${recordId}`);
 
-        // Recalculate scheduled start
-        const [startH, startM] = data.shift.startTime.split(':').map(Number);
-        const scheduledStart = new Date(data.checkInTime);
-        scheduledStart.setHours(startH, startM, 0, 0);
+        let earlyMinutes = 0;
+        let lateMinutes = 0;
 
-        const diffMs = data.checkInTime.getTime() - scheduledStart.getTime();
-        const diffMins = Math.round(diffMs / 60000);
+        if (!data.shift.isFlexible && data.shift.startTime && data.shift.startTime.includes(':')) {
+            const [startH, startM] = data.shift.startTime.split(':').map(Number);
+            const scheduledStart = new Date(data.checkInTime);
+            scheduledStart.setHours(startH, startM, 0, 0);
 
-        const earlyMinutes = diffMins < 0 ? Math.abs(diffMins) : 0;
-        const lateMinutes = diffMins > 0 ? diffMins : 0;
+            const diffMs = data.checkInTime.getTime() - scheduledStart.getTime();
+            const diffMins = Math.round(diffMs / 60000);
+
+            earlyMinutes = diffMins < 0 ? Math.abs(diffMins) : 0;
+            lateMinutes = diffMins > 0 ? diffMins : 0;
+        }
 
         let workedMinutes = 0;
         let deficitMinutes = 0;
@@ -667,16 +689,20 @@ export class StaffAttendanceService {
         },
         adminName: string
     ): Promise<void> {
-        // Recalculate scheduled start
-        const [startH, startM] = data.shift.startTime.split(':').map(Number);
-        const scheduledStart = new Date(data.checkInTime);
-        scheduledStart.setHours(startH, startM, 0, 0);
+        let earlyMinutes = 0;
+        let lateMinutes = 0;
 
-        const diffMs = data.checkInTime.getTime() - scheduledStart.getTime();
-        const diffMins = Math.round(diffMs / 60000);
+        if (!data.shift.isFlexible && data.shift.startTime && data.shift.startTime.includes(':')) {
+            const [startH, startM] = data.shift.startTime.split(':').map(Number);
+            const scheduledStart = new Date(data.checkInTime);
+            scheduledStart.setHours(startH, startM, 0, 0);
 
-        const earlyMinutes = diffMins < 0 ? Math.abs(diffMins) : 0;
-        const lateMinutes = diffMins > 0 ? diffMins : 0;
+            const diffMs = data.checkInTime.getTime() - scheduledStart.getTime();
+            const diffMins = Math.round(diffMs / 60000);
+
+            earlyMinutes = diffMins < 0 ? Math.abs(diffMins) : 0;
+            lateMinutes = diffMins > 0 ? diffMins : 0;
+        }
 
         let workedMinutes = 0;
         let deficitMinutes = 0;

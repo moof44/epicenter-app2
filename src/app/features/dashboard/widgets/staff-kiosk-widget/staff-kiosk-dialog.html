@@ -63,7 +63,7 @@
                 <mat-icon matPrefix>access_time</mat-icon>
                 <mat-select formControlName="shiftId">
                     <mat-option *ngFor="let shift of shiftsList()" [value]="shift.id">
-                        {{ shift.name }} ({{ shift.startTime }} - {{ shift.endTime }})
+                        {{ shift.name }} ({{ formatShiftSchedule(shift) }})
                     </mat-option>
                 </mat-select>
             </mat-form-field>

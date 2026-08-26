@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { StaffAttendanceService } from '../../../../core/services/staff-attendance.service';
+import { StaffAttendanceService, formatShiftSchedule, formatTime12Hour } from '../../../../core/services/staff-attendance.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { StaffAttendanceRecord } from '../../../../core/models/staff-attendance.model';
 import { fadeIn } from '../../../../core/animations/animations';
@@ -31,6 +31,9 @@ import { Observable } from 'rxjs';
 export class MyAttendanceHistoryComponent implements OnInit {
     private attendanceService = inject(StaffAttendanceService);
     private authService = inject(AuthService);
+
+    formatShiftSchedule = formatShiftSchedule;
+    formatTime12Hour = formatTime12Hour;
 
     historyRecords$: Observable<StaffAttendanceRecord[]> | null = null;
 

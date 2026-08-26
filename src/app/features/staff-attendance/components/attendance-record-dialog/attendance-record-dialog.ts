@@ -10,7 +10,12 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { StaffAttendanceService, DEFAULT_STAFF_SHIFTS } from '../../../../core/services/staff-attendance.service';
+import {
+    StaffAttendanceService,
+    DEFAULT_STAFF_SHIFTS,
+    formatShiftSchedule,
+    formatTime12Hour
+} from '../../../../core/services/staff-attendance.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { StaffAttendanceRecord, StaffShiftDefinition } from '../../../../core/models/staff-attendance.model';
 import { User } from '../../../../core/models/user.model';
@@ -50,6 +55,8 @@ export class AttendanceRecordDialogComponent implements OnInit {
     private snackBar = inject(MatSnackBar);
     private fb = inject(FormBuilder);
     public data: AttendanceDialogData = inject(MAT_DIALOG_DATA);
+
+    formatShiftSchedule = formatShiftSchedule;
 
     isSubmitting = signal(false);
     isEdit = signal(false);

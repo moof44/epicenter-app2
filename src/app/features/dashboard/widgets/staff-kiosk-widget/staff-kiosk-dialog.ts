@@ -9,7 +9,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { StaffAttendanceService, DEFAULT_STAFF_SHIFTS } from '../../../../core/services/staff-attendance.service';
+import {
+    StaffAttendanceService,
+    DEFAULT_STAFF_SHIFTS,
+    formatShiftSchedule,
+    formatTime12Hour
+} from '../../../../core/services/staff-attendance.service';
 import { UserService } from '../../../../core/services/user.service';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { User } from '../../../../core/models/user.model';
@@ -71,6 +76,8 @@ export class StaffKioskDialogComponent implements OnInit, OnDestroy {
 
     isSubmitting = signal(false);
     resultMessage = signal<{ text: string; type: 'success' | 'error' } | null>(null);
+
+    formatShiftSchedule = formatShiftSchedule;
 
     private timerInterval: any = null;
 
