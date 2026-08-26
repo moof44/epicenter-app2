@@ -415,3 +415,229 @@ mat-tab-group {
 .voided-item .tx-reason {
   text-decoration: line-through;
 }
+
+/* ==========================================
+   KPI SUMMARY CARDS
+   ========================================== */
+.kpi-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-card.kpi-alert {
+  border-color: rgba(244, 67, 54, 0.3);
+  background: #fffafa;
+}
+
+.kpi-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpi-icon-wrap.sales {
+  background: rgba(76, 175, 80, 0.12);
+  color: #2e7d32;
+}
+
+.kpi-icon-wrap.expenses {
+  background: rgba(244, 67, 54, 0.12);
+  color: #c62828;
+}
+
+.kpi-icon-wrap.balanced {
+  background: rgba(33, 150, 243, 0.12);
+  color: #1976d2;
+}
+
+.kpi-icon-wrap.shortage {
+  background: rgba(244, 67, 54, 0.15);
+  color: #d32f2f;
+}
+
+.kpi-icon-wrap.overage {
+  background: rgba(255, 152, 0, 0.15);
+  color: #ef6c00;
+}
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kpi-label {
+  font-size: 0.78rem;
+  color: #666;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #202124;
+  margin-top: 2px;
+}
+
+.kpi-hint {
+  font-size: 0.72rem;
+  margin-top: 2px;
+  font-weight: 500;
+  color: #888;
+}
+
+.kpi-hint.danger {
+  color: #d32f2f;
+}
+
+.kpi-hint.success {
+  color: #2e7d32;
+}
+
+/* ==========================================
+   OPENING & HANDOVER CELL
+   ========================================== */
+.opening-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.opening-amount {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #202124;
+}
+
+.opened-by {
+  color: #888;
+  font-size: 0.75rem;
+}
+
+.handover-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  width: fit-content;
+  cursor: help;
+}
+
+.handover-badge mat-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+}
+
+.handover-badge.mismatch {
+  background: #fce8e6;
+  color: #c5221f;
+  border: 1px solid rgba(217, 48, 37, 0.2);
+}
+
+.handover-badge.matched {
+  background: #e6f4ea;
+  color: #137333;
+}
+
+.handover-badge.initial {
+  background: #e8f0fe;
+  color: #1a73e8;
+}
+
+/* ==========================================
+   DRAWER HANDOVER AUDIT CARD
+   ========================================== */
+.handover-audit-card {
+  margin: 16px 24px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: white;
+}
+
+.handover-audit-card.shortage,
+.handover-audit-card.overage {
+  background: #fff8f7;
+  border-color: #f28b82;
+}
+
+.handover-audit-card.matched {
+  background: #f6fbf7;
+  border-color: #81c995;
+}
+
+.handover-audit-card.initial {
+  background: #f8faff;
+  border-color: #aecbfa;
+}
+
+.audit-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  margin-bottom: 10px;
+  color: #202124;
+}
+
+.handover-audit-card.shortage .audit-header,
+.handover-audit-card.overage .audit-header {
+  color: #c5221f;
+}
+
+.handover-audit-card.matched .audit-header {
+  color: #137333;
+}
+
+.audit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.audit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #444;
+}
+
+.audit-row.result-row {
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+.initial-body {
+  font-size: 0.85rem;
+  color: #555;
+}

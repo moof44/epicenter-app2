@@ -5,6 +5,52 @@
       <h1>Cash Reports & Shift History</h1>
     </div>
 
+    <!-- 📊 KPI Summary Overview Cards -->
+    <div class="kpi-summary-cards" *ngIf="dataSource.data.length > 0" [@fadeIn]>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap sales"><mat-icon>point_of_sale</mat-icon></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Revenue</span>
+          <span class="kpi-value positive">₱{{ totalSales | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap expenses"><mat-icon>receipt_long</mat-icon></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Expenses</span>
+          <span class="kpi-value negative">₱{{ totalExpenses | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap" [ngClass]="totalShiftVariance >= 0 ? 'balanced' : 'shortage'">
+          <mat-icon>{{ totalShiftVariance === 0 ? 'balance' : (totalShiftVariance > 0 ? 'arrow_upward' : 'arrow_downward') }}</mat-icon>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Shift Close Variance</span>
+          <span class="kpi-value" [class.negative]="totalShiftVariance < 0" [class.positive]="totalShiftVariance > 0">
+            {{ totalShiftVariance > 0 ? '+' : '' }}₱{{ totalShiftVariance | number:'1.2-2' }}
+          </span>
+          <small class="kpi-hint">Inside shift discrepancies</small>
+        </div>
+      </div>
+
+      <div class="kpi-card" [class.kpi-alert]="mismatchCount > 0">
+        <div class="kpi-icon-wrap" [ngClass]="totalHandoverDiscrepancy === 0 ? 'balanced' : (totalHandoverDiscrepancy > 0 ? 'overage' : 'shortage')">
+          <mat-icon>{{ mismatchCount > 0 ? 'compare_arrows' : 'check_circle' }}</mat-icon>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Handover Discrepancies</span>
+          <span class="kpi-value" [class.negative]="totalHandoverDiscrepancy < 0" [class.positive]="totalHandoverDiscrepancy > 0">
+            {{ totalHandoverDiscrepancy > 0 ? '+' : '' }}₱{{ totalHandoverDiscrepancy | number:'1.2-2' }}
+          </span>
+          <small class="kpi-hint danger" *ngIf="mismatchCount > 0">{{ mismatchCount }} handover mismatch{{ mismatchCount > 1 ? 'es' : '' }}</small>
+          <small class="kpi-hint success" *ngIf="mismatchCount === 0">All handovers balanced</small>
+        </div>
+      </div>
+    </div>
+
     <div class="filters-section">
       <mat-form-field appearance="outline">
         <mat-label>Date Range</mat-label>
@@ -36,15 +82,34 @@
               <span class="date">{{ formatDate(shift.startTime) | date:'mediumDate' }}</span>
               <span class="time">{{ formatDate(shift.startTime) | date:'shortTime' }} - {{ formatDate(shift.endTime) |
                 date:'shortTime' }}</span>
+              <small class="opened-by">By: <strong>{{ shift.openedBy || 'Staff' }}</strong></small>
             </div>
           </td>
         </ng-container>
 
-        <!-- Opening Cash Column -->
+        <!-- Opening Cash Column (with Handover Comparison Badge) -->
         <ng-container matColumnDef="openingCash">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Opening</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Opening & Handover</th>
           <td mat-cell *matCellDef="let shift">
-            ₱{{ shift.openingBalance | number:'1.2-2' }}
+            <div class="opening-cell">
+              <span class="opening-amount">₱{{ shift.openingBalance | number:'1.2-2' }}</span>
+              
+              <!-- Handover Comparison Badge vs Previous Shift Closing -->
+              <span class="handover-badge mismatch" *ngIf="shift.handoverStatus === 'SHORTAGE' || shift.handoverStatus === 'OVERAGE'" [matTooltip]="getHandoverTooltip(shift)">
+                <mat-icon>warning</mat-icon>
+                <span>{{ shift.handoverDiscrepancy > 0 ? '+' : '' }}₱{{ shift.handoverDiscrepancy | number:'1.2-2' }} vs prev close</span>
+              </span>
+              
+              <span class="handover-badge matched" *ngIf="shift.handoverStatus === 'MATCHED'" [matTooltip]="getHandoverTooltip(shift)">
+                <mat-icon>check_circle</mat-icon>
+                <span>Matches prev close</span>
+              </span>
+
+              <span class="handover-badge initial" *ngIf="shift.handoverStatus === 'INITIAL'" [matTooltip]="getHandoverTooltip(shift)">
+                <mat-icon>flag</mat-icon>
+                <span>Initial Float</span>
+              </span>
+            </div>
           </td>
         </ng-container>
 
@@ -128,6 +193,43 @@
       </div>
 
       <div class="drawer-content">
+        <!-- 🔍 Shift Handover Reconciliation Card -->
+        <div class="handover-audit-card" [ngClass]="selectedShift.handoverStatus?.toLowerCase() || 'initial'">
+          <div class="audit-header">
+            <mat-icon>{{ selectedShift.handoverStatus === 'MATCHED' ? 'check_circle' : (selectedShift.handoverStatus === 'INITIAL' ? 'info' : 'warning') }}</mat-icon>
+            <strong>Shift Handover Audit</strong>
+          </div>
+          
+          <div class="audit-body" *ngIf="selectedShift.prevShift">
+            <div class="audit-row">
+              <span>Previous Shift Closed By:</span>
+              <strong>{{ selectedShift.prevShiftClosedBy || 'Staff' }}</strong>
+            </div>
+            <div class="audit-row">
+              <span>Previous Shift Closing Cash:</span>
+              <strong>₱{{ (selectedShift.prevShiftEndingBalance || 0) | number:'1.2-2' }}</strong>
+            </div>
+            <div class="audit-row">
+              <span>This Shift Opening Balance:</span>
+              <strong>₱{{ selectedShift.openingBalance | number:'1.2-2' }}</strong>
+            </div>
+            <mat-divider></mat-divider>
+            <div class="audit-row result-row">
+              <span>Handover Discrepancy:</span>
+              <strong [class.negative]="(selectedShift.handoverDiscrepancy || 0) < 0" [class.positive]="(selectedShift.handoverDiscrepancy || 0) > 0">
+                {{ (selectedShift.handoverDiscrepancy || 0) > 0 ? '+' : '' }}₱{{ (selectedShift.handoverDiscrepancy || 0) | number:'1.2-2' }}
+                <span *ngIf="selectedShift.handoverStatus === 'MATCHED'">(Perfect Match)</span>
+                <span *ngIf="selectedShift.handoverStatus === 'SHORTAGE'">(Missing Cash at Handover)</span>
+                <span *ngIf="selectedShift.handoverStatus === 'OVERAGE'">(Surplus Cash at Handover)</span>
+              </strong>
+            </div>
+          </div>
+
+          <div class="audit-body initial-body" *ngIf="!selectedShift.prevShift">
+            <span>First recorded shift in current timeline. Opening float: <strong>₱{{ selectedShift.openingBalance | number:'1.2-2' }}</strong></span>
+          </div>
+        </div>
+
         <!-- Shift Summary -->
         <div class="shift-summary">
           <div class="summary-row">
