@@ -455,6 +455,62 @@ export const generatePortalLoginToken = functions.https.onCall(async (data: any,
 });
 
 /**
+ * Uploads a Member Progress Body Composition Scan Report image to Firebase Storage.
+ * Bypasses browser CORS constraints and secures upload with staff authentication.
+ */
+export const uploadMemberProgressScan = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    // 1. Security Check: Must be authenticated and have staff role
+    if (!context.auth || !context.auth.token.roles || 
+        !context.auth.token.roles.some((r: string) => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(r))) {
+        throw new functions.https.HttpsError(
+            'permission-denied',
+            'Only gym staff can upload progress scan reports.'
+        );
+    }
+
+    const { memberId, fileBase64, fileName, contentType } = data;
+    if (!memberId || !fileBase64) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required fields: memberId, fileBase64.');
+    }
+
+    try {
+        const bucket = admin.storage().bucket();
+        // Strip data URI prefix if present
+        const base64Data = fileBase64.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        const timestamp = Date.now();
+        const safeName = String(fileName || 'scan.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
+        const storagePath = `members/${memberId}/scans/${timestamp}_${safeName}`;
+        const file = bucket.file(storagePath);
+
+        const downloadToken = require('crypto').randomUUID();
+
+        await file.save(buffer, {
+            metadata: {
+                contentType: contentType || 'image/jpeg',
+                metadata: {
+                    firebaseStorageDownloadTokens: downloadToken,
+                    memberId,
+                    uploadedAt: new Date().toISOString()
+                }
+            }
+        });
+
+        // Generate public media download URL
+        const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(storagePath)}?alt=media&token=${downloadToken}`;
+
+        return {
+            success: true,
+            downloadUrl,
+            storagePath
+        };
+    } catch (err: any) {
+        console.error('Error uploading member progress scan:', err);
+        throw new functions.https.HttpsError('internal', err.message || 'Failed to upload progress scan report.', err);
+    }
+});
+
+/**
  * Triggered when a new store sale transaction is completed.
  * Writes a formatted message to the global chat room.
  */

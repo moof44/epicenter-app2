@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, collectionData, addDoc, query, orderBy, limit, doc, updateDoc, getDoc, writeBatch } from '@angular/fire/firestore';
-import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
+import { Functions, httpsCallable } from '@angular/fire/functions';
 import { Observable } from 'rxjs';
 import { Measurement, DeletedMeasurement } from '../models/measurement.model';
 import { AuthService } from './auth.service';
@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 })
 export class ProgressService {
     private firestore: Firestore = inject(Firestore);
-    private storage: Storage = inject(Storage);
+    private functions: Functions = inject(Functions);
     private authService = inject(AuthService);
 
     private get _currentUserSnapshot() {
@@ -24,26 +24,33 @@ export class ProgressService {
     }
 
     /**
-     * Upload a Starfit/InBody scan report image to Firebase Storage.
+     * Upload a Starfit/InBody scan report image via Cloud Function (CORS-free and authenticated).
      */
     async uploadReportImage(memberId: string, file: File): Promise<{ downloadUrl: string; storagePath: string }> {
-        const timestamp = Date.now();
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const storagePath = `members/${memberId}/scans/${timestamp}_${safeName}`;
-        const storageRef = ref(this.storage, storagePath);
+        // Read file as base64 data URL
+        const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+        });
 
-        const metadata = {
-            contentType: file.type || 'image/jpeg',
-            customMetadata: {
-                memberId,
-                uploadedAt: new Date().toISOString()
-            }
+        const uploadFn = httpsCallable<
+            { memberId: string; fileBase64: string; fileName: string; contentType: string },
+            { success: boolean; downloadUrl: string; storagePath: string }
+        >(this.functions, 'uploadMemberProgressScan');
+
+        const result = await uploadFn({
+            memberId,
+            fileBase64: base64,
+            fileName: file.name,
+            contentType: file.type || 'image/jpeg'
+        });
+
+        return {
+            downloadUrl: result.data.downloadUrl,
+            storagePath: result.data.storagePath
         };
-
-        const uploadResult = await uploadBytes(storageRef, file, metadata);
-        const downloadUrl = await getDownloadURL(uploadResult.ref);
-
-        return { downloadUrl, storagePath };
     }
 
     getTimeSeries(memberId: string): Observable<Measurement[]> {
