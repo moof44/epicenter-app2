@@ -499,6 +499,14 @@ export const uploadMemberProgressScan = functions.https.onCall(async (data: any,
         // Generate public media download URL
         const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(storagePath)}?alt=media&token=${downloadToken}`;
 
+        // Immediately update member doc with latestScanImageUrl and hasPendingProgressScan
+        await admin.firestore().collection('members').doc(memberId).set({
+            hasPendingProgressScan: true,
+            latestScanImageUrl: downloadUrl,
+            pendingProgressScanUrl: downloadUrl,
+            pendingProgressDate: new Date()
+        }, { merge: true });
+
         return {
             success: true,
             downloadUrl,
@@ -1360,7 +1368,7 @@ export const purgeLegacyNotificationAndChatSpam = functions.https.onCall(async (
 });
 
 /**
- * Automatically calculates and maintains `hasPendingProgressScan` on the parent member document
+ * Automatically calculates and maintains `hasPendingProgressScan` and `latestScanImageUrl` on the parent member document
  * whenever a measurement record is created, updated, or deleted.
  */
 export const onMeasurementWrite = functions.firestore
@@ -1370,24 +1378,32 @@ export const onMeasurementWrite = functions.firestore
         const db = admin.firestore();
 
         try {
-            // Read all measurements for this member
+            // Read all measurements for this member ordered by date descending
             const measurementsSnap = await db
                 .collection(`members/${memberId}/measurements`)
+                .orderBy('date', 'desc')
                 .get();
 
             let hasPending = false;
             let latestPendingDate: any = null;
+            let latestScanImageUrl: string | null = null;
+            let pendingProgressScanUrl: string | null = null;
 
             for (const doc of measurementsSnap.docs) {
                 const data = doc.data();
-                // If an image report exists and weight is missing/zero/undefined, it is pending manual transcription
                 const isImageUploaded = Boolean(data.reportImageUrl);
                 const hasWeight = data.weight !== undefined && data.weight !== null && Number(data.weight) > 0;
 
-                if (isImageUploaded && !hasWeight) {
-                    hasPending = true;
-                    if (!latestPendingDate || (data.date && data.date > latestPendingDate)) {
-                        latestPendingDate = data.date;
+                if (isImageUploaded) {
+                    if (!latestScanImageUrl) {
+                        latestScanImageUrl = data.reportImageUrl;
+                    }
+                    if (!hasWeight) {
+                        hasPending = true;
+                        if (!latestPendingDate) {
+                            latestPendingDate = data.date;
+                            pendingProgressScanUrl = data.reportImageUrl;
+                        }
                     }
                 }
             }
@@ -1397,16 +1413,94 @@ export const onMeasurementWrite = functions.firestore
             };
             if (hasPending && latestPendingDate) {
                 updatePayload.pendingProgressDate = latestPendingDate;
+                if (pendingProgressScanUrl) updatePayload.pendingProgressScanUrl = pendingProgressScanUrl;
             } else if (!hasPending) {
                 updatePayload.pendingProgressDate = admin.firestore.FieldValue.delete();
+                updatePayload.pendingProgressScanUrl = admin.firestore.FieldValue.delete();
+            }
+
+            if (latestScanImageUrl) {
+                updatePayload.latestScanImageUrl = latestScanImageUrl;
+            } else {
+                updatePayload.latestScanImageUrl = admin.firestore.FieldValue.delete();
             }
 
             await db.collection('members').doc(memberId).set(updatePayload, { merge: true });
-            console.log(`[onMeasurementWrite] Updated member ${memberId} hasPendingProgressScan: ${hasPending}`);
+            console.log(`[onMeasurementWrite] Updated member ${memberId}: hasPending=${hasPending}, latestScan=${latestScanImageUrl}`);
         } catch (err: any) {
             console.error(`[onMeasurementWrite] Error syncing progress status for member ${memberId}:`, err);
         }
     });
+
+/**
+ * Maintenance callable function to scan all members and backfill hasPendingProgressScan and latestScanImageUrl.
+ * Only callable by authenticated staff members (ADMIN, MANAGER, STAFF, TRAINER).
+ */
+export const syncAllMembersProgressScans = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    if (!context.auth || !context.auth.token.roles || 
+        !context.auth.token.roles.some((r: string) => ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'].includes(r))) {
+        throw new functions.https.HttpsError('permission-denied', 'Only staff can trigger progress scan sync.');
+    }
+
+    const db = admin.firestore();
+    const membersSnap = await db.collection('members').get();
+    let updatedCount = 0;
+
+    for (const memberDoc of membersSnap.docs) {
+        const memberId = memberDoc.id;
+        const measurementsSnap = await db
+            .collection(`members/${memberId}/measurements`)
+            .orderBy('date', 'desc')
+            .get();
+
+        let hasPending = false;
+        let latestPendingDate: any = null;
+        let latestScanImageUrl: string | null = null;
+        let pendingProgressScanUrl: string | null = null;
+
+        for (const mDoc of measurementsSnap.docs) {
+            const data = mDoc.data();
+            const isImage = Boolean(data.reportImageUrl);
+            const hasWeight = data.weight !== undefined && data.weight !== null && Number(data.weight) > 0;
+
+            if (isImage) {
+                if (!latestScanImageUrl) latestScanImageUrl = data.reportImageUrl;
+                if (!hasWeight) {
+                    hasPending = true;
+                    if (!latestPendingDate) {
+                        latestPendingDate = data.date;
+                        pendingProgressScanUrl = data.reportImageUrl;
+                    }
+                }
+            }
+        }
+
+        const memData = memberDoc.data();
+        if (hasPending || memData.hasPendingProgressScan !== hasPending || latestScanImageUrl !== memData.latestScanImageUrl) {
+            const payload: any = {
+                hasPendingProgressScan: hasPending
+            };
+            if (hasPending && latestPendingDate) {
+                payload.pendingProgressDate = latestPendingDate;
+                if (pendingProgressScanUrl) payload.pendingProgressScanUrl = pendingProgressScanUrl;
+            } else {
+                payload.pendingProgressDate = admin.firestore.FieldValue.delete();
+                payload.pendingProgressScanUrl = admin.firestore.FieldValue.delete();
+            }
+
+            if (latestScanImageUrl) {
+                payload.latestScanImageUrl = latestScanImageUrl;
+            } else {
+                payload.latestScanImageUrl = admin.firestore.FieldValue.delete();
+            }
+
+            await memberDoc.ref.set(payload, { merge: true });
+            updatedCount++;
+        }
+    }
+
+    return { success: true, updatedMembersCount: updatedCount, totalMembers: membersSnap.size };
+});
 
 
 

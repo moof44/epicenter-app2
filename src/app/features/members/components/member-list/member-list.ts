@@ -65,9 +65,48 @@ export class MemberList implements OnInit {
 
   trackByMemberId = (_index: number, item: Member): string => item.id || String(_index);
 
+  previewingImageUrl: string | null = null;
+  previewingMemberName = '';
+  loadingScanMemberId: string | null = null;
+
   ngOnInit() {
     this.setupUrlPersistence();
     this.setupDataLoading();
+    // Auto-sync any existing scan reports across all members in background
+    this.memberService.syncAllMembersProgressScans().catch(err => {
+      console.warn('[MemberList] Scan backfill notice:', err);
+    });
+  }
+
+  async openScanPreview(member: Member) {
+    if (member.latestScanImageUrl || member.pendingProgressScanUrl) {
+      this.previewingImageUrl = member.latestScanImageUrl || member.pendingProgressScanUrl || null;
+      this.previewingMemberName = member.name || 'Member';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    if (!member.id) return;
+
+    this.loadingScanMemberId = member.id;
+    this.cdr.markForCheck();
+
+    try {
+      const url = await this.memberService.getLatestScanImageUrl(member.id);
+      if (url) {
+        this.previewingImageUrl = url;
+        this.previewingMemberName = member.name || 'Member';
+      }
+    } finally {
+      this.loadingScanMemberId = null;
+      this.cdr.markForCheck();
+    }
+  }
+
+  closeImagePreview() {
+    this.previewingImageUrl = null;
+    this.previewingMemberName = '';
+    this.cdr.markForCheck();
   }
 
   openDuplicateResolver() {

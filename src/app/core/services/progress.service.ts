@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, addDoc, query, orderBy, limit, doc, updateDoc, getDoc, setDoc, writeBatch } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, addDoc, query, orderBy, limit, doc, updateDoc, getDoc, getDocs, setDoc, writeBatch } from '@angular/fire/firestore';
 import { Functions, httpsCallable } from '@angular/fire/functions';
 import { Observable } from 'rxjs';
 import { Measurement, DeletedMeasurement } from '../models/measurement.model';
@@ -59,21 +59,70 @@ export class ProgressService {
         return collectionData(q, { idField: 'id' }) as Observable<Measurement[]>;
     }
 
+    async getLatestScanImageUrl(memberId: string): Promise<string | null> {
+        try {
+            const colRef = collection(this.firestore, `members/${memberId}/measurements`);
+            const q = query(colRef, orderBy('date', 'desc'), limit(20));
+            const snap = await getDocs(q);
+            for (const d of snap.docs) {
+                const data = d.data() as Measurement;
+                if (data.reportImageUrl) {
+                    return data.reportImageUrl;
+                }
+            }
+            return null;
+        } catch {
+            return null;
+        }
+    }
+
+    async syncMemberProgressStatus(memberId: string): Promise<void> {
+        try {
+            const colRef = collection(this.firestore, `members/${memberId}/measurements`);
+            const q = query(colRef, orderBy('date', 'desc'), limit(50));
+            const snap = await getDocs(q);
+
+            let hasPending = false;
+            let latestPendingDate: any = null;
+            let latestScanImageUrl: string | null = null;
+            let pendingProgressScanUrl: string | null = null;
+
+            for (const docSnap of snap.docs) {
+                const data = docSnap.data() as Measurement;
+                const isImage = Boolean(data.reportImageUrl);
+                const hasWeight = data.weight !== undefined && data.weight !== null && Number(data.weight) > 0;
+
+                if (isImage) {
+                    if (!latestScanImageUrl) latestScanImageUrl = data.reportImageUrl || null;
+                    if (!hasWeight) {
+                        hasPending = true;
+                        if (!latestPendingDate) {
+                            latestPendingDate = data.date;
+                            pendingProgressScanUrl = data.reportImageUrl || null;
+                        }
+                    }
+                }
+            }
+
+            const updatePayload: any = {
+                hasPendingProgressScan: hasPending,
+                latestScanImageUrl: latestScanImageUrl || null,
+                pendingProgressScanUrl: pendingProgressScanUrl || null,
+                pendingProgressDate: latestPendingDate || null
+            };
+
+            await setDoc(doc(this.firestore, 'members', memberId), updatePayload, { merge: true });
+        } catch (err) {
+            console.warn('[ProgressService] syncMemberProgressStatus error:', err);
+        }
+    }
+
     async addEntry(memberId: string, data: Measurement): Promise<any> {
         const colRef = collection(this.firestore, `members/${memberId}/measurements`);
         const trace = this._currentUserSnapshot;
         const docRef = await addDoc(colRef, { ...data, createdBy: trace, lastModifiedBy: trace });
 
-        // Optimistic sync for member pending scan flag
-        const isImageUploaded = Boolean(data.reportImageUrl);
-        const hasWeight = data.weight !== undefined && data.weight !== null && Number(data.weight) > 0;
-        if (isImageUploaded && !hasWeight) {
-            await setDoc(doc(this.firestore, 'members', memberId), {
-                hasPendingProgressScan: true,
-                pendingProgressDate: data.date
-            }, { merge: true });
-        }
-
+        await this.syncMemberProgressStatus(memberId);
         return docRef;
     }
 
@@ -81,6 +130,8 @@ export class ProgressService {
         const docRef = doc(this.firestore, `members/${memberId}/measurements`, docId);
         const trace = this._currentUserSnapshot;
         await updateDoc(docRef, { ...data, lastModifiedBy: trace });
+
+        await this.syncMemberProgressStatus(memberId);
     }
 
     async softDeleteEntry(memberId: string, docId: string): Promise<string> {
@@ -109,6 +160,8 @@ export class ProgressService {
 
         // 4. Commit atomically
         await batch.commit();
+
+        await this.syncMemberProgressStatus(memberId);
 
         // Return the deleted doc ID for undo functionality
         return deletedRef.id;
@@ -139,5 +192,7 @@ export class ProgressService {
         batch.delete(deletedRef);
 
         await batch.commit();
+
+        await this.syncMemberProgressStatus(memberId);
     }
 }

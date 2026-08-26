@@ -24,4 +24,6 @@ export interface Member {
     tags?: string[];
     hasPendingProgressScan?: boolean;
     pendingProgressDate?: any;
+    latestScanImageUrl?: string;
+    pendingProgressScanUrl?: string;
 }

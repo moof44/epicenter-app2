@@ -19,6 +19,7 @@ import {
     where,
     QueryDocumentSnapshot,
 } from '@angular/fire/firestore';
+import { Functions, httpsCallable } from '@angular/fire/functions';
 import { Observable, shareReplay } from 'rxjs';
 import { Member } from '../models/member.model';
 import { createConverter } from '../utils/firestore-converter.utils';
@@ -28,11 +29,38 @@ import { createConverter } from '../utils/firestore-converter.utils';
 })
 export class MemberService {
     private firestore: Firestore = inject(Firestore);
+    private functions: Functions = inject(Functions);
     private authService = inject(AuthService);
     private memberRepository = inject(MemberRepository);
     private membersCollection = collection(this.firestore, 'members').withConverter(
         createConverter<Member>()
     );
+
+    async syncAllMembersProgressScans(): Promise<{ success: boolean; updatedMembersCount: number }> {
+        const fn = httpsCallable<void, { success: boolean; updatedMembersCount: number }>(
+            this.functions,
+            'syncAllMembersProgressScans'
+        );
+        const res = await fn();
+        return res.data;
+    }
+
+    async getLatestScanImageUrl(memberId: string): Promise<string | null> {
+        try {
+            const colRef = collection(this.firestore, `members/${memberId}/measurements`);
+            const q = query(colRef, orderBy('date', 'desc'), limit(20));
+            const snap = await getDocs(q);
+            for (const d of snap.docs) {
+                const data = d.data() as any;
+                if (data.reportImageUrl) {
+                    return data.reportImageUrl;
+                }
+            }
+            return null;
+        } catch {
+            return null;
+        }
+    }
 
     private get _currentUserSnapshot() {
         const user = this.authService.userProfile();
