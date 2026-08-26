@@ -24,6 +24,11 @@ export class GymAppLocalDb extends Dexie {
             products: 'id, name, category, stock',
             outboxQueue: '++id, clientTxId, type, status, createdAt',
         });
+        this.version(4).stores({
+            members: 'id, name, membershipStatus, portalUid, hasPendingProgressScan',
+            products: 'id, name, category, stock',
+            outboxQueue: '++id, clientTxId, type, status, createdAt',
+        });
     }
 }
 

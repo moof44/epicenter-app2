@@ -1359,4 +1359,54 @@ export const purgeLegacyNotificationAndChatSpam = functions.https.onCall(async (
     };
 });
 
+/**
+ * Automatically calculates and maintains `hasPendingProgressScan` on the parent member document
+ * whenever a measurement record is created, updated, or deleted.
+ */
+export const onMeasurementWrite = functions.firestore
+    .document('/members/{memberId}/measurements/{measurementId}')
+    .onWrite(async (change, context) => {
+        const memberId = context.params.memberId;
+        const db = admin.firestore();
+
+        try {
+            // Read all measurements for this member
+            const measurementsSnap = await db
+                .collection(`members/${memberId}/measurements`)
+                .get();
+
+            let hasPending = false;
+            let latestPendingDate: any = null;
+
+            for (const doc of measurementsSnap.docs) {
+                const data = doc.data();
+                // If an image report exists and weight is missing/zero/undefined, it is pending manual transcription
+                const isImageUploaded = Boolean(data.reportImageUrl);
+                const hasWeight = data.weight !== undefined && data.weight !== null && Number(data.weight) > 0;
+
+                if (isImageUploaded && !hasWeight) {
+                    hasPending = true;
+                    if (!latestPendingDate || (data.date && data.date > latestPendingDate)) {
+                        latestPendingDate = data.date;
+                    }
+                }
+            }
+
+            const updatePayload: any = {
+                hasPendingProgressScan: hasPending
+            };
+            if (hasPending && latestPendingDate) {
+                updatePayload.pendingProgressDate = latestPendingDate;
+            } else if (!hasPending) {
+                updatePayload.pendingProgressDate = admin.firestore.FieldValue.delete();
+            }
+
+            await db.collection('members').doc(memberId).set(updatePayload, { merge: true });
+            console.log(`[onMeasurementWrite] Updated member ${memberId} hasPendingProgressScan: ${hasPending}`);
+        } catch (err: any) {
+            console.error(`[onMeasurementWrite] Error syncing progress status for member ${memberId}:`, err);
+        }
+    });
+
+
 

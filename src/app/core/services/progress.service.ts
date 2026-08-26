@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, addDoc, query, orderBy, limit, doc, updateDoc, getDoc, writeBatch } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, addDoc, query, orderBy, limit, doc, updateDoc, getDoc, setDoc, writeBatch } from '@angular/fire/firestore';
 import { Functions, httpsCallable } from '@angular/fire/functions';
 import { Observable } from 'rxjs';
 import { Measurement, DeletedMeasurement } from '../models/measurement.model';
@@ -59,10 +59,22 @@ export class ProgressService {
         return collectionData(q, { idField: 'id' }) as Observable<Measurement[]>;
     }
 
-    addEntry(memberId: string, data: Measurement): Promise<any> {
+    async addEntry(memberId: string, data: Measurement): Promise<any> {
         const colRef = collection(this.firestore, `members/${memberId}/measurements`);
         const trace = this._currentUserSnapshot;
-        return addDoc(colRef, { ...data, createdBy: trace, lastModifiedBy: trace });
+        const docRef = await addDoc(colRef, { ...data, createdBy: trace, lastModifiedBy: trace });
+
+        // Optimistic sync for member pending scan flag
+        const isImageUploaded = Boolean(data.reportImageUrl);
+        const hasWeight = data.weight !== undefined && data.weight !== null && Number(data.weight) > 0;
+        if (isImageUploaded && !hasWeight) {
+            await setDoc(doc(this.firestore, 'members', memberId), {
+                hasPendingProgressScan: true,
+                pendingProgressDate: data.date
+            }, { merge: true });
+        }
+
+        return docRef;
     }
 
     async updateEntry(memberId: string, docId: string, data: Partial<Measurement>): Promise<void> {

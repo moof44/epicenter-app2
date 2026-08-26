@@ -47,6 +47,7 @@ export class MemberList implements OnInit {
   searchQuery = '';
   statusFilter = 'All';
   subscriptionFilter = 'All';
+  progressFilter = 'All';
 
   pageIndex = 0;
   pageSize = 10;
@@ -57,6 +58,7 @@ export class MemberList implements OnInit {
     search: '',
     status: 'All',
     subscription: 'All',
+    progress: 'All',
     pageIndex: 0,
     pageSize: 10,
   });
@@ -91,6 +93,7 @@ export class MemberList implements OnInit {
       const newSearch = params['search'] || '';
       const newStatus = params['status'] || 'All';
       const newSub = params['subscription'] || 'All';
+      const newProg = params['progress'] || 'All';
       const newPage = params['page'] ? parseInt(params['page'], 10) : 0;
       const newPageSize = params['pageSize'] ? parseInt(params['pageSize'], 10) : this.pageSize;
 
@@ -105,6 +108,10 @@ export class MemberList implements OnInit {
       }
       if (this.subscriptionFilter !== newSub) {
         this.subscriptionFilter = newSub;
+        changed = true;
+      }
+      if (this.progressFilter !== newProg) {
+        this.progressFilter = newProg;
         changed = true;
       }
       if (this.pageIndex !== newPage) {
@@ -141,6 +148,7 @@ export class MemberList implements OnInit {
       search: this.searchQuery,
       status: this.statusFilter,
       subscription: this.subscriptionFilter,
+      progress: this.progressFilter,
       pageIndex: this.pageIndex,
       pageSize: this.pageSize,
     });
@@ -164,6 +172,7 @@ export class MemberList implements OnInit {
         search: this.searchQuery || null,
         status: this.statusFilter !== 'All' ? this.statusFilter : null,
         subscription: this.subscriptionFilter !== 'All' ? this.subscriptionFilter : null,
+        progress: this.progressFilter !== 'All' ? this.progressFilter : null,
         page: this.pageIndex > 0 ? this.pageIndex : null,
         pageSize: this.pageSize !== 10 ? this.pageSize : null,
       },

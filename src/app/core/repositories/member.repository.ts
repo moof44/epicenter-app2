@@ -17,6 +17,7 @@ export interface MemberQueryOptions {
     search?: string;
     status?: string;
     subscription?: string;
+    progress?: string;
     pageIndex: number;
     pageSize: number;
 }
@@ -60,6 +61,7 @@ export class MemberRepository {
                 const search = (options.search || '').trim().toLowerCase();
                 const status = options.status || 'All';
                 const subscription = options.subscription || 'All';
+                const progress = options.progress || 'All';
                 const pageIndex = options.pageIndex || 0;
                 const pageSize = options.pageSize || 10;
                 const nowMs = Date.now();
@@ -73,7 +75,7 @@ export class MemberRepository {
                     return isNaN(d.getTime()) ? 0 : d.getTime();
                 };
 
-                const isFiltered = search !== '' || status !== 'All' || subscription !== 'All';
+                const isFiltered = search !== '' || status !== 'All' || subscription !== 'All' || progress !== 'All';
 
                 if (!isFiltered) {
                     const totalCount = await db.members.count();
@@ -100,6 +102,11 @@ export class MemberRepository {
                         const hasActive = memExpMs > nowMs || trainExpMs > nowMs;
                         if (subscription === 'HasSubscription' && !hasActive) return false;
                         if (subscription === 'NoSubscription' && hasActive) return false;
+                    }
+                    if (progress !== 'All') {
+                        const isPending = !!m.hasPendingProgressScan;
+                        if (progress === 'PendingScan' && !isPending) return false;
+                        if (progress === 'UpToDate' && isPending) return false;
                     }
                     return true;
                 });
