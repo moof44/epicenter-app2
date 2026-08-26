@@ -5,7 +5,42 @@
         </mat-card-header>
         <mat-card-content>
             <form [formGroup]="form" (ngSubmit)="onSubmit()" class="progress-form">
-                <h3>General Metrics</h3>
+
+                <!-- 📸 Body Composition Scale Report Image Upload -->
+                <div class="image-upload-card">
+                    <div class="image-upload-header">
+                        <mat-icon color="primary">document_scanner</mat-icon>
+                        <div>
+                            <h4>Body Scale Report Image (Starfit / InBody)</h4>
+                            <p>Attach the scan sheet image. Numerical fields below are optional and can be filled now or later.</p>
+                        </div>
+                    </div>
+
+                    <!-- File Selector Button -->
+                    <div class="upload-dropzone" *ngIf="!imagePreview && !existingImageUrl">
+                        <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" style="display:none">
+                        <button type="button" mat-stroked-button color="primary" (click)="fileInput.click()">
+                            <mat-icon>cloud_upload</mat-icon> Select / Snap Report Photo
+                        </button>
+                        <span class="upload-hint">Supports JPG, PNG, WebP</span>
+                    </div>
+
+                    <!-- Image Preview Card -->
+                    <div class="image-preview-container" *ngIf="imagePreview || existingImageUrl">
+                        <div class="preview-wrapper">
+                            <img [src]="imagePreview || existingImageUrl" alt="Body Composition Scan Report" class="preview-img">
+                            <button type="button" mat-mini-fab color="warn" class="remove-img-btn" (click)="removeSelectedImage()" title="Remove image">
+                                <mat-icon>close</mat-icon>
+                            </button>
+                        </div>
+                        <div class="preview-info">
+                            <span class="preview-status" *ngIf="selectedFile">✓ New image selected: <strong>{{ selectedFile.name }}</strong></span>
+                            <span class="preview-status" *ngIf="!selectedFile && existingImageUrl">✓ Scan sheet attached</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Checkup Date & General Metrics</h3>
                 <div class="form-grid">
                     <mat-form-field appearance="outline">
                         <mat-label>Date</mat-label>
@@ -14,11 +49,11 @@
                         <mat-datepicker #picker></mat-datepicker>
                     </mat-form-field>
                     <mat-form-field appearance="outline">
-                        <mat-label>Height (cm)</mat-label>
+                        <mat-label>Height (cm) (Optional)</mat-label>
                         <input matInput type="number" formControlName="height" step="0.1">
                     </mat-form-field>
                     <mat-form-field appearance="outline">
-                        <mat-label>Weight (kg)</mat-label>
+                        <mat-label>Weight (kg) (Optional)</mat-label>
                         <input matInput type="number" formControlName="weight" step="0.1">
                     </mat-form-field>
                     <mat-form-field appearance="outline">

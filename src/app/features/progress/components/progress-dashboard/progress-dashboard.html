@@ -23,8 +23,10 @@
                 <mat-card-title>Weight</mat-card-title>
             </mat-card-header>
             <mat-card-content class="stat-content">
-                <span class="value">{{ latest.weight }} kg</span>
-                <span class="diff" *ngIf="(previous$ | async)?.weight as prev"
+                <span class="value" *ngIf="latest.weight">{{ latest.weight }} kg</span>
+                <span class="value empty-val" *ngIf="!latest.weight && latest.reportImageUrl">Scan Attached</span>
+                <span class="value empty-val" *ngIf="!latest.weight && !latest.reportImageUrl">--</span>
+                <span class="diff" *ngIf="latest.weight && (previous$ | async)?.weight as prev"
                     [class.positive]="(latest.weight - prev) < 0" [class.negative]="(latest.weight - prev) > 0">
                     {{ (latest.weight - prev) | number:'1.1-1' }}
                 </span>
@@ -36,8 +38,9 @@
                 <mat-card-title>Body Fat</mat-card-title>
             </mat-card-header>
             <mat-card-content class="stat-content">
-                <span class="value">{{ latest.bodyFat }}%</span>
-                <span class="diff" *ngIf="(previous$ | async)?.bodyFat as prev"
+                <span class="value" *ngIf="latest.bodyFat">{{ latest.bodyFat }}%</span>
+                <span class="value empty-val" *ngIf="!latest.bodyFat">--</span>
+                <span class="diff" *ngIf="latest.bodyFat && (previous$ | async)?.bodyFat as prev"
                     [class.positive]="(latest.bodyFat - prev) < 0" [class.negative]="(latest.bodyFat - prev) > 0">
                     {{ (latest.bodyFat - prev) | number:'1.1-1' }}
                 </span>
@@ -49,8 +52,9 @@
                 <mat-card-title>Muscle Mass</mat-card-title>
             </mat-card-header>
             <mat-card-content class="stat-content">
-                <span class="value">{{ latest.muscleMass }}%</span>
-                <span class="diff" *ngIf="(previous$ | async)?.muscleMass as prev"
+                <span class="value" *ngIf="latest.muscleMass">{{ latest.muscleMass }}%</span>
+                <span class="value empty-val" *ngIf="!latest.muscleMass">--</span>
+                <span class="diff" *ngIf="latest.muscleMass && (previous$ | async)?.muscleMass as prev"
                     [class.positive]="(latest.muscleMass - prev) > 0" [class.negative]="(latest.muscleMass - prev) < 0">
                     {{ (latest.muscleMass - prev) | number:'1.1-1' }}
                 </span>
@@ -62,8 +66,9 @@
                 <mat-card-title>Visceral Fat</mat-card-title>
             </mat-card-header>
             <mat-card-content class="stat-content">
-                <span class="value">{{ latest.visceralFat }}</span>
-                <span class="diff" *ngIf="(previous$ | async)?.visceralFat as prev"
+                <span class="value" *ngIf="latest.visceralFat">{{ latest.visceralFat }}</span>
+                <span class="value empty-val" *ngIf="!latest.visceralFat">--</span>
+                <span class="diff" *ngIf="latest.visceralFat && (previous$ | async)?.visceralFat as prev"
                     [class.positive]="(latest.visceralFat - prev) < 0"
                     [class.negative]="(latest.visceralFat - prev) > 0">
                     {{ (latest.visceralFat - prev) | number:'1.1-1' }}
@@ -76,8 +81,9 @@
                 <mat-card-title>BMI</mat-card-title>
             </mat-card-header>
             <mat-card-content class="stat-content">
-                <span class="value">{{ latest.bmi }}</span>
-                <span class="diff" *ngIf="(previous$ | async)?.bmi as prev" [class.positive]="(latest.bmi - prev) < 0"
+                <span class="value" *ngIf="latest.bmi">{{ latest.bmi }}</span>
+                <span class="value empty-val" *ngIf="!latest.bmi">--</span>
+                <span class="diff" *ngIf="latest.bmi && (previous$ | async)?.bmi as prev" [class.positive]="(latest.bmi - prev) < 0"
                     [class.negative]="(latest.bmi - prev) > 0">
                     {{ (latest.bmi - prev) | number:'1.1-1' }}
                 </span>
@@ -89,8 +95,9 @@
                 <mat-card-title>Body Age</mat-card-title>
             </mat-card-header>
             <mat-card-content class="stat-content">
-                <span class="value">{{ latest.bodyAge }}</span>
-                <span class="diff" *ngIf="(previous$ | async)?.bodyAge as prev"
+                <span class="value" *ngIf="latest.bodyAge">{{ latest.bodyAge }}</span>
+                <span class="value empty-val" *ngIf="!latest.bodyAge">--</span>
+                <span class="diff" *ngIf="latest.bodyAge && (previous$ | async)?.bodyAge as prev"
                     [class.positive]="(latest.bodyAge - prev) < 0" [class.negative]="(latest.bodyAge - prev) > 0">
                     {{ (latest.bodyAge - prev) | number:'1.0-0' }}
                 </span>
@@ -107,7 +114,16 @@
             <table mat-table [dataSource]="(measurements$ | async) || []" class="history-table">
                 <ng-container matColumnDef="date">
                     <th mat-header-cell *matHeaderCellDef> Date </th>
-                    <td mat-cell *matCellDef="let m"> {{ m.date.seconds * 1000 | date:'shortDate' }} </td>
+                    <td mat-cell *matCellDef="let m">
+                        <div class="date-cell-wrapper">
+                            <span>{{ (m.date?.seconds ? (m.date.seconds * 1000) : m.date) | date:'shortDate' }}</span>
+                            <button *ngIf="m.reportImageUrl" type="button" mat-icon-button color="primary" 
+                                class="scan-thumb-btn" (click)="openImagePreview(m.reportImageUrl); $event.stopPropagation()"
+                                matTooltip="Click to view Body Scale Scan Report">
+                                <mat-icon>document_scanner</mat-icon>
+                            </button>
+                        </div>
+                    </td>
                 </ng-container>
 
                 <ng-container matColumnDef="height">
@@ -316,5 +332,27 @@
     <!-- Attendance Chart -->
     <div class="attendance-section" *ngIf="member.id">
         <app-attendance-calendar [memberId]="member.id"></app-attendance-calendar>
+    </div>
+
+    <!-- 📸 Fullscreen Scan Image Preview Lightbox -->
+    <div class="image-lightbox-overlay" *ngIf="previewingImageUrl" role="dialog" aria-modal="true" tabindex="0" (keydown.escape)="closeImagePreview()" (click)="closeImagePreview()">
+        <div class="image-lightbox-content" role="document">
+            <div class="lightbox-header">
+                <span class="lightbox-title">
+                    <mat-icon>document_scanner</mat-icon> Body Composition Scan Report
+                </span>
+                <div class="lightbox-actions">
+                    <a [href]="previewingImageUrl" target="_blank" download="scan_report.jpg" mat-icon-button title="Open original / Download">
+                        <mat-icon>open_in_new</mat-icon>
+                    </a>
+                    <button mat-icon-button (click)="closeImagePreview()" title="Close">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </div>
+            </div>
+            <div class="lightbox-img-container">
+                <img [src]="previewingImageUrl" alt="Body Composition Scan Report" class="lightbox-img">
+            </div>
+        </div>
     </div>
 </div>

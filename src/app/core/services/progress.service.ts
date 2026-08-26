@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, collectionData, addDoc, query, orderBy, limit, doc, updateDoc, getDoc, writeBatch } from '@angular/fire/firestore';
+import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 import { Observable } from 'rxjs';
 import { Measurement, DeletedMeasurement } from '../models/measurement.model';
 import { AuthService } from './auth.service';
@@ -9,6 +10,7 @@ import { AuthService } from './auth.service';
 })
 export class ProgressService {
     private firestore: Firestore = inject(Firestore);
+    private storage: Storage = inject(Storage);
     private authService = inject(AuthService);
 
     private get _currentUserSnapshot() {
@@ -19,6 +21,29 @@ export class ProgressService {
             name: user.displayName,
             timestamp: new Date()
         };
+    }
+
+    /**
+     * Upload a Starfit/InBody scan report image to Firebase Storage.
+     */
+    async uploadReportImage(memberId: string, file: File): Promise<{ downloadUrl: string; storagePath: string }> {
+        const timestamp = Date.now();
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const storagePath = `members/${memberId}/scans/${timestamp}_${safeName}`;
+        const storageRef = ref(this.storage, storagePath);
+
+        const metadata = {
+            contentType: file.type || 'image/jpeg',
+            customMetadata: {
+                memberId,
+                uploadedAt: new Date().toISOString()
+            }
+        };
+
+        const uploadResult = await uploadBytes(storageRef, file, metadata);
+        const downloadUrl = await getDownloadURL(uploadResult.ref);
+
+        return { downloadUrl, storagePath };
     }
 
     getTimeSeries(memberId: string): Observable<Measurement[]> {
@@ -83,7 +108,11 @@ export class ProgressService {
         const originalDocId = data.originalDocId;
 
         // 2. Restore to original location (exclude deletion metadata)
-        const { deletedBy, deletedFrom, originalMemberId, originalDocId: _, ...measurementData } = data;
+        const measurementData: Partial<DeletedMeasurement> = { ...data };
+        delete measurementData.deletedBy;
+        delete measurementData.deletedFrom;
+        delete measurementData.originalMemberId;
+        delete measurementData.originalDocId;
         const originalRef = doc(this.firestore, `members/${memberId}/measurements`, originalDocId);
         batch.set(originalRef, measurementData);
 

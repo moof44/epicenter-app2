@@ -5,6 +5,7 @@ import { provideFirestore, initializeFirestore, persistentLocalCache, persistent
 import { getFunctions, provideFunctions } from '@angular/fire/functions';
 import { getAuth, provideAuth } from '@angular/fire/auth';
 import { getMessaging, provideMessaging } from '@angular/fire/messaging';
+import { getStorage, provideStorage } from '@angular/fire/storage';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { firebaseConfig } from './core/firebase.config';
 import { GlobalErrorHandler } from './core/handlers/global-error-handler';
@@ -22,6 +23,7 @@ export const appConfig: ApplicationConfig = {
     })),
     provideFunctions(() => getFunctions()),
     provideAuth(() => getAuth()),
+    provideStorage(() => getStorage()),
     provideMessaging(() => {
       try {
         return getMessaging();

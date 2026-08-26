@@ -5,6 +5,7 @@ import { initializeApp, provideFirebaseApp, getApp } from '@angular/fire/app';
 import { provideFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from '@angular/fire/firestore';
 import { getAuth, provideAuth } from '@angular/fire/auth';
 import { getFunctions, provideFunctions } from '@angular/fire/functions';
+import { getStorage, provideStorage } from '@angular/fire/storage';
 import { firebaseConfig } from './core/firebase.config';
 
 import { routes } from './app.routes';
@@ -19,6 +20,7 @@ export const appConfig: ApplicationConfig = {
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
     })),
     provideAuth(() => getAuth()),
-    provideFunctions(() => getFunctions())
+    provideFunctions(() => getFunctions()),
+    provideStorage(() => getStorage())
   ]
 };

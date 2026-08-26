@@ -66,30 +66,42 @@ export class ProgressDashboard implements OnInit {
     this.latest$ = this.measurements$.pipe(map(list => list[0]));
     this.previous$ = this.measurements$.pipe(map(list => list[1]));
 
+    const safeDiff = (a?: number, b?: number) => (a !== undefined && b !== undefined && a !== null && b !== null) ? a - b : null;
+
     this.diffs$ = combineLatest([this.latest$, this.previous$]).pipe(
       map(([curr, prev]) => {
         if (!curr || !prev) return null;
         return {
-          weight: curr.weight - prev.weight,
-          bodyFat: curr.bodyFat - prev.bodyFat,
-          visceralFat: curr.visceralFat - prev.visceralFat,
-          muscleMass: curr.muscleMass - prev.muscleMass,
-          bmi: curr.bmi - prev.bmi,
-          metabolism: curr.metabolism - prev.metabolism,
-          bodyAge: curr.bodyAge - prev.bodyAge,
-          height: curr.height - prev.height,
-          subcutaneousFat: curr.subcutaneousFat - prev.subcutaneousFat,
-          sinistralFatFull: curr.sinistralFatFull - prev.sinistralFatFull,
-          muscleFull: curr.muscleFull - prev.muscleFull,
-          subcutaneousFatArms: curr.subcutaneousFatArms - prev.subcutaneousFatArms,
-          muscleArms: curr.muscleArms - prev.muscleArms,
-          subcutaneousFatTrunk: curr.subcutaneousFatTrunk - prev.subcutaneousFatTrunk,
-          muscleTrunk: curr.muscleTrunk - prev.muscleTrunk,
-          subcutaneousFatLegs: curr.subcutaneousFatLegs - prev.subcutaneousFatLegs,
-          muscleLegs: curr.muscleLegs - prev.muscleLegs
+          weight: safeDiff(curr.weight, prev.weight),
+          bodyFat: safeDiff(curr.bodyFat, prev.bodyFat),
+          visceralFat: safeDiff(curr.visceralFat, prev.visceralFat),
+          muscleMass: safeDiff(curr.muscleMass, prev.muscleMass),
+          bmi: safeDiff(curr.bmi, prev.bmi),
+          metabolism: safeDiff(curr.metabolism, prev.metabolism),
+          bodyAge: safeDiff(curr.bodyAge, prev.bodyAge),
+          height: safeDiff(curr.height, prev.height),
+          subcutaneousFat: safeDiff(curr.subcutaneousFat, prev.subcutaneousFat),
+          sinistralFatFull: safeDiff(curr.sinistralFatFull, prev.sinistralFatFull),
+          muscleFull: safeDiff(curr.muscleFull, prev.muscleFull),
+          subcutaneousFatArms: safeDiff(curr.subcutaneousFatArms, prev.subcutaneousFatArms),
+          muscleArms: safeDiff(curr.muscleArms, prev.muscleArms),
+          subcutaneousFatTrunk: safeDiff(curr.subcutaneousFatTrunk, prev.subcutaneousFatTrunk),
+          muscleTrunk: safeDiff(curr.muscleTrunk, prev.muscleTrunk),
+          subcutaneousFatLegs: safeDiff(curr.subcutaneousFatLegs, prev.subcutaneousFatLegs),
+          muscleLegs: safeDiff(curr.muscleLegs, prev.muscleLegs)
         };
       })
     );
+  }
+
+  previewingImageUrl: string | null = null;
+
+  openImagePreview(url: string): void {
+    this.previewingImageUrl = url;
+  }
+
+  closeImagePreview(): void {
+    this.previewingImageUrl = null;
   }
 
   formatDiff(val: number): string {
@@ -98,8 +110,11 @@ export class ProgressDashboard implements OnInit {
   }
 
   getDiff(current: Measurement, next: Measurement | undefined, key: keyof Measurement): number | null {
-    if (!next || current[key] === undefined || next[key] === undefined) return null;
-    return (current[key] as number) - (next[key] as number);
+    if (!next || current[key] === undefined || next[key] === undefined || current[key] === null || next[key] === null) return null;
+    const currVal = Number(current[key]);
+    const nextVal = Number(next[key]);
+    if (isNaN(currVal) || isNaN(nextVal)) return null;
+    return currVal - nextVal;
   }
 
   getDiffClass(key: string, val: number): string {
