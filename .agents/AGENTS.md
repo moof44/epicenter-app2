@@ -7,6 +7,13 @@ Before finishing any task, you must audit the changes to ensure:
 2. **No breaking changes**: The modifications must not introduce compiler errors, runtime exceptions, or any unintended side-effects.
 3. **Not a stopper**: Under no circumstances should the changes block or serve as a blocker to the runtime operation of the kiosk check-in, bookings, or other active services.
 
+## Mandatory Implementation Plan & Documentation Protocol
+
+For any feature implementation, architectural change, or significant bug fix:
+1. **Real-File Implementation Plans in `docs/`**: Every implementation plan must be written as a permanent, real Markdown file in the project's `docs/` directory (e.g. `docs/<feature-name>-implementation-plan.md` or `docs/<feature-name>-specs.md`), in addition to chat planning artifacts.
+2. **Persistence Across AI Sessions**: This ensures that if a discussion halts, any future AI agent or developer can immediately pick up where it left off, inspect the active plan, review design decisions, and resume execution seamlessly.
+3. **Commit with Code**: Always commit the plan/specification document into Git alongside the code changes.
+
 ## Dexie.js Offline Sync & Architecture Workflow Protocol
 
 ### 🎭 AI Agent Personas
