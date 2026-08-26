@@ -1,10 +1,12 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Functions, httpsCallable } from '@angular/fire/functions';
 import { NotificationService, NotificationItem } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -17,7 +19,8 @@ import { AuthService } from '../../core/services/auth.service';
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatDividerModule
+    MatDividerModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="notifications-page-container">
@@ -31,11 +34,16 @@ import { AuthService } from '../../core/services/auth.service';
       <mat-card class="notifications-card">
         <mat-card-header class="card-header-row">
           <mat-card-title>All Messages</mat-card-title>
-          <button mat-raised-button color="primary" 
-                  *ngIf="notifService.unreadCount() > 0"
-                  (click)="markAllRead()">
-            <mat-icon>done_all</mat-icon> Mark All As Read
-          </button>
+          <div class="header-actions">
+            <button mat-button color="warn" (click)="purgeSpam()" [disabled]="isPurging()" title="Delete old check-in spam and reset unread badges">
+              <mat-icon>{{ isPurging() ? 'sync' : 'auto_delete' }}</mat-icon> {{ isPurging() ? 'Cleaning...' : 'Purge Old Spam' }}
+            </button>
+            <button mat-raised-button color="primary" 
+                    *ngIf="notifService.unreadCount() > 0"
+                    (click)="markAllRead()">
+              <mat-icon>done_all</mat-icon> Mark All As Read
+            </button>
+          </div>
         </mat-card-header>
         
         <mat-divider></mat-divider>
@@ -277,12 +285,39 @@ export class NotificationsComponent implements OnInit {
   notifService = inject(NotificationService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private functions = inject(Functions, { optional: true });
+  private snackBar = inject(MatSnackBar);
+
+  isPurging = signal(false);
 
   ngOnInit() {
     // Permission request logic can be run on component init
     const user = this.authService.userProfile();
     if (user) {
       this.notifService.requestPushPermission();
+    }
+  }
+
+  async purgeSpam() {
+    if (!this.functions) {
+      this.snackBar.open('Cloud functions not initialized.', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.isPurging.set(true);
+    try {
+      const purgeFn = httpsCallable(this.functions, 'purgeLegacyNotificationAndChatSpam');
+      const res: any = await purgeFn();
+      const user = this.authService.userProfile();
+      if (user) {
+        await this.notifService.markAllAsRead(user.uid);
+      }
+      this.snackBar.open(`Cleaned ${res.data?.deletedNotifsCount || 0} notifications & ${res.data?.deletedChatCount || 0} chat spam messages!`, 'OK', { duration: 5000 });
+    } catch (err: any) {
+      console.error('Error purging spam:', err);
+      this.snackBar.open('Error cleaning spam: ' + (err.message || 'Unknown error'), 'Close', { duration: 4000 });
+    } finally {
+      this.isPurging.set(false);
     }
   }
 

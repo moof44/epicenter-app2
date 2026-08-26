@@ -404,32 +404,13 @@ export const generatePortalLoginToken = functions.https.onCall(async (data: any,
  * Writes a formatted message to the global chat room.
  */
 export const onTransactionCreated = functions.firestore.document('/transactions/{transactionId}').onCreate(async (snapshot, context) => {
-    const transaction = snapshot.data() || {};
-    const db = admin.firestore();
-
-    const items = transaction.items || [];
-    const itemsList = items.map((item: any) => `${item.productName}${item.quantity > 1 ? ' (x' + item.quantity + ')' : ''}`).join(', ');
-
-    const content = `💰 **New Sale** by **${transaction.staffName || 'Staff'}**! Total: **$${transaction.totalAmount}** via **${transaction.paymentMethod || 'CASH'}** (Items: ${itemsList || 'None'}). Great job! 🚀`;
-
-    await db.collection('chats/global/messages').add({
-        senderId: 'system',
-        senderName: 'GymBot',
-        senderAvatar: '',
-        content,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        type: 'system',
-        metadata: {
-            transactionType: 'STORE_SALE',
-            referencedId: context.params.transactionId,
-            amount: transaction.totalAmount
-        }
-    });
+    // Individual POS transactions are recorded in /transactions and silent in chat to prevent notification/chat fatigue.
+    // Major operational events (Shift summaries, Discrepancies, Voids) are broadcast below.
 });
 
 /**
  * Triggered when a transaction is updated (specifically voided).
- * Writes a warning message to the global chat room.
+ * Writes a warning message to the global chat room and alerts managers.
  */
 export const onTransactionUpdated = functions.firestore.document('/transactions/{transactionId}').onUpdate(async (change, context) => {
     const before = change.before.data() || {};
@@ -452,7 +433,7 @@ export const onTransactionUpdated = functions.firestore.document('/transactions/
             }
         });
 
-        // Trigger manager/admin notifications (Phase 2)
+        // Trigger manager/admin notifications
         await sendNotificationsToRoles(['ADMIN', 'MANAGER'], {
             title: '⚠️ Transaction Voided',
             body: `Sale #${context.params.transactionId.slice(0, 8)} was voided by ${after.voidedBy || 'Staff'}. Reason: ${after.voidReason || 'None'}`,
@@ -473,7 +454,7 @@ export const onTransactionUpdated = functions.firestore.document('/transactions/
 export const onShiftCreated = functions.firestore.document('/shifts/{shiftId}').onCreate(async (snapshot, context) => {
     const shift = snapshot.data() || {};
     if (shift.status === 'OPEN') {
-        const content = `🔓 **Shift Opened** by **${shift.openedBy || 'Staff'}**. Starting Float: **$${shift.openingBalance}**.`;
+        const content = `🔓 **Shift Opened** by **${shift.openedBy || 'Staff'}**. Starting Float: **₱${shift.openingBalance}**.`;
         const db = admin.firestore();
         await db.collection('chats/global/messages').add({
             senderId: 'system',
@@ -502,7 +483,7 @@ export const onShiftUpdated = functions.firestore.document('/shifts/{shiftId}').
 
     // 1. Shift Closing detection
     if (before.status === 'OPEN' && after.status === 'CLOSED') {
-        const content = `🔒 **Shift Closed** by **${after.closedBy || 'Staff'}**. Expected: **$${after.expectedClosingBalance}** | Actual: **$${after.actualClosingBalance}** | Discrepancy: **$${after.discrepancy || 0}** (Sales: $${after.totalSales || 0}).`;
+        const content = `🔒 **Shift Closed** by **${after.closedBy || 'Staff'}**. Expected: **₱${after.expectedClosingBalance}** | Actual: **₱${after.actualClosingBalance}** | Discrepancy: **₱${after.discrepancy || 0}** (Sales: ₱${after.totalSales || 0}).`;
         await db.collection('chats/global/messages').add({
             senderId: 'system',
             senderName: 'GymBot',
@@ -517,11 +498,11 @@ export const onShiftUpdated = functions.firestore.document('/shifts/{shiftId}').
             }
         });
 
-        // Trigger discrepancy alert notification if discrepancy exists (Phase 2)
+        // Trigger discrepancy alert notification if discrepancy exists
         if (after.discrepancy && Math.abs(after.discrepancy) > 0.01) {
             await sendNotificationsToRoles(['ADMIN', 'MANAGER'], {
                 title: 'Shift Closed - Discrepancy Alert',
-                body: `Shift closed by ${after.closedBy || 'Staff'} with a discrepancy of $${after.discrepancy}.`,
+                body: `Shift closed by ${after.closedBy || 'Staff'} with a discrepancy of ₱${after.discrepancy}.`,
                 type: 'alert',
                 actionUrl: '/store/shifts',
                 metadata: {
@@ -556,7 +537,7 @@ export const onShiftUpdated = functions.firestore.document('/shifts/{shiftId}').
             }
 
             if (prefix) {
-                const content = `${prefix} recorded by **${tx.performedBy || 'Staff'}**. Amount: **$${tx.amount}** | Reason: **${tx.reason || 'None'}**.`;
+                const content = `${prefix} recorded by **${tx.performedBy || 'Staff'}**. Amount: **₱${tx.amount}** | Reason: **${tx.reason || 'None'}**.`;
                 await db.collection('chats/global/messages').add({
                     senderId: 'system',
                     senderName: 'GymBot',
@@ -576,41 +557,39 @@ export const onShiftUpdated = functions.firestore.document('/shifts/{shiftId}').
 });
 
 /**
+ * Triggered when a staff attendance record is created or updated.
+ * Notifies Admins and Managers when a check-in time adjustment is requested.
+ */
+export const onStaffAttendanceAdjustment = functions.firestore.document('/staff_attendance/{attendanceId}').onWrite(async (change, context) => {
+    const before = change.before?.data() || {};
+    const after = change.after?.data() || {};
+
+    // Only trigger when adjustment is requested and status is PENDING (and wasn't already pending)
+    if (after.adjustmentRequested === true && after.adjustmentStatus === 'PENDING' && before.adjustmentStatus !== 'PENDING') {
+        const staffName = after.staffName || 'Staff Member';
+        const dateStr = after.date || 'Today';
+        const reason = after.adjustmentReason || 'No reason provided';
+
+        await sendNotificationsToRoles(['ADMIN', 'MANAGER'], {
+            title: '⏱️ Time Adjustment Requested',
+            body: `${staffName} requested check-in adjustment for ${dateStr}. Reason: ${reason}`,
+            type: 'warning',
+            actionUrl: '/staff-attendance',
+            metadata: {
+                staffId: after.staffId,
+                attendanceId: context.params.attendanceId
+            }
+        });
+    }
+});
+
+/**
  * Triggered when a member registers check-in attendance.
- * Notifies staff and managers to offer personalized greeting/assistance.
+ * Evaluates gamified attendance streak silently without spamming notifications or chat.
  */
 export const onMemberCheckInNotification = functions.firestore.document('/attendance/{attendanceId}').onCreate(async (snapshot, context) => {
     const attendance = snapshot.data() || {};
-    const memberName = attendance.memberName || 'A member';
     const db = admin.firestore();
-
-    const staffName = attendance.checkedInBy?.name;
-    const staffMention = staffName ? `@${staffName}` : 'Staff';
-
-    const content = `🔔 **Member Checked In**: **${memberName}** has checked in! ${staffMention}, please offer our products and services. 🌟`;
-
-    await db.collection('chats/global/messages').add({
-        senderId: 'system',
-        senderName: 'GymBot',
-        senderAvatar: '',
-        content,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        type: 'system',
-        metadata: {
-            transactionType: 'MEMBER_CHECK_IN',
-            referencedId: context.params.attendanceId
-        }
-    });
-
-    await sendNotificationsToRoles(['ADMIN', 'MANAGER', 'STAFF'], {
-        title: 'Member Checked In',
-        body: `${memberName} has checked in. Ensure staff offer excellent service!`,
-        type: 'info',
-        actionUrl: '/attendance',
-        metadata: {
-            itemId: attendance.memberId || ''
-        }
-    });
 
     // --- Gamified Attendance Evaluation (Non-blocking) ---
     try {
@@ -1145,5 +1124,85 @@ export const retroactivelyProcessAllBadges = functions.https.onCall(async (data:
 export * from './gamification';
 
 export * from './gamification-audit';
+
+/**
+ * Admin callable function to purge legacy spam notifications and chat messages,
+ * and mark remaining notifications as read.
+ */
+export const purgeLegacyNotificationAndChatSpam = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated.');
+    }
+
+    const db = admin.firestore();
+
+    // 1. Purge Chat Bot Spam Messages
+    const chatSnap = await db.collection('chats/global/messages').get();
+    let deletedChatCount = 0;
+    let chatBatch = db.batch();
+    let chatOpCount = 0;
+
+    for (const doc of chatSnap.docs) {
+        const msg = doc.data();
+        const txType = msg.metadata?.transactionType;
+        const isBotSpam = msg.senderId === 'system' && (
+            txType === 'MEMBER_CHECK_IN' ||
+            txType === 'STORE_SALE' ||
+            (!txType && (msg.senderName === 'GymBot' || msg.content?.includes('Member Checked In') || msg.content?.includes('New Sale')))
+        );
+
+        if (isBotSpam) {
+            chatBatch.delete(doc.ref);
+            deletedChatCount++;
+            chatOpCount++;
+            if (chatOpCount >= 400) {
+                await chatBatch.commit();
+                chatBatch = db.batch();
+                chatOpCount = 0;
+            }
+        }
+    }
+    if (chatOpCount > 0) {
+        await chatBatch.commit();
+    }
+
+    // 2. Purge Routine Check-In Notifications for all users and mark remaining as read
+    const usersSnap = await db.collection('users').get();
+    let deletedNotifsCount = 0;
+
+    for (const userDoc of usersSnap.docs) {
+        const notifsSnap = await db.collection(`users/${userDoc.id}/notifications`).get();
+        let notifBatch = db.batch();
+        let notifOpCount = 0;
+
+        for (const notifDoc of notifsSnap.docs) {
+            const notif = notifDoc.data();
+            if (notif.title === 'Member Checked In' || notif.title === 'Member Check-In' || notif.type === 'info') {
+                notifBatch.delete(notifDoc.ref);
+                deletedNotifsCount++;
+                notifOpCount++;
+            } else if (!notif.read) {
+                notifBatch.update(notifDoc.ref, { read: true });
+                notifOpCount++;
+            }
+
+            if (notifOpCount >= 400) {
+                await notifBatch.commit();
+                notifBatch = db.batch();
+                notifOpCount = 0;
+            }
+        }
+
+        if (notifOpCount > 0) {
+            await notifBatch.commit();
+        }
+    }
+
+    return {
+        success: true,
+        deletedChatCount,
+        deletedNotifsCount
+    };
+});
 
 
