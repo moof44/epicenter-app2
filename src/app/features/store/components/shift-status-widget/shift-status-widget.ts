@@ -30,10 +30,12 @@ export class ShiftStatusWidget {
 
   openShiftModal(): void {
     this.dialog.open(ShiftControlModal, {
-      width: this.isMobile ? '100vw' : '500px',
-      maxWidth: this.isMobile ? '100vw' : '90vw',
+      width: this.isMobile ? '100vw' : '580px',
+      maxWidth: this.isMobile ? '100vw' : '94vw',
+      maxHeight: this.isMobile ? '100vh' : '92vh',
       disableClose: true,
-      panelClass: this.isMobile ? 'mobile-dialog' : ''
+      autoFocus: false,
+      panelClass: this.isMobile ? 'mobile-dialog' : 'shift-control-dialog-panel'
     });
   }
 }

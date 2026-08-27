@@ -239,4 +239,21 @@ export class ShiftHistory implements AfterViewInit, OnInit {
     };
     return icons[type];
   }
+
+  getDenominationEntries(shift?: ShiftSession | null): { value: number; count: number; subtotal: number }[] {
+    if (!shift?.closingDenominations) return [];
+    const entries: { value: number; count: number; subtotal: number }[] = [];
+    for (const [denomStr, count] of Object.entries(shift.closingDenominations)) {
+      const value = parseFloat(denomStr);
+      if (!isNaN(value) && count > 0) {
+        entries.push({
+          value,
+          count,
+          subtotal: value * count
+        });
+      }
+    }
+    // Sort high to low
+    return entries.sort((a, b) => b.value - a.value);
+  }
 }

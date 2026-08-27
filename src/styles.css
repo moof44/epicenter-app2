@@ -263,4 +263,22 @@ html {
   overflow: hidden !important;
   visibility: hidden !important;
 }
+
+/* ── Shift Control Dialog Modern Styling & No-Scrollbar Container ── */
+.shift-control-dialog-panel {
+  --mat-dialog-container-max-width: 620px;
+}
+
+.shift-control-dialog-panel .mat-mdc-dialog-container {
+  padding: 0 !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.shift-control-dialog-panel .mat-mdc-dialog-surface {
+  padding: 0 !important;
+  border-radius: 20px !important;
+  overflow-x: hidden !important;
+}
 

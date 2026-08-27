@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -102,8 +102,12 @@ export class CashManagement {
 
   openShiftModal(): void {
     this.dialog.open(ShiftControlModal, {
-      width: '500px',
-      disableClose: true
+      width: '580px',
+      maxWidth: '94vw',
+      maxHeight: '92vh',
+      autoFocus: false,
+      disableClose: true,
+      panelClass: 'shift-control-dialog-panel'
     });
   }
 

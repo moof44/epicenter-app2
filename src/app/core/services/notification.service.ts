@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, effect, OnDestroy } from '@angular/core';
-import { Firestore, collection, collectionData, doc, setDoc, query, orderBy, limit, updateDoc, Timestamp } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, doc, setDoc, query, orderBy, limit, updateDoc, Timestamp, getDocs, where, writeBatch } from '@angular/fire/firestore';
 import { Messaging, getToken, onMessage } from '@angular/fire/messaging';
 import { Observable, Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
@@ -175,6 +175,29 @@ export class NotificationService implements OnDestroy {
       await Promise.all(promises);
     } catch (err) {
       console.error('Failed to mark all notifications as read:', err);
+    }
+  }
+
+  async notifyAdmins(title: string, body: string, actionUrl?: string, metadata?: any): Promise<void> {
+    try {
+      const usersSnap = await getDocs(query(collection(this.firestore, 'users'), where('roles', 'array-contains-any', ['ADMIN', 'MANAGER'])));
+      const batch = writeBatch(this.firestore);
+      usersSnap.forEach(userDoc => {
+        const notifRef = doc(collection(this.firestore, `users/${userDoc.id}/notifications`));
+        const notif: Omit<NotificationItem, 'id'> = {
+          title,
+          body,
+          type: 'warning',
+          read: false,
+          timestamp: new Date(),
+          actionUrl,
+          metadata
+        };
+        batch.set(notifRef, notif);
+      });
+      await batch.commit();
+    } catch (err) {
+      console.warn('Failed to send admin notification:', err);
     }
   }
 

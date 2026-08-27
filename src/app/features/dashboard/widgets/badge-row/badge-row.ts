@@ -115,6 +115,13 @@ export class BadgeRowWidget {
     }
 
     openShiftModal(): void {
-        this.dialog.open(ShiftControlModal, { width: '500px', disableClose: true });
+        this.dialog.open(ShiftControlModal, {
+            width: '580px',
+            maxWidth: '94vw',
+            maxHeight: '92vh',
+            autoFocus: false,
+            disableClose: true,
+            panelClass: 'shift-control-dialog-panel'
+        });
     }
 }

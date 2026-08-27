@@ -1,12 +1,25 @@
-<!-- Opening View -->
-<ng-container *ngIf="!isShiftOpen">
-  <h2 mat-dialog-title class="modal-title">
-    <mat-icon>lock_open</mat-icon>
-    Open Register
-  </h2>
+<!-- ==========================================
+     OPENING REGISTER VIEW
+     ========================================== -->
+<div class="shift-dialog-wrapper" *ngIf="!isShiftOpen">
+  <div class="dialog-header-hero open-mode">
+    <div class="header-top-row">
+      <div class="mode-badge open">
+        <mat-icon>lock_open</mat-icon>
+        <span>Open Register</span>
+      </div>
+      <button mat-icon-button class="close-icon-btn" (click)="cancel()" matTooltip="Close dialog">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="header-title-block">
+      <h2>Start New Shift</h2>
+      <p class="subtitle">Confirm active cashier and enter the starting drawer float.</p>
+    </div>
+  </div>
 
-  <mat-dialog-content>
-    <!-- 👤 Active Staff Identity Card -->
+  <div class="dialog-body">
+    <!-- 👤 Active Staff Card -->
     <div class="staff-identity-card">
       <div class="staff-avatar">
         <mat-icon>account_circle</mat-icon>
@@ -29,9 +42,9 @@
       </div>
     </div>
 
-    <p class="hint-text">Count the physical cash in the drawer and enter the opening starting balance below:</p>
+    <p class="section-instruction">Count the physical cash in the register drawer and enter the opening starting balance:</p>
 
-    <mat-form-field appearance="outline" class="full-width">
+    <mat-form-field appearance="outline" class="full-width amount-input-field">
       <mat-label>Opening Starting Cash</mat-label>
       <span matTextPrefix>₱&nbsp;</span>
       <input matInput type="number" [(ngModel)]="openingBalance" min="0" step="0.01">
@@ -39,115 +52,266 @@
         Suggested from previous shift: ₱{{ suggestedBalance | number:'1.2-2' }}
       </mat-hint>
     </mat-form-field>
-  </mat-dialog-content>
+  </div>
 
-  <mat-dialog-actions align="end">
-    <button mat-button (click)="cancel()">Cancel</button>
-    <button mat-raised-button color="primary" (click)="openShift()" [disabled]="isLoading">
+  <div class="dialog-actions-bar">
+    <button mat-button class="cancel-action-btn" (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary" class="primary-action-btn" (click)="openShift()" [disabled]="isLoading">
       <mat-icon>play_arrow</mat-icon>
-      {{ isLoading ? 'Opening...' : 'Open Shift' }}
+      {{ isLoading ? 'Opening Shift...' : 'Open Shift' }}
     </button>
-  </mat-dialog-actions>
-</ng-container>
+  </div>
+</div>
 
-<!-- Closing View -->
-<ng-container *ngIf="isShiftOpen && shiftSummary">
-  <h2 mat-dialog-title class="modal-title">
-    <mat-icon>lock</mat-icon>
-    Close Register
-  </h2>
+<!-- ==========================================
+     CLOSING REGISTER VIEW (2-STEP WIZARD)
+     ========================================== -->
+<div class="shift-dialog-wrapper" *ngIf="isShiftOpen && shiftSummary">
 
-  <mat-dialog-content>
-    <!-- 👤 Active Staff Identity Card -->
-    <div class="staff-identity-card closing-card">
-      <div class="staff-avatar">
-        <mat-icon>account_circle</mat-icon>
+  <!-- ── STEP 1: SHIFT FINANCIAL SUMMARY ── -->
+  <ng-container *ngIf="closingStep === 'SUMMARY'">
+    <div class="dialog-header-hero">
+      <div class="header-top-row">
+        <div class="wizard-stepper-pill">
+          <div class="step-chip active">
+            <span class="step-num">1</span>
+            <span class="step-name">Summary</span>
+          </div>
+          <mat-icon class="step-separator">chevron_right</mat-icon>
+          <div class="step-chip">
+            <span class="step-num">2</span>
+            <span class="step-name">Cash Count</span>
+          </div>
+        </div>
+        <button mat-icon-button class="close-icon-btn" (click)="cancel()" matTooltip="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
       </div>
-      <div class="staff-info">
-        <span class="label">Closing Shift As:</span>
-        <strong class="name">{{ currentUser()?.displayName || currentUser()?.email || 'Unknown Staff' }}</strong>
-        <small class="opened-by-sub">Shift opened by: {{ currentShift?.openedBy || 'Staff' }}</small>
+      <div class="header-title-block">
+        <h2>Shift Financial Summary</h2>
+        <p class="subtitle">Review sales, expenses, and expected drawer balance before counting cash.</p>
       </div>
-      <button mat-stroked-button color="warn" type="button" class="switch-user-btn" (click)="switchUser()" matTooltip="Log out and switch to your account">
-        <mat-icon>swap_horiz</mat-icon> Switch User
-      </button>
     </div>
 
-    <div class="summary-section">
-      <div class="summary-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <h3>Shift Financial Summary</h3>
-        <button mat-icon-button color="primary" (click)="recalculate()" matTooltip="Recalculate Shift Totals"
-          [disabled]="isLoading">
-          <mat-icon>sync</mat-icon>
+    <div class="dialog-body">
+      <!-- 👤 Active Staff Card -->
+      <div class="staff-identity-card closing-card">
+        <div class="staff-avatar">
+          <mat-icon>account_circle</mat-icon>
+        </div>
+        <div class="staff-info">
+          <span class="label">Closing Shift As:</span>
+          <strong class="name">{{ currentUser()?.displayName || currentUser()?.email || 'Unknown Staff' }}</strong>
+          <small class="opened-by-sub">Shift opened by: {{ currentShift?.openedBy || 'Staff' }}</small>
+        </div>
+        <button mat-stroked-button color="warn" type="button" class="switch-user-btn" (click)="switchUser()" matTooltip="Log out and switch to your account">
+          <mat-icon>swap_horiz</mat-icon> Switch User
         </button>
       </div>
 
-      <div class="summary-row">
-        <span>Opening Balance</span>
-        <span>₱{{ shiftSummary.openingBalance | number:'1.2-2' }}</span>
-      </div>
+      <!-- Financial Breakdown Card -->
+      <div class="summary-breakdown-card">
+        <div class="card-top-header">
+          <span class="card-title">Shift Breakdown</span>
+          <button mat-icon-button color="primary" class="recalc-mini-btn" (click)="recalculate()" matTooltip="Recalculate Shift Totals" [disabled]="isLoading">
+            <mat-icon>sync</mat-icon>
+          </button>
+        </div>
 
-      <mat-divider></mat-divider>
+        <div class="summary-line">
+          <span class="line-label">Opening Starting Cash</span>
+          <span class="line-val">₱{{ shiftSummary.openingBalance | number:'1.2-2' }}</span>
+        </div>
 
-      <div class="summary-row positive">
-        <span>+ Total Sales</span>
-        <span>₱{{ shiftSummary.totalSales | number:'1.2-2' }}</span>
-      </div>
-      <div class="summary-sub-row">
-        <span>&nbsp;&nbsp;&nbsp;&nbsp;💵 Cash Sales</span>
-        <span>₱{{ (shiftSummary.totalCashSales || 0) | number:'1.2-2' }}</span>
-      </div>
-      <div class="summary-sub-row">
-        <span>&nbsp;&nbsp;&nbsp;&nbsp;📱 GCash Sales</span>
-        <span>₱{{ (shiftSummary.totalGcashSales || 0) | number:'1.2-2' }}</span>
-      </div>
+        <mat-divider></mat-divider>
 
-      <div class="summary-row positive" *ngIf="(shiftSummary.totalFloatIn || 0) > 0">
-        <span>+ Cash In (Float)</span>
-        <span>₱{{ shiftSummary.totalFloatIn | number:'1.2-2' }}</span>
-      </div>
+        <div class="summary-line positive">
+          <span class="line-label">+ Total Sales</span>
+          <span class="line-val">₱{{ shiftSummary.totalSales | number:'1.2-2' }}</span>
+        </div>
+        <div class="summary-sub-line">
+          <span>&nbsp;&nbsp;&nbsp;&nbsp;💵 Cash Sales Portion</span>
+          <span>₱{{ (shiftSummary.totalCashSales || 0) | number:'1.2-2' }}</span>
+        </div>
+        <div class="summary-sub-line">
+          <span>&nbsp;&nbsp;&nbsp;&nbsp;📱 GCash Sales Portion</span>
+          <span>₱{{ (shiftSummary.totalGcashSales || 0) | number:'1.2-2' }}</span>
+        </div>
 
-      <div class="summary-row negative" *ngIf="(shiftSummary.totalExpenses || 0) > 0">
-        <span>- Expenses</span>
-        <span>₱{{ shiftSummary.totalExpenses | number:'1.2-2' }}</span>
-      </div>
+        <div class="summary-line positive" *ngIf="(shiftSummary.totalFloatIn || 0) > 0">
+          <span class="line-label">+ Cash In (Float)</span>
+          <span class="line-val">₱{{ shiftSummary.totalFloatIn | number:'1.2-2' }}</span>
+        </div>
 
-      <div class="summary-row negative" *ngIf="(shiftSummary.totalFloatOut || 0) > 0">
-        <span>- Cash Out / Remittances</span>
-        <span>₱{{ shiftSummary.totalFloatOut | number:'1.2-2' }}</span>
-      </div>
+        <div class="summary-line negative" *ngIf="(shiftSummary.totalExpenses || 0) > 0">
+          <span class="line-label">- Expenses</span>
+          <span class="line-val">₱{{ shiftSummary.totalExpenses | number:'1.2-2' }}</span>
+        </div>
 
-      <mat-divider></mat-divider>
+        <div class="summary-line negative" *ngIf="(shiftSummary.totalFloatOut || 0) > 0">
+          <span class="line-label">- Cash Out / Remittances</span>
+          <span class="line-val">₱{{ shiftSummary.totalFloatOut | number:'1.2-2' }}</span>
+        </div>
 
-      <div class="summary-row total">
-        <span>Expected Cash in Drawer</span>
-        <span>₱{{ shiftSummary.expectedClosingBalance | number:'1.2-2' }}</span>
+        <!-- Expected Cash Highlight Box -->
+        <div class="expected-highlight-box">
+          <div class="expected-title">
+            <mat-icon>savings</mat-icon>
+            <span>Expected Cash in Drawer:</span>
+          </div>
+          <strong class="expected-amount">₱{{ shiftSummary.expectedClosingBalance | number:'1.2-2' }}</strong>
+        </div>
       </div>
     </div>
 
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Actual Physical Cash Count</mat-label>
-      <span matTextPrefix>₱&nbsp;</span>
-      <input matInput type="number" [(ngModel)]="actualClosingBalance" min="0" step="0.01">
-    </mat-form-field>
+    <div class="dialog-actions-bar">
+      <button mat-button class="cancel-action-btn" (click)="cancel()">Cancel</button>
+      <button mat-raised-button color="primary" class="primary-action-btn" (click)="goToCashCount()">
+        Proceed to Cash Count <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </button>
+    </div>
+  </ng-container>
 
-    <div class="discrepancy" [class.over]="getDiscrepancy() > 0" [class.short]="getDiscrepancy() < 0"
-      *ngIf="getDiscrepancy() !== 0">
-      <mat-icon>{{ getDiscrepancy() > 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
-      <span>{{ getDiscrepancy() > 0 ? 'Over by' : 'Short by' }} ₱{{ (getDiscrepancy() > 0 ? getDiscrepancy() : -getDiscrepancy()) | number:'1.2-2' }}</span>
+  <!-- ── STEP 2: DEDICATED PHYSICAL MONEY COUNT ── -->
+  <ng-container *ngIf="closingStep === 'COUNT'">
+    <div class="dialog-header-hero count-step">
+      <div class="header-top-row">
+        <div class="wizard-stepper-pill">
+          <button type="button" class="step-chip completed" (click)="backToSummary()">
+            <mat-icon class="check-icon">check</mat-icon>
+            <span class="step-name">Summary</span>
+          </button>
+          <mat-icon class="step-separator">chevron_right</mat-icon>
+          <div class="step-chip active">
+            <span class="step-num">2</span>
+            <span class="step-name">Cash Count</span>
+          </div>
+        </div>
+        <button mat-icon-button class="close-icon-btn" (click)="cancel()" matTooltip="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="header-title-block">
+        <h2>Physical Cash Count</h2>
+        <p class="subtitle">Count all drawer cash by denomination or enter the total amount directly.</p>
+      </div>
     </div>
 
-    <div class="discrepancy balanced" *ngIf="getDiscrepancy() === 0">
-      <mat-icon>check_circle</mat-icon>
-      <span>Perfect Match: Actual cash matches expected drawer balance (₱{{ actualClosingBalance | number:'1.2-2' }})</span>
-    </div>
-  </mat-dialog-content>
+    <div class="dialog-body">
+      <!-- Target Expected Reference Pill -->
+      <div class="expected-reference-pill">
+        <div class="ref-left">
+          <mat-icon>account_balance_wallet</mat-icon>
+          <span>Expected Cash in Drawer:</span>
+        </div>
+        <strong class="ref-amount">₱{{ shiftSummary.expectedClosingBalance | number:'1.2-2' }}</strong>
+      </div>
 
-  <mat-dialog-actions align="end">
-    <button mat-button (click)="cancel()">Cancel</button>
-    <button mat-raised-button color="warn" (click)="closeShift()" [disabled]="isLoading">
-      <mat-icon>stop</mat-icon>
-      {{ isLoading ? 'Closing...' : 'Close Shift' }}
-    </button>
-  </mat-dialog-actions>
-</ng-container>
+      <!-- Controls Row: Override Checkbox & Reset -->
+      <div class="count-controls-header">
+        <mat-checkbox [(ngModel)]="isManualOverride" (change)="toggleManualOverride()" color="warn">
+          Override manual cash count (Enter total directly)
+        </mat-checkbox>
+        <button *ngIf="!isManualOverride" mat-button color="primary" class="clear-btn" type="button" (click)="clearDenominations()">
+          <mat-icon>restart_alt</mat-icon> Reset Counts
+        </button>
+      </div>
+
+      <!-- ⚠️ Override Warning Notice -->
+      <div class="override-alert-banner" *ngIf="isManualOverride">
+        <mat-icon>warning</mat-icon>
+        <div class="alert-text">
+          <strong>Manual Total Override Active</strong>
+          <span>Skipping denomination breakdown will be recorded in the shift audit log and notified to administrators.</span>
+        </div>
+      </div>
+
+      <!-- 📋 Default Mode: Itemized Denomination Breakdown Grid -->
+      <div class="denomination-calculator" *ngIf="!isManualOverride">
+        <div class="denom-grid">
+          <!-- Bills Column -->
+          <div class="denom-column bills-column">
+            <div class="column-header">
+              <mat-icon>payments</mat-icon>
+              <span>Paper Bills</span>
+            </div>
+            <div class="denom-list">
+              <div class="denom-row" *ngFor="let item of billDenominations">
+                <div class="denom-chip bill">{{ item.label }}</div>
+                <span class="times">×</span>
+                <input type="number" class="denom-field" [(ngModel)]="item.count" min="0" step="1" (input)="onDenominationChange()" placeholder="0">
+                <span class="denom-total">₱{{ ((item.count || 0) * item.denomination) | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coins Column -->
+          <div class="denom-column coins-column">
+            <div class="column-header">
+              <mat-icon>monetization_on</mat-icon>
+              <span>Coins</span>
+            </div>
+            <div class="denom-list">
+              <div class="denom-row" *ngFor="let item of coinDenominations">
+                <div class="denom-chip coin">{{ item.label }}</div>
+                <span class="times">×</span>
+                <input type="number" class="denom-field" [(ngModel)]="item.count" min="0" step="1" (input)="onDenominationChange()" placeholder="0">
+                <span class="denom-total">₱{{ ((item.count || 0) * item.denomination) | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculated Summary Bar -->
+        <div class="calculated-total-bar">
+          <div class="pieces-badge">
+            <mat-icon>inventory_2</mat-icon>
+            <span>Total Pieces: <strong>{{ getTotalPieces() }}</strong></span>
+          </div>
+          <div class="counted-badge">
+            <span class="label">Counted Cash:</span>
+            <strong class="amount">₱{{ actualClosingBalance | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- ✏️ Override Mode: Direct Lump-Sum Input -->
+      <div class="manual-total-input" *ngIf="isManualOverride">
+        <mat-form-field appearance="outline" class="full-width amount-input-field">
+          <mat-label>Manual Total Cash Count</mat-label>
+          <span matTextPrefix>₱&nbsp;</span>
+          <input matInput type="number" [(ngModel)]="actualClosingBalance" min="0" step="0.01" placeholder="0.00">
+          <mat-hint>Enter the total physical cash amount counted from the drawer</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <!-- Live Discrepancy Status Card -->
+      <div class="discrepancy-card" [class.over]="getDiscrepancy() > 0" [class.short]="getDiscrepancy() < 0" *ngIf="getDiscrepancy() !== 0">
+        <mat-icon>{{ getDiscrepancy() > 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+        <div class="discrepancy-text">
+          <strong>{{ getDiscrepancy() > 0 ? 'Cash Overage (+₱' + (getDiscrepancy() | number:'1.2-2') + ')' : 'Cash Shortage (-₱' + (-getDiscrepancy() | number:'1.2-2') + ')' }}</strong>
+          <span>Actual count does not match the system expected balance.</span>
+        </div>
+      </div>
+
+      <div class="discrepancy-card balanced" *ngIf="getDiscrepancy() === 0">
+        <mat-icon>check_circle</mat-icon>
+        <div class="discrepancy-text">
+          <strong>Perfect Match (₱{{ actualClosingBalance | number:'1.2-2' }})</strong>
+          <span>Physical cash in drawer matches the system expected balance exactly.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-actions-bar">
+      <button mat-button class="cancel-action-btn" (click)="backToSummary()">
+        <mat-icon>arrow_back</mat-icon> Back to Summary
+      </button>
+      <button mat-raised-button color="warn" class="primary-action-btn" (click)="closeShift()" [disabled]="isLoading">
+        <mat-icon>stop</mat-icon>
+        {{ isLoading ? 'Closing Shift...' : 'Close Shift' }}
+      </button>
+    </div>
+  </ng-container>
+
+</div>

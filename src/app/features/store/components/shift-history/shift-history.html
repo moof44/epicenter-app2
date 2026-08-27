@@ -134,9 +134,19 @@
           <th mat-header-cell *matHeaderCellDef>Ending Balance</th>
           <td mat-cell *matCellDef="let shift">
             <div class="balance-cell">
-              <span class="expected" matTooltip="Expected">₱{{ shift.expectedClosingBalance | number:'1.2-2' }}</span>
+              <span class="expected" matTooltip="Expected Cash">₱{{ shift.expectedClosingBalance | number:'1.2-2' }}</span>
               <span class="vs">vs</span>
-              <span class="actual" matTooltip="Actual">₱{{ shift.actualClosingBalance | number:'1.2-2' }}</span>
+              <span class="actual" matTooltip="Actual Counted Cash">₱{{ shift.actualClosingBalance | number:'1.2-2' }}</span>
+            </div>
+
+            <!-- Audit Method Tag -->
+            <div class="count-audit-tag override" *ngIf="shift.isManualClosingCountOverride" matTooltip="Staff entered total amount without itemized denomination breakdown">
+              <mat-icon>warning</mat-icon>
+              <span>Manual Override</span>
+            </div>
+            <div class="count-audit-tag itemized" *ngIf="!shift.isManualClosingCountOverride && shift.closingDenominations" matTooltip="Itemized physical denomination count verified">
+              <mat-icon>receipt_long</mat-icon>
+              <span>Itemized Count</span>
             </div>
           </td>
         </ng-container>
@@ -290,6 +300,58 @@
                 ({{ getVariance(selectedShift) > 0 ? '+' : '' }}₱{{ getVariance(selectedShift) | number:'1.2-2' }})
               </span>
             </span>
+          </div>
+        </div>
+
+        <!-- 💵 Physical Cash Count & Denominations Audit Section -->
+        <div class="drawer-section denom-audit-card">
+          <div class="section-title">
+            <mat-icon>calculate</mat-icon>
+            <strong>Physical Cash Count Audit</strong>
+          </div>
+
+          <!-- When Override was used -->
+          <div class="override-drawer-notice" *ngIf="selectedShift.isManualClosingCountOverride">
+            <mat-icon>warning</mat-icon>
+            <div class="alert-info">
+              <strong>Manual Lump-Sum Count Override</strong>
+              <span>Staff entered the total cash count directly without itemized denomination breakdown.</span>
+            </div>
+          </div>
+
+          <!-- When Denominations are present -->
+          <div class="denom-table-wrap" *ngIf="!selectedShift.isManualClosingCountOverride && getDenominationEntries(selectedShift).length > 0">
+            <table class="denom-audit-table">
+              <thead>
+                <tr>
+                  <th>Denomination</th>
+                  <th class="text-center">Count</th>
+                  <th class="text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let d of getDenominationEntries(selectedShift)">
+                  <td>
+                    <span class="denom-pill" [class.bill]="d.value >= 20" [class.coin]="d.value < 20">
+                      ₱{{ d.value >= 1 ? (d.value | number:'1.0-0') : (d.value | number:'1.2-2') }}
+                    </span>
+                  </td>
+                  <td class="text-center">{{ d.count }} pcs</td>
+                  <td class="text-right">₱{{ d.subtotal | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2"><strong>Total Physical Count</strong></td>
+                  <td class="text-right"><strong>₱{{ selectedShift.actualClosingBalance | number:'1.2-2' }}</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- No denomination data available (legacy shift) -->
+          <div class="no-denom-data" *ngIf="!selectedShift.isManualClosingCountOverride && getDenominationEntries(selectedShift).length === 0">
+            <span>No itemized denomination breakdown recorded for this shift.</span>
           </div>
         </div>
 

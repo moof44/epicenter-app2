@@ -18,6 +18,8 @@ export interface CashTransaction {
 
 export type ShiftStatus = 'OPEN' | 'CLOSED';
 
+export type DenominationBreakdown = Record<string, number>;
+
 export interface ShiftSession {
     id?: string;
     openingBalance: number;
@@ -37,6 +39,10 @@ export interface ShiftSession {
     totalExpenses: number;
     totalFloatIn: number;
     totalFloatOut: number;
+    isManualClosingCountOverride?: boolean;
+    closingDenominations?: DenominationBreakdown | null;
+    isManualOpeningCountOverride?: boolean;
+    openingDenominations?: DenominationBreakdown | null;
 }
 
 export interface ShiftSummary {

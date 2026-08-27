@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { StaleShiftDialog } from '../../shared/components/stale-shift-dialog/stale-shift-dialog';
 import {
   Firestore,
   collection,
@@ -13,7 +12,6 @@ import {
   orderBy,
   limit,
   getDocs,
-  getDoc,
   startAfter,
   arrayUnion,
   increment
@@ -23,7 +21,8 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import {
   CashTransaction,
   ShiftSession,
-  ShiftSummary
+  ShiftSummary,
+  DenominationBreakdown
 } from '../models/cash-register.model';
 
 @Injectable({
@@ -118,7 +117,12 @@ export class CashRegisterService {
 
 
   // Open a new shift
-  async openShift(openingBalance: number, openedBy: string): Promise<string> {
+  async openShift(
+    openingBalance: number,
+    openedBy: string,
+    isManualOverride = false,
+    denominations: DenominationBreakdown | null = null
+  ): Promise<string> {
     // 1. Check local state pending initialization (optional but good UI feedback)
     if (this.isShiftOpen()) {
       throw new Error('A shift is already open. Close it first.');
@@ -148,7 +152,9 @@ export class CashRegisterService {
       totalRevenue: 0,
       totalExpenses: 0,
       totalFloatIn: 0,
-      totalFloatOut: 0
+      totalFloatOut: 0,
+      isManualOpeningCountOverride: isManualOverride,
+      openingDenominations: denominations
     };
 
     const docRef = await addDoc(this.shiftsCollection, newShift);
@@ -270,7 +276,12 @@ export class CashRegisterService {
   }
 
   // Close the shift with self-healing expected balance verification
-  async closeShift(actualClosingBalance: number, closedBy: string): Promise<void> {
+  async closeShift(
+    actualClosingBalance: number,
+    closedBy: string,
+    isManualOverride = false,
+    denominations: DenominationBreakdown | null = null
+  ): Promise<void> {
     const shift = this.currentShift.getValue();
     if (!shift?.id || shift.status !== 'OPEN') {
       throw new Error('No open shift to close.');
@@ -326,6 +337,8 @@ export class CashRegisterService {
       totalExpenses: expenses,
       totalFloatIn: floatIn,
       totalFloatOut: floatOut,
+      isManualClosingCountOverride: isManualOverride,
+      closingDenominations: denominations,
       endTime: new Date(),
       closedBy
     };

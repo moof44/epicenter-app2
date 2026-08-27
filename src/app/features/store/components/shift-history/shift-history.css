@@ -647,3 +647,134 @@ mat-tab-group {
   font-size: 0.85rem;
   color: #555;
 }
+
+/* 🏷️ Count Audit Tags in Table */
+.count-audit-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  width: fit-content;
+}
+
+.count-audit-tag mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.count-audit-tag.override {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.count-audit-tag.itemized {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+/* 💵 Drawer Denomination Audit Card */
+.denom-audit-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.denom-audit-card .section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.denom-audit-card .section-title mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #3b82f6;
+}
+
+.override-drawer-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 10px;
+  color: #92400e;
+  font-size: 12px;
+}
+
+.override-drawer-notice mat-icon {
+  color: #d97706;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.denom-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.denom-audit-table th {
+  text-align: left;
+  padding: 6px 8px;
+  color: #64748b;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.denom-audit-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.denom-audit-table tfoot td {
+  border-top: 2px solid #cbd5e1;
+  border-bottom: none;
+  padding-top: 8px;
+  font-size: 13px;
+}
+
+.denom-pill {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.denom-pill.bill {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.denom-pill.coin {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.no-denom-data {
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+  padding: 4px 0;
+}
