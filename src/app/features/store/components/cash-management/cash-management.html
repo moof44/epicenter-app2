@@ -1,13 +1,21 @@
 <div class="page-header">
-  <h1>Cash Management</h1>
-  <button mat-raised-button color="primary" (click)="openShiftModal()">
-    <mat-icon>settings</mat-icon> Shift Control
-  </button>
-  <button mat-stroked-button (click)="recalculateShift()" matTooltip="Recalculate Shift Totals"
-    [disabled]="isSubmitting" style="margin-left: 8px;">
-    <mat-icon [class.spinning]="isSubmitting">sync</mat-icon>
-    {{ isSubmitting ? 'Recalculating...' : 'Recalculate' }}
-  </button>
+  <div class="header-titles">
+    <h1>Cash Management</h1>
+    <div class="active-shift-pill" *ngIf="currentShift$ | async as shift">
+      <span class="pulse-dot"></span>
+      <span>Active Shift: <strong>{{ shift.openedBy || 'Staff' }}</strong> (since {{ formatDate(shift.startTime) | date:'shortTime' }})</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button mat-raised-button color="primary" (click)="openShiftModal()">
+      <mat-icon>settings</mat-icon> Shift Control
+    </button>
+    <button mat-stroked-button (click)="recalculateShift()" matTooltip="Recalculate Shift Totals"
+      [disabled]="isSubmitting" style="margin-left: 8px;">
+      <mat-icon [class.spinning]="isSubmitting">sync</mat-icon>
+      {{ isSubmitting ? 'Recalculating...' : 'Recalculate' }}
+    </button>
+  </div>
 </div>
 
 <ng-container *ngIf="currentShift$ | async as shift; else noShift">
@@ -17,7 +25,7 @@
       <mat-card-content>
         <mat-icon>account_balance_wallet</mat-icon>
         <div class="card-info">
-          <span class="label">Opening</span>
+          <span class="label">Opening Cash</span>
           <span class="value">₱{{ shift.openingBalance | number:'1.2-2' }}</span>
         </div>
       </mat-card-content>
@@ -37,12 +45,32 @@
       </mat-card-content>
     </mat-card>
 
-    <mat-card class="summary-card expenses">
+    <mat-card class="summary-card float-in" *ngIf="(shift.totalFloatIn || 0) > 0">
+      <mat-card-content>
+        <mat-icon>add_circle</mat-icon>
+        <div class="card-info">
+          <span class="label">Cash In (Float)</span>
+          <span class="value positive">+₱{{ shift.totalFloatIn | number:'1.2-2' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card expenses" *ngIf="(shift.totalExpenses || 0) > 0">
       <mat-card-content>
         <mat-icon>receipt</mat-icon>
         <div class="card-info">
           <span class="label">Expenses</span>
-          <span class="value">₱{{ shift.totalExpenses | number:'1.2-2' }}</span>
+          <span class="value negative">-₱{{ shift.totalExpenses | number:'1.2-2' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card float-out" *ngIf="(shift.totalFloatOut || 0) > 0">
+      <mat-card-content>
+        <mat-icon>money_off</mat-icon>
+        <div class="card-info">
+          <span class="label">Cash Out / Remit</span>
+          <span class="value negative">-₱{{ shift.totalFloatOut | number:'1.2-2' }}</span>
         </div>
       </mat-card-content>
     </mat-card>

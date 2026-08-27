@@ -136,6 +136,11 @@ export class CashManagement {
     return icons[type];
   }
 
+  formatDate(timestamp: any): Date {
+    if (!timestamp) return new Date();
+    return timestamp instanceof Date ? timestamp : (timestamp.toDate ? timestamp.toDate() : new Date(timestamp));
+  }
+
   isPositive(type: CashTransactionType): boolean {
     return type === 'Sale' || type === 'Float_In';
   }

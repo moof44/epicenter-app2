@@ -25,9 +25,11 @@ export class ShiftControlModal implements OnInit {
   private cashRegisterService = inject(CashRegisterService);
   private dialogRef = inject(MatDialogRef<ShiftControlModal>);
   private snackBar = inject(MatSnackBar);
-  private authService = inject(AuthService);
+  readonly authService = inject(AuthService);
+  currentUser = this.authService.userProfile;
 
   currentShift: ShiftSession | null = null;
+  lastClosedShift: ShiftSession | null = null;
   isShiftOpen = false;
   isLoading = false;
 
@@ -47,13 +49,6 @@ export class ShiftControlModal implements OnInit {
       if (this.isShiftOpen && shift) {
         this.shiftSummary = this.cashRegisterService.getShiftSummary();
 
-        // Only set actualClosingBalance to expected if it hasn't been set yet (or on first load)
-        // We compare with 0 or check if it matches the *previous* expected balance to determine if we should update it.
-        // Better: Only set it when the modal Opens.
-        // However, this subscription runs whenever currentShift updates.
-        // If we are strictly in "Close Register" mode, we might want to start with the expected balance.
-
-        // Fix: Don't overwrite if we already have a value that might be user input
         if (this.actualClosingBalance === 0 && shift.expectedClosingBalance > 0) {
           this.actualClosingBalance = shift.expectedClosingBalance;
         }
@@ -63,13 +58,21 @@ export class ShiftControlModal implements OnInit {
     this.loadSuggestedBalance();
   }
 
-
   private async loadSuggestedBalance(): Promise<void> {
     const lastShift = await this.cashRegisterService.getLastClosedShift();
-    if (lastShift?.actualClosingBalance) {
+    this.lastClosedShift = lastShift;
+    if (lastShift?.actualClosingBalance !== null && lastShift?.actualClosingBalance !== undefined) {
       this.suggestedBalance = lastShift.actualClosingBalance;
       this.openingBalance = this.suggestedBalance;
+    } else if (lastShift?.expectedClosingBalance) {
+      this.suggestedBalance = lastShift.expectedClosingBalance;
+      this.openingBalance = this.suggestedBalance;
     }
+  }
+
+  switchUser(): void {
+    this.dialogRef.close(false);
+    this.authService.logout().subscribe();
   }
 
   async openShift(): Promise<void> {

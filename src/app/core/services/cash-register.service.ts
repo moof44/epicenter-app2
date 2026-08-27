@@ -42,62 +42,40 @@ export class CashRegisterService {
   private isStaleDialogOpen = false;
 
   constructor() {
+    this.initRealtimeShiftListener();
     this.refreshShift();
+  }
+
+  // Real-time listener for open shift across all devices (Tablet, Phone, Web)
+  private initRealtimeShiftListener(): void {
+    const q = query(
+      this.shiftsCollection,
+      where('status', '==', 'OPEN'),
+      limit(1)
+    );
+    
+    collectionData(q, { idField: 'id' }).subscribe({
+      next: (shifts) => {
+        const active = shifts.length > 0 ? (shifts[0] as ShiftSession) : null;
+        this.currentShift.next(active);
+      },
+      error: (err) => {
+        console.warn('Realtime shift listener error:', err);
+      }
+    });
   }
 
   // Pre-validate a shift before any cash operations
   async ensureValidShiftForTransaction(): Promise<boolean> {
     // DISABLE_FOR_NOW: Temporarily allow transactions regardless of shift date
     return true;
-
-    /* 
-    const shift = this.currentShift.getValue();
-    if (!shift || shift.status !== 'OPEN') {
-      // Return false safely. Basic logic usually catches this and throws its own "Register closed" logic.
-      return false;
-    }
-
-    // BUG #1 FIX: Safely handle both Firestore Timestamp and plain JS Date.
-    // When a shift is first opened, startTime is a JS Date (in-memory).
-    // After refreshShift() reads from Firestore, it becomes a Firestore Timestamp with .toDate().
-    // Calling .toDate() on a plain Date crashes with: TypeError: shift.startTime.toDate is not a function
-    const rawStart = shift.startTime;
-    const startDate: Date = rawStart instanceof Date ? rawStart : new Date(rawStart);
-    const shiftDate = startDate.toLocaleDateString('en-CA');
-    const today = new Date().toLocaleDateString('en-CA');
-
-    if (shiftDate !== today) {
-      // BUG #4 FIX: Prevent multiple StaleShiftDialogs from stacking.
-      // This service is a singleton (providedIn: 'root'), so this flag protects
-      // all callers (POS, Kiosk, Cash Management) simultaneously.
-      if (!this.isStaleDialogOpen) {
-        this.isStaleDialogOpen = true;
-        const dialogRef = this.dialog.open(StaleShiftDialog, {
-          data: { shiftDate },
-          disableClose: true,
-          width: '450px'
-        });
-        dialogRef.afterClosed().subscribe(() => {
-          this.isStaleDialogOpen = false;
-        });
-      }
-      // Throw a specific error code to intercept and silence in UI
-      throw new Error('STALE_SHIFT');
-    }
-
-    return true;
-    */
   }
-
 
   // Initialize: Check for active open session
   async refreshShift(): Promise<void> {
     const openShift = await this.getOpenShift();
     this.currentShift.next(openShift); // Update even if null (to clear closed shift)
   }
-
-  // Removed subscribeToSales to prevent non-atomic updates
-  // private subscribeToSales(): Subscription { ... }
 
   // Get currently open shift
   private async getOpenShift(): Promise<ShiftSession | null> {
@@ -291,19 +269,63 @@ export class CashRegisterService {
     return shift?.expectedClosingBalance ?? 0;
   }
 
-  // Close the shift
+  // Close the shift with self-healing expected balance verification
   async closeShift(actualClosingBalance: number, closedBy: string): Promise<void> {
     const shift = this.currentShift.getValue();
     if (!shift?.id || shift.status !== 'OPEN') {
       throw new Error('No open shift to close.');
     }
 
-    const discrepancy = actualClosingBalance - shift.expectedClosingBalance;
+    // 1. Audit and calculate true expected balance directly from transaction history
+    let cashSales = 0;
+    let floatIn = 0;
+    let expenses = 0;
+    let floatOut = 0;
+    let gcashSales = 0;
+    let totalSales = 0;
+
+    for (const tx of (shift.transactions || [])) {
+      if ((tx as any).voided) continue;
+      
+      if (tx.type === 'Sale') {
+        totalSales += (tx.amount || 0);
+        if (tx.paymentMethod === 'GCASH') {
+          gcashSales += (tx.amount || 0);
+        } else if (tx.paymentMethod === 'SPLIT') {
+          const cashPart = (tx as any).cashAmount !== undefined && (tx as any).cashAmount !== null 
+            ? Number((tx as any).cashAmount) 
+            : 0;
+          const gcashPart = (tx as any).gcashAmount !== undefined && (tx as any).gcashAmount !== null
+            ? Number((tx as any).gcashAmount)
+            : ((tx.amount || 0) - cashPart);
+          cashSales += cashPart;
+          gcashSales += gcashPart;
+        } else {
+          cashSales += (tx.amount || 0);
+        }
+      } else if (tx.type === 'Float_In') {
+        floatIn += (tx.amount || 0);
+      } else if (tx.type === 'Expense') {
+        expenses += (tx.amount || 0);
+      } else if (tx.type === 'Float_Out') {
+        floatOut += (tx.amount || 0);
+      }
+    }
+
+    const calculatedExpected = (shift.openingBalance || 0) + cashSales + floatIn - expenses - floatOut;
+    const discrepancy = actualClosingBalance - calculatedExpected;
 
     const updates: Partial<ShiftSession> = {
       status: 'CLOSED',
+      expectedClosingBalance: calculatedExpected,
       actualClosingBalance,
       discrepancy,
+      totalSales,
+      totalCashSales: cashSales,
+      totalGcashSales: gcashSales,
+      totalExpenses: expenses,
+      totalFloatIn: floatIn,
+      totalFloatOut: floatOut,
       endTime: new Date(),
       closedBy
     };

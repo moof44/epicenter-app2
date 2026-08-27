@@ -6,9 +6,109 @@ h2[mat-dialog-title] {
   font-size: 20px;
 }
 
+/* 👤 Staff Identity Card */
+.staff-identity-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.staff-identity-card.closing-card {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.staff-avatar mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: #166534;
+}
+
+.staff-identity-card.closing-card .staff-avatar mat-icon {
+  color: #0f172a;
+}
+
+.staff-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.staff-info .label {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.staff-info .name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.opened-by-sub {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.switch-user-btn {
+  font-size: 12px !important;
+  height: 34px !important;
+  line-height: 34px !important;
+  padding: 0 10px !important;
+}
+
+.switch-user-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
+/* 🔍 Handover Info Banner */
+.handover-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: #1e40af;
+}
+
+.handover-info-banner mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #3b82f6;
+}
+
+.handover-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.handover-amount {
+  font-size: 12px;
+  color: #1d4ed8;
+}
+
 .hint-text {
-  color: rgba(0, 0, 0, 0.6);
-  margin-bottom: 16px;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 13px;
+  margin-bottom: 14px;
 }
 
 .full-width {
