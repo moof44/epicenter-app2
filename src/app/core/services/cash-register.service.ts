@@ -181,10 +181,18 @@ export class CashRegisterService {
       throw new Error('No open shift. Please open a shift first.');
     }
 
-    const newTransaction: CashTransaction = {
+    const rawTransaction: Record<string, any> = {
       ...transaction,
       timestamp: new Date()
     };
+
+    // Sanitize: Firestore arrayUnion throws if any key has value undefined
+    const newTransaction: any = {};
+    Object.keys(rawTransaction).forEach(key => {
+      if (rawTransaction[key] !== undefined) {
+        newTransaction[key] = rawTransaction[key];
+      }
+    });
 
     // ATOMIC UPDATE: Use arrayUnion and increment to prevent overwriting concurrent updates
     const updates: any = {

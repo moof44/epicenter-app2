@@ -125,11 +125,18 @@ export class PayablesService {
       }
     }
 
+    const sanitizedPaymentRecord: any = {};
+    Object.keys(paymentRecord).forEach(key => {
+      if (paymentRecord[key] !== undefined) {
+        sanitizedPaymentRecord[key] = paymentRecord[key];
+      }
+    });
+
     await updateDoc(billRef, {
       totalAmountPaid: newTotalPaid,
       remainingBalance: newRemaining,
       status: newStatus,
-      payments: arrayUnion(paymentRecord),
+      payments: arrayUnion(sanitizedPaymentRecord),
       updatedAt: Timestamp.now()
     });
   }
