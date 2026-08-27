@@ -42,6 +42,89 @@
     gap: 20px;
 }
 
+/* Weekly Saturday Payroll Action Banner */
+.weekly-payroll-banner {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 14px;
+    padding: 18px 24px;
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payroll-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pay-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pay-icon-box mat-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+}
+
+.pay-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.pay-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.payroll-banner-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.pay-total-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.pay-label {
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.pay-amount {
+    font-size: 22px;
+    font-weight: 800;
+    color: #34d399;
+}
+
+.post-payroll-btn {
+    min-height: 44px !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    padding: 0 20px !important;
+}
+
 /* Week Navigator Bar */
 .filter-card {
     border-radius: 12px;

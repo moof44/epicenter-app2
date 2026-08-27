@@ -1,3 +1,5 @@
+import { OutflowCategory, OutflowPaymentSource } from './outflow.model';
+
 export type CashTransactionType = 'Sale' | 'Expense' | 'Float_In' | 'Float_Out';
 
 export interface CashTransaction {
@@ -14,6 +16,10 @@ export interface CashTransaction {
     productsSummary?: string;
     voided?: boolean;
     memberName?: string;
+    category?: OutflowCategory;
+    paymentSource?: OutflowPaymentSource;
+    billerOrSupplier?: string;
+    billId?: string;
 }
 
 export type ShiftStatus = 'OPEN' | 'CLOSED';

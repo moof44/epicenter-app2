@@ -1,0 +1,135 @@
+<div class="payroll-dialog-container">
+  <div class="dialog-header">
+    <div class="header-left">
+      <div class="icon-wrap">
+        <mat-icon>payments</mat-icon>
+      </div>
+      <div>
+        <h2 mat-dialog-title>Review & Adjust Weekly Payroll</h2>
+        <p class="dialog-subtitle">
+          Period: <strong>{{ data.sunday | date:'mediumDate' }}</strong> – <strong>{{ data.saturday | date:'mediumDate' }}</strong> (Saturday Cutoff)
+        </p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="cancel()" class="close-btn">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="dialog-body">
+    <!-- Title Input -->
+    <div class="title-field-wrap">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Bill / Payable Title</mat-label>
+        <input matInput [(ngModel)]="payrollTitle" placeholder="e.g. Weekly Staff Payroll - Week ending...">
+      </mat-form-field>
+    </div>
+
+    <!-- Staff Payroll Adjustment Table -->
+    <div class="table-card">
+      <div class="table-header-bar">
+        <span class="table-title">Employee Breakdown & Deductions ({{ activeStaffCount }} included)</span>
+      </div>
+
+      <div class="table-scroll-wrap">
+        <table class="payroll-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">
+                <mat-checkbox [checked]="activeStaffCount === items.length" 
+                              [indeterminate]="activeStaffCount > 0 && activeStaffCount < items.length"
+                              (change)="toggleAll($event.checked)"></mat-checkbox>
+              </th>
+              <th>Employee</th>
+              <th style="text-align: right;">Base System Pay</th>
+              <th style="width: 140px; text-align: center;">Vale (Advance)</th>
+              <th style="width: 140px; text-align: center;">Bonus / Adj.</th>
+              <th style="width: 160px;">Adjustment Reason</th>
+              <th style="text-align: right;">Net Payout</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of items" [class.excluded-row]="!item.included">
+              <td>
+                <mat-checkbox [(ngModel)]="item.included"></mat-checkbox>
+              </td>
+              <td>
+                <div class="staff-cell">
+                  <strong>{{ item.staffName }}</strong>
+                  <small>{{ item.roles.join(', ') || 'Staff' }} • {{ item.daysPresent }} days</small>
+                </div>
+              </td>
+              <td style="text-align: right;">
+                <span class="base-pay">₱{{ item.baseCompensation | number:'1.2-2' }}</span>
+              </td>
+              <td>
+                <div class="input-prefix-box" [matTooltip]="item.valeNote || ''">
+                  <span class="prefix">-₱</span>
+                  <input type="number" min="0" class="mini-input vale-input"
+                         [(ngModel)]="item.valeDeduction" 
+                         (ngModelChange)="recalculateRow(item)"
+                         [disabled]="!item.included"
+                         placeholder="0.00">
+                </div>
+              </td>
+              <td>
+                <div class="input-prefix-box">
+                  <span class="prefix">±₱</span>
+                  <input type="number" class="mini-input"
+                         [(ngModel)]="item.adjustmentAmount" 
+                         (ngModelChange)="recalculateRow(item)"
+                         [disabled]="!item.included"
+                         placeholder="0.00">
+                </div>
+              </td>
+              <td>
+                <input type="text" class="mini-text-input"
+                       [(ngModel)]="item.adjustmentReason"
+                       [disabled]="!item.included"
+                       placeholder="e.g. Bonus / Penalty">
+              </td>
+              <td style="text-align: right;">
+                <strong class="net-pay" [class.zero]="item.netAmount === 0">
+                  ₱{{ item.netAmount | number:'1.2-2' }}
+                </strong>
+              </td>
+            </tr>
+
+            <tr *ngIf="items.length === 0">
+              <td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8;">
+                No employee compensation records found for this week.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Summary Box -->
+    <div class="summary-pills-grid">
+      <div class="sum-box">
+        <span class="sum-lbl">Total Gross Base</span>
+        <strong class="sum-val">₱{{ totalGross | number:'1.2-2' }}</strong>
+      </div>
+      <div class="sum-box vale-box">
+        <span class="sum-lbl">Total Vale (Advances)</span>
+        <strong class="sum-val">-₱{{ totalVale | number:'1.2-2' }}</strong>
+      </div>
+      <div class="sum-box">
+        <span class="sum-lbl">Net Adjustments</span>
+        <strong class="sum-val">{{ totalAdjustments >= 0 ? '+' : '' }}₱{{ totalAdjustments | number:'1.2-2' }}</strong>
+      </div>
+      <div class="sum-box net-box">
+        <span class="sum-lbl">FINAL NET PAYABLE</span>
+        <strong class="sum-val net-highlight">₱{{ totalNet | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-footer">
+    <button mat-button (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="accent" class="confirm-post-btn" (click)="submit()" [disabled]="totalNet <= 0 || activeStaffCount === 0">
+      <mat-icon>post_add</mat-icon> Confirm & Post to Bills & Payables (₱{{ totalNet | number:'1.2-2' }})
+    </button>
+  </mat-dialog-actions>
+</div>

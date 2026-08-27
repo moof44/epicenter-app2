@@ -24,6 +24,7 @@ import {
   ShiftSummary,
   DenominationBreakdown
 } from '../models/cash-register.model';
+import { OutflowCategory } from '../models/outflow.model';
 
 @Injectable({
   providedIn: 'root'
@@ -109,6 +110,10 @@ export class CashRegisterService {
   isShiftOpen(): boolean {
     const shift = this.currentShift.getValue();
     return shift?.status === 'OPEN';
+  }
+
+  getCurrentShift(): ShiftSession | null {
+    return this.currentShift.getValue();
   }
 
   getCurrentShiftId(): string | undefined {
@@ -224,12 +229,22 @@ export class CashRegisterService {
 
 
   // Manual cash movements
-  async addExpense(amount: number, reason: string, performedBy: string): Promise<void> {
+  async addExpense(
+    amount: number,
+    reason: string,
+    performedBy: string,
+    category?: OutflowCategory,
+    billerOrSupplier?: string,
+    billId?: string
+  ): Promise<void> {
     await this.addCashTransaction({
       type: 'Expense',
       amount,
       reason,
-      performedBy
+      performedBy,
+      category,
+      billerOrSupplier,
+      billId
     });
   }
 
@@ -242,12 +257,22 @@ export class CashRegisterService {
     });
   }
 
-  async addFloatOut(amount: number, reason: string, performedBy: string): Promise<void> {
+  async addFloatOut(
+    amount: number,
+    reason: string,
+    performedBy: string,
+    category?: OutflowCategory,
+    billerOrSupplier?: string,
+    billId?: string
+  ): Promise<void> {
     await this.addCashTransaction({
       type: 'Float_Out',
       amount,
       reason,
-      performedBy
+      performedBy,
+      category,
+      billerOrSupplier,
+      billId
     });
   }
 

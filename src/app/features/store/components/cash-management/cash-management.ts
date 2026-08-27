@@ -16,6 +16,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { TransactionService } from '../../../../core/services/transaction.service';
 import { CashTransactionType } from '../../../../core/models/cash-register.model';
+import { OutflowCategory, OUTFLOW_CATEGORIES, getOutflowCategoryMeta } from '../../../../core/models/outflow.model';
 import { ShiftControlModal } from '../shift-control-modal/shift-control-modal';
 import { fadeIn } from '../../../../core/animations/animations';
 
@@ -40,17 +41,31 @@ export class CashManagement {
   currentShift$ = this.cashRegisterService.currentShift$;
   displayedColumns = ['timestamp', 'type', 'products', 'performer', 'paymentMethod', 'reason', 'amount', 'actions'];
 
+  // Categories metadata
+  readonly categories = OUTFLOW_CATEGORIES;
+  readonly getCategoryMeta = getOutflowCategoryMeta;
+
   // Form state
   showForm = false;
   formType: 'expense' | 'floatIn' | 'floatOut' = 'expense';
   formAmount = 0;
   formReason = '';
+  formCategory: OutflowCategory = 'EXPENSE_SUPPLIES';
+  formBillerOrSupplier = '';
   isSubmitting = false;
 
   openForm(type: 'expense' | 'floatIn' | 'floatOut'): void {
     this.formType = type;
     this.formAmount = 0;
     this.formReason = '';
+    this.formBillerOrSupplier = '';
+    if (type === 'expense') {
+      this.formCategory = 'EXPENSE_SUPPLIES';
+    } else if (type === 'floatOut') {
+      this.formCategory = 'LIABILITY_OWNER';
+    } else {
+      this.formCategory = 'EXPENSE_MISC';
+    }
     this.showForm = true;
   }
 
@@ -75,21 +90,30 @@ export class CashManagement {
 
       switch (this.formType) {
         case 'expense':
-          await this.cashRegisterService.addExpense(this.formAmount, this.formReason, userName);
+          await this.cashRegisterService.addExpense(
+            this.formAmount,
+            this.formReason,
+            userName,
+            this.formCategory,
+            this.formBillerOrSupplier
+          );
           break;
         case 'floatIn':
           await this.cashRegisterService.addFloatIn(this.formAmount, this.formReason, userName);
           break;
         case 'floatOut':
-          await this.cashRegisterService.addFloatOut(this.formAmount, this.formReason, userName);
+          await this.cashRegisterService.addFloatOut(
+            this.formAmount,
+            this.formReason,
+            userName,
+            this.formCategory,
+            this.formBillerOrSupplier
+          );
           break;
       }
       this.snackBar.open('Transaction recorded', 'Close', { duration: 3000 });
       this.closeForm();
     } catch (err: any) {
-      // BUG #5 FIX: Close the form when STALE_SHIFT or SILENT is caught.
-      // Without this, the expense/float form stays open and populated behind the modal,
-      // causing a confusing re-submission loop while the StaleShiftDialog is visible.
       if (err.message === 'STALE_SHIFT' || err.message === 'SILENT') {
         this.closeForm();
         return;

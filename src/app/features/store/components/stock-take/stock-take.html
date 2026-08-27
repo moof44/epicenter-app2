@@ -72,8 +72,13 @@
     <div class="summary">
       <span>Items Counted: <strong>{{ getCountedItems() }}</strong> / {{ dataSource.data.length }}</span>
     </div>
-    <button mat-raised-button color="primary" [disabled]="getCountedItems() === 0" (click)="finalizeAdjustment()">
-      <mat-icon>save_alt</mat-icon> Update Stock Levels
-    </button>
+    <div class="action-buttons-group">
+      <button mat-stroked-button color="accent" (click)="draftPurchaseRequestFromDeficits()" [disabled]="isDraftingPR">
+        <mat-icon>shopping_cart_checkout</mat-icon> Draft Restock PR
+      </button>
+      <button mat-raised-button color="primary" [disabled]="getCountedItems() === 0" (click)="finalizeAdjustment()">
+        <mat-icon>save_alt</mat-icon> Update Stock Levels
+      </button>
+    </div>
   </div>
 </div>

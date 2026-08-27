@@ -151,6 +151,12 @@
   font-size: 18px;
 }
 
+.action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* Responsive adjustments */
 @media (min-width: 800px) {
   .actions-bar {

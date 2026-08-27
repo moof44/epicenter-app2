@@ -1,0 +1,484 @@
+.health-container {
+  padding: 24px;
+  max-width: 1350px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.header-titles h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.header-titles .subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.period-pills {
+  display: flex;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.period-pills button {
+  border-radius: 8px !important;
+  font-size: 12px !important;
+}
+
+.loading-wrap {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+}
+
+.loading-wrap mat-spinner {
+  margin: 0 auto 16px;
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.kpi-icon-wrap {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.kpi-card.net-profit.profit .kpi-icon-wrap {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.kpi-card.net-profit.loss .kpi-icon-wrap {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.kpi-card.revenue .kpi-icon-wrap {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.kpi-card.outflows .kpi-icon-wrap {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.kpi-card.runway.alert .kpi-icon-wrap {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.grade-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.kpi-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kpi-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.margin-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.margin-pill.positive {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.margin-pill.negative {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.sub-label {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Analytics Grid */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.chart-card, .benchmarks-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.card-header small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.chart-body {
+  margin-top: 16px;
+}
+
+.empty-chart {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+}
+
+.empty-chart mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+/* Benchmark Items */
+.benchmark-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.bench-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.bench-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bench-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.bench-title mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.bench-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.bench-val.bad { color: #dc2626; }
+.bench-val.good { color: #16a34a; }
+
+.meter-track {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 9999px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.meter-fill.bad {
+  background: #ef4444;
+}
+
+.bench-foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.overdue-summary {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.alert-text {
+  color: #b91c1c !important;
+}
+
+.overdue-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #991b1b;
+}
+
+/* Recommendations Board */
+.recommendations-section {
+  margin-top: 10px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.sec-titles h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sec-titles p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.rec-count-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.rec-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.rec-card.sev-critical {
+  border-left: 5px solid #ef4444;
+}
+
+.rec-card.sev-warning {
+  border-left: 5px solid #f59e0b;
+}
+
+.rec-card.sev-positive {
+  border-left: 5px solid #10b981;
+}
+
+.rec-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.rec-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.rec-tag mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.sev-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.sev-critical .sev-badge { background: #fef2f2; color: #b91c1c; }
+.sev-warning .sev-badge { background: #fffbeb; color: #b45309; }
+.sev-positive .sev-badge { background: #f0fdf4; color: #15803d; }
+
+.rec-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.rec-summary {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.rec-impact {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #334155;
+  margin-bottom: 14px;
+}
+
+.rec-action-box {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-text {
+  margin: 0;
+  font-size: 12px;
+  color: #1e293b;
+}
+
+.take-action-btn {
+  width: 100% !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.print-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+
+/* Print Specific Layout */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+  
+  .page-header .period-pills,
+  .print-btn,
+  .take-action-btn,
+  mat-toolbar,
+  mat-sidenav,
+  .mat-drawer-container {
+    display: none !important;
+  }
+
+  .health-container {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .kpi-card,
+  .chart-card,
+  .benchmarks-card,
+  .rec-card {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    break-inside: avoid;
+  }
+}

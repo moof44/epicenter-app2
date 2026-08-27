@@ -55,7 +55,7 @@
         </a>
 
         <a mat-list-item routerLink="/reports" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
+          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
           <mat-icon matListItemIcon>insights</mat-icon>
           <span matListItemTitle>Reports Dashboard</span>
         </a>
@@ -158,6 +158,19 @@
             (click)="mobileQuery.matches ? snav.close() : null">
             <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
             <span matListItemTitle>Shift Management</span>
+          </a>
+        </ng-container>
+
+        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
+          <a mat-list-item routerLink="/store/payables" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>request_quote</mat-icon>
+            <span matListItemTitle>Bills & Payables</span>
+          </a>
+          <a mat-list-item routerLink="/store/financial-health" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>insights</mat-icon>
+            <span matListItemTitle>Financial Health & AI</span>
           </a>
         </ng-container>
 

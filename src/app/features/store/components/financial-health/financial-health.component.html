@@ -1,0 +1,234 @@
+<div class="health-container" [@fadeIn]>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-titles">
+      <h1>Financial Health & AI Advisor</h1>
+      <p class="subtitle">Real-time P&L analysis, gym benchmark ratios, and strategic decision support.</p>
+    </div>
+    <div class="header-actions">
+      <div class="period-pills">
+        <button mat-flat-button [color]="dateFilter() === 'THIS_MONTH' ? 'primary' : ''" (click)="setPeriod('THIS_MONTH')">This Month</button>
+        <button mat-flat-button [color]="dateFilter() === 'LAST_MONTH' ? 'primary' : ''" (click)="setPeriod('LAST_MONTH')">Last Month</button>
+        <button mat-flat-button [color]="dateFilter() === 'LAST_90_DAYS' ? 'primary' : ''" (click)="setPeriod('LAST_90_DAYS')">Last 90 Days</button>
+      </div>
+      <button mat-stroked-button class="print-btn" (click)="printReport()">
+        <mat-icon>print</mat-icon> Print P&L Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading-wrap">
+    <mat-spinner diameter="44"></mat-spinner>
+    <p>Analyzing financial inflows, outflows, and benchmark ratios...</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading() && summary() as s">
+    <!-- Executive KPI Cards Grid -->
+    <div class="kpi-grid">
+      <!-- Net Profit Card -->
+      <div class="kpi-card net-profit" [class.profit]="s.netProfit >= 0" [class.loss]="s.netProfit < 0">
+        <div class="kpi-icon-wrap">
+          <mat-icon>{{ s.netProfit >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+        </div>
+        <div class="kpi-data">
+          <span class="kpi-label">Net Operating Profit</span>
+          <strong class="kpi-val">₱{{ s.netProfit | number:'1.2-2' }}</strong>
+          <span class="margin-pill" [class.positive]="s.netProfitMargin >= 15" [class.negative]="s.netProfitMargin < 0">
+            {{ s.netProfitMargin >= 0 ? '+' : '' }}{{ s.netProfitMargin }}% Net Margin
+          </span>
+        </div>
+      </div>
+
+      <!-- Total Inflows -->
+      <div class="kpi-card revenue">
+        <div class="kpi-icon-wrap">
+          <mat-icon>add_circle_outline</mat-icon>
+        </div>
+        <div class="kpi-data">
+          <span class="kpi-label">Total Ingoing Revenue</span>
+          <strong class="kpi-val">₱{{ s.totalRevenue | number:'1.2-2' }}</strong>
+          <small class="sub-label">POS + Memberships + Passes</small>
+        </div>
+      </div>
+
+      <!-- Total Outflows -->
+      <div class="kpi-card outflows">
+        <div class="kpi-icon-wrap">
+          <mat-icon>remove_circle_outline</mat-icon>
+        </div>
+        <div class="kpi-data">
+          <span class="kpi-label">Total Outgoing Expenses</span>
+          <strong class="kpi-val">₱{{ s.totalOutflows | number:'1.2-2' }}</strong>
+          <small class="sub-label">Utilities + Wages + Stock + OPEX</small>
+        </div>
+      </div>
+
+      <!-- Cash Runway -->
+      <div class="kpi-card runway" [class.alert]="s.runwayDays < 15">
+        <div class="kpi-icon-wrap">
+          <mat-icon>hourglass_bottom</mat-icon>
+        </div>
+        <div class="kpi-data">
+          <span class="kpi-label">Operating Cash Buffer</span>
+          <strong class="kpi-val">{{ s.runwayDays > 365 ? '30+ Days' : s.runwayDays + ' Days' }}</strong>
+          <small class="sub-label">Runway in active till cash</small>
+        </div>
+      </div>
+
+      <!-- Health Score / Grade -->
+      <div class="kpi-card grade-card">
+        <div class="grade-badge" [style.background]="getGradeColor(s.healthGrade)">
+          {{ s.healthGrade }}
+        </div>
+        <div class="kpi-data">
+          <span class="kpi-label">Gym Health Score</span>
+          <strong class="kpi-val">{{ s.healthScore }} / 100</strong>
+          <small class="sub-label">Overall Financial Stability</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts & Benchmarks Grid -->
+    <div class="analytics-grid">
+      <!-- Outflow Category Donut Chart -->
+      <div class="chart-card mat-elevation-z2">
+        <div class="card-header">
+          <h3>Outflows Distribution ("Money Eaters")</h3>
+          <small>Breakdown of where money was spent this period</small>
+        </div>
+
+        <div class="chart-body" *ngIf="s.outflowBreakdown.length > 0">
+          <apx-chart
+            [series]="donutChartSeries"
+            [labels]="donutChartLabels"
+            [colors]="donutChartColors"
+            [chart]="donutChartOptions.chart"
+            [legend]="donutChartOptions.legend"
+            [plotOptions]="donutChartOptions.plotOptions"
+            [dataLabels]="donutChartOptions.dataLabels"
+          ></apx-chart>
+        </div>
+
+        <div class="empty-chart" *ngIf="s.outflowBreakdown.length === 0">
+          <mat-icon>bar_chart</mat-icon>
+          <p>No outflows recorded in this date range.</p>
+        </div>
+      </div>
+
+      <!-- Benchmark Metrics Cards -->
+      <div class="benchmarks-card mat-elevation-z2">
+        <div class="card-header">
+          <h3>Gym Industry Health Benchmarks</h3>
+          <small>Performance measured against optimal target ratios</small>
+        </div>
+
+        <div class="benchmark-list">
+          <!-- Payroll Ratio -->
+          <div class="bench-item">
+            <div class="bench-top">
+              <span class="bench-title">
+                <mat-icon style="color: #10b981;">badge</mat-icon> Payroll / Labor Ratio
+              </span>
+              <strong class="bench-val" [class.bad]="s.payrollRatio > 40" [class.good]="s.payrollRatio <= 35">
+                {{ s.payrollRatio }}%
+              </strong>
+            </div>
+            <div class="meter-track">
+              <div class="meter-fill" [style.width.%]="Math.min(100, s.payrollRatio * 2)" [class.bad]="s.payrollRatio > 40"></div>
+            </div>
+            <div class="bench-foot">
+              <span>Target Benchmark: <strong>30% – 35%</strong></span>
+              <span>Total Wages: ₱{{ s.payrollAmount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- Utilities Ratio -->
+          <div class="bench-item">
+            <div class="bench-top">
+              <span class="bench-title">
+                <mat-icon style="color: #eab308;">bolt</mat-icon> Utilities Ratio (Electricity + Water)
+              </span>
+              <strong class="bench-val" [class.bad]="s.utilitiesRatio > 15" [class.good]="s.utilitiesRatio <= 12">
+                {{ s.utilitiesRatio }}%
+              </strong>
+            </div>
+            <div class="meter-track">
+              <div class="meter-fill" [style.width.%]="Math.min(100, s.utilitiesRatio * 4)" [class.bad]="s.utilitiesRatio > 15"></div>
+            </div>
+            <div class="bench-foot">
+              <span>Target Benchmark: <strong>8% – 12%</strong></span>
+              <span>Total Utilities: ₱{{ s.utilitiesAmount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- COGS / Stock Ratio -->
+          <div class="bench-item">
+            <div class="bench-top">
+              <span class="bench-title">
+                <mat-icon style="color: #8b5cf6;">inventory_2</mat-icon> Retail COGS Ratio
+              </span>
+              <strong class="bench-val">
+                {{ s.cogsRatio }}%
+              </strong>
+            </div>
+            <div class="meter-track">
+              <div class="meter-fill" [style.width.%]="Math.min(100, s.cogsRatio * 3)"></div>
+            </div>
+            <div class="bench-foot">
+              <span>Retail Stock Expense: ₱{{ s.cogsAmount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- Overdue Liabilities Summary -->
+          <div class="bench-item overdue-summary" *ngIf="s.overdueBillsCount > 0">
+            <div class="bench-top">
+              <span class="bench-title alert-text">
+                <mat-icon color="warn">warning</mat-icon> Overdue Liabilities Alert
+              </span>
+              <strong class="bench-val alert-text">{{ s.overdueBillsCount }} Bills</strong>
+            </div>
+            <p class="overdue-desc">₱{{ s.overdueBillsAmount | number:'1.2-2' }} total past due obligations.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Strategic Recommendations Board -->
+    <div class="recommendations-section">
+      <div class="section-header">
+        <div class="sec-titles">
+          <h2>AI Strategic Recommendations</h2>
+          <p>Automated decision support based on financial thresholds and cash pace</p>
+        </div>
+        <span class="rec-count-badge">{{ s.recommendations.length }} Action Items</span>
+      </div>
+
+      <div class="rec-grid">
+        <div class="rec-card" *ngFor="let rec of s.recommendations" [ngClass]="getSeverityClass(rec.severity)">
+          <div class="rec-card-top">
+            <div class="rec-tag">
+              <mat-icon>{{ rec.icon }}</mat-icon>
+              <span>{{ rec.category }}</span>
+            </div>
+            <span class="sev-badge">{{ rec.severity }}</span>
+          </div>
+
+          <h3 class="rec-title">{{ rec.title }}</h3>
+          <p class="rec-summary">{{ rec.summary }}</p>
+
+          <div class="rec-impact">
+            <strong>Impact:</strong> {{ rec.impact }}
+          </div>
+
+          <div class="rec-action-box">
+            <p class="action-text"><strong>Recommended Action:</strong> {{ rec.actionText }}</p>
+            <button mat-raised-button color="primary" class="take-action-btn" (click)="navigateToAction(rec.actionRoute)">
+              Take Action <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

@@ -32,9 +32,22 @@ import {
     KioskDevice
 } from '../../../../core/models/staff-attendance.model';
 import { User } from '../../../../core/models/user.model';
+import { PayablesService } from '../../../../core/services/payables.service';
+import {
+    Firestore,
+    collection,
+    query,
+    where,
+    getDocs,
+    Timestamp
+} from '@angular/fire/firestore';
 import { fadeIn } from '../../../../core/animations/animations';
 import { firstValueFrom, Observable } from 'rxjs';
 import { AttendanceRecordDialogComponent } from '../../components/attendance-record-dialog/attendance-record-dialog';
+import {
+    PayrollAdjustmentDialogComponent,
+    PayrollDialogResult
+} from '../../components/payroll-adjustment-dialog/payroll-adjustment-dialog';
 
 @Component({
     selector: 'app-staff-attendance-admin',
@@ -68,6 +81,8 @@ export class StaffAttendanceAdminComponent implements OnInit {
     private userService = inject(UserService);
     private settingsService = inject(SettingsService);
     private authService = inject(AuthService);
+    private payablesService = inject(PayablesService);
+    private firestore = inject(Firestore);
     private snackBar = inject(MatSnackBar);
     private dialog = inject(MatDialog);
     private fb = inject(FormBuilder);
@@ -95,6 +110,7 @@ export class StaffAttendanceAdminComponent implements OnInit {
     weeklySummaries = signal<StaffWeeklyAttendanceSummary[]>([]);
     expandedStaffId = signal<string | null>(null);
     isLoadingReport = signal(false);
+    isPostingPayroll = signal(false);
 
     displayedSummaries = computed(() => {
         const summaries = this.weeklySummaries();
@@ -108,6 +124,10 @@ export class StaffAttendanceAdminComponent implements OnInit {
             if (!user) return true;
             return filter === 'ACTIVE' ? user.isActive !== false : user.isActive === false;
         });
+    });
+
+    totalWeeklyCompensation = computed(() => {
+        return this.displayedSummaries().reduce((sum, s) => sum + (s.totalCompensation || 0), 0);
     });
 
     // Pending Adjustments
@@ -359,8 +379,98 @@ export class StaffAttendanceAdminComponent implements OnInit {
         const link = document.createElement('a');
         link.setAttribute('href', encodedUri);
         link.setAttribute('download', `Staff_Payroll_Attendance_${this.currentSunday().toISOString().substring(0, 10)}.csv`);
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+    }
+
+    async postWeeklyPayrollToPayables(): Promise<void> {
+        const summaries = this.displayedSummaries();
+        if (!summaries || summaries.length === 0) {
+            this.snackBar.open('No staff attendance summaries available for this week.', 'Close', { duration: 3000 });
+            return;
+        }
+
+        const sun = this.currentSunday();
+        const sat = this.currentSaturday();
+
+        // 1. Query Shift drawer expenses for SALARY_ADVANCE in [sun, sat]
+        const detectedVales: Record<string, { amount: number; note: string }> = {};
+        try {
+            const shiftsColl = collection(this.firestore, 'shifts');
+            const shiftsQ = query(
+                shiftsColl,
+                where('startTime', '>=', Timestamp.fromDate(sun)),
+                where('startTime', '<=', Timestamp.fromDate(sat))
+            );
+            const shiftsSnap = await getDocs(shiftsQ);
+            shiftsSnap.forEach(docSnap => {
+                const shiftData = docSnap.data();
+                const txs = shiftData['transactions'] || [];
+                txs.forEach((tx: any) => {
+                    if ((tx.type === 'Expense' || tx.type === 'Float_Out') && !tx.voided && tx.category === 'SALARY_ADVANCE') {
+                        const payee = (tx.billerOrSupplier || tx.notes || '').toLowerCase().trim();
+                        const amt = Number(tx.amount || 0);
+                        if (payee && amt > 0) {
+                            if (!detectedVales[payee]) {
+                                detectedVales[payee] = { amount: amt, note: `₱${amt.toLocaleString()} from Shift Drawer` };
+                            } else {
+                                detectedVales[payee].amount += amt;
+                                detectedVales[payee].note += `, +₱${amt.toLocaleString()}`;
+                            }
+                        }
+                    }
+                });
+            });
+        } catch (e) {
+            console.warn('Could not query shift vales:', e);
+        }
+
+        // 2. Open Payroll Adjustment Dialog
+        const dialogRef = this.dialog.open(PayrollAdjustmentDialogComponent, {
+            width: '960px',
+            maxWidth: '95vw',
+            data: {
+                sunday: sun,
+                saturday: sat,
+                staffSummaries: summaries,
+                detectedVales
+            }
+        });
+
+        dialogRef.afterClosed().subscribe(async (result: PayrollDialogResult | undefined) => {
+            if (!result) return;
+
+            this.isPostingPayroll.set(true);
+            try {
+                const user = this.authService.userProfile();
+                const userName = user?.displayName || user?.email || 'Admin';
+
+                await this.payablesService.createBill({
+                    title: result.title,
+                    category: 'SALARY_STAFF',
+                    billerOrSupplier: 'Gym Staff & Coaches',
+                    billingPeriodStart: sun,
+                    billingPeriodEnd: sat,
+                    dueDate: sat,
+                    totalAmountDue: result.totalNet,
+                    notes: result.notes,
+                    createdBy: userName
+                });
+
+                const snack = this.snackBar.open(
+                    `Weekly Payroll (Net: ₱${result.totalNet.toLocaleString()}) posted to Bills & Payables!`,
+                    'View Payables',
+                    { duration: 5000 }
+                );
+
+                snack.onAction().subscribe(() => {
+                    this.router.navigate(['/store/payables']);
+                });
+            } catch (err: any) {
+                console.error('Failed to post weekly payroll:', err);
+                this.snackBar.open(err.message || 'Failed to post payroll bill', 'Close', { duration: 3000 });
+            } finally {
+                this.isPostingPayroll.set(false);
+            }
+        });
     }
 }

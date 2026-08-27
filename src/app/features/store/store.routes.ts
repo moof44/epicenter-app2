@@ -38,6 +38,18 @@ export const storeRoutes: Routes = [
     data: { animation: 'CashPage', roles: ['ADMIN', 'MANAGER', 'STAFF'] }
   },
   {
+    path: 'payables',
+    loadComponent: () => import('./components/bills-payables/bills-payables.component').then(m => m.BillsPayablesComponent),
+    canActivate: [roleGuard],
+    data: { animation: 'PayablesPage', roles: ['ADMIN', 'MANAGER'] }
+  },
+  {
+    path: 'financial-health',
+    loadComponent: () => import('./components/financial-health/financial-health.component').then(m => m.FinancialHealthComponent),
+    canActivate: [roleGuard],
+    data: { animation: 'HealthPage', roles: ['ADMIN', 'MANAGER'] }
+  },
+  {
     path: 'reports',
     loadComponent: () => import('./components/shift-history/shift-history').then(m => m.ShiftHistory),
     canActivate: [roleGuard],

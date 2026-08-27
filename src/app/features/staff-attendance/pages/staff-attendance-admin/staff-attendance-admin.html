@@ -68,6 +68,28 @@
                     </div>
                 </mat-card>
 
+                <!-- Weekly Saturday Payroll Action Banner -->
+                <div class="weekly-payroll-banner mat-elevation-z1">
+                    <div class="payroll-banner-left">
+                        <div class="pay-icon-box">
+                            <mat-icon>payments</mat-icon>
+                        </div>
+                        <div class="pay-info">
+                            <div class="pay-title">Weekly Saturday Payroll · Week Ending {{ currentSaturday() | date:'mediumDate' }}</div>
+                            <div class="pay-subtitle">Sunday to Saturday compensation for {{ displayedSummaries().length }} staff members</div>
+                        </div>
+                    </div>
+                    <div class="payroll-banner-right">
+                        <div class="pay-total-box">
+                            <span class="pay-label">Total Compensation Due</span>
+                            <strong class="pay-amount">₱{{ totalWeeklyCompensation() | number:'1.2-2' }}</strong>
+                        </div>
+                        <button mat-raised-button color="accent" class="post-payroll-btn" (click)="postWeeklyPayrollToPayables()" [disabled]="isPostingPayroll() || totalWeeklyCompensation() <= 0">
+                            <mat-icon>post_add</mat-icon> {{ isPostingPayroll() ? 'Posting...' : 'Post to Bills & Payables →' }}
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Weekly Summary Matrix Table -->
                 <mat-card class="matrix-card">
                     <table mat-table [dataSource]="displayedSummaries()" class="summary-table">
