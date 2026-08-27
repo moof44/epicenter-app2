@@ -28,7 +28,8 @@ export class NotificationService implements OnDestroy {
   private router = inject(Router);
 
   // VAPID key from Firebase Console -> Project Settings -> Cloud Messaging -> Web Configuration
-  private vapidKey = 'BH0q7xZ4YJ8_5eI9g7J4K5V8AYUMMo_d7Pc8x_vUYK1WvUYM_Uu8e_x-xAYU-v1_XAYUMMo';
+  // Leave empty until a valid Web Push Certificate key pair is generated in Firebase Console
+  private vapidKey = '';
 
   notifications = signal<NotificationItem[]>([]);
   unreadCount = signal(0);
@@ -68,29 +69,33 @@ export class NotificationService implements OnDestroy {
     if (!user) return;
 
     if (!('Notification' in window) || !('serviceWorker' in navigator) || !this.messaging) {
-      console.warn('Web Push Notifications are not supported in this browser.');
       return;
     }
 
     try {
       // 1. Request Browser Permission
       const permission = await Notification.requestPermission();
-      if (permission === 'granted' && this.messaging) {
-        // 2. Fetch FCM Token
-        const token = await getToken(this.messaging, {
-          vapidKey: this.vapidKey
-        });
+      if (permission === 'granted' && this.messaging && this.vapidKey) {
+        try {
+          // 2. Fetch FCM Token
+          const token = await getToken(this.messaging, {
+            vapidKey: this.vapidKey
+          });
 
-        if (token) {
-          // 3. Register Token in user's subcollection
-          await this.registerDeviceToken(user.uid, token);
+          if (token) {
+            // 3. Register Token in user's subcollection
+            await this.registerDeviceToken(user.uid, token);
+          }
+        } catch (fcmErr: any) {
+          // If VAPID key is mismatched/invalid in Firebase console, log diagnostic info without breaking app
+          console.info('[FCM] Push token registration skipped (Valid Web Push VAPID key required from Firebase Console):', fcmErr?.message || fcmErr);
         }
       }
 
       // 4. Register Foreground Message Handler
       this.setupForegroundListener();
     } catch (err) {
-      console.warn('Failed to initialize push notifications:', err);
+      console.warn('[NotificationService] Failed to initialize push notifications:', err);
     }
   }
 
