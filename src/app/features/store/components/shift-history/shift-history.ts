@@ -11,13 +11,14 @@ import { MatSidenavModule, MatDrawer } from '@angular/material/sidenav';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTabsModule } from '@angular/material/tabs';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
-import { ShiftSession, CashTransaction } from '../../../../core/models/cash-register.model';
+import { ShiftSession, CashTransaction, HandoverDenominationAudit, DenominationAuditDiffItem } from '../../../../core/models/cash-register.model';
 import {
   calculateVariance,
   getVarianceType,
   calculateNetCashFlow,
   filterTransactionsByType,
-  formatShiftDate
+  formatShiftDate,
+  compareDenominations
 } from '../../../../core/utils/cash-register.utils';
 import { fadeIn } from '../../../../core/animations/animations';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -32,6 +33,7 @@ export interface EnrichedShiftSession extends ShiftSession {
   prevShiftEndTime?: any;
   handoverDiscrepancy?: number | null;
   handoverStatus?: 'MATCHED' | 'SHORTAGE' | 'OVERAGE' | 'INITIAL';
+  computedHandoverAudit?: HandoverDenominationAudit | null;
 }
 
 @Component({
@@ -106,7 +108,8 @@ export class ShiftHistory implements AfterViewInit, OnInit {
             prevShiftClosedBy: null,
             prevShiftEndTime: null,
             handoverDiscrepancy: 0,
-            handoverStatus: 'INITIAL'
+            handoverStatus: 'INITIAL',
+            computedHandoverAudit: shift.handoverAudit || null
           };
         }
 
@@ -125,6 +128,17 @@ export class ShiftHistory implements AfterViewInit, OnInit {
           status = 'OVERAGE';
         }
 
+        // Compute or reuse HandoverDenominationAudit
+        const audit = shift.handoverAudit || compareDenominations(
+          prev.closingDenominations,
+          shift.openingDenominations,
+          prevEnding || 0,
+          shift.openingBalance || 0,
+          prev.id,
+          prev.closedBy || prev.openedBy,
+          shift.openingRemarks
+        );
+
         return {
           ...shift,
           prevShift: prev,
@@ -132,7 +146,8 @@ export class ShiftHistory implements AfterViewInit, OnInit {
           prevShiftClosedBy: prev.closedBy,
           prevShiftEndTime: prev.endTime,
           handoverDiscrepancy: roundedDiff,
-          handoverStatus: status
+          handoverStatus: status,
+          computedHandoverAudit: audit
         };
       });
 
@@ -185,13 +200,13 @@ export class ShiftHistory implements AfterViewInit, OnInit {
       return 'First recorded shift in timeline';
     }
     const prevClosing = shift.prevShiftEndingBalance !== null && shift.prevShiftEndingBalance !== undefined 
-      ? `₱${shift.prevShiftEndingBalance.toFixed(2)}` 
+      ? ('₱' + shift.prevShiftEndingBalance.toFixed(2))
       : 'N/A';
-    const closer = shift.prevShiftClosedBy ? ` (Closed by ${shift.prevShiftClosedBy})` : '';
+    const closer = shift.prevShiftClosedBy ? (' (Closed by ' + shift.prevShiftClosedBy + ')') : '';
     const diff = shift.handoverDiscrepancy !== null && shift.handoverDiscrepancy !== undefined
-      ? ` • Diff: ${shift.handoverDiscrepancy > 0 ? '+' : ''}₱${shift.handoverDiscrepancy.toFixed(2)}`
+      ? (' • Diff: ' + (shift.handoverDiscrepancy > 0 ? '+' : '') + '₱' + shift.handoverDiscrepancy.toFixed(2))
       : '';
-    return `Previous shift closing was ${prevClosing}${closer}${diff}`;
+    return 'Previous shift closing was ' + prevClosing + closer + diff;
   }
 
   // Drill-down
@@ -255,5 +270,14 @@ export class ShiftHistory implements AfterViewInit, OnInit {
     }
     // Sort high to low
     return entries.sort((a, b) => b.value - a.value);
+  }
+
+  getHandoverDiffItems(shift: EnrichedShiftSession): DenominationAuditDiffItem[] {
+    return shift.computedHandoverAudit?.diffItems || [];
+  }
+
+  hasHandoverDiscrepancies(shift: EnrichedShiftSession): boolean {
+    if (!shift.computedHandoverAudit) return false;
+    return shift.computedHandoverAudit.status !== 'PERFECT_MATCH';
   }
 }

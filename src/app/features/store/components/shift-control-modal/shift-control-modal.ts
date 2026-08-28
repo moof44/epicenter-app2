@@ -11,9 +11,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
-import { ShiftSession, ShiftSummary, DenominationBreakdown } from '../../../../core/models/cash-register.model';
+import { ShiftSession, ShiftSummary, DenominationBreakdown, HandoverDenominationAudit } from '../../../../core/models/cash-register.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { compareDenominations } from '../../../../core/utils/cash-register.utils';
 
 export interface DenominationItem {
   denomination: number;
@@ -48,13 +49,33 @@ export class ShiftControlModal implements OnInit {
   // Opening form
   openingBalance = 0;
   suggestedBalance = 0;
+  openingRemarks = '';
+  isOpeningManualOverride = false;
+  isLiabilityConfirmed = false;
+  isSameAsPreviousActive = false;
+  handoverAudit: HandoverDenominationAudit | null = null;
+
+  openingBillDenominations: DenominationItem[] = [
+    { denomination: 1000, label: '₱1,000', type: 'BILL', count: 0 },
+    { denomination: 500, label: '₱500', type: 'BILL', count: 0 },
+    { denomination: 200, label: '₱200', type: 'BILL', count: 0 },
+    { denomination: 100, label: '₱100', type: 'BILL', count: 0 },
+    { denomination: 50, label: '₱50', type: 'BILL', count: 0 },
+    { denomination: 20, label: '₱20', type: 'BILL', count: 0 }
+  ];
+
+  openingCoinDenominations: DenominationItem[] = [
+    { denomination: 20, label: '₱20 Coin', type: 'COIN', count: 0 },
+    { denomination: 10, label: '₱10 Coin', type: 'COIN', count: 0 },
+    { denomination: 5, label: '₱5 Coin', type: 'COIN', count: 0 },
+    { denomination: 1, label: '₱1 Coin', type: 'COIN', count: 0 },
+    { denomination: 0.25, label: '25¢ Coin', type: 'COIN', count: 0 }
+  ];
 
   // Closing form & Multi-step wizard
   closingStep: 'SUMMARY' | 'COUNT' = 'SUMMARY';
   actualClosingBalance = 0;
   shiftSummary: ShiftSummary | null = null;
-
-  // Denomination Breakdown (Default) vs Manual Override
   isManualOverride = false;
 
   billDenominations: DenominationItem[] = [
@@ -102,6 +123,8 @@ export class ShiftControlModal implements OnInit {
       this.suggestedBalance = lastShift.expectedClosingBalance;
       this.openingBalance = this.suggestedBalance;
     }
+
+    this.recalculateHandoverAudit();
   }
 
   switchUser(): void {
@@ -117,7 +140,161 @@ export class ShiftControlModal implements OnInit {
     this.closingStep = 'SUMMARY';
   }
 
-  // Denomination Counting Logic
+  // ════════════════ OPENING COUNT & HANDOVER LOGIC ════════════════
+
+  copyPreviousHandover(): void {
+    if (!this.lastClosedShift) return;
+
+    const prevClosingDenoms = this.lastClosedShift.closingDenominations || {};
+    
+    for (const b of this.openingBillDenominations) {
+      b.count = Number(prevClosingDenoms[String(b.denomination)] || 0);
+    }
+    for (const c of this.openingCoinDenominations) {
+      c.count = Number(prevClosingDenoms[String(c.denomination)] || 0);
+    }
+
+    this.openingBalance = this.getCalculatedOpeningTotal();
+    this.isSameAsPreviousActive = true;
+    this.isLiabilityConfirmed = true;
+    this.recalculateHandoverAudit();
+    this.snackBar.open('Copied exact handover count from previous shift.', 'Close', { duration: 2500 });
+  }
+
+  onOpeningDenominationChange(): void {
+    this.isSameAsPreviousActive = false;
+    if (!this.isOpeningManualOverride) {
+      this.openingBalance = this.getCalculatedOpeningTotal();
+    }
+    this.recalculateHandoverAudit();
+  }
+
+  getCalculatedOpeningTotal(): number {
+    let total = 0;
+    for (const b of this.openingBillDenominations) {
+      total += (b.count || 0) * b.denomination;
+    }
+    for (const c of this.openingCoinDenominations) {
+      total += (c.count || 0) * c.denomination;
+    }
+    return Math.round(total * 100) / 100;
+  }
+
+  getOpeningPieces(): number {
+    let total = 0;
+    for (const b of this.openingBillDenominations) {
+      total += (b.count || 0);
+    }
+    for (const c of this.openingCoinDenominations) {
+      total += (c.count || 0);
+    }
+    return total;
+  }
+
+  toggleOpeningManualOverride(): void {
+    if (!this.isOpeningManualOverride) {
+      this.openingBalance = this.getCalculatedOpeningTotal();
+    }
+    this.recalculateHandoverAudit();
+  }
+
+  clearOpeningDenominations(): void {
+    this.openingBillDenominations.forEach(b => b.count = 0);
+    this.openingCoinDenominations.forEach(c => c.count = 0);
+    this.isSameAsPreviousActive = false;
+    if (!this.isOpeningManualOverride) {
+      this.openingBalance = 0;
+    }
+    this.recalculateHandoverAudit();
+  }
+
+  getPrevCount(denomination: number): number {
+    if (!this.lastClosedShift?.closingDenominations) return 0;
+    return Number(this.lastClosedShift.closingDenominations[String(denomination)] || 0);
+  }
+
+  getOpeningDiff(item: DenominationItem): number {
+    const prev = this.getPrevCount(item.denomination);
+    return (item.count || 0) - prev;
+  }
+
+  recalculateHandoverAudit(): void {
+    const prevClosingCash = (this.lastClosedShift?.actualClosingBalance !== null && this.lastClosedShift?.actualClosingBalance !== undefined)
+      ? this.lastClosedShift.actualClosingBalance
+      : (this.lastClosedShift?.expectedClosingBalance || 0);
+
+    const openBreakdown: DenominationBreakdown = {};
+    if (!this.isOpeningManualOverride) {
+      for (const b of this.openingBillDenominations) {
+        if (b.count > 0) openBreakdown[String(b.denomination)] = b.count;
+      }
+      for (const c of this.openingCoinDenominations) {
+        if (c.count > 0) openBreakdown[String(c.denomination)] = c.count;
+      }
+    }
+
+    this.handoverAudit = compareDenominations(
+      this.lastClosedShift?.closingDenominations,
+      openBreakdown,
+      prevClosingCash,
+      this.openingBalance,
+      this.lastClosedShift?.id,
+      this.lastClosedShift?.closedBy || this.lastClosedShift?.openedBy,
+      this.openingRemarks
+    );
+  }
+
+  async openShift(): Promise<void> {
+    if (this.openingBalance < 0) {
+      this.snackBar.open('Opening balance cannot be negative', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.recalculateHandoverAudit();
+
+    // If there is a cash mismatch and no remarks, suggest a note
+    if (this.handoverAudit && this.handoverAudit.status === 'CASH_MISMATCH' && !this.openingRemarks.trim()) {
+      if (!confirm('There is a cash difference of ₱' + Math.abs(this.handoverAudit.cashVariance).toFixed(2) + ' vs previous shift close without remarks. Do you still want to proceed?')) {
+        return;
+      }
+    }
+
+    this.isLoading = true;
+    try {
+      const user = this.authService.userProfile();
+      const userName = user?.displayName || user?.email || 'Unknown Staff';
+
+      let denominations: DenominationBreakdown | null = null;
+      if (!this.isOpeningManualOverride) {
+        denominations = {};
+        for (const b of this.openingBillDenominations) {
+          if (b.count > 0) denominations[String(b.denomination)] = b.count;
+        }
+        for (const c of this.openingCoinDenominations) {
+          if (c.count > 0) denominations[String(c.denomination)] = c.count;
+        }
+      }
+
+      await this.cashRegisterService.openShift(
+        this.openingBalance,
+        userName,
+        this.isOpeningManualOverride,
+        denominations,
+        this.openingRemarks,
+        this.handoverAudit
+      );
+
+      this.snackBar.open('Shift opened successfully', 'Close', { duration: 3000 });
+      this.dialogRef.close(true);
+    } catch (err: any) {
+      this.snackBar.open(err.message || 'Failed to open shift', 'Close', { duration: 3000 });
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // ════════════════ CLOSING COUNT LOGIC ════════════════
+
   onDenominationChange(): void {
     if (!this.isManualOverride) {
       this.actualClosingBalance = this.getCalculatedDenominationTotal();
@@ -148,7 +325,6 @@ export class ShiftControlModal implements OnInit {
 
   toggleManualOverride(): void {
     if (!this.isManualOverride) {
-      // Re-sync with calculated denomination count
       this.actualClosingBalance = this.getCalculatedDenominationTotal();
     }
   }
@@ -158,26 +334,6 @@ export class ShiftControlModal implements OnInit {
     this.coinDenominations.forEach(c => c.count = 0);
     if (!this.isManualOverride) {
       this.actualClosingBalance = 0;
-    }
-  }
-
-  async openShift(): Promise<void> {
-    if (this.openingBalance < 0) {
-      this.snackBar.open('Opening balance cannot be negative', 'Close', { duration: 3000 });
-      return;
-    }
-
-    this.isLoading = true;
-    try {
-      const user = this.authService.userProfile();
-      const userName = user?.displayName || user?.email || 'Unknown Staff';
-      await this.cashRegisterService.openShift(this.openingBalance, userName);
-      this.snackBar.open('Shift opened successfully', 'Close', { duration: 3000 });
-      this.dialogRef.close(true);
-    } catch (err: any) {
-      this.snackBar.open(err.message || 'Failed to open shift', 'Close', { duration: 3000 });
-    } finally {
-      this.isLoading = false;
     }
   }
 
@@ -214,7 +370,7 @@ export class ShiftControlModal implements OnInit {
       if (this.isManualOverride) {
         await this.notificationService.notifyAdmins(
           '⚠️ Shift Closed with Manual Cash Override',
-          `${userName} closed shift with a manual total of ₱${this.actualClosingBalance.toFixed(2)} without itemized denomination breakdown.`,
+          userName + ' closed shift with a manual total of ₱' + this.actualClosingBalance.toFixed(2) + ' without itemized denomination breakdown.',
           '/store/reports',
           { shiftId: this.currentShift?.id, staffName: userName, amount: this.actualClosingBalance }
         );
@@ -237,7 +393,7 @@ export class ShiftControlModal implements OnInit {
     try {
       const result = await this.cashRegisterService.recalculateShiftTotals(this.currentShift.id);
       this.shiftSummary = this.cashRegisterService.getShiftSummary();
-      this.snackBar.open(`Recalculated. Adjustment: ₱${result.salesDiff.toFixed(2)}`, 'Close', { duration: 4000 });
+      this.snackBar.open('Recalculated. Adjustment: ₱' + result.salesDiff.toFixed(2), 'Close', { duration: 4000 });
     } catch (error: any) {
       this.snackBar.open('Recalculation failed: ' + error.message, 'Close', { duration: 3000 });
     } finally {

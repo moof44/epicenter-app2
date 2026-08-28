@@ -26,9 +26,17 @@ export const appConfig: ApplicationConfig = {
     provideStorage(() => getStorage()),
     provideMessaging(() => {
       try {
-        return getMessaging();
+        const isSupported = typeof window !== 'undefined'
+          && 'serviceWorker' in navigator
+          && 'PushManager' in window
+          && 'Notification' in window
+          && 'indexedDB' in window;
+
+        if (isSupported) {
+          return getMessaging();
+        }
+        return null as any;
       } catch (e) {
-        console.warn('[Messaging] Push messaging is not supported in this browser environment:', e);
         return null as any;
       }
     }),
