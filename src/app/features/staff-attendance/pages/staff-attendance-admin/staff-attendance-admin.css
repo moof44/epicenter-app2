@@ -11,23 +11,26 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .page-header h1 {
     margin: 0;
     font-size: 1.6rem;
     font-weight: 700;
+    color: var(--mat-sys-on-surface, #1e293b);
 }
 
 .subtitle {
     margin: 4px 0 0;
-    color: #7e8299;
+    color: #64748b;
     font-size: 0.9rem;
 }
 
 .admin-tabs {
-    margin-top: 12px;
+    margin-top: 8px;
 }
 
 .tab-icon {
@@ -36,10 +39,10 @@
 }
 
 .tab-content {
-    padding: 20px 0;
+    padding: 16px 0;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
 }
 
 /* Weekly Saturday Payroll Action Banner */
@@ -72,6 +75,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .pay-icon-box mat-icon {
@@ -128,7 +132,7 @@
 /* Week Navigator Bar */
 .filter-card {
     border-radius: 12px;
-    padding: 16px 24px;
+    padding: 16px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -139,16 +143,18 @@
 .week-navigator {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .week-range-text {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 1.2rem;
+    gap: 8px;
+    font-size: 1.1rem;
     font-weight: 700;
     color: #1e1e2d;
+    flex-wrap: wrap;
 }
 
 .week-label {
@@ -160,14 +166,22 @@
 .filter-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-.date-picker-field {
-    margin-bottom: -1.25em; /* Alignment tweak for Material Form Field inside flex */
+.date-picker-field, .status-select-field {
+    margin-bottom: -1.25em;
 }
 
-/* Matrix Summary Table */
+/* Responsive Table Wrappers */
+.table-responsive-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+}
+
 .matrix-card {
     border-radius: 12px;
     overflow: hidden;
@@ -175,6 +189,7 @@
 
 .summary-table, .admin-table {
     width: 100%;
+    min-width: 860px;
 }
 
 .center-align {
@@ -194,159 +209,179 @@
 .staff-name {
     font-weight: 600;
     font-size: 0.95rem;
+    color: #0f172a;
 }
 
 .flags-row {
     display: flex;
-    gap: 6px;
+    gap: 4px;
+    flex-wrap: wrap;
 }
 
 .flag-chip {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
+    font-weight: 700;
     padding: 2px 6px;
     border-radius: 4px;
-    font-weight: 600;
+    text-transform: uppercase;
 }
 
 .flag-chip.missed {
-    background: #ffebee;
-    color: #c62828;
+    background-color: #ffe2e5;
+    color: #f64e60;
 }
 
 .flag-chip.pending {
-    background: #fff3e0;
-    color: #e65100;
+    background-color: #fff4de;
+    color: #ffa800;
 }
 
-.present-count {
-    font-size: 1rem;
-    color: #2e7d32;
+.hours-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
 }
 
-.warn-text {
-    color: #e65100;
-    font-weight: 600;
-}
-
-.danger-text {
-    color: #c62828;
-    font-weight: 600;
-}
-
-.success-text {
-    color: #2e7d32;
-    font-weight: 600;
-}
-
-.ot-text {
-    color: #1565c0;
+.main-hours {
     font-weight: 700;
-}
-
-.highlight-pay {
-    font-weight: 700;
-    font-size: 1.05rem;
-    color: #2e7d32;
-}
-
-.highlight-time {
-    font-weight: 700;
-    color: #1565c0;
-}
-
-/* Daily Breakdown Grid Expansion */
-.daily-matrix-container {
-    background: #f9f9fc;
-    padding: 16px 20px 24px;
-    border-top: 1px solid #e4e6ef;
-}
-
-.daily-matrix-container h4 {
-    margin: 0 0 12px;
     font-size: 0.95rem;
-    font-weight: 600;
-    color: #3f51b5;
 }
 
-.matrix-grid {
+.ot-badge {
+    font-size: 0.72rem;
+    color: #2e7d32;
+    background: #e8f5e9;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.deficit-badge {
+    font-size: 0.72rem;
+    color: #c62828;
+    background: #ffebee;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.badge-green {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.badge-grey {
+    color: #9e9e9e;
+}
+
+.comp-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.comp-val {
+    font-weight: 800;
+    color: #10b981;
+    font-size: 1rem;
+}
+
+.rate-sub {
+    font-size: 0.72rem;
+    color: #94a3b8;
+}
+
+/* Daily Breakdown Grid */
+.detail-card {
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.staff-section {
+    margin-bottom: 24px;
+}
+
+.staff-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.staff-section-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.days-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     gap: 12px;
 }
 
-@media (max-width: 1024px) {
-    .matrix-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-@media (max-width: 600px) {
-    .matrix-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
 .day-card {
-    background: white;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    border: 1px solid #e4e6ef;
-    padding: 10px;
-    font-size: 0.8rem;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    padding: 10px 12px;
+    background: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.day-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .day-card.absent {
-    background: #fafafa;
-    opacity: 0.7;
+    background: #f8fafc;
+    border-color: #f1f5f9;
 }
 
 .day-header {
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid #f3f3f3;
-    padding-bottom: 4px;
-}
-
-.day-name {
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 12px;
     font-weight: 700;
-    color: #1e1e2d;
+    color: #475569;
 }
 
-.day-date {
-    color: #9e9e9e;
+.day-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
 }
 
-.shift-name {
-    font-size: 0.72rem;
-    color: #3f51b5;
+.day-body .time-in {
+    color: #16a34a;
     font-weight: 600;
 }
 
-.time-row {
-    display: flex;
-    justify-content: space-between;
+.day-body .time-out {
+    color: #0284c7;
+    font-weight: 600;
 }
 
-.mini-chip {
-    display: inline-block;
-    font-size: 0.65rem;
-    background: #eee;
-    padding: 2px 4px;
-    border-radius: 3px;
-    margin-top: 4px;
-}
-
-.absent-body {
-    text-align: center;
-    padding: 12px 0 6px 0;
-    color: #9e9e9e;
-    font-style: italic;
-    display: flex;
-    flex-direction: column;
+.day-body.absent-body {
     align-items: center;
-    gap: 6px;
+    padding: 12px 0;
+}
+
+.absent-label {
+    color: #94a3b8;
+    font-size: 11px;
 }
 
 .day-card-actions {
@@ -354,7 +389,7 @@
     justify-content: flex-end;
     gap: 4px;
     margin-top: 6px;
-    border-top: 1px dashed #eee;
+    border-top: 1px dashed #e2e8f0;
     padding-top: 4px;
 }
 
@@ -374,10 +409,6 @@
 
 .card-mini-btn.warn-btn {
     color: #e53935;
-}
-
-.card-mini-btn:hover {
-    background: rgba(0, 0, 0, 0.04);
 }
 
 .add-log-btn {
@@ -415,4 +446,109 @@
     width: 48px;
     height: 48px;
     margin-bottom: 12px;
+}
+
+/* =========================================================================
+   📱 4-SCREEN RESPONSIVE UI PROTOCOL (Mobile, Tablet Port., Tablet Land., Desktop)
+   ========================================================================= */
+
+/* 1. Mobile (< 640px) */
+@media (max-width: 639px) {
+    .admin-attendance-container {
+        padding: 10px;
+        gap: 14px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .page-header h1 {
+        font-size: 1.3rem;
+    }
+
+    .weekly-payroll-banner {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 14px 16px;
+        gap: 14px;
+    }
+
+    .payroll-banner-right {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .pay-total-box {
+        align-items: flex-start;
+    }
+
+    .post-payroll-btn {
+        width: 100% !important;
+    }
+
+    .filter-card {
+        padding: 12px 14px;
+    }
+
+    .week-navigator {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .filter-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .status-select-field, .date-picker-field {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .filter-actions button {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .days-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* 2. Tablet Portrait (640px - 768px) */
+@media (min-width: 640px) and (max-width: 768px) {
+    .admin-attendance-container {
+        padding: 14px;
+    }
+
+    .weekly-payroll-banner {
+        padding: 16px 20px;
+    }
+
+    .payroll-banner-right {
+        gap: 14px;
+    }
+
+    .days-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* 3. Tablet Landscape / Small Laptop (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .days-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* 4. Desktop & Wide (> 1024px) */
+@media (min-width: 1025px) {
+    .days-grid {
+        grid-template-columns: repeat(7, 1fr);
+    }
 }

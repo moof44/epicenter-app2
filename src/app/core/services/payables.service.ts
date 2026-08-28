@@ -14,7 +14,7 @@ import {
   arrayUnion
 } from '@angular/fire/firestore';
 import { Observable, map } from 'rxjs';
-import { BillPayable, BillStatus, OutflowCategory, OutflowPaymentSource } from '../models/outflow.model';
+import { BillPayable, BillStatus, OutflowCategory, OutflowPaymentSource, PayrollItemRecord } from '../models/outflow.model';
 import { CashRegisterService } from './cash-register.service';
 
 @Injectable({
@@ -46,6 +46,7 @@ export class PayablesService {
     totalAmountDue: number;
     notes?: string;
     attachmentUrl?: string;
+    payrollItems?: PayrollItemRecord[];
     createdBy: string;
   }): Promise<string> {
     const newBill: any = {
@@ -62,6 +63,7 @@ export class PayablesService {
       status: 'UNPAID' as BillStatus,
       notes: data.notes?.trim() || '',
       attachmentUrl: data.attachmentUrl || '',
+      payrollItems: data.payrollItems || [],
       payments: [],
       createdAt: Timestamp.now(),
       createdBy: data.createdBy,

@@ -31,3 +31,29 @@ When working on data storage, Dexie.js, or offline sync, assume the appropriate 
 4. **Build Verification**: Run compilation checks (`compile_applet`) for both `gym-app` and `members-portal`.
 5. **Update Documentation**: Record progress/completion status in the Phase Plan document and commit changes to git.
 
+## 📱 Mandatory 4-Screen Responsive UI Protocol
+
+Every UI component, dashboard, matrix, and modal in the application must strictly support and maintain the following **4 Screen Parameters**:
+
+1. 📱 **Mobile (< 640px)**:
+   - Single-column vertically stacked layouts (`grid-template-columns: 1fr`).
+   - Full-width touch-friendly buttons (`min-height: 44px`).
+   - Horizontally scrollable tables with `position: sticky; left: 0` for key identifying columns (e.g. employee names).
+   - Wrapped filter bars and compact badge typography.
+
+2. 📱 **Tablet Portrait (640px – 768px)**:
+   - 2-column card/grid layouts (`grid-template-columns: repeat(2, 1fr)`).
+   - Compact table padding and condensed action icons.
+   - Flexible navigation and date picker controls without overflowing viewport width.
+
+3. 💻 **Tablet Landscape / Small Laptop (769px – 1024px)**:
+   - 2-to-3 column dashboard arrangements.
+   - Semi-expanded matrix grids with smooth horizontal scrolling.
+   - Side-by-side action button groups and filter bars.
+
+4. 🖥️ **Desktop & Wide Displays (> 1024px / ≥ 1280px)**:
+   - Full multi-column (3-to-4 columns) executive views.
+   - Expanded data matrices utilizing maximum horizontal space (up to `1400px` container).
+   - Side-by-side master-detail panels and tabbed workspaces.
+
+

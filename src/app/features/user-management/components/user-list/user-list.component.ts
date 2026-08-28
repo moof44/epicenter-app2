@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { BehaviorSubject, combineLatest, map } from 'rxjs';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
     selector: 'app-user-list',
@@ -39,8 +41,10 @@ import { MatSelectModule } from '@angular/material/select';
 })
 export class UserListComponent {
     private userService = inject(UserService);
+    private authService = inject(AuthService);
     private dialog = inject(MatDialog);
     private snackBar = inject(MatSnackBar);
+    private router = inject(Router);
 
     searchQuery$ = new BehaviorSubject<string>('');
     statusFilter$ = new BehaviorSubject<'ALL' | 'ACTIVE' | 'INACTIVE'>('ACTIVE');
@@ -62,13 +66,13 @@ export class UserListComponent {
                 list = list.filter(u => u.isActive === false);
             }
 
-            // Search Filter
+            // Search Query Filter
             if (search && search.trim()) {
                 const query = search.toLowerCase().trim();
                 list = list.filter(u =>
-                    (u.displayName && u.displayName.toLowerCase().includes(query)) ||
-                    (u.email && u.email.toLowerCase().includes(query)) ||
-                    (u.phone && u.phone.toLowerCase().includes(query))
+                    u.displayName?.toLowerCase().includes(query) ||
+                    u.email?.toLowerCase().includes(query) ||
+                    u.phone?.includes(query)
                 );
             }
 
@@ -76,7 +80,14 @@ export class UserListComponent {
         })
     );
 
-    displayedColumns: string[] = ['photo', 'displayName', 'roles', 'dailySalaryRate', 'status', 'actions'];
+    displayedColumns: string[] = [
+        'photo',
+        'displayName',
+        'roles',
+        'dailySalaryRate',
+        'status',
+        'actions'
+    ];
 
     getRoleColor(role: string): CreateRoleColor {
         switch (role) {
@@ -89,6 +100,40 @@ export class UserListComponent {
 
     isRoleAdmin(role: string): boolean {
         return role === 'ADMIN';
+    }
+
+    get isAdmin(): boolean {
+        return this.authService.hasAnyRole(['ADMIN']);
+    }
+
+    get isManager(): boolean {
+        return this.authService.hasAnyRole(['MANAGER']);
+    }
+
+    /**
+     * Admin can modify all.
+     * Managers can edit profiles/accounts of users below them (non-Admins).
+     */
+    canEditUser(targetUser: User): boolean {
+        if (!targetUser) return false;
+        if (this.isAdmin) return true;
+        if (this.isManager) {
+            return !targetUser.roles?.includes('ADMIN');
+        }
+        return false;
+    }
+
+    canToggleStatus(targetUser: User): boolean {
+        if (!targetUser) return false;
+        if (this.isAdmin) return true;
+        if (this.isManager) {
+            return !targetUser.roles?.includes('ADMIN');
+        }
+        return false;
+    }
+
+    viewUserProfile(user: User) {
+        this.router.navigate(['/users', user.uid, 'profile']);
     }
 
     openAddUserDialog() {

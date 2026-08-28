@@ -1,0 +1,150 @@
+<div class="payslip-dialog-wrapper">
+  <!-- Confidentiality Banner (Screen only) -->
+  <div class="confidentiality-banner no-print">
+    <mat-icon>lock</mat-icon>
+    <div class="conf-text">
+      <strong>STRICTLY CONFIDENTIAL</strong>
+      <span>This payslip contains private compensation details. Do not share, publish, or leave this document exposed to other employees.</span>
+    </div>
+    <button mat-icon-button (click)="close()" class="dialog-close-btn">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Main Printable Pay Stub Document -->
+  <div class="payslip-printable-document" id="printable-paystub">
+    <!-- Header -->
+    <div class="stub-header">
+      <div class="gym-brand">
+        <div class="brand-logo">
+          <mat-icon>fitness_center</mat-icon>
+        </div>
+        <div class="brand-info">
+          <h2>EPICENTER GYM & FITNESS</h2>
+          <p>Official Employee Compensation Pay Stub</p>
+          <small>San Pedro, Laguna, Philippines</small>
+        </div>
+      </div>
+      <div class="stub-meta">
+        <div class="meta-pill">
+          <span class="meta-lbl">PAYSLIP NO.</span>
+          <strong>#PAY-{{ payslip.billId.substring(0, 8).toUpperCase() }}</strong>
+        </div>
+        <div class="meta-pill">
+          <span class="meta-lbl">DATE PAID</span>
+          <strong>{{ payslip.paidDate | date:'mediumDate' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee & Cycle Details Bar -->
+    <div class="employee-details-grid">
+      <div class="detail-box">
+        <span class="lbl">EMPLOYEE NAME</span>
+        <strong class="val name-val">{{ payslip.staffName }}</strong>
+      </div>
+      <div class="detail-box">
+        <span class="lbl">PAYROLL CYCLE</span>
+        <strong class="val">{{ payslip.billingPeriodStart | date:'MMM d' }} – {{ payslip.billingPeriodEnd | date:'MMM d, y' }}</strong>
+        <small class="cycle-tag">Sunday to Saturday</small>
+      </div>
+      <div class="detail-box">
+        <span class="lbl">PAYMENT CHANNEL</span>
+        <strong class="val">{{ payslip.paymentSource.replace('_', ' ') }}</strong>
+        <small *ngIf="payslip.referenceNumber">Ref: {{ payslip.referenceNumber }}</small>
+      </div>
+      <div class="detail-box">
+        <span class="lbl">DAYS WORKED</span>
+        <strong class="val">{{ payslip.daysPresent }} Days Present</strong>
+      </div>
+    </div>
+
+    <!-- Breakdown Dual Grid (Earnings vs Deductions) -->
+    <div class="breakdown-grid">
+      <!-- Earnings Column -->
+      <div class="breakdown-col earnings-col">
+        <div class="col-header">
+          <mat-icon>add_circle_outline</mat-icon>
+          <span>EARNINGS & ALLOWANCES</span>
+        </div>
+        <div class="line-item">
+          <span>Basic Gross Attendance Pay ({{ payslip.daysPresent }} days)</span>
+          <strong>₱{{ payslip.baseCompensation | number:'1.2-2' }}</strong>
+        </div>
+        <div class="line-item" *ngIf="payslip.adjustmentAmount > 0">
+          <span>{{ payslip.adjustmentReason || 'Bonus / Commission / Allowance' }}</span>
+          <strong class="green-text">+₱{{ payslip.adjustmentAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="subtotal-item">
+          <span>Total Gross Earnings</span>
+          <strong>₱{{ (payslip.baseCompensation + (payslip.adjustmentAmount > 0 ? payslip.adjustmentAmount : 0)) | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <!-- Deductions Column -->
+      <div class="breakdown-col deductions-col">
+        <div class="col-header">
+          <mat-icon>remove_circle_outline</mat-icon>
+          <span>DEDUCTIONS & CASH ADVANCES</span>
+        </div>
+        <div class="line-item" *ngIf="payslip.valeDeduction > 0">
+          <div>
+            <span>Cash Advance (Vale)</span>
+            <small *ngIf="payslip.valeNote" class="sub-note">{{ payslip.valeNote }}</small>
+          </div>
+          <strong class="red-text">-₱{{ payslip.valeDeduction | number:'1.2-2' }}</strong>
+        </div>
+        <div class="line-item" *ngIf="payslip.adjustmentAmount < 0">
+          <span>{{ payslip.adjustmentReason || 'Other Deductions / Fees' }}</span>
+          <strong class="red-text">-₱{{ (-payslip.adjustmentAmount) | number:'1.2-2' }}</strong>
+        </div>
+        <div class="line-item" *ngIf="payslip.valeDeduction === 0 && payslip.adjustmentAmount >= 0">
+          <span class="no-ded">No deductions recorded</span>
+          <strong>₱0.00</strong>
+        </div>
+        <div class="subtotal-item">
+          <span>Total Deductions</span>
+          <strong class="red-text">-₱{{ (payslip.valeDeduction + (payslip.adjustmentAmount < 0 ? -payslip.adjustmentAmount : 0)) | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Final Net Take-Home Highlight -->
+    <div class="net-payout-banner">
+      <div class="net-label">
+        <mat-icon>account_balance_wallet</mat-icon>
+        <span>NET TAKE-HOME PAY</span>
+      </div>
+      <div class="net-amount">
+        ₱{{ payslip.netAmount | number:'1.2-2' }}
+      </div>
+    </div>
+
+    <!-- Signatures & Authorization -->
+    <div class="stub-signatures">
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <span class="sig-title">Employee Signature & Conforme</span>
+        <small class="sig-date">Date Received: {{ payslip.paidDate | date:'mediumDate' }}</small>
+      </div>
+      <div class="sig-block">
+        <div class="sig-line management-sig"></div>
+        <span class="sig-title">Authorized Management Signatory</span>
+        <small class="sig-date">Epicenter Gym Treasury</small>
+      </div>
+    </div>
+
+    <!-- Confidentiality Footer -->
+    <div class="print-confidentiality-footer">
+      🔒 CONFIDENTIAL DOCUMENT: Generated for the designated employee only. Unauthorized disclosure is strictly prohibited under Gym Data Privacy Policy.
+    </div>
+  </div>
+
+  <!-- Dialog Actions (Screen only) -->
+  <div class="dialog-actions-bar no-print">
+    <button mat-stroked-button (click)="close()">Close</button>
+    <button mat-raised-button color="primary" class="print-btn" (click)="printPayslip()">
+      <mat-icon>print</mat-icon> Print / Save as PDF
+    </button>
+  </div>
+</div>

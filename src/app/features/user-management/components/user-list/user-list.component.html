@@ -1,7 +1,7 @@
 <div class="container">
     <div class="page-header">
         <h1>Staff Management</h1>
-        <div class="action-buttons">
+        <div class="action-buttons" *ngIf="isAdmin">
             <button mat-raised-button color="primary" (click)="openAddUserDialog()">
                 <mat-icon>add</mat-icon> Add Staff
             </button>
@@ -151,11 +151,15 @@
 
 <mat-menu #menu="matMenu">
     <ng-template matMenuContent let-user="user">
-        <button mat-menu-item (click)="editUser(user)">
-            <mat-icon>edit</mat-icon>
-            <span>Edit</span>
+        <button mat-menu-item (click)="viewUserProfile(user)">
+            <mat-icon color="primary">account_circle</mat-icon>
+            <span>View Profile & Documents</span>
         </button>
-        <button mat-menu-item (click)="toggleUserStatus(user)">
+        <button mat-menu-item (click)="editUser(user)" *ngIf="canEditUser(user)">
+            <mat-icon>edit</mat-icon>
+            <span>Edit Account</span>
+        </button>
+        <button mat-menu-item (click)="toggleUserStatus(user)" *ngIf="canToggleStatus(user)">
             <ng-container *ngIf="user.isActive !== false; else unblockIcon">
                 <mat-icon color="warn">block</mat-icon>
                 <span>Deactivate</span>

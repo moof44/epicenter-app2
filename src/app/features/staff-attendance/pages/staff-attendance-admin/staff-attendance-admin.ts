@@ -453,6 +453,18 @@ export class StaffAttendanceAdminComponent implements OnInit {
                     dueDate: sat,
                     totalAmountDue: result.totalNet,
                     notes: result.notes,
+                    payrollItems: result.items.map(item => ({
+                        staffId: item.staffId,
+                        staffName: item.staffName,
+                        roles: item.roles || [],
+                        daysPresent: item.daysPresent || 0,
+                        baseCompensation: Number(item.baseCompensation || 0),
+                        valeDeduction: Number(item.valeDeduction || 0),
+                        valeNote: item.valeNote || '',
+                        adjustmentAmount: Number(item.adjustmentAmount || 0),
+                        adjustmentReason: item.adjustmentReason || '',
+                        netAmount: Number(item.netAmount || 0)
+                    })),
                     createdBy: userName
                 });
 

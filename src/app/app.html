@@ -43,6 +43,11 @@
             <mat-icon matListItemIcon>schedule</mat-icon>
             <span matListItemTitle>My Attendance</span>
           </a>
+          <a mat-list-item routerLink="/profile" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>account_circle</mat-icon>
+            <span matListItemTitle>My Profile</span>
+          </a>
         </ng-container>
 
         <mat-divider *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])"></mat-divider>
@@ -79,7 +84,7 @@
         </a>
 
         <a mat-list-item routerLink="/users" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
+          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
           <mat-icon matListItemIcon>people</mat-icon>
           <span matListItemTitle>Staff Accounts</span>
         </a>

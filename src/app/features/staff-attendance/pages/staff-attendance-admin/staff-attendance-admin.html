@@ -92,21 +92,22 @@
 
                 <!-- Weekly Summary Matrix Table -->
                 <mat-card class="matrix-card">
-                    <table mat-table [dataSource]="displayedSummaries()" class="summary-table">
-                        
-                        <!-- Staff Name -->
-                        <ng-container matColumnDef="staffName">
-                            <th mat-header-cell *matHeaderCellDef> Employee </th>
-                            <td mat-cell *matCellDef="let s">
-                                <div class="staff-info">
-                                    <span class="staff-name">{{ s.staffName }}</span>
-                                    <span class="flags-row">
-                                        <span class="flag-chip missed" *ngIf="s.hasMissedCheckout" matTooltip="Has missed check-out this week">Missed Checkout</span>
-                                        <span class="flag-chip pending" *ngIf="s.hasPendingAdjustment" matTooltip="Has pending check-in adjustment">Pending Adjustment</span>
-                                    </span>
-                                </div>
-                            </td>
-                        </ng-container>
+                    <div class="table-responsive-wrapper">
+                        <table mat-table [dataSource]="displayedSummaries()" class="summary-table">
+                            
+                            <!-- Staff Name -->
+                            <ng-container matColumnDef="staffName">
+                                <th mat-header-cell *matHeaderCellDef class="sticky-col"> Employee </th>
+                                <td mat-cell *matCellDef="let s" class="sticky-col">
+                                    <div class="staff-info">
+                                        <span class="staff-name">{{ s.staffName }}</span>
+                                        <span class="flags-row">
+                                            <span class="flag-chip missed" *ngIf="s.hasMissedCheckout" matTooltip="Has missed check-out this week">Missed Checkout</span>
+                                            <span class="flag-chip pending" *ngIf="s.hasPendingAdjustment" matTooltip="Has pending check-in adjustment">Pending Adjustment</span>
+                                        </span>
+                                    </div>
+                                </td>
+                            </ng-container>
 
                         <!-- Roles -->
                         <ng-container matColumnDef="roles">
@@ -191,6 +192,7 @@
                         <tr mat-header-row *matHeaderRowDef="reportColumns"></tr>
                         <tr mat-row *matRowDef="let row; columns: reportColumns;"></tr>
                     </table>
+                    </div>
 
                     <!-- Expandable Daily Breakdown Matrix -->
                     <div class="expanded-details" *ngFor="let s of displayedSummaries()">
@@ -264,11 +266,12 @@
                     </mat-card-header>
 
                     <mat-card-content>
-                        <table mat-table [dataSource]="pending" class="admin-table" *ngIf="pending.length > 0; else noPending">
+                        <div class="table-responsive-wrapper" *ngIf="pending.length > 0; else noPending">
+                        <table mat-table [dataSource]="pending" class="admin-table">
                             
                             <ng-container matColumnDef="staffName">
-                                <th mat-header-cell *matHeaderCellDef> Employee </th>
-                                <td mat-cell *matCellDef="let p"> <strong>{{ p.staffName }}</strong> </td>
+                                <th mat-header-cell *matHeaderCellDef class="sticky-col"> Employee </th>
+                                <td mat-cell *matCellDef="let p" class="sticky-col"> <strong>{{ p.staffName }}</strong> </td>
                             </ng-container>
 
                             <ng-container matColumnDef="date">
@@ -313,6 +316,7 @@
                             <tr mat-header-row *matHeaderRowDef="adjustmentColumns"></tr>
                             <tr mat-row *matRowDef="let row; columns: adjustmentColumns;"></tr>
                         </table>
+                        </div>
 
                         <ng-template #noPending>
                             <div class="empty-state">

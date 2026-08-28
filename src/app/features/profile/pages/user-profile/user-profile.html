@@ -1,0 +1,347 @@
+<div class="user-profile-container" [@fadeIn]>
+  <!-- Page Header -->
+  <div class="profile-header-card mat-elevation-z1">
+    <div class="header-left">
+      <div class="user-avatar-box">
+        <mat-icon *ngIf="!currentUser()?.photoURL">account_circle</mat-icon>
+        <img *ngIf="currentUser()?.photoURL" [src]="currentUser()?.photoURL" alt="Avatar">
+      </div>
+      <div class="user-identity">
+        <h1>{{ currentUser()?.displayName || 'User Profile' }}</h1>
+        <p class="user-email">{{ currentUser()?.email }}</p>
+        <div class="user-chips">
+          <mat-chip-set>
+            <mat-chip *ngFor="let role of currentUser()?.roles" [color]="getRoleColor(role)" highlighted>
+              {{ role }}
+            </mat-chip>
+            <mat-chip class="status-chip" [class.active-chip]="currentUser()?.isActive !== false">
+              {{ currentUser()?.isActive !== false ? 'Active Employee' : 'Inactive' }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- Read-Only Badge for Manager viewing Admin Profile -->
+      <span class="read-only-badge" *ngIf="isReadOnlyAdminProfile()">
+        <mat-icon>lock</mat-icon> Admin Profile (View Only)
+      </span>
+
+      <!-- Edit Controls (if permitted) -->
+      <ng-container *ngIf="canEditProfile()">
+        <button mat-stroked-button color="primary" (click)="toggleEdit()" *ngIf="!isEditMode()">
+          <mat-icon>edit</mat-icon> Edit Profile
+        </button>
+        <button mat-flat-button color="primary" (click)="saveProfile()" *ngIf="isEditMode()" [disabled]="isSaving()">
+          <mat-icon>save</mat-icon> {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+        </button>
+        <button mat-button (click)="toggleEdit()" *ngIf="isEditMode()">Cancel</button>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-wrap" *ngIf="isLoading()">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading employee profile...</p>
+  </div>
+
+  <!-- Profile Tabs -->
+  <mat-card class="profile-tabs-card" *ngIf="!isLoading()">
+    <mat-tab-group animationDuration="200ms" class="profile-tabs">
+      
+      <!-- ════════════════ TAB 1: PERSONAL & EMPLOYMENT DETAILS ════════════════ -->
+      <mat-tab>
+        <ng-template matTabLabel>
+          <mat-icon class="tab-icon">person</mat-icon> Personal & Employment
+        </ng-template>
+
+        <div class="tab-body">
+          <form [formGroup]="profileForm">
+            <!-- Section 1: Basic Information -->
+            <div class="section-block">
+              <h3 class="section-title"><mat-icon>badge</mat-icon> Basic Information</h3>
+              <div class="form-grid-3">
+                <mat-form-field appearance="outline">
+                  <mat-label>Full Name</mat-label>
+                  <input matInput formControlName="displayName" [readonly]="!isEditMode()">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Phone Number</mat-label>
+                  <input matInput formControlName="phone" [readonly]="!isEditMode()" placeholder="0917-000-0000">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Gender</mat-label>
+                  <mat-select formControlName="gender" [disabled]="!isEditMode()">
+                    <mat-option value="MALE">Male</mat-option>
+                    <mat-option value="FEMALE">Female</mat-option>
+                    <mat-option value="OTHER">Other</mat-option>
+                    <mat-option value="PREFER_NOT_TO_SAY">Prefer not to say</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Date of Birth</mat-label>
+                  <input matInput type="date" formControlName="birthDate" [readonly]="!isEditMode()">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="col-span-2">
+                  <mat-label>Residential Address</mat-label>
+                  <input matInput formControlName="address" [readonly]="!isEditMode()" placeholder="Street, Barangay, City, Province">
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Section 2: Emergency Contact -->
+            <div class="section-block">
+              <h3 class="section-title"><mat-icon>contact_emergency</mat-icon> Emergency Contact</h3>
+              <div class="form-grid-3">
+                <mat-form-field appearance="outline">
+                  <mat-label>Contact Person Name</mat-label>
+                  <input matInput formControlName="emergencyName" [readonly]="!isEditMode()" placeholder="e.g. Maria Tindoy">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Relationship</mat-label>
+                  <input matInput formControlName="emergencyRelationship" [readonly]="!isEditMode()" placeholder="e.g. Spouse / Parent">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Emergency Phone</mat-label>
+                  <input matInput formControlName="emergencyPhone" [readonly]="!isEditMode()" placeholder="0918-000-0000">
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Section 3: Government ID Numbers -->
+            <div class="section-block">
+              <h3 class="section-title"><mat-icon>account_balance</mat-icon> Government Identifiers</h3>
+              <div class="form-grid-4">
+                <mat-form-field appearance="outline">
+                  <mat-label>SSS Number</mat-label>
+                  <input matInput formControlName="sssNumber" [readonly]="!isEditMode()" placeholder="00-0000000-0">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>PhilHealth Number</mat-label>
+                  <input matInput formControlName="philHealthNumber" [readonly]="!isEditMode()" placeholder="00-000000000-0">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Pag-IBIG / HDMF</mat-label>
+                  <input matInput formControlName="pagIbigNumber" [readonly]="!isEditMode()" placeholder="0000-0000-0000">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Tax ID (TIN)</mat-label>
+                  <input matInput formControlName="tinNumber" [readonly]="!isEditMode()" placeholder="000-000-000-000">
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Section 4: Employment & Compensation Details -->
+            <div class="section-block">
+              <h3 class="section-title"><mat-icon>work</mat-icon> Employment & Salary Payout Details</h3>
+              <div class="form-grid-3">
+                <mat-form-field appearance="outline">
+                  <mat-label>Job Title / Position</mat-label>
+                  <input matInput formControlName="jobTitle" [readonly]="!isEditMode()" placeholder="e.g. Senior Fitness Coach">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Employment Type</mat-label>
+                  <mat-select formControlName="employmentType" [disabled]="!isEditMode()">
+                    <mat-option value="FULL_TIME">Full-Time</mat-option>
+                    <mat-option value="PART_TIME">Part-Time</mat-option>
+                    <mat-option value="CONTRACT">Contract</mat-option>
+                    <mat-option value="COMMISSION_ONLY">Commission Only</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Date Hired</mat-label>
+                  <input matInput type="date" formControlName="hireDate" [readonly]="!isEditMode()">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" *ngIf="isCurrentAdmin || isOwnProfile">
+                  <mat-label>Daily Salary Rate (₱)</mat-label>
+                  <input matInput type="number" formControlName="dailySalaryRate" [readonly]="!isCurrentAdmin || !isEditMode()" placeholder="500.00">
+                  <span matTextPrefix>₱&nbsp;</span>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>GCash Number (For Salary)</mat-label>
+                  <input matInput formControlName="gcashNumber" [readonly]="!isEditMode()" placeholder="0917-000-0000">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Bank Name</mat-label>
+                  <input matInput formControlName="bankName" [readonly]="!isEditMode()" placeholder="e.g. BDO / BPI">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Bank Account Number</mat-label>
+                  <input matInput formControlName="bankAccountNumber" [readonly]="!isEditMode()" placeholder="0000-0000-0000">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Bank Account Name</mat-label>
+                  <input matInput formControlName="bankAccountName" [readonly]="!isEditMode()" placeholder="Account Holder Name">
+                </mat-form-field>
+              </div>
+            </div>
+          </form>
+        </div>
+      </mat-tab>
+
+      <!-- ════════════════ TAB 2: EMPLOYEE DOCUMENTS & ATTACHMENTS ════════════════ -->
+      <mat-tab>
+        <ng-template matTabLabel>
+          <mat-icon class="tab-icon">folder_shared</mat-icon> Documents & Identity
+          <span class="badge-count" *ngIf="currentUser()?.documents?.length">
+            {{ currentUser()?.documents?.length }}
+          </span>
+        </ng-template>
+
+        <div class="tab-body">
+          <!-- Upload Dropzone Card (Visible if user can edit/upload) -->
+          <div class="upload-card" *ngIf="canEditProfile()">
+            <div class="upload-header">
+              <div class="up-title">
+                <mat-icon>cloud_upload</mat-icon>
+                <div>
+                  <h4>Upload Employee Documents</h4>
+                  <p>Upload employee Identification (Valid ID), Employment Contract, or Certifications. Only <strong>Images (JPG, PNG, WebP)</strong> and <strong>PDF Documents</strong> are accepted.</p>
+                </div>
+              </div>
+
+              <div class="upload-controls">
+                <mat-form-field appearance="outline" class="category-select">
+                  <mat-label>Document Type</mat-label>
+                  <mat-select [(ngModel)]="selectedDocCategory">
+                    <mat-option value="GOVERNMENT_ID">🪪 Valid Government ID</mat-option>
+                    <mat-option value="CONTRACT">📜 Employment Contract</mat-option>
+                    <mat-option value="CERTIFICATION">🏆 Certification / License</mat-option>
+                    <mat-option value="RESUME">📄 Resume / Bio-Data</mat-option>
+                    <mat-option value="OTHER">📎 Other Document</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*,application/pdf" style="display: none;">
+                <button mat-raised-button color="primary" class="upload-btn" (click)="fileInput.click()" [disabled]="isUploading()">
+                  <mat-icon>upload_file</mat-icon> {{ isUploading() ? 'Uploading...' : 'Select Image / PDF' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document List Grid -->
+          <div class="docs-grid" *ngIf="currentUser()?.documents?.length; else noDocs">
+            <div class="doc-card mat-elevation-z1" *ngFor="let doc of currentUser()?.documents">
+              <button type="button" class="doc-preview-box" (click)="viewDocument(doc)">
+                <img *ngIf="doc.fileType === 'IMAGE'" [src]="doc.downloadUrl" alt="Thumbnail" class="doc-thumb">
+                <div *ngIf="doc.fileType === 'PDF'" class="pdf-placeholder">
+                  <mat-icon>picture_as_pdf</mat-icon>
+                  <span>PDF Document</span>
+                </div>
+                <div class="preview-overlay">
+                  <mat-icon>visibility</mat-icon> View Document
+                </div>
+              </button>
+
+              <div class="doc-card-info">
+                <div class="doc-name-row">
+                  <strong class="doc-name" [title]="doc.name">{{ doc.name }}</strong>
+                  <span class="doc-cat-tag">{{ doc.category.replace('_', ' ') }}</span>
+                </div>
+                <div class="doc-meta-sub">
+                  <span>{{ doc.fileType }} · {{ doc.uploadedAt | date:'mediumDate' }}</span>
+                </div>
+                <div class="doc-actions-row">
+                  <button mat-button color="primary" class="mini-action-btn" (click)="viewDocument(doc)">
+                    <mat-icon>visibility</mat-icon> View
+                  </button>
+                  <button mat-icon-button color="warn" class="mini-action-btn" (click)="deleteDocument(doc)" *ngIf="canEditProfile()" title="Delete document">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noDocs>
+            <div class="empty-docs-box">
+              <mat-icon class="empty-icon">folder_open</mat-icon>
+              <h4>No Documents Uploaded</h4>
+              <p>Upload valid IDs and employment contracts above to store them securely.</p>
+            </div>
+          </ng-template>
+        </div>
+      </mat-tab>
+
+      <!-- ════════════════ TAB 3: CONFIDENTIAL WEEKLY PAYSLIPS ════════════════ -->
+      <mat-tab>
+        <ng-template matTabLabel>
+          <mat-icon class="tab-icon">payments</mat-icon> Weekly Payslips
+          <span class="badge-count" *ngIf="payslips().length">{{ payslips().length }}</span>
+        </ng-template>
+
+        <div class="tab-body">
+          <!-- Confidentiality Warning Alert Banner -->
+          <div class="confidentiality-notice-card">
+            <mat-icon>security</mat-icon>
+            <div class="notice-text">
+              <strong>CONFIDENTIALITY NOTICE</strong>
+              <p>This section contains confidential compensation statements. Payslips are unlocked and displayed <strong>only after being marked PAID</strong> by Management in Bills & Accounts Payable. Zero-compensation periods are excluded.</p>
+            </div>
+          </div>
+
+          <!-- Loading Payslips -->
+          <div class="loading-wrap" *ngIf="isLoadingPayslips()">
+            <mat-spinner diameter="32"></mat-spinner>
+            <p>Loading compensation statements...</p>
+          </div>
+
+          <!-- Payslips List -->
+          <div class="payslips-list-container" *ngIf="!isLoadingPayslips() && payslips().length > 0; else noPayslips">
+            <div class="payslip-row-card mat-elevation-z1" *ngFor="let p of payslips()">
+              <div class="p-left">
+                <div class="p-icon-box">
+                  <mat-icon>receipt_long</mat-icon>
+                </div>
+                <div class="p-details">
+                  <h4>{{ p.title }}</h4>
+                  <p class="p-period">Period: <strong>{{ p.billingPeriodStart | date:'mediumDate' }}</strong> – <strong>{{ p.billingPeriodEnd | date:'mediumDate' }}</strong> (Saturday Cutoff)</p>
+                  <small class="p-date">Paid on {{ p.paidDate | date:'mediumDate' }} via <strong>{{ p.paymentSource.replace('_', ' ') }}</strong></small>
+                </div>
+              </div>
+
+              <div class="p-right">
+                <div class="p-amount-box">
+                  <span class="p-lbl">Net Take-Home Pay</span>
+                  <strong class="p-amt">₱{{ p.netAmount | number:'1.2-2' }}</strong>
+                  <small class="p-gross">Gross: ₱{{ p.baseCompensation | number:'1.2-2' }} ({{ p.daysPresent }} days)</small>
+                </div>
+                <button mat-raised-button color="primary" class="view-slip-btn" (click)="openPayslip(p)">
+                  <mat-icon>print</mat-icon> View & Print Payslip
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noPayslips>
+            <div class="empty-docs-box" *ngIf="!isLoadingPayslips()">
+              <mat-icon class="empty-icon">payments</mat-icon>
+              <h4>No Paid Payslips Available</h4>
+              <p>No paid weekly salary records found for this account. Payslips appear automatically once weekly payroll is finalized and marked PAID in Bills & Accounts Payable.</p>
+            </div>
+          </ng-template>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </mat-card>
+</div>

@@ -67,7 +67,7 @@ export const routes: Routes = [
         path: 'users',
         loadComponent: () => import('./features/user-management/components/user-list/user-list.component').then(m => m.UserListComponent),
         canActivate: [authGuard, roleGuard],
-        data: { animation: 'ListPage', roles: ['ADMIN'] }
+        data: { animation: 'ListPage', roles: ['ADMIN', 'MANAGER'] }
     },
     {
         path: 'reports',
@@ -133,6 +133,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/staff-attendance/pages/my-attendance-history/my-attendance-history').then(m => m.MyAttendanceHistoryComponent),
         canActivate: [authGuard],
         data: { animation: 'ListPage' }
+    },
+    {
+        path: 'profile',
+        loadComponent: () => import('./features/profile/pages/user-profile/user-profile').then(m => m.UserProfileComponent),
+        canActivate: [authGuard],
+        data: { animation: 'FormPage' }
+    },
+    {
+        path: 'users/:id/profile',
+        loadComponent: () => import('./features/profile/pages/user-profile/user-profile').then(m => m.UserProfileComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER'] }
     },
 ];
 

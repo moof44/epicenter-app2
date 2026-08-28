@@ -34,6 +34,19 @@ export interface BillPaymentRecord {
   notes?: string;
 }
 
+export interface PayrollItemRecord {
+  staffId: string;
+  staffName: string;
+  roles?: string[];
+  daysPresent: number;
+  baseCompensation: number; // Gross Base
+  valeDeduction: number;   // Vale Cash Advance
+  valeNote?: string;
+  adjustmentAmount: number; // Bonus/Commission/Deduction
+  adjustmentReason?: string;
+  netAmount: number;        // Net Take-Home Pay
+}
+
 export interface BillPayable {
   id?: string;
   title: string;              // e.g. "Meralco Bill - August 2026"
@@ -50,6 +63,7 @@ export interface BillPayable {
   notes?: string;
   attachmentUrl?: string;     // Bill photo / scan
   payments: BillPaymentRecord[];
+  payrollItems?: PayrollItemRecord[];
   createdAt: Date;
   createdBy: string;
   updatedAt: Date;
