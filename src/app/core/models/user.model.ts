@@ -28,7 +28,7 @@ export interface UserGovernmentIds {
 
 export interface UserEmploymentDetails {
     jobTitle?: string;
-    employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'COMMISSION_ONLY';
+    employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'COMMISSION_ONLY' | 'SERVICE_PROVIDER';
     hireDate?: Date | string;
     defaultShift?: string;
     bankName?: string;
@@ -42,6 +42,7 @@ export interface UserEmploymentDetails {
 
 export interface UserProfile {
     phone?: string;
+    contactEmail?: string;
     address?: string;
     birthDate?: Date | string;
     gender?: 'MALE' | 'FEMALE' | 'OTHER' | 'PREFER_NOT_TO_SAY';
@@ -59,6 +60,7 @@ export interface User {
     createdAt?: Date;
     lastLoginAt?: Date;
     phone?: string;
+    contactEmail?: string;
     address?: string;
     isActive?: boolean;
     monthlyTarget?: number;

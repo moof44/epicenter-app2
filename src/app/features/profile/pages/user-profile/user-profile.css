@@ -170,6 +170,74 @@
   grid-column: span 2;
 }
 
+/* ════════════════ FORM VIEW / EDIT VISUAL STATES ════════════════ */
+.edit-mode-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.edit-mode-banner mat-icon {
+  color: #2563eb;
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+/* View Mode (Disabled by Default): Clean Read-Only Visuals */
+.view-mode-active .mat-mdc-text-field-wrapper {
+  background-color: #f8fafc !important;
+  border-radius: 8px;
+}
+
+.view-mode-active .mdc-notched-outline__notch,
+.view-mode-active .mdc-notched-outline__leading,
+.view-mode-active .mdc-notched-outline__trailing {
+  border-color: #e2e8f0 !important;
+}
+
+.view-mode-active input,
+.view-mode-active .mat-mdc-select-value,
+.view-mode-active .mat-mdc-select-disabled .mat-mdc-select-value {
+  color: #334155 !important;
+  font-weight: 600;
+  cursor: default !important;
+}
+
+.view-mode-active .mat-mdc-form-field-icon-prefix,
+.view-mode-active .mat-mdc-form-field-icon-suffix {
+  color: #94a3b8;
+}
+
+/* Edit Mode: Illuminated Editable Visuals */
+.edit-mode-active .mat-mdc-text-field-wrapper {
+  background-color: #ffffff !important;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.edit-mode-active .mdc-notched-outline__notch,
+.edit-mode-active .mdc-notched-outline__leading,
+.edit-mode-active .mdc-notched-outline__trailing {
+  border-color: #94a3b8 !important;
+}
+
+.edit-mode-active .mat-focused .mdc-notched-outline__notch,
+.edit-mode-active .mat-focused .mdc-notched-outline__leading,
+.edit-mode-active .mat-focused .mdc-notched-outline__trailing {
+  border-color: #0284c7 !important;
+  border-width: 2px !important;
+}
+
 /* Documents Tab */
 .upload-card {
   background: #f8fafc;

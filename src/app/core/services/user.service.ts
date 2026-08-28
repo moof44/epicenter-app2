@@ -119,6 +119,7 @@ export class UserService {
 
         if (data.displayName !== undefined) updates.displayName = data.displayName;
         if (data.phone !== undefined) updates.phone = data.phone;
+        if (data.contactEmail !== undefined) updates.contactEmail = data.contactEmail;
         if (data.address !== undefined) updates.address = data.address;
         if (data.dailySalaryRate !== undefined) updates.dailySalaryRate = Number(data.dailySalaryRate);
         if (data.monthlyTarget !== undefined) updates.monthlyTarget = Number(data.monthlyTarget);
@@ -208,8 +209,7 @@ export class UserService {
         const q = query(
             billsCol,
             where('category', '==', 'SALARY_STAFF'),
-            where('status', '==', 'PAID'),
-            orderBy('dueDate', 'desc')
+            where('status', '==', 'PAID')
         );
 
         return collectionData(q, { idField: 'id' }).pipe(
@@ -266,6 +266,14 @@ export class UserService {
                         });
                     }
                 }
+
+                // Sort descending (newest payslip first)
+                payslips.sort((a, b) => {
+                    const timeA = a.paidDate instanceof Date ? a.paidDate.getTime() : new Date(a.paidDate).getTime();
+                    const timeB = b.paidDate instanceof Date ? b.paidDate.getTime() : new Date(b.paidDate).getTime();
+                    return timeB - timeA;
+                });
+
                 return payslips;
             })
         );

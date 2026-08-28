@@ -49,6 +49,7 @@ export class UserProfileComponent implements OnInit, OnDestroy {
   isSaving = signal<boolean>(false);
   isUploading = signal<boolean>(false);
   isEditMode = signal<boolean>(false);
+  selectedTabIndex = signal<number>(0);
 
   payslips = signal<UserPayslip[]>([]);
   isLoadingPayslips = signal<boolean>(true);
@@ -68,6 +69,10 @@ export class UserProfileComponent implements OnInit, OnDestroy {
 
   get isCurrentManager(): boolean {
     return this.authService.hasAnyRole(['MANAGER']);
+  }
+
+  get isManagementOrAdmin(): boolean {
+    return this.isCurrentAdmin || this.isCurrentManager;
   }
 
   /**
@@ -122,11 +127,10 @@ export class UserProfileComponent implements OnInit, OnDestroy {
     this.profileForm = this.fb.group({
       displayName: [''],
       phone: [''],
+      contactEmail: [''],
       address: [''],
       birthDate: [''],
       gender: ['PREFER_NOT_TO_SAY'],
-      dailySalaryRate: [0],
-      monthlyTarget: [0],
       emergencyName: [''],
       emergencyRelationship: [''],
       emergencyPhone: [''],
@@ -142,6 +146,7 @@ export class UserProfileComponent implements OnInit, OnDestroy {
       bankAccountNumber: [''],
       gcashNumber: ['']
     });
+    this.profileForm.disable();
   }
 
   private loadUserData(uid: string): void {
@@ -169,11 +174,10 @@ export class UserProfileComponent implements OnInit, OnDestroy {
     this.profileForm.patchValue({
       displayName: user.displayName || '',
       phone: user.phone || '',
+      contactEmail: user.contactEmail || '',
       address: user.address || '',
       birthDate: user.birthDate ? this.formatDateForInput(user.birthDate) : '',
       gender: user.gender || 'PREFER_NOT_TO_SAY',
-      dailySalaryRate: user.dailySalaryRate || 0,
-      monthlyTarget: user.monthlyTarget || 0,
       emergencyName: user.emergencyContact?.name || '',
       emergencyRelationship: user.emergencyContact?.relationship || '',
       emergencyPhone: user.emergencyContact?.phone || '',
@@ -189,6 +193,22 @@ export class UserProfileComponent implements OnInit, OnDestroy {
       bankAccountNumber: user.employmentDetails?.bankAccountNumber || '',
       gcashNumber: user.employmentDetails?.gcashNumber || ''
     });
+
+    this.applyFieldLocks();
+  }
+
+  private applyFieldLocks(): void {
+    if (this.isEditMode()) {
+      this.profileForm.enable();
+      // Job Title, Employment Type, and Date Hired can ONLY be edited by Management / Admin
+      if (!this.isManagementOrAdmin) {
+        this.profileForm.get('jobTitle')?.disable();
+        this.profileForm.get('employmentType')?.disable();
+        this.profileForm.get('hireDate')?.disable();
+      }
+    } else {
+      this.profileForm.disable();
+    }
   }
 
   private loadPayslips(user: User): void {
@@ -207,24 +227,51 @@ export class UserProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+  onTabChange(index: number): void {
+    this.selectedTabIndex.set(index);
+    if (this.isEditMode() && index !== 0) {
+      this.isEditMode.set(false);
+      const target = this.currentUser();
+      if (target) {
+        this.populateForm(target);
+      }
+      this.profileForm.disable();
+    }
+  }
+
   toggleEdit(): void {
     if (!this.canEditProfile()) {
       this.snackBar.open('You do not have permission to edit this profile.', 'Close', { duration: 3000 });
       return;
     }
-    this.isEditMode.set(!this.isEditMode());
+
+    const nextState = !this.isEditMode();
+    this.isEditMode.set(nextState);
+
+    if (nextState) {
+      this.selectedTabIndex.set(0);
+      this.applyFieldLocks();
+    } else {
+      const target = this.currentUser();
+      if (target) {
+        this.populateForm(target);
+      }
+      this.profileForm.disable();
+    }
   }
 
   async saveProfile(): Promise<void> {
     if (!this.canEditProfile() || !this.targetUid || this.profileForm.invalid) return;
 
     this.isSaving.set(true);
-    const formVal = this.profileForm.value;
+    const formVal = this.profileForm.getRawValue();
+    const current = this.currentUser();
 
     try {
       const updateData: Partial<User> = {
         displayName: formVal.displayName,
         phone: formVal.phone,
+        contactEmail: formVal.contactEmail || '',
         address: formVal.address,
         gender: formVal.gender,
         birthDate: formVal.birthDate || null,
@@ -240,26 +287,20 @@ export class UserProfileComponent implements OnInit, OnDestroy {
           tinNumber: formVal.tinNumber
         },
         employmentDetails: {
-          jobTitle: formVal.jobTitle,
-          employmentType: formVal.employmentType,
-          hireDate: formVal.hireDate || null,
+          jobTitle: this.isManagementOrAdmin ? formVal.jobTitle : (current?.employmentDetails?.jobTitle || formVal.jobTitle),
+          employmentType: this.isManagementOrAdmin ? formVal.employmentType : (current?.employmentDetails?.employmentType || formVal.employmentType),
+          hireDate: this.isManagementOrAdmin ? (formVal.hireDate || null) : (current?.employmentDetails?.hireDate ? this.formatDateForInput(current.employmentDetails.hireDate) : null),
           bankName: formVal.bankName,
           bankAccountName: formVal.bankAccountName,
           bankAccountNumber: formVal.bankAccountNumber,
-          gcashNumber: formVal.gcashNumber,
-          dailyRate: Number(formVal.dailySalaryRate || 0),
-          monthlyTarget: Number(formVal.monthlyTarget || 0)
+          gcashNumber: formVal.gcashNumber
         }
       };
-
-      if (this.isCurrentAdmin) {
-        updateData.dailySalaryRate = Number(formVal.dailySalaryRate || 0);
-        updateData.monthlyTarget = Number(formVal.monthlyTarget || 0);
-      }
 
       await this.userService.updateUserProfile(this.targetUid, updateData);
       this.snackBar.open('Profile updated successfully!', 'Close', { duration: 3000 });
       this.isEditMode.set(false);
+      this.profileForm.disable();
     } catch (err: any) {
       console.error('Error saving profile:', err);
       this.snackBar.open(err.message || 'Failed to update profile', 'Close', { duration: 4000 });

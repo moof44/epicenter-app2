@@ -15,7 +15,7 @@
               {{ role }}
             </mat-chip>
             <mat-chip class="status-chip" [class.active-chip]="currentUser()?.isActive !== false">
-              {{ currentUser()?.isActive !== false ? 'Active Employee' : 'Inactive' }}
+              {{ currentUser()?.isActive !== false ? 'Active' : 'Inactive' }}
             </mat-chip>
           </mat-chip-set>
         </div>
@@ -28,8 +28,8 @@
         <mat-icon>lock</mat-icon> Admin Profile (View Only)
       </span>
 
-      <!-- Edit Controls (if permitted) -->
-      <ng-container *ngIf="canEditProfile()">
+      <!-- Edit Controls (Only visible on Personal & Employment Tab) -->
+      <ng-container *ngIf="canEditProfile() && selectedTabIndex() === 0">
         <button mat-stroked-button color="primary" (click)="toggleEdit()" *ngIf="!isEditMode()">
           <mat-icon>edit</mat-icon> Edit Profile
         </button>
@@ -49,7 +49,7 @@
 
   <!-- Profile Tabs -->
   <mat-card class="profile-tabs-card" *ngIf="!isLoading()">
-    <mat-tab-group animationDuration="200ms" class="profile-tabs">
+    <mat-tab-group animationDuration="200ms" class="profile-tabs" [selectedIndex]="selectedTabIndex()" (selectedIndexChange)="onTabChange($event)">
       
       <!-- ════════════════ TAB 1: PERSONAL & EMPLOYMENT DETAILS ════════════════ -->
       <mat-tab>
@@ -58,24 +58,36 @@
         </ng-template>
 
         <div class="tab-body">
-          <form [formGroup]="profileForm">
+          <!-- Active Edit Mode Visual Banner -->
+          <div class="edit-mode-banner" *ngIf="isEditMode()">
+            <mat-icon>edit_note</mat-icon>
+            <span>You are currently in <strong>Edit Mode</strong>. Make your changes below and click <strong>"Save Changes"</strong> when done.</span>
+          </div>
+
+          <form [formGroup]="profileForm" [class.edit-mode-active]="isEditMode()" [class.view-mode-active]="!isEditMode()">
             <!-- Section 1: Basic Information -->
             <div class="section-block">
               <h3 class="section-title"><mat-icon>badge</mat-icon> Basic Information</h3>
               <div class="form-grid-3">
                 <mat-form-field appearance="outline">
                   <mat-label>Full Name</mat-label>
-                  <input matInput formControlName="displayName" [readonly]="!isEditMode()">
+                  <input matInput formControlName="displayName">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Phone Number</mat-label>
-                  <input matInput formControlName="phone" [readonly]="!isEditMode()" placeholder="0917-000-0000">
+                  <input matInput formControlName="phone" placeholder="0917-000-0000">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Email Contact (Personal)</mat-label>
+                  <input matInput type="email" formControlName="contactEmail" placeholder="personal@example.com">
+                  <mat-hint>Personal contact email (separate from login email)</mat-hint>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Gender</mat-label>
-                  <mat-select formControlName="gender" [disabled]="!isEditMode()">
+                  <mat-select formControlName="gender">
                     <mat-option value="MALE">Male</mat-option>
                     <mat-option value="FEMALE">Female</mat-option>
                     <mat-option value="OTHER">Other</mat-option>
@@ -85,12 +97,12 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Date of Birth</mat-label>
-                  <input matInput type="date" formControlName="birthDate" [readonly]="!isEditMode()">
+                  <input matInput type="date" formControlName="birthDate">
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="col-span-2">
+                <mat-form-field appearance="outline">
                   <mat-label>Residential Address</mat-label>
-                  <input matInput formControlName="address" [readonly]="!isEditMode()" placeholder="Street, Barangay, City, Province">
+                  <input matInput formControlName="address" placeholder="Street, Barangay, City, Province">
                 </mat-form-field>
               </div>
             </div>
@@ -101,17 +113,17 @@
               <div class="form-grid-3">
                 <mat-form-field appearance="outline">
                   <mat-label>Contact Person Name</mat-label>
-                  <input matInput formControlName="emergencyName" [readonly]="!isEditMode()" placeholder="e.g. Maria Tindoy">
+                  <input matInput formControlName="emergencyName" placeholder="e.g. Maria Tindoy">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Relationship</mat-label>
-                  <input matInput formControlName="emergencyRelationship" [readonly]="!isEditMode()" placeholder="e.g. Spouse / Parent">
+                  <input matInput formControlName="emergencyRelationship" placeholder="e.g. Spouse / Parent">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Emergency Phone</mat-label>
-                  <input matInput formControlName="emergencyPhone" [readonly]="!isEditMode()" placeholder="0918-000-0000">
+                  <input matInput formControlName="emergencyPhone" placeholder="0918-000-0000">
                 </mat-form-field>
               </div>
             </div>
@@ -122,22 +134,22 @@
               <div class="form-grid-4">
                 <mat-form-field appearance="outline">
                   <mat-label>SSS Number</mat-label>
-                  <input matInput formControlName="sssNumber" [readonly]="!isEditMode()" placeholder="00-0000000-0">
+                  <input matInput formControlName="sssNumber" placeholder="00-0000000-0">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>PhilHealth Number</mat-label>
-                  <input matInput formControlName="philHealthNumber" [readonly]="!isEditMode()" placeholder="00-000000000-0">
+                  <input matInput formControlName="philHealthNumber" placeholder="00-000000000-0">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Pag-IBIG / HDMF</mat-label>
-                  <input matInput formControlName="pagIbigNumber" [readonly]="!isEditMode()" placeholder="0000-0000-0000">
+                  <input matInput formControlName="pagIbigNumber" placeholder="0000-0000-0000">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Tax ID (TIN)</mat-label>
-                  <input matInput formControlName="tinNumber" [readonly]="!isEditMode()" placeholder="000-000-000-000">
+                  <input matInput formControlName="tinNumber" placeholder="000-000-000-000">
                 </mat-form-field>
               </div>
             </div>
@@ -148,48 +160,46 @@
               <div class="form-grid-3">
                 <mat-form-field appearance="outline">
                   <mat-label>Job Title / Position</mat-label>
-                  <input matInput formControlName="jobTitle" [readonly]="!isEditMode()" placeholder="e.g. Senior Fitness Coach">
+                  <input matInput formControlName="jobTitle" placeholder="e.g. Senior Fitness Coach">
+                  <mat-hint *ngIf="!isManagementOrAdmin">Managed by Admin / Management</mat-hint>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Employment Type</mat-label>
-                  <mat-select formControlName="employmentType" [disabled]="!isEditMode()">
+                  <mat-select formControlName="employmentType">
                     <mat-option value="FULL_TIME">Full-Time</mat-option>
                     <mat-option value="PART_TIME">Part-Time</mat-option>
                     <mat-option value="CONTRACT">Contract</mat-option>
                     <mat-option value="COMMISSION_ONLY">Commission Only</mat-option>
+                    <mat-option value="SERVICE_PROVIDER">Service Provider</mat-option>
                   </mat-select>
+                  <mat-hint *ngIf="!isManagementOrAdmin">Managed by Admin / Management</mat-hint>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Date Hired</mat-label>
-                  <input matInput type="date" formControlName="hireDate" [readonly]="!isEditMode()">
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" *ngIf="isCurrentAdmin || isOwnProfile">
-                  <mat-label>Daily Salary Rate (₱)</mat-label>
-                  <input matInput type="number" formControlName="dailySalaryRate" [readonly]="!isCurrentAdmin || !isEditMode()" placeholder="500.00">
-                  <span matTextPrefix>₱&nbsp;</span>
+                  <input matInput type="date" formControlName="hireDate">
+                  <mat-hint *ngIf="!isManagementOrAdmin">Managed by Admin / Management</mat-hint>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>GCash Number (For Salary)</mat-label>
-                  <input matInput formControlName="gcashNumber" [readonly]="!isEditMode()" placeholder="0917-000-0000">
+                  <input matInput formControlName="gcashNumber" placeholder="0917-000-0000">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Bank Name</mat-label>
-                  <input matInput formControlName="bankName" [readonly]="!isEditMode()" placeholder="e.g. BDO / BPI">
+                  <input matInput formControlName="bankName" placeholder="e.g. BDO / BPI">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Bank Account Number</mat-label>
-                  <input matInput formControlName="bankAccountNumber" [readonly]="!isEditMode()" placeholder="0000-0000-0000">
+                  <input matInput formControlName="bankAccountNumber" placeholder="0000-0000-0000">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Bank Account Name</mat-label>
-                  <input matInput formControlName="bankAccountName" [readonly]="!isEditMode()" placeholder="Account Holder Name">
+                  <input matInput formControlName="bankAccountName" placeholder="Account Holder Name">
                 </mat-form-field>
               </div>
             </div>
@@ -290,12 +300,12 @@
         </ng-template>
 
         <div class="tab-body">
-          <!-- Confidentiality Warning Alert Banner -->
+          <!-- Confidentiality Warning Alert Banner (Friendly Staff Perspective) -->
           <div class="confidentiality-notice-card">
             <mat-icon>security</mat-icon>
             <div class="notice-text">
-              <strong>CONFIDENTIALITY NOTICE</strong>
-              <p>This section contains confidential compensation statements. Payslips are unlocked and displayed <strong>only after being marked PAID</strong> by Management in Bills & Accounts Payable. Zero-compensation periods are excluded.</p>
+              <strong>CONFIDENTIAL COMPENSATION STATEMENT</strong>
+              <p>This section contains your official weekly compensation records. For your privacy and security, payslips are confidential and will appear here automatically once each weekly salary payout is released.</p>
             </div>
           </div>
 
@@ -335,8 +345,8 @@
           <ng-template #noPayslips>
             <div class="empty-docs-box" *ngIf="!isLoadingPayslips()">
               <mat-icon class="empty-icon">payments</mat-icon>
-              <h4>No Paid Payslips Available</h4>
-              <p>No paid weekly salary records found for this account. Payslips appear automatically once weekly payroll is finalized and marked PAID in Bills & Accounts Payable.</p>
+              <h4>No Weekly Payslips Available</h4>
+              <p>Your official payslips will appear here automatically once your weekly salary payout is released.</p>
             </div>
           </ng-template>
         </div>
