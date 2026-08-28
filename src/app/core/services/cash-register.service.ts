@@ -22,7 +22,8 @@ import {
   CashTransaction,
   ShiftSession,
   ShiftSummary,
-  DenominationBreakdown
+  DenominationBreakdown,
+  HandoverDenominationAudit
 } from '../models/cash-register.model';
 import { OutflowCategory } from '../models/outflow.model';
 
@@ -126,7 +127,9 @@ export class CashRegisterService {
     openingBalance: number,
     openedBy: string,
     isManualOverride = false,
-    denominations: DenominationBreakdown | null = null
+    denominations: DenominationBreakdown | null = null,
+    openingRemarks = '',
+    handoverAudit: HandoverDenominationAudit | null = null
   ): Promise<string> {
     // 1. Check local state pending initialization (optional but good UI feedback)
     if (this.isShiftOpen()) {
@@ -140,7 +143,7 @@ export class CashRegisterService {
       throw new Error('A shift is ALREADY open in the system. Refreshed state.');
     }
 
-    const newShift: Omit<ShiftSession, 'id'> = {
+    const newShift: any = {
       openingBalance,
       expectedClosingBalance: openingBalance,
       actualClosingBalance: null,
@@ -159,12 +162,40 @@ export class CashRegisterService {
       totalFloatIn: 0,
       totalFloatOut: 0,
       isManualOpeningCountOverride: isManualOverride,
-      openingDenominations: denominations
+      openingDenominations: denominations,
+      openingRemarks: openingRemarks || '',
+      handoverAudit: handoverAudit || null
     };
 
     const docRef = await addDoc(this.shiftsCollection, newShift);
     const createdShift: ShiftSession = { ...newShift, id: docRef.id };
     this.currentShift.next(createdShift);
+
+    // Silent Audit Logging for Denomination Reallocation or Cash Mismatch
+    if (handoverAudit && (handoverAudit.status === 'DENOM_REALLOCATION' || handoverAudit.status === 'CASH_MISMATCH')) {
+      try {
+        const logsCol = collection(this.firestore, 'system_logs');
+        await addDoc(logsCol, {
+          action: 'SHIFT_HANDOVER_MISMATCH_DETECTED',
+          category: 'CASH_REGISTER_AUDIT',
+          severity: handoverAudit.status === 'CASH_MISMATCH' ? 'WARNING' : 'INFO',
+          performedBy: openedBy,
+          shiftId: docRef.id,
+          details: {
+            status: handoverAudit.status,
+            previousClosingCash: handoverAudit.previousClosingCash,
+            openingCash: handoverAudit.openingCash,
+            cashVariance: handoverAudit.cashVariance,
+            prevShiftId: handoverAudit.prevShiftId || null,
+            prevShiftClosedBy: handoverAudit.prevShiftClosedBy || null,
+            openingRemarks: openingRemarks || null
+          },
+          timestamp: new Date()
+        });
+      } catch (err) {
+        console.warn('Silent handover audit log failure:', err);
+      }
+    }
 
     return docRef.id;
   }

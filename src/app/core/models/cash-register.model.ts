@@ -26,6 +26,35 @@ export type ShiftStatus = 'OPEN' | 'CLOSED';
 
 export type DenominationBreakdown = Record<string, number>;
 
+export interface DenominationAuditDiffItem {
+    denomination: number;
+    label: string;
+    type: 'BILL' | 'COIN';
+    prevCount: number;
+    openCount: number;
+    unitDiff: number;       // openCount - prevCount
+    prevSubtotal: number;
+    openSubtotal: number;
+    valueDiff: number;      // openSubtotal - prevSubtotal
+    isMatched: boolean;
+}
+
+export type HandoverStatus = 'PERFECT_MATCH' | 'DENOM_REALLOCATION' | 'CASH_MISMATCH' | 'INITIAL_SHIFT' | 'MANUAL_OVERRIDE';
+
+export interface HandoverDenominationAudit {
+    status: HandoverStatus;
+    isTotalMatched: boolean;
+    isDenomMatched: boolean;
+    previousClosingCash: number;
+    openingCash: number;
+    cashVariance: number;
+    prevShiftId?: string;
+    prevShiftClosedBy?: string;
+    openingRemarks?: string;
+    diffItems: DenominationAuditDiffItem[];
+    recordedAt: Date;
+}
+
 export interface ShiftSession {
     id?: string;
     openingBalance: number;
@@ -49,6 +78,8 @@ export interface ShiftSession {
     closingDenominations?: DenominationBreakdown | null;
     isManualOpeningCountOverride?: boolean;
     openingDenominations?: DenominationBreakdown | null;
+    openingRemarks?: string;
+    handoverAudit?: HandoverDenominationAudit | null;
 }
 
 export interface ShiftSummary {
