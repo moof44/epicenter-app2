@@ -29,6 +29,14 @@ export class GlobalErrorHandler implements ErrorHandler {
             const user = authService.userProfile();
             const extracted = this.extractErrorDetails(error);
 
+            // Ignore benign browser capability limitations (e.g. iOS Safari without push support)
+            if (
+                extracted.message.includes('messaging/unsupported-browser') ||
+                extracted.message.includes("This browser doesn't support the API's required to use the Firebase SDK")
+            ) {
+                return;
+            }
+
             errorLogger.logError({
                 message: extracted.message,
                 name: extracted.name,

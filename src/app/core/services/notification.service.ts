@@ -68,7 +68,14 @@ export class NotificationService implements OnDestroy {
     const user = this.authService.userProfile();
     if (!user) return;
 
-    if (!('Notification' in window) || !('serviceWorker' in navigator) || !this.messaging) {
+    if (
+      typeof window === 'undefined' ||
+      !('Notification' in window) ||
+      !('serviceWorker' in navigator) ||
+      !('PushManager' in window) ||
+      !('indexedDB' in window) ||
+      !this.messaging
+    ) {
       return;
     }
 
