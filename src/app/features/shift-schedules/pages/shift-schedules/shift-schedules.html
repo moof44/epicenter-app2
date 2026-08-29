@@ -1,0 +1,299 @@
+<div class="shift-schedules-container" [@fadeIn]>
+
+  <!-- ════════════════ TOP HEADER BAR ════════════════ -->
+  <div class="schedule-header-card mat-elevation-z1">
+    <div class="header-left">
+      <div class="header-icon-box">
+        <mat-icon>calendar_month</mat-icon>
+      </div>
+      <div>
+        <h1 class="page-title">Employee Shift Schedules</h1>
+        <p class="page-subtitle">Weekly staff roster from Sunday to Saturday with attendance integration & shift swaps</p>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="header-right">
+      <button mat-stroked-button class="action-btn" (click)="openShiftSwaps()">
+        <mat-icon>swap_horiz</mat-icon> Shift Swaps
+        <span class="badge-count warn" *ngIf="pendingSwaps().length && isManagerOrAdmin">{{ pendingSwaps().length }}</span>
+      </button>
+
+      <button mat-stroked-button class="action-btn" (click)="openShiftDefinitions()" *ngIf="isManagerOrAdmin">
+        <mat-icon>settings</mat-icon> Manage Shifts
+      </button>
+
+      <button mat-flat-button color="primary" class="action-btn copy-btn" (click)="copyFromPreviousWeek()" *ngIf="isManagerOrAdmin" [disabled]="isCopying()">
+        <mat-icon>content_copy</mat-icon> {{ isCopying() ? 'Copying...' : 'Copy Previous Week' }}
+      </button>
+
+      <button mat-icon-button (click)="printSchedule()" matTooltip="Print Weekly Roster">
+        <mat-icon>print</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════ WEEK SELECTOR CONTROLS ════════════════ -->
+  <div class="week-controls-bar">
+    <div class="week-nav-group">
+      <button mat-icon-button (click)="prevWeek()" title="Previous Week">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <button mat-stroked-button class="today-btn" (click)="todayWeek()">
+        This Week
+      </button>
+      <button mat-icon-button (click)="nextWeek()" title="Next Week">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+
+    <div class="active-week-label">
+      <mat-icon>date_range</mat-icon>
+      <strong>{{ weekInfo().startDate | date:'MMM d' }} – {{ weekInfo().endDate | date:'MMM d, y' }}</strong>
+      <span class="week-tag">Sunday – Saturday</span>
+    </div>
+
+    <div class="legend-pills">
+      <span class="legend-pill" *ngFor="let def of shiftDefinitions()">
+        <span class="dot" [style.background]="def.colorHex || '#0284c7'"></span>
+        {{ def.name }}
+      </span>
+      <span class="legend-pill off">
+        <span class="dot off"></span> Day Off
+      </span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-wrap" *ngIf="isLoading()">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading weekly schedule...</p>
+  </div>
+
+  <div *ngIf="!isLoading()">
+
+    <!-- ════════════════ "MY SCHEDULE THIS WEEK" HERO (FOR LOGGED IN STAFF) ════════════════ -->
+    <div class="my-schedule-hero" *ngIf="myWeeklyShifts().length > 0">
+      <div class="hero-header">
+        <div class="hero-title">
+          <mat-icon>person_pin</mat-icon>
+          <span>My Shifts for This Week ({{ currentUser()?.displayName }})</span>
+        </div>
+        <button mat-button color="primary" class="swap-link-btn" (click)="openShiftSwaps()">
+          <mat-icon>swap_horiz</mat-icon> Request Shift Swap
+        </button>
+      </div>
+
+      <div class="my-shifts-carousel">
+        <div class="my-shift-card" 
+             *ngFor="let s of myWeeklyShifts()"
+             [class.is-today]="s.isToday"
+             [class.is-off]="!s.shift || s.shift.shiftId === 'OFF'">
+          <div class="card-day-header">
+            <span class="day-lbl">{{ s.dayName }}</span>
+            <span class="date-lbl">{{ s.formattedDate }}</span>
+            <span class="today-badge" *ngIf="s.isToday">TODAY</span>
+          </div>
+
+          <div class="card-shift-body">
+            <div class="shift-name" *ngIf="s.shift && s.shift.shiftId !== 'OFF'">
+              <span class="status-indicator" [style.background]="s.shift.colorHex || '#0284c7'"></span>
+              <strong>{{ s.shift.shiftName }}</strong>
+            </div>
+            <div class="shift-hours" *ngIf="s.shift && s.shift.shiftId !== 'OFF'">
+              <mat-icon>schedule</mat-icon>
+              <span>{{ formatShiftSchedule(s.shift) }}</span>
+            </div>
+
+            <div class="off-body" *ngIf="!s.shift || s.shift.shiftId === 'OFF'">
+              <mat-icon class="off-icon">beach_access</mat-icon>
+              <span>Rest Day / Off</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 📱 MOBILE DAY-BY-DAY ACCORDION VIEW (< 640px) ════════════════ -->
+    <div class="mobile-schedule-view">
+      <div class="mobile-day-selector">
+        <button type="button"
+                class="mob-day-chip"
+                *ngFor="let day of weekInfo().days; let i = index"
+                [class.active]="activeMobileDayIndex() === i"
+                [class.is-today]="day.dateStr === todayStr()"
+                (click)="activeMobileDayIndex.set(i)">
+          <span class="m-day">{{ day.dayName }}</span>
+          <span class="m-date">{{ day.formattedDate }}</span>
+        </button>
+      </div>
+
+      <!-- Active Day Staff Roster Card -->
+      <div class="mobile-day-roster-card mat-elevation-z1">
+        <div class="m-roster-header">
+          <div class="m-header-left">
+            <h3>{{ weekInfo().days[activeMobileDayIndex()].dayName }} Roster ({{ weekInfo().days[activeMobileDayIndex()].formattedDate }})</h3>
+            <span class="lock-tag" *ngIf="isPast(weekInfo().days[activeMobileDayIndex()].dateStr)">
+              <mat-icon>lock</mat-icon> Locked (Past Day)
+            </span>
+          </div>
+          <span class="headcount-badge">
+            {{ getDayHeadcount(weekInfo().days[activeMobileDayIndex()].dateStr).total }} Staff Scheduled
+          </span>
+        </div>
+
+        <div class="mobile-staff-list">
+          <div class="mob-staff-row" *ngFor="let staff of staffList()">
+            <div class="mob-staff-info">
+              <strong class="staff-name">{{ staff.displayName }}</strong>
+              <small class="staff-role">{{ staff.roles.join(', ') }}</small>
+            </div>
+
+            <div class="mob-shift-pill-wrap">
+              <ng-container *ngIf="getDayShift(staff.uid, weekInfo().days[activeMobileDayIndex()].dateStr) as shift; else mobOff">
+                <div class="shift-tag" [style.background]="shift.colorHex || '#0284c7'">
+                  <strong>{{ shift.shiftName }}</strong>
+                  <small>{{ formatShiftSchedule(shift) }}</small>
+                </div>
+              </ng-container>
+              <ng-template #mobOff>
+                <span class="off-tag">Day Off</span>
+              </ng-template>
+
+              <!-- Edit Shift Menu on Mobile for Manager -->
+              <button mat-icon-button 
+                      [matMenuTriggerFor]="mobileShiftMenu" 
+                      *ngIf="isManagerOrAdmin && !isPast(weekInfo().days[activeMobileDayIndex()].dateStr)" 
+                      class="mob-edit-btn">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+
+              <mat-menu #mobileShiftMenu="matMenu">
+                <button mat-menu-item *ngFor="let def of shiftDefinitions()" (click)="assignShift(staff, weekInfo().days[activeMobileDayIndex()].dateStr, def)">
+                  <span class="menu-dot" [style.background]="def.colorHex || '#0284c7'"></span>
+                  {{ def.name }} ({{ formatShiftSchedule(def) }})
+                </button>
+                <button mat-menu-item (click)="assignShift(staff, weekInfo().days[activeMobileDayIndex()].dateStr, null)">
+                  <mat-icon color="warn">beach_access</mat-icon> Set as Day Off
+                </button>
+              </mat-menu>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ 🖥️ TABLET & DESKTOP MASTER MATRIX ════════════════ -->
+    <div class="desktop-matrix-card mat-elevation-z1">
+      <div class="table-responsive">
+        <table class="schedule-matrix-table">
+          <thead>
+            <tr>
+              <th class="col-staff sticky-left">Staff Member</th>
+              <th class="col-day" 
+                  *ngFor="let day of weekInfo().days"
+                  [class.is-today]="day.dateStr === todayStr()"
+                  [class.is-past]="isPast(day.dateStr)">
+                <div class="day-head-box">
+                  <span class="day-title">{{ day.dayName }}</span>
+                  <span class="day-sub">{{ day.formattedDate }}</span>
+                  <span class="today-chip" *ngIf="day.dateStr === todayStr()">TODAY</span>
+                  <mat-icon class="lock-icon" *ngIf="isPast(day.dateStr)" title="Past Date (Locked)">lock</mat-icon>
+                </div>
+              </th>
+              <th class="col-total">Total Hours</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let staff of staffList()" class="staff-row">
+              <!-- Frozen Employee Column -->
+              <td class="col-staff sticky-left">
+                <div class="staff-cell-content">
+                  <div class="avatar-mini">
+                    <mat-icon>account_circle</mat-icon>
+                  </div>
+                  <div class="staff-text">
+                    <strong class="name">{{ staff.displayName }}</strong>
+                    <span class="role">{{ staff.roles.join(', ') }}</span>
+                    <!-- 1-Day Off Compliance Tag -->
+                    <span class="compliance-alert" *ngIf="getStaffAssignment(staff.uid)?.daysScheduled === 7" title="Labor Compliance: Employee requires at least 1 day off">
+                      ⚠️ 7/7 Days (No Day Off)
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- 7 Days Columns (Sunday to Saturday) -->
+              <td *ngFor="let day of weekInfo().days" 
+                  class="col-day-cell"
+                  [class.is-today]="day.dateStr === todayStr()"
+                  [class.is-past]="isPast(day.dateStr)">
+                
+                <div class="cell-wrapper" [matMenuTriggerFor]="!isManagerOrAdmin || isPast(day.dateStr) ? null : shiftMenu">
+                  <ng-container *ngIf="getDayShift(staff.uid, day.dateStr) as shift; else offCell">
+                    <div class="shift-badge-pill" [style.background]="shift.colorHex || '#0284c7'">
+                      <span class="s-name">{{ shift.shiftName }}</span>
+                      <span class="s-hours">{{ formatShiftSchedule(shift) }}</span>
+                    </div>
+                  </ng-container>
+
+                  <ng-template #offCell>
+                    <div class="off-badge-pill">
+                      <span>Day Off</span>
+                    </div>
+                  </ng-template>
+
+                  <!-- Lock Overlay for Past Days -->
+                  <div class="past-lock-overlay" *ngIf="isPast(day.dateStr)"></div>
+                </div>
+
+                <!-- Dropdown Menu for Editing Shift -->
+                <mat-menu #shiftMenu="matMenu">
+                  <div class="menu-header">Assign Shift for {{ day.dayName }} ({{ day.formattedDate }})</div>
+                  <button mat-menu-item *ngFor="let def of shiftDefinitions()" (click)="assignShift(staff, day.dateStr, def)">
+                    <span class="menu-dot" [style.background]="def.colorHex || '#0284c7'"></span>
+                    <strong>{{ def.name }}</strong>
+                    <small>({{ formatShiftSchedule(def) }})</small>
+                  </button>
+                  <button mat-menu-item (click)="assignShift(staff, day.dateStr, null)">
+                    <mat-icon color="warn">beach_access</mat-icon>
+                    <span>Set as Day Off / Unscheduled</span>
+                  </button>
+                </mat-menu>
+              </td>
+
+              <!-- Weekly Total Scheduled Hours -->
+              <td class="col-total">
+                <div class="total-box">
+                  <strong>{{ getStaffAssignment(staff.uid)?.totalScheduledHours || 0 }} hrs</strong>
+                  <small>{{ getStaffAssignment(staff.uid)?.daysScheduled || 0 }} days</small>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+
+          <!-- Daily Headcount Footer Summary -->
+          <tfoot>
+            <tr class="headcount-footer-row">
+              <td class="sticky-left footer-label">
+                <strong>Daily Staff On Duty</strong>
+              </td>
+              <td *ngFor="let day of weekInfo().days" class="headcount-cell">
+                <div class="headcount-summary-box">
+                  <span class="total-count">{{ getDayHeadcount(day.dateStr).total }} Staff</span>
+                  <div class="sub-counts" *ngIf="getDayHeadcount(day.dateStr).total > 0">
+                    <span *ngIf="getDayHeadcount(day.dateStr).opening" title="Opening Shift">🌅 {{ getDayHeadcount(day.dateStr).opening }}</span>
+                    <span *ngIf="getDayHeadcount(day.dateStr).morning" title="Morning Shift">☀️ {{ getDayHeadcount(day.dateStr).morning }}</span>
+                    <span *ngIf="getDayHeadcount(day.dateStr).night" title="Night Shift">🌙 {{ getDayHeadcount(day.dateStr).night }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="total-footer-blank"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1502,5 +1502,141 @@ export const syncAllMembersProgressScans = functions.https.onCall(async (data: a
     return { success: true, updatedMembersCount: updatedCount, totalMembers: membersSnap.size };
 });
 
+/**
+ * Scheduled Cloud Function running every Saturday at 7:00 PM Manila Time.
+ * Automatically duplicates the current week's shift schedule into next week if not already created.
+ */
+export const autoRolloverWeeklyShiftSchedule = functions.pubsub
+    .schedule('0 19 * * 6')
+    .timeZone('Asia/Manila')
+    .onRun(async (context) => {
+        const db = admin.firestore();
+        console.log('Running autoRolloverWeeklyShiftSchedule (Saturday 7:00 PM PHT)...');
 
+        try {
+            // Get Manila now
+            const now = new Date();
+            const manilaStr = now.toLocaleString('en-US', { timeZone: 'Asia/Manila' });
+            const manilaNow = new Date(manilaStr);
 
+            // Saturday today: calculate current week's Sunday (6 days ago)
+            const currentSunday = new Date(manilaNow);
+            currentSunday.setDate(manilaNow.getDate() - 6);
+            currentSunday.setHours(0, 0, 0, 0);
+
+            const currentSaturday = new Date(manilaNow);
+            currentSaturday.setHours(23, 59, 59, 999);
+
+            const formatYMD = (d: Date) => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+
+            const currentStartDate = formatYMD(currentSunday);
+            const currentEndDate = formatYMD(currentSaturday);
+            const currentWeekId = `${currentStartDate}_${currentEndDate}`;
+
+            // Next week: Tomorrow (Sunday) to next Saturday
+            const nextSunday = new Date(manilaNow);
+            nextSunday.setDate(manilaNow.getDate() + 1);
+            nextSunday.setHours(0, 0, 0, 0);
+
+            const nextSaturday = new Date(nextSunday);
+            nextSaturday.setDate(nextSunday.getDate() + 6);
+            nextSaturday.setHours(23, 59, 59, 999);
+
+            const nextStartDate = formatYMD(nextSunday);
+            const nextEndDate = formatYMD(nextSaturday);
+            const nextWeekId = `${nextStartDate}_${nextEndDate}`;
+
+            // Check if next week schedule already exists
+            const nextWeekDoc = await db.collection('weekly_schedules').doc(nextWeekId).get();
+            if (nextWeekDoc.exists) {
+                console.log(`Next week schedule ${nextWeekId} already exists. Skipping auto-duplication.`);
+                return null;
+            }
+
+            // Fetch current week schedule
+            const currentWeekDoc = await db.collection('weekly_schedules').doc(currentWeekId).get();
+            if (!currentWeekDoc.exists) {
+                console.log(`Current week schedule ${currentWeekId} not found. Skipping auto-duplication.`);
+                return null;
+            }
+
+            const currentData = currentWeekDoc.data() || {};
+            const currentAssignments = currentData.assignments || {};
+
+            const nextAssignments: any = {};
+
+            // Days array for current week and next week
+            const currentDays: string[] = [];
+            const nextDays: string[] = [];
+            for (let i = 0; i < 7; i++) {
+                const cDay = new Date(currentSunday);
+                cDay.setDate(currentSunday.getDate() + i);
+                currentDays.push(formatYMD(cDay));
+
+                const nDay = new Date(nextSunday);
+                nDay.setDate(nextSunday.getDate() + i);
+                nextDays.push(formatYMD(nDay));
+            }
+
+            for (const [staffId, staffData] of Object.entries<any>(currentAssignments)) {
+                const newDays: any = {};
+                let scheduledHours = 0;
+                let daysScheduled = 0;
+
+                for (let i = 0; i < 7; i++) {
+                    const srcDate = currentDays[i];
+                    const targetDate = nextDays[i];
+                    const shift = staffData.days?.[srcDate] || null;
+
+                    newDays[targetDate] = shift;
+                    if (shift && shift.shiftId !== 'OFF') {
+                        daysScheduled++;
+                        scheduledHours += shift.isFlexible ? 7 : (shift.requiredHours || 7);
+                    }
+                }
+
+                nextAssignments[staffId] = {
+                    staffId: staffData.staffId,
+                    staffName: staffData.staffName,
+                    roles: staffData.roles || [],
+                    days: newDays,
+                    totalScheduledHours: scheduledHours,
+                    daysScheduled,
+                    hasDayOff: daysScheduled < 7
+                };
+            }
+
+            const newSchedulePayload = {
+                id: nextWeekId,
+                startDate: nextStartDate,
+                endDate: nextEndDate,
+                status: 'PUBLISHED',
+                assignments: nextAssignments,
+                createdBy: 'system_auto_scheduler',
+                createdByName: 'Auto Scheduler (Saturday 7PM PHT)',
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            };
+
+            await db.collection('weekly_schedules').doc(nextWeekId).set(newSchedulePayload);
+            console.log(`Successfully auto-created next week schedule: ${nextWeekId}`);
+
+            // Notify Management
+            await sendNotificationsToRoles(['ADMIN', 'MANAGER'], {
+                title: '📅 Weekly Shift Schedule Generated',
+                body: `The shift schedule for next week (${nextStartDate} – ${nextEndDate}) has been generated automatically from this week's roster.`,
+                type: 'info',
+                actionUrl: '/shift-schedules'
+            });
+
+            return null;
+        } catch (error) {
+            console.error('Error in autoRolloverWeeklyShiftSchedule:', error);
+            return null;
+        }
+    });

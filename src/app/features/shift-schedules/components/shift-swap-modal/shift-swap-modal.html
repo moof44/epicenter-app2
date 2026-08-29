@@ -1,0 +1,173 @@
+<div class="modal-header">
+  <div class="header-title">
+    <mat-icon>swap_horizontal_circle</mat-icon>
+    <div>
+      <h2>Shift Exchange & Swap Requests</h2>
+      <p>Request to exchange your scheduled shift with a co-worker subject to manager approval.</p>
+    </div>
+  </div>
+  <button mat-icon-button (click)="close()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div class="modal-body">
+  <mat-tab-group animationDuration="200ms" [selectedIndex]="selectedTabIndex()" (selectedIndexChange)="selectedTabIndex.set($event)">
+    
+    <!-- ════════════════ TAB 1: REQUEST SHIFT SWAP ════════════════ -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon class="tab-icon">add_task</mat-icon> Request Swap
+      </ng-template>
+
+      <div class="tab-body">
+        <form [formGroup]="swapForm" (ngSubmit)="submitSwap()" class="swap-form">
+          
+          <div class="form-row-2">
+            <!-- Step 1: Select My Shift -->
+            <mat-form-field appearance="outline">
+              <mat-label>1. Select Your Shift to Swap Out</mat-label>
+              <mat-select formControlName="myDate" placeholder="Choose your scheduled shift">
+                <mat-option *ngFor="let s of myAvailableShifts()" [value]="s.dateStr">
+                  {{ s.label }}
+                </mat-option>
+              </mat-select>
+              <mat-hint *ngIf="myAvailableShifts().length === 0">No upcoming active shifts found for this week</mat-hint>
+            </mat-form-field>
+
+            <!-- Step 2: Select Co-worker -->
+            <mat-form-field appearance="outline">
+              <mat-label>2. Select Co-worker to Swap With</mat-label>
+              <mat-select formControlName="targetStaffId" placeholder="Choose colleague">
+                <mat-option *ngFor="let staff of staffList()" [value]="staff.uid">
+                  {{ staff.displayName }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Step 3: Select Target Shift -->
+          <mat-form-field appearance="outline" class="full-width" *ngIf="swapForm.value.targetStaffId">
+            <mat-label>3. Select Co-worker's Shift You Want to Take</mat-label>
+            <mat-select formControlName="targetDate" placeholder="Choose target shift">
+              <mat-option *ngFor="let s of targetAvailableShifts()" [value]="s.dateStr">
+                {{ s.label }}
+              </mat-option>
+            </mat-select>
+            <mat-hint *ngIf="targetAvailableShifts().length === 0">This co-worker has no available shifts to swap</mat-hint>
+          </mat-form-field>
+
+          <!-- Step 4: Reason -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>4. Reason for Shift Exchange</mat-label>
+            <textarea matInput formControlName="reason" rows="2" placeholder="e.g. Family emergency, university exam, agreed peer coverage"></textarea>
+          </mat-form-field>
+
+          <div class="submit-row">
+            <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting() || swapForm.invalid">
+              <mat-icon>send</mat-icon> {{ isSubmitting() ? 'Submitting...' : 'Submit Request to Manager' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </mat-tab>
+
+    <!-- ════════════════ TAB 2: MY SWAP REQUESTS ════════════════ -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon class="tab-icon">history</mat-icon> My Requests
+        <span class="badge-count" *ngIf="myRequests().length">{{ myRequests().length }}</span>
+      </ng-template>
+
+      <div class="tab-body">
+        <div class="requests-list" *ngIf="myRequests().length > 0; else noMyRequests">
+          <div class="req-card" *ngFor="let r of myRequests()">
+            <div class="req-card-header">
+              <div class="parties-title">
+                <strong>{{ r.requesterName }}</strong> ⇄ <strong>{{ r.targetStaffName }}</strong>
+              </div>
+              <span class="status-tag" [ngClass]="r.status.toLowerCase()">
+                {{ r.status.replace('_', ' ') }}
+              </span>
+            </div>
+
+            <div class="shifts-comparison-box">
+              <div class="shift-mini">
+                <small>{{ r.requesterName }}'s Shift:</small>
+                <strong>{{ r.requesterDate }} · {{ r.requesterShift.shiftName }} ({{ formatShiftSchedule(r.requesterShift) }})</strong>
+              </div>
+              <mat-icon class="swap-icon">sync_alt</mat-icon>
+              <div class="shift-mini">
+                <small>{{ r.targetStaffName }}'s Shift:</small>
+                <strong>{{ r.targetDate }} · {{ r.targetShift.shiftName }} ({{ formatShiftSchedule(r.targetShift) }})</strong>
+              </div>
+            </div>
+
+            <p class="req-reason"><em>Reason:</em> "{{ r.reason }}"</p>
+          </div>
+        </div>
+
+        <ng-template #noMyRequests>
+          <div class="empty-box">
+            <mat-icon>inbox</mat-icon>
+            <p>No shift swap requests found for your account.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- ════════════════ TAB 3: MANAGER APPROVAL REVIEW ════════════════ -->
+    <mat-tab *ngIf="isManagerOrAdmin">
+      <ng-template matTabLabel>
+        <mat-icon class="tab-icon">rule</mat-icon> Pending Approvals
+        <span class="badge-count warn" *ngIf="pendingRequests().length">{{ pendingRequests().length }}</span>
+      </ng-template>
+
+      <div class="tab-body">
+        <div class="requests-list" *ngIf="pendingRequests().length > 0; else noPending">
+          <div class="req-card manager-card" *ngFor="let r of pendingRequests()">
+            <div class="req-card-header">
+              <div class="parties-title">
+                <mat-icon>sync</mat-icon>
+                <strong>{{ r.requesterName }}</strong> wants to exchange with <strong>{{ r.targetStaffName }}</strong>
+              </div>
+              <span class="date-sub">{{ r.createdAt?.toDate ? (r.createdAt.toDate() | date:'short') : '' }}</span>
+            </div>
+
+            <div class="shifts-comparison-box">
+              <div class="shift-mini">
+                <small>{{ r.requesterName }} gives up:</small>
+                <strong>{{ r.requesterDate }} · {{ r.requesterShift.shiftName }}</strong>
+                <span>{{ formatShiftSchedule(r.requesterShift) }}</span>
+              </div>
+              <mat-icon class="swap-icon">sync_alt</mat-icon>
+              <div class="shift-mini">
+                <small>{{ r.targetStaffName }} gives up:</small>
+                <strong>{{ r.targetDate }} · {{ r.targetShift.shiftName }}</strong>
+                <span>{{ formatShiftSchedule(r.targetShift) }}</span>
+              </div>
+            </div>
+
+            <p class="req-reason"><strong>Reason:</strong> "{{ r.reason }}"</p>
+
+            <div class="manager-actions-row">
+              <button mat-button color="warn" (click)="rejectRequest(r)">
+                <mat-icon>close</mat-icon> Decline
+              </button>
+              <button mat-flat-button color="primary" (click)="approveRequest(r)">
+                <mat-icon>check</mat-icon> Approve Swap
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noPending>
+          <div class="empty-box">
+            <mat-icon>task_alt</mat-icon>
+            <p>No pending shift swap requests requiring approval.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

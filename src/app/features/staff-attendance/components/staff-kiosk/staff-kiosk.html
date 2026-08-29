@@ -79,7 +79,8 @@
                             {{ shift.name }} ({{ formatShiftSchedule(shift) }})
                         </mat-option>
                     </mat-select>
-                    <mat-hint>Auto-detected based on current Manila time</mat-hint>
+                    <mat-hint *ngIf="scheduledShiftNotice()" class="scheduled-shift-hint">{{ scheduledShiftNotice() }}</mat-hint>
+                    <mat-hint *ngIf="!scheduledShiftNotice()">Auto-detected based on current Manila time</mat-hint>
                 </mat-form-field>
 
                 <!-- Password Verification Input -->

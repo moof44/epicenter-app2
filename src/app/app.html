@@ -43,6 +43,11 @@
             <mat-icon matListItemIcon>schedule</mat-icon>
             <span matListItemTitle>My Attendance</span>
           </a>
+          <a mat-list-item routerLink="/shift-schedules" routerLinkActive="active"
+            (click)="mobileQuery.matches ? snav.close() : null">
+            <mat-icon matListItemIcon>calendar_month</mat-icon>
+            <span matListItemTitle>Shift Schedules</span>
+          </a>
           <a mat-list-item routerLink="/profile" routerLinkActive="active"
             (click)="mobileQuery.matches ? snav.close() : null">
             <mat-icon matListItemIcon>account_circle</mat-icon>

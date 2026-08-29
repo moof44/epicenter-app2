@@ -146,5 +146,16 @@ export const routes: Routes = [
         canActivate: [authGuard, roleGuard],
         data: { animation: 'FormPage', roles: ['ADMIN', 'MANAGER'] }
     },
+    {
+        path: 'shift-schedules',
+        loadComponent: () => import('./features/shift-schedules/pages/shift-schedules/shift-schedules').then(m => m.ShiftSchedulesComponent),
+        canActivate: [authGuard],
+        data: { animation: 'DashboardPage' }
+    },
+    {
+        path: 'schedules',
+        redirectTo: 'shift-schedules',
+        pathMatch: 'full'
+    }
 ];
 

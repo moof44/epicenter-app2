@@ -13,16 +13,16 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
     StaffAttendanceService,
     DEFAULT_STAFF_SHIFTS,
-    formatShiftSchedule,
-    formatTime12Hour
+    formatShiftSchedule
 } from '../../../../core/services/staff-attendance.service';
+import { ShiftScheduleService } from '../../../../core/services/shift-schedule.service';
 import { UserService } from '../../../../core/services/user.service';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { User } from '../../../../core/models/user.model';
 import { StaffShiftDefinition } from '../../../../core/models/staff-attendance.model';
 import { fadeIn } from '../../../../core/animations/animations';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-staff-kiosk',
@@ -47,6 +47,7 @@ import { firstValueFrom } from 'rxjs';
 })
 export class StaffKioskComponent implements OnInit, OnDestroy {
     private attendanceService = inject(StaffAttendanceService);
+    private shiftScheduleService = inject(ShiftScheduleService);
     private userService = inject(UserService);
     private settingsService = inject(SettingsService);
     private authService = inject(AuthService);
@@ -80,11 +81,13 @@ export class StaffKioskComponent implements OnInit, OnDestroy {
     staffList = signal<User[]>([]);
     shiftsList = signal<StaffShiftDefinition[]>(DEFAULT_STAFF_SHIFTS);
     deviceName = signal<string>('Attendance Terminal');
+    scheduledShiftNotice = signal<string | null>(null);
 
     // Manila Time Signals
     manilaTimeStr = signal<string>('');
     manilaDateStr = signal<string>('');
     private timerInterval: any = null;
+    private staffChangeSub?: Subscription;
 
     // UI Loading & Feedback
     isSubmitting = signal(false);
@@ -93,6 +96,8 @@ export class StaffKioskComponent implements OnInit, OnDestroy {
     async ngOnInit() {
         this.updateManilaClock();
         this.timerInterval = setInterval(() => this.updateManilaClock(), 1000);
+
+        this.setupStaffChangeListener();
 
         await this.checkDeviceAuthorization();
         if (this.isAuthorized()) {
@@ -104,6 +109,41 @@ export class StaffKioskComponent implements OnInit, OnDestroy {
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
         }
+        this.staffChangeSub?.unsubscribe();
+    }
+
+    private setupStaffChangeListener() {
+        this.staffChangeSub = this.kioskForm.get('staffId')?.valueChanges.subscribe(async (staffId) => {
+            if (!staffId) {
+                this.scheduledShiftNotice.set(null);
+                return;
+            }
+            try {
+                const scheduled = await this.shiftScheduleService.getTodayShiftForStaff(staffId);
+                if (scheduled) {
+                    let shiftDef = this.shiftsList().find(s => s.id === scheduled.shiftId);
+                    if (!shiftDef) {
+                        shiftDef = {
+                            id: scheduled.shiftId,
+                            name: scheduled.shiftName,
+                            startTime: scheduled.startTime,
+                            endTime: scheduled.endTime,
+                            isFlexible: scheduled.isFlexible,
+                            requiredHours: 7
+                        };
+                        this.shiftsList.update(list => [...list, shiftDef!]);
+                    }
+                    this.kioskForm.patchValue({ shiftId: shiftDef.id });
+                    this.scheduledShiftNotice.set('🎯 Assigned Schedule for Today: ' + scheduled.shiftName + ' (' + formatShiftSchedule(shiftDef) + ')');
+                } else {
+                    const autoShift = this.attendanceService.autoDetectCurrentShift(this.shiftsList());
+                    this.kioskForm.patchValue({ shiftId: autoShift.id });
+                    this.scheduledShiftNotice.set(null);
+                }
+            } catch (e) {
+                console.warn('Error auto-binding scheduled shift on kiosk:', e);
+            }
+        });
     }
 
     private updateManilaClock() {

@@ -1,0 +1,750 @@
+.shift-schedules-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* Header Card */
+.schedule-header-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-icon-box mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.page-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.action-btn {
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.badge-count {
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+}
+
+.badge-count.warn {
+  background: #f59e0b;
+}
+
+/* Week Controls Bar */
+.week-controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.week-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.today-btn {
+  font-weight: 700;
+}
+
+.active-week-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.active-week-label mat-icon {
+  color: #0284c7;
+}
+
+.week-tag {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-left: 4px;
+}
+
+.legend-pills {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.legend-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.legend-pill .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-pill .dot.off {
+  background: #cbd5e1;
+}
+
+/* My Schedule Hero */
+.my-schedule-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.hero-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.hero-title mat-icon {
+  color: #38bdf8;
+}
+
+.swap-link-btn {
+  color: #38bdf8 !important;
+  font-weight: 600;
+}
+
+.my-shifts-carousel {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.my-shift-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.my-shift-card.is-today {
+  background: rgba(2, 132, 199, 0.25);
+  border-color: #38bdf8;
+}
+
+.card-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.day-lbl {
+  font-size: 13px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.date-lbl {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.today-badge {
+  background: #38bdf8;
+  color: #0f172a;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.card-shift-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shift-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.shift-hours {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.shift-hours mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.off-body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+  padding: 6px 0;
+}
+
+.off-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+}
+
+/* Master Desktop / Tablet Table */
+.desktop-matrix-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.schedule-matrix-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.schedule-matrix-table th,
+.schedule-matrix-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #f1f5f9;
+  text-align: center;
+}
+
+.schedule-matrix-table th {
+  background: #f8fafc;
+  font-weight: 700;
+  color: #334155;
+  user-select: none;
+}
+
+.sticky-left {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: #ffffff;
+  text-align: left !important;
+  min-width: 220px;
+  border-right: 2px solid #e2e8f0 !important;
+}
+
+thead th.sticky-left {
+  background: #f8fafc;
+  z-index: 6;
+}
+
+tfoot td.sticky-left {
+  background: #f8fafc;
+  z-index: 6;
+}
+
+.col-day {
+  min-width: 135px;
+}
+
+.col-day.is-today {
+  background: #eff6ff !important;
+}
+
+.col-day.is-past {
+  background: #f1f5f9 !important;
+  opacity: 0.9;
+}
+
+.day-head-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.day-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.day-sub {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.today-chip {
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+.lock-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.staff-cell-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar-mini {
+  color: #0284c7;
+}
+
+.staff-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.staff-text .name {
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.staff-text .role {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.compliance-alert {
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.cell-wrapper {
+  cursor: pointer;
+  position: relative;
+  border-radius: 8px;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.cell-wrapper:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.shift-badge-pill {
+  color: #ffffff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+}
+
+.shift-badge-pill .s-name {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.shift-badge-pill .s-hours {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+.off-badge-pill {
+  background: #f1f5f9;
+  color: #94a3b8;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.total-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.total-box strong {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.total-box small {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Headcount Footer */
+.headcount-footer-row td {
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.footer-label {
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.headcount-summary-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.total-count {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0284c7;
+}
+
+.sub-counts {
+  display: flex;
+  gap: 6px;
+  font-size: 10px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.menu-header {
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.menu-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+/* Mobile View Elements (hidden by default on desktop) */
+.mobile-schedule-view {
+  display: none;
+}
+
+/* ════════════════ RESPONSIVE RULES (4-SCREEN PROTOCOL) ════════════════ */
+
+/* Mobile (< 640px) */
+@media (max-width: 640px) {
+  .shift-schedules-container {
+    padding: 12px;
+  }
+
+  .schedule-header-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .header-right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    flex: 1 1 calc(50% - 6px);
+    min-height: 44px;
+  }
+
+  .week-controls-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .my-shifts-carousel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .desktop-matrix-card {
+    display: none;
+  }
+
+  .mobile-schedule-view {
+    display: block;
+  }
+
+  .mobile-day-selector {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+  }
+
+  .mob-day-chip {
+    flex: 0 0 68px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    min-height: 48px;
+  }
+
+  .mob-day-chip.active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+  }
+
+  .mob-day-chip.is-today:not(.active) {
+    border-color: #0284c7;
+    background: #f0f9ff;
+  }
+
+  .m-day {
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .m-date {
+    font-size: 10px;
+    opacity: 0.85;
+  }
+
+  .mobile-day-roster-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 16px;
+  }
+
+  .m-roster-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .m-roster-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .lock-tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  .lock-tag mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .headcount-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .mobile-staff-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .mob-staff-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    min-height: 52px;
+  }
+
+  .mob-staff-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .staff-name {
+    font-size: 14px;
+    color: #0f172a;
+  }
+
+  .staff-role {
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  .mob-shift-pill-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .shift-tag {
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .shift-tag strong {
+    font-size: 11px;
+  }
+
+  .shift-tag small {
+    font-size: 9px;
+    opacity: 0.9;
+  }
+
+  .off-tag {
+    background: #e2e8f0;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+}
+
+/* Tablet Portrait (640px - 768px) */
+@media (min-width: 641px) and (max-width: 768px) {
+  .my-shifts-carousel {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .schedule-header-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
+
+/* Tablet Landscape (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .my-shifts-carousel {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}
