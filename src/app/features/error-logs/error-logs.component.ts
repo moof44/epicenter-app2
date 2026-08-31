@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,12 +15,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
 import { ErrorLoggerService } from '../../core/services/error-logger.service';
 import { SystemErrorLog } from '../../core/models/system-error.model';
+import { fadeIn } from '../../core/animations/animations';
 
 @Component({
     selector: 'app-error-logs',
     standalone: true,
     imports: [
         CommonModule,
+        RouterModule,
         FormsModule,
         MatCardModule,
         MatButtonModule,
@@ -31,14 +34,16 @@ import { SystemErrorLog } from '../../core/models/system-error.model';
         MatExpansionModule,
         MatSnackBarModule,
         MatTooltipModule,
-        MatBadgeModule,
+        MatBadgeModule
     ],
     templateUrl: './error-logs.component.html',
-    styleUrl: './error-logs.component.scss',
+    styleUrl: './error-logs.component.css',
+    animations: [fadeIn]
 })
 export class ErrorLogsComponent implements OnInit {
     private errorLoggerService = inject(ErrorLoggerService);
     private snackBar = inject(MatSnackBar);
+    private router = inject(Router);
 
     logs = signal<SystemErrorLog[]>([]);
     searchQuery = signal<string>('');
@@ -49,6 +54,7 @@ export class ErrorLogsComponent implements OnInit {
     totalCount = computed(() => this.logs().length);
     unresolvedCount = computed(() => this.logs().filter((l) => l.status === 'UNRESOLVED').length);
     fatalCount = computed(() => this.logs().filter((l) => l.severity === 'FATAL').length);
+    resolvedCount = computed(() => this.logs().filter((l) => l.status === 'RESOLVED').length);
 
     // Filtered logs stream
     filteredLogs = computed(() => {
@@ -136,5 +142,17 @@ export class ErrorLogsComponent implements OnInit {
                 });
             }
         );
+    }
+
+    setSeverity(sev: string) {
+        this.severityFilter.set(sev);
+    }
+
+    setStatus(st: string) {
+        this.statusFilter.set(st);
+    }
+
+    goBack() {
+        this.router.navigate(['/dashboard']);
     }
 }

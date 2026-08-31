@@ -1,55 +1,15 @@
-.chart-wrapper {
-    /* Background handled by parent grid-item for consistency */
-    background: transparent;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
+.volume-chart-container { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+.chart-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border, #334155); padding-bottom: 12px; }
+.header-left h3 { margin: 0; font-size: var(--font-size-base, 16px); font-weight: var(--font-weight-black, 900); }
+.header-left p { margin: 2px 0 0; font-size: var(--font-size-xs, 12px); }
+.peak-hours-section { border-top: 1px solid var(--color-border, #334155); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.peak-hours-section h4 { margin: 0; font-size: var(--font-size-xs, 12px); font-weight: var(--font-weight-extrabold, 800); text-transform: uppercase; }
+.peak-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.peak-pill { background: var(--color-canvas, #090d16); border: 1px solid var(--color-border, #334155); border-radius: var(--radius-full, 9999px); padding: 4px 12px; font-size: 11px; display: inline-flex; gap: 6px; }
+.text-white { color: #ffffff !important; }
+.text-cyan { color: var(--color-cyan-light, #22d3ee) !important; }
+.text-gold { color: var(--color-gold-light, #fbbf24) !important; }
+.text-muted { color: var(--color-text-secondary, #cbd5e1) !important; }
+.font-mono { font-family: var(--font-family-mono); }
 
-.chart-container {
-    width: 100%;
-    min-height: 350px;
-}
-
-.peak-hours {
-    padding-top: 16px;
-    margin-top: 16px;
-    border-top: 1px solid #eee;
-}
-
-.peak-hours h4 {
-    color: var(--text-main, #333);
-    margin: 0 0 12px 0;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.peak-list {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-}
-
-.peak-item {
-    background: #f8fafc;
-    /* Light gray */
-    padding: 8px 16px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 80px;
-    border: 1px solid #e2e8f0;
-}
-
-.peak-item .time {
-    color: var(--primary-color, #3f51b5);
-    font-weight: 700;
-    font-size: 1.1rem;
-}
-
-.peak-item .count {
-    color: var(--text-secondary, #64748b);
-    font-size: 0.85rem;
-}
+.chart-content { width: 100%; min-height: 300px; }

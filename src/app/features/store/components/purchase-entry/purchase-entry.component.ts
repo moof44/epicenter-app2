@@ -1,7 +1,8 @@
-import { Component, inject, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, OnInit, DestroyRef, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -9,115 +10,33 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ProductService } from '../../../../core/services/product.service';
 import { PurchaseService } from '../../../../core/services/purchase.service';
-import { Product, ProductCategory, ProductType } from '../../../../core/models/store.model';
+import { Product } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
-import { Router } from '@angular/router';
+import { ProductCreationDialog } from './product-creation-dialog/product-creation-dialog';
 
-// ==========================================
-// Dialog Component for New Product
-// ==========================================
-@Component({
-  selector: 'app-product-creation-dialog',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatDialogModule],
-  template: `
-    <h2 mat-dialog-title>Create New Product</h2>
-    <mat-dialog-content>
-      <form [formGroup]="productForm" class="dialog-content">
-        <mat-form-field appearance="outline">
-          <mat-label>Name</mat-label>
-          <input matInput formControlName="name">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Type</mat-label>
-          <mat-select formControlName="type">
-            <mat-option value="RETAIL">Retail</mat-option>
-            <mat-option value="CONSUMABLE">Consumable</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Category</mat-label>
-          <mat-select formControlName="category">
-            <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Selling Price</mat-label>
-          <span matTextPrefix>$&nbsp;</span>
-          <input matInput type="number" formControlName="price">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Unit</mat-label>
-          <input matInput formControlName="unit" placeholder="e.g. Item, Bottle">
-        </mat-form-field>
-      </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancel</button>
-      <button mat-raised-button color="primary" [disabled]="productForm.invalid" (click)="save()">Create</button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    .dialog-content { display: flex; flex-direction: column; gap: 12px; min-width: 300px; padding-top: 10px; }
-  `]
-})
-export class ProductCreationDialog {
-  private fb = inject(FormBuilder);
-  private dialogRef = inject(MatDialogRef<ProductCreationDialog>);
-  private productService = inject(ProductService);
-
-  categories: ProductCategory[] = ['Training', 'Supplements', 'Drinks', 'Boxing'];
-
-  productForm = this.fb.group({
-    name: ['', Validators.required],
-    description: [''],
-    type: ['RETAIL' as ProductType, Validators.required],
-    category: ['Supplements' as ProductCategory, Validators.required],
-    price: [0, [Validators.required, Validators.min(0)]],
-    unit: ['Item', Validators.required],
-    stock: [0], // Initial stock 0, will be added via purchase
-    minStockLevel: [5]
-  });
-
-  async save() {
-    if (this.productForm.invalid) return;
-    try {
-      const productData = this.productForm.value as any; // Cast to avoid strict type issues with partial
-      const res = await this.productService.addProduct(productData);
-      // addProduct returns docRef or similar? StoreService.addProduct returns Promise<any> (addDoc result)
-      // I need the ID of the created product.
-      // Let's assume storeService.addProduct returns the DocumentReference
-      this.dialogRef.close(res);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-}
-
-// ==========================================
-// Main Component
-// ==========================================
 @Component({
   selector: 'app-purchase-entry',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, FormsModule, MatButtonModule, MatIconModule,
-    MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule,
-    MatDialogModule, MatSnackBarModule, MatTooltipModule
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    RouterModule,
+    MatButtonModule,
+    MatIconModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatDialogModule,
+    MatSnackBarModule,
+    MatTooltipModule
   ],
   templateUrl: './purchase-entry.component.html',
   styleUrl: './purchase-entry.component.css',
@@ -133,11 +52,15 @@ export class PurchaseEntryComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   purchaseForm!: FormGroup;
-  retailProducts: Product[] = [];
-  consumableProducts: Product[] = [];
-  productsLoaded = false;
-  allProducts: Product[] = [];
+  retailProducts = signal<Product[]>([]);
+  consumableProducts = signal<Product[]>([]);
+  allProducts = signal<Product[]>([]);
+  productsLoaded = signal(false);
+  isSubmitting = signal(false);
 
+  // Computed Metrics
+  totalItemsCount = computed(() => this.items.length);
+  
   constructor() {
     this.initForm();
   }
@@ -153,28 +76,25 @@ export class PurchaseEntryComponent implements OnInit {
       referenceNumber: [''],
       items: this.fb.array([])
     });
-    // Add one empty row by default
     this.addItem();
   }
 
-  get items() {
+  get items(): FormArray {
     return this.purchaseForm.get('items') as FormArray;
   }
 
   addItem() {
     const itemGroup = this.fb.group({
       productId: ['', Validators.required],
-      productName: [''], // Hidden, auto-filled
+      productName: [''],
       quantity: [1, [Validators.required, Validators.min(1)]],
       unitCost: [0, [Validators.required, Validators.min(0)]]
     });
 
-    // Listen to productId changes to update productName
     itemGroup.get('productId')?.valueChanges.subscribe(id => {
-      const p = this.allProducts.find(prod => prod.id === id);
+      const p = this.allProducts().find(prod => prod.id === id);
       if (p) {
         itemGroup.patchValue({ productName: p.name }, { emitEvent: false });
-        // Optionally suggest lastCostPrice if we had it?
         if (p.lastCostPrice) {
           itemGroup.patchValue({ unitCost: p.lastCostPrice }, { emitEvent: false });
         }
@@ -188,52 +108,54 @@ export class PurchaseEntryComponent implements OnInit {
     this.items.removeAt(index);
   }
 
-  loadProducts() {
-    this.productService.getProducts().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(products => {
-      this.allProducts = products;
-      this.retailProducts = products.filter(p => (!p.type || p.type === 'RETAIL'));
-      this.consumableProducts = products.filter(p => p.type === 'CONSUMABLE');
-      this.productsLoaded = true;
-    });
+  stepQuantity(index: number, delta: number) {
+    const control = this.items.at(index).get('quantity');
+    if (!control) return;
+    const current = Number(control.value) || 1;
+    const updated = Math.max(1, current + delta);
+    control.setValue(updated);
   }
 
-  onProductSelected(_index: number, _productId: string) {
-    // Handled by valueChanges mainly, but double check here if needed
+  loadProducts() {
+    this.productService.getProducts().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(products => {
+      this.allProducts.set(products);
+      this.retailProducts.set(products.filter(p => (!p.type || p.type === 'RETAIL')));
+      this.consumableProducts.set(products.filter(p => p.type === 'CONSUMABLE'));
+      this.productsLoaded.set(true);
+    });
   }
 
   openNewProductDialog(index: number) {
     const dialogRef = this.dialog.open(ProductCreationDialog, {
-      width: '400px'
+      width: '460px',
+      panelClass: 'dark-dialog-panel'
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) { // result is the docRef or similar. StoreService returns addDoc promise result.
-        // If StoreService.addProduct returns DocumentReference, it has .id
-        const newId = result.id;
-        if (newId) {
-          // Need to reload products or wait for subscription update? 
-          // Subscription should be live if it's Firestore... 
-          // But to be safe and fast, let's wait a tick or just set the ID.
-          // Assuming subscription updates quickly.
-          // We can set the value after a short delay or find it in allProducts if observable fired
-          // For now, let's just set the ID and hope the list updates.
-          this.items.at(index).patchValue({ productId: newId });
-        }
+      if (result && result.id) {
+        this.items.at(index).patchValue({ productId: result.id });
       }
     });
   }
 
+  get totalUnits(): number {
+    return this.items.controls.reduce((acc, control) => {
+      return acc + (Number(control.get('quantity')?.value) || 0);
+    }, 0);
+  }
+
   get totalCost(): number {
     return this.items.controls.reduce((acc, control) => {
-      const qty = control.get('quantity')?.value || 0;
-      const cost = control.get('unitCost')?.value || 0;
+      const qty = Number(control.get('quantity')?.value) || 0;
+      const cost = Number(control.get('unitCost')?.value) || 0;
       return acc + (qty * cost);
     }, 0);
   }
 
   async save() {
-    if (this.purchaseForm.invalid) return;
+    if (this.purchaseForm.invalid || this.items.length === 0 || this.isSubmitting()) return;
 
+    this.isSubmitting.set(true);
     try {
       const formVal = this.purchaseForm.getRawValue();
 
@@ -245,21 +167,25 @@ export class PurchaseEntryComponent implements OnInit {
         items: formVal.items.map((i: any) => ({
           productId: i.productId,
           productName: i.productName,
-          quantity: i.quantity,
-          unitCost: i.unitCost,
-          totalRowCost: i.quantity * i.unitCost
+          quantity: Number(i.quantity),
+          unitCost: Number(i.unitCost),
+          totalRowCost: Number(i.quantity) * Number(i.unitCost)
         }))
       };
 
       await this.purchaseService.recordPurchase(order);
 
-      this.snackBar.open('Purchase recorded successfully', 'Close', { duration: 3000 });
-      this.router.navigate(['/store/purchases']); // Redirect to history (Phase 4)
-      // Or just reset
-      // this.initForm();
+      this.snackBar.open('Restock purchase recorded successfully!', 'Close', { duration: 3000 });
+      this.router.navigate(['/store/purchases']);
     } catch (err) {
-      console.error(err);
-      this.snackBar.open('Error recording purchase', 'Close', { duration: 3000 });
+      console.error('Error recording restock purchase:', err);
+      this.snackBar.open('Error recording purchase: ' + ((err as any)?.message || 'Unknown error'), 'Close', { duration: 4000 });
+    } finally {
+      this.isSubmitting.set(false);
     }
+  }
+
+  goBack() {
+    this.router.navigate(['/store/manage']);
   }
 }

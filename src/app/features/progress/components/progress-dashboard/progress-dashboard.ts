@@ -1,4 +1,3 @@
-
 import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -17,8 +16,21 @@ import { Measurement } from '../../../../core/models/measurement.model';
 import { fadeIn, staggerList } from '../../../../core/animations/animations';
 import { AttendanceCalendarComponent } from '../attendance-calendar/attendance-calendar';
 
+export interface TransformationStats {
+  title: string;
+  subtitle: string;
+  badge: string;
+  icon: string;
+  energyLevel: 'fire' | 'momentum' | 'fresh';
+  netMuscle: number | null;
+  netFat: number | null;
+  netWeight: number | null;
+  bioAgeYounger: number | null;
+}
+
 @Component({
   selector: 'app-progress-dashboard',
+  standalone: true,
   imports: [
     CommonModule, RouterLink, MatCardModule, MatTableModule,
     MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatTooltipModule,
@@ -39,10 +51,10 @@ export class ProgressDashboard implements OnInit {
   member$: Observable<Member | undefined> | undefined;
   measurements$: Observable<Measurement[]> | undefined;
 
-  // Helpers for view
   latest$: Observable<Measurement | undefined> | undefined;
   previous$: Observable<Measurement | undefined> | undefined;
-  diffs$: Observable<any> | undefined; // { weight: -2, bodyFat: -1.5 ... }
+  diffs$: Observable<any> | undefined;
+  transformation$: Observable<TransformationStats | null> | undefined;
 
   memberId: string | null = null;
   historyColumns: string[] = [
@@ -55,6 +67,8 @@ export class ProgressDashboard implements OnInit {
     'actions'
   ];
 
+  previewingImageUrl: string | null = null;
+
   ngOnInit() {
     this.memberId = this.route.snapshot.paramMap.get('id');
     if (!this.memberId) return;
@@ -62,7 +76,6 @@ export class ProgressDashboard implements OnInit {
     this.member$ = this.memberService.getMember(this.memberId);
     this.measurements$ = this.progressService.getTimeSeries(this.memberId);
 
-    // Derived state
     this.latest$ = this.measurements$.pipe(map(list => list[0]));
     this.previous$ = this.measurements$.pipe(map(list => list[1]));
 
@@ -92,9 +105,90 @@ export class ProgressDashboard implements OnInit {
         };
       })
     );
+
+    // Calculate transformation motivation stats
+    this.transformation$ = combineLatest([this.measurements$, this.member$]).pipe(
+      map(([list, member]) => {
+        if (!list || list.length === 0) return null;
+        const latest = list[0];
+        const oldest = list[list.length - 1];
+
+        const netMuscle = (latest.muscleMass !== undefined && oldest.muscleMass !== undefined) ? latest.muscleMass - oldest.muscleMass : null;
+        const netFat = (latest.bodyFat !== undefined && oldest.bodyFat !== undefined) ? latest.bodyFat - oldest.bodyFat : null;
+        const netWeight = (latest.weight !== undefined && oldest.weight !== undefined) ? latest.weight - oldest.weight : null;
+        
+        let bioAgeYounger: number | null = null;
+        if (latest.bodyAge && member?.birthday) {
+          try {
+            const birth = new Date(member.birthday);
+            const ageDiffMs = Date.now() - birth.getTime();
+            const chronologicalAge = Math.floor(ageDiffMs / (365.25 * 24 * 60 * 60 * 1000));
+            if (chronologicalAge > latest.bodyAge) {
+              bioAgeYounger = chronologicalAge - latest.bodyAge;
+            }
+          } catch {}
+        }
+
+        // Tiered emotional coaching
+        let energyLevel: 'fire' | 'momentum' | 'fresh' = 'fresh';
+        let title = 'Transformation Journey Underway';
+        let subtitle = 'Consistent checkups build long-term athletic momentum and metabolic vitality.';
+        let badge = 'Active Athlete';
+        let icon = 'local_fire_department';
+
+        if ((netMuscle !== null && netMuscle > 0) || (netFat !== null && netFat < 0)) {
+          energyLevel = 'fire';
+          title = '🔥 BEAST MODE ACTIVATED!';
+          subtitle = 'Outstanding transformation! Muscle gains and fat burn are firing on all cylinders.';
+          badge = 'Victory In Progress';
+          icon = 'military_tech';
+        } else if (list.length > 1) {
+          energyLevel = 'momentum';
+          title = '⚡ Consistent Warrior';
+          subtitle = 'Every checkup refines your baseline. Keep the nutrition and training locked in!';
+          badge = 'Momentum Builder';
+          icon = 'bolt';
+        }
+
+        return {
+          title,
+          subtitle,
+          badge,
+          icon,
+          energyLevel,
+          netMuscle,
+          netFat,
+          netWeight,
+          bioAgeYounger
+        };
+      })
+    );
   }
 
-  previewingImageUrl: string | null = null;
+  getMemberInitials(name?: string): string {
+    if (!name) return 'MB';
+    return name
+      .split(' ')
+      .filter(p => p.length > 0)
+      .slice(0, 2)
+      .map(p => p[0].toUpperCase())
+      .join('');
+  }
+
+  getBodyFatTier(bf?: number, gender?: string): string {
+    if (!bf) return 'General';
+    if (bf < 14) return 'Athletic Zone';
+    if (bf <= 19) return 'Fitness Zone';
+    if (bf <= 24) return 'Healthy Zone';
+    return 'Optimization';
+  }
+
+  getVisceralFatTier(vf?: number): string {
+    if (!vf) return 'Normal';
+    if (vf <= 4) return 'Optimal Health';
+    if (vf <= 9) return 'Safe Range';
+    return 'Attention Needed';
+  }
 
   openImagePreview(url: string): void {
     this.previewingImageUrl = url;
@@ -105,7 +199,7 @@ export class ProgressDashboard implements OnInit {
   }
 
   formatDiff(val: number): string {
-    if (val > 0) return `+ ${val.toFixed(1)} `;
+    if (val > 0) return `+${val.toFixed(1)}`;
     return val.toFixed(1);
   }
 
@@ -118,18 +212,16 @@ export class ProgressDashboard implements OnInit {
   }
 
   getDiffClass(key: string, val: number): string {
-    // For weight/fat, negative is usually good (green), positive bad (red).
-    // For muscle, positive is good.
-    if (val === 0) return 'neutral';
-
-    const isBadIfPositive = ['weight', 'bodyFat', 'visceralFat', 'bmi', 'bodyAge', 'subcutaneousFat', 'sinistralFatFull',
-      'subcutaneousFatArms', 'subcutaneousFatTrunk', 'subcutaneousFatLegs'].includes(key);
+    if (val === 0) return 'diff-neutral';
+    const isBadIfPositive = [
+      'weight', 'bodyFat', 'visceralFat', 'bmi', 'bodyAge', 'subcutaneousFat', 'sinistralFatFull',
+      'subcutaneousFatArms', 'subcutaneousFatTrunk', 'subcutaneousFatLegs'
+    ].includes(key);
 
     if (isBadIfPositive) {
-      return val < 0 ? 'good' : 'bad';
+      return val < 0 ? 'diff-good' : 'diff-bad';
     } else {
-      // Muscle, Metabolism
-      return val > 0 ? 'good' : 'bad';
+      return val > 0 ? 'diff-good' : 'diff-bad';
     }
   }
 
@@ -140,15 +232,13 @@ export class ProgressDashboard implements OnInit {
 
   async deleteEntry(measurement: Measurement): Promise<void> {
     if (!this.memberId || !measurement.id) return;
-
     try {
       const deletedDocId = await this.progressService.softDeleteEntry(this.memberId, measurement.id);
-
-      const snackRef = this.snackBar.open('Entry deleted', 'Undo', { duration: 5000 });
+      const snackRef = this.snackBar.open('Progress entry deleted', 'Undo', { duration: 5000 });
       snackRef.onAction().subscribe(async () => {
         try {
           await this.progressService.restoreEntry(deletedDocId);
-          this.snackBar.open('Entry restored', 'Close', { duration: 2000 });
+          this.snackBar.open('Progress entry restored', 'Close', { duration: 2000 });
         } catch (err: any) {
           this.snackBar.open('Restore failed: ' + err.message, 'Close', { duration: 3000 });
         }

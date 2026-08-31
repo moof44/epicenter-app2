@@ -7,17 +7,33 @@
 } @else {
     <div class="gym-card" (click)="navigateToAttendance()" (keydown.enter)="navigateToAttendance()" tabindex="0" role="button">
         <div class="card-header">
-            <mat-icon class="card-icon">fitness_center</mat-icon>
-            <span class="card-title">In the Gym Now</span>
+            <div class="card-title-group">
+                <mat-icon class="card-icon">fitness_center</mat-icon>
+                <span class="card-title">In The Gym Now</span>
+            </div>
+            <div class="live-beacon">
+                <span class="live-dot"></span> LIVE RADAR
+            </div>
         </div>
+
         <div class="count-row">
             <span class="count-number">{{ count() }}</span>
-            <span class="count-label">{{ count() === 1 ? 'member' : 'members' }}</span>
+            <div class="count-meta">
+                <span class="count-label">Active Members</span>
+                <span class="floor-status">On Gym Floor</span>
+            </div>
         </div>
-        <div class="names-line">
-            {{ recentNames().join(', ') }}
+
+        <!-- Interactive Member Avatar Bubble Chips -->
+        <div class="member-chips-cluster">
+            @for (name of recentNames(); track name) {
+                <span class="member-chip">
+                    <span class="chip-avatar">{{ name.charAt(0) }}</span>
+                    {{ name }}
+                </span>
+            }
             @if (extraCount() > 0) {
-                <span class="extra-count">+{{ extraCount() }} more</span>
+                <span class="extra-chip">+{{ extraCount() }} more</span>
             }
         </div>
     </div>

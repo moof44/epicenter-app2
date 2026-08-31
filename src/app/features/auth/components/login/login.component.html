@@ -1,48 +1,119 @@
-<div class="login-container">
-    <mat-card class="login-card">
-        <mat-card-header>
-            <mat-card-title>
-                <div class="logo-area">
-                    <h1>Epicenter</h1>
-                    <p>Gym Management System</p>
-                </div>
-            </mat-card-title>
-        </mat-card-header>
+<div class="login-page-canvas min-h-[calc(100vh-var(--height-header))] flex items-center justify-center p-4 sm:p-6 bg-slate-canvas relative overflow-hidden">
+  <!-- Subtle Ambient Glow -->
+  <div class="absolute w-96 h-96 rounded-full bg-cyan-primary/10 blur-3xl pointer-events-none -top-20 -left-20" aria-hidden="true"></div>
+  <div class="absolute w-96 h-96 rounded-full bg-eagle-gold/5 blur-3xl pointer-events-none -bottom-20 -right-20" aria-hidden="true"></div>
 
-        <mat-card-content>
-            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-                <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Email</mat-label>
-                    <input matInput formControlName="email" type="email" placeholder="admin@example.com">
-                    <mat-error *ngIf="loginForm.get('email')?.hasError('required')">Email is required</mat-error>
-                    <mat-error *ngIf="loginForm.get('email')?.hasError('email')">Invalid email</mat-error>
-                </mat-form-field>
+  <!-- Glassmorphic Login Card -->
+  <div class="login-card relative z-10 w-full max-w-login bg-slate-app/95 backdrop-blur-md border border-slate-border rounded-3xl p-6 sm:p-8 shadow-card-elevated">
+    
+    <!-- Logo & Brand Header -->
+    <div class="flex flex-col items-center text-center mb-7">
+      <img
+        src="assets/images/epicenter-logo.png"
+        alt="Epicenter Fitness Gym Official Seal"
+        width="80"
+        height="80"
+        class="login-logo-img mb-3 drop-shadow-md"
+      />
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-text-pure tracking-tight font-inter">EPICENTER</h1>
+      <p class="text-xs font-bold tracking-widest text-eagle-gold-light uppercase font-inter mt-1">FITNESS GYM MANAGEMENT</p>
+    </div>
 
-                <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Password</mat-label>
-                    <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password">
-                    <button mat-icon-button matSuffix (click)="togglePasswordVisibility($event)" type="button"
-                        [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hidePassword()">
-                        <mat-icon>{{hidePassword() ? 'visibility_off' : 'visibility'}}</mat-icon>
-                    </button>
-                    <mat-error *ngIf="loginForm.get('password')?.hasError('required')">Password is required</mat-error>
-                </mat-form-field>
+    <!-- Login Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+      
+      <!-- Email Field -->
+      <div>
+        <label for="login-email" class="block text-sm font-semibold text-text-body mb-1.5 font-inter">
+          Email Address
+        </label>
+        <input
+          id="login-email"
+          formControlName="email"
+          type="email"
+          autocomplete="email"
+          placeholder="staff@epicenter.ph"
+          class="w-full h-control-lg px-4 bg-slate-input border border-slate-border-light rounded-xl text-sm font-medium text-text-pure placeholder-text-muted focus:outline-none focus:border-cyan-focus focus-visible:ring-2 focus-visible:ring-cyan-focus focus-visible:ring-offset-2 focus-visible:ring-offset-slate-canvas transition-colors"
+          [class.border-rose-danger]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+        />
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+          <p class="text-xs text-rose-danger font-medium mt-1 font-inter">
+            @if (loginForm.get('email')?.hasError('required')) { Email is required }
+            @if (loginForm.get('email')?.hasError('email')) { Please enter a valid email address }
+          </p>
+        }
+      </div>
 
-                <div class="remember-me-container">
-                    <mat-checkbox formControlName="rememberMe">Remember me</mat-checkbox>
-                </div>
+      <!-- Password Field -->
+      <div>
+        <label for="login-password" class="block text-sm font-semibold text-text-body mb-1.5 font-inter">
+          Password
+        </label>
+        <div class="relative flex items-center">
+          <input
+            id="login-password"
+            formControlName="password"
+            [type]="hidePassword() ? 'password' : 'text'"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            class="w-full h-control-lg pl-4 pr-11 bg-slate-input border border-slate-border-light rounded-xl text-sm font-medium text-text-pure placeholder-text-muted focus:outline-none focus:border-cyan-focus focus-visible:ring-2 focus-visible:ring-cyan-focus focus-visible:ring-offset-2 focus-visible:ring-offset-slate-canvas transition-colors"
+            [class.border-rose-danger]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          />
+          <button
+            type="button"
+            (click)="togglePasswordVisibility($event)"
+            [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+            class="absolute right-3 w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-pure hover:bg-slate-surface transition-colors focus-visible:ring-2 focus-visible:ring-cyan-focus focus:outline-none"
+          >
+            <mat-icon class="text-[20px] w-[20px] h-[20px]" aria-hidden="true">
+              {{ hidePassword() ? 'visibility' : 'visibility_off' }}
+            </mat-icon>
+          </button>
+        </div>
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <p class="text-xs text-rose-danger font-medium mt-1 font-inter">Password is required</p>
+        }
+      </div>
 
-                <div class="actions">
-                    <button mat-raised-button color="primary" type="submit"
-                        [disabled]="loginForm.invalid || isLoading()" class="submit-btn">
-                        @if (isLoading()) {
-                        <mat-spinner diameter="20"></mat-spinner>
-                        } @else {
-                        Sign In
-                        }
-                    </button>
-                </div>
-            </form>
-        </mat-card-content>
-    </mat-card>
+      <!-- Remember Me Checkbox -->
+      <div class="flex items-center gap-2.5 pt-1">
+        <input
+          id="remember-me"
+          formControlName="rememberMe"
+          type="checkbox"
+          class="w-4 h-4 rounded bg-slate-input border-slate-border-light text-cyan-primary focus:ring-cyan-focus focus:ring-offset-slate-canvas cursor-pointer"
+        />
+        <label for="remember-me" class="text-sm font-medium text-text-secondary select-none cursor-pointer font-inter">
+          Remember this terminal
+        </label>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="pt-2">
+        <button
+          type="submit"
+          [disabled]="loginForm.invalid || isLoading()"
+          class="w-full h-control-lg rounded-xl bg-gradient-to-r from-cyan-primary to-cyan-light hover:from-cyan-hover hover:to-cyan-primary text-text-inverse font-bold text-base shadow-glow-cyan active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 font-inter focus-visible:ring-2 focus-visible:ring-cyan-focus focus-visible:ring-offset-2 focus-visible:ring-offset-slate-canvas focus:outline-none"
+        >
+          @if (isLoading()) {
+            <svg class="animate-spin h-5 w-5 text-text-inverse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Signing in...</span>
+          } @else {
+            <span>Sign In to Console</span>
+            <mat-icon class="text-[20px] w-[20px] h-[20px]" aria-hidden="true">arrow_forward</mat-icon>
+          }
+        </button>
+      </div>
+    </form>
+
+    <!-- Footer Note -->
+    <div class="mt-6 pt-4 border-t border-slate-border text-center">
+      <p class="text-xs text-text-muted font-inter">
+        🛡️ Authorized Front-Desk & Staff Access Only
+      </p>
+    </div>
+  </div>
 </div>

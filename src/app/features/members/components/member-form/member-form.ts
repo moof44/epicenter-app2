@@ -23,6 +23,7 @@ import { fadeIn } from '../../../../core/animations/animations';
 
 @Component({
   selector: 'app-member-form',
+  standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, MatInputModule,
     MatSelectModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule,
@@ -73,7 +74,6 @@ export class MemberForm implements OnInit {
       this.loadMember(this.memberId);
     }
     
-    // Load administrative and achievement badges for tagging
     this.badgeService.getBadges().pipe(take(1)).subscribe(badges => {
       this.availableBadges = badges.filter(b => b.type === 'ADMINISTRATIVE' || b.type === 'ACHIEVEMENT');
     });
@@ -98,138 +98,87 @@ export class MemberForm implements OnInit {
     if (!this.memberId) return;
     this.portalLoading = true;
     try {
-      const createFn = httpsCallable(this.functions, 'createMemberPortalAccount');
-      const result: any = await createFn({ memberId: this.memberId });
-      if (result.data?.success) {
-        this.loadMember(this.memberId);
-      }
-    } catch (error: any) {
-      console.error('Failed to create portal account:', error);
-      alert(error.message || 'Error creating portal account.');
+      const createMemberPortalAccount = httpsCallable(this.functions, 'createMemberPortalAccount');
+      await createMemberPortalAccount({ memberId: this.memberId });
+      await this.loadMember(this.memberId);
+      alert('Portal account created successfully!');
+    } catch (err: any) {
+      console.error(err);
+      alert('Failed to create portal account: ' + (err.message || err));
     } finally {
       this.portalLoading = false;
     }
   }
 
-  async showQR() {
+  async resetPortalPassword() {
     if (!this.memberId) return;
+    if (!confirm('Are you sure you want to reset this member\'s portal PIN back to their birthday?')) return;
     this.portalLoading = true;
     try {
-      const tokenFn = httpsCallable(this.functions, 'generatePortalLoginToken');
-      const result: any = await tokenFn({ memberId: this.memberId });
-      if (result.data?.success && result.data?.token) {
-        const token = result.data.token;
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const baseUrl = isLocalhost ? 'http://localhost:4201' : 'https://epicenter-members-portal.web.app';
-        const loginUrl = `${baseUrl}/login?token=${token}`;
-        
-        this.dialog.open(QRDialog, {
-          data: {
-            loginUrl,
-            memberName: this.member?.name || 'Gym Member'
-          },
-          width: '340px'
-        });
-      }
-    } catch (error: any) {
-      console.error('Failed to generate portal login token:', error);
-      alert(error.message || 'Error generating login code.');
+      const resetMemberPortalPassword = httpsCallable(this.functions, 'resetMemberPortalPassword');
+      await resetMemberPortalPassword({ memberId: this.memberId });
+      alert('Temporary PIN reset successfully to birthday (MMDDYYYY)!');
+    } catch (err: any) {
+      console.error(err);
+      alert('Failed to reset PIN: ' + (err.message || err));
     } finally {
       this.portalLoading = false;
     }
   }
 
-  async deactivatePortalAccount() {
-    if (!this.memberId) return;
+  async togglePortalStatus() {
+    if (!this.memberId || !this.member) return;
+    const currentStatus = this.member.portalStatus || 'Active';
+    const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+    const actionName = newStatus === 'Active' ? 'activate' : 'deactivate';
+
+    if (!confirm(`Are you sure you want to ${actionName} portal access for this member?`)) return;
+    
     this.portalLoading = true;
     try {
-      const deactivateFn = httpsCallable(this.functions, 'deactivateMemberPortalAccount');
-      const result: any = await deactivateFn({ memberId: this.memberId });
-      if (result.data?.success) {
-        this.loadMember(this.memberId);
-      }
-    } catch (error: any) {
-      console.error('Failed to deactivate portal account:', error);
-      alert(error.message || 'Error deactivating portal account.');
+      const setMemberPortalStatus = httpsCallable(this.functions, 'setMemberPortalStatus');
+      await setMemberPortalStatus({ memberId: this.memberId, status: newStatus });
+      await this.loadMember(this.memberId);
+      alert(`Portal access successfully ${newStatus.toLowerCase()}d!`);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to ${actionName} portal access: ` + (err.message || err));
     } finally {
       this.portalLoading = false;
     }
   }
 
-  async reactivatePortalAccount() {
-    if (!this.memberId) return;
-    this.portalLoading = true;
-    try {
-      const reactivateFn = httpsCallable(this.functions, 'reactivateMemberPortalAccount');
-      const result: any = await reactivateFn({ memberId: this.memberId });
-      if (result.data?.success) {
-        this.loadMember(this.memberId);
+  showQRCode() {
+    if (!this.member) return;
+    this.dialog.open(QRDialog, {
+      data: {
+        member: this.member,
+        value: this.member.id
       }
-    } catch (error: any) {
-      console.error('Failed to reactivate portal account:', error);
-      alert(error.message || 'Error reactivating portal account.');
-    } finally {
-      this.portalLoading = false;
-    }
-  }
-
-  async resetPortalAccount() {
-    if (!this.memberId) return;
-    if (!confirm('Are you sure you want to reset this portal account password back to the default temporary birthday PIN (MMDDYYYY)?')) return;
-    this.portalLoading = true;
-    try {
-      const resetFn = httpsCallable(this.functions, 'resetMemberPortalAccount');
-      const result: any = await resetFn({ memberId: this.memberId });
-      if (result.data?.success) {
-        alert('Password has been successfully reset to the member\'s default birthday PIN (MMDDYYYY).');
-        this.loadMember(this.memberId);
-      }
-    } catch (error: any) {
-      console.error('Failed to reset portal account password:', error);
-      alert(error.message || 'Error resetting portal account password.');
-    } finally {
-      this.portalLoading = false;
-    }
-  }
-
-  formatMonthlyBadgeId(mBadgeId: string): string {
-    if (!mBadgeId) return '';
-    const [year, monthStr] = mBadgeId.split('-');
-    const month = parseInt(monthStr, 10);
-    const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    const monthName = monthNames[month - 1] || monthStr;
-    return `${monthName} ${year}`;
-  }
-
-  cancel() {
-    this.location.back();
+    });
   }
 
   async onSubmit() {
     if (this.form.invalid) return;
 
     this.loading = true;
-    const data = this.form.value;
+    const val = this.form.value;
 
     try {
       if (this.isEditMode && this.memberId) {
-        await this.memberService.updateMember(this.memberId, data);
+        await this.memberService.updateMember(this.memberId, val);
       } else {
-        await this.memberService.addMember(data as Member);
+        await this.memberService.addMember(val);
       }
-
-      const returnUrl = this.route.snapshot.queryParams['returnUrl'];
-      if (returnUrl) {
-        this.router.navigate([returnUrl]);
-      } else {
-        this.router.navigate(['/members']);
-      }
-    } catch (error) {
-      console.error(error);
+      this.router.navigate(['/members']);
+    } catch (err) {
+      console.error('Failed to save member:', err);
+    } finally {
       this.loading = false;
     }
+  }
+
+  cancel() {
+    this.location.back();
   }
 }

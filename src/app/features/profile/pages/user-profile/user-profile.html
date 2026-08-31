@@ -1,23 +1,24 @@
 <div class="user-profile-container" [@fadeIn]>
   <!-- Page Header -->
-  <div class="profile-header-card mat-elevation-z1">
+  <header class="profile-header-card">
     <div class="header-left">
       <div class="user-avatar-box">
-        <mat-icon *ngIf="!currentUser()?.photoURL">account_circle</mat-icon>
+        <mat-icon *ngIf="!currentUser()?.photoURL" class="default-avatar-icon">account_circle</mat-icon>
         <img *ngIf="currentUser()?.photoURL" [src]="currentUser()?.photoURL" alt="Avatar">
       </div>
       <div class="user-identity">
-        <h1>{{ currentUser()?.displayName || 'User Profile' }}</h1>
+        <h1 class="user-name">{{ currentUser()?.displayName || 'User Profile' }}</h1>
         <p class="user-email">{{ currentUser()?.email }}</p>
         <div class="user-chips">
-          <mat-chip-set>
-            <mat-chip *ngFor="let role of currentUser()?.roles" [color]="getRoleColor(role)" highlighted>
+          <div class="chips-row">
+            <span class="role-pill" *ngFor="let role of currentUser()?.roles" [ngClass]="'role-' + role.toLowerCase()">
               {{ role }}
-            </mat-chip>
-            <mat-chip class="status-chip" [class.active-chip]="currentUser()?.isActive !== false">
+            </span>
+            <span class="status-pill" [class.status-active]="currentUser()?.isActive !== false" [class.status-inactive]="currentUser()?.isActive === false">
+              <span class="status-dot"></span>
               {{ currentUser()?.isActive !== false ? 'Active' : 'Inactive' }}
-            </mat-chip>
-          </mat-chip-set>
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -25,21 +26,23 @@
     <div class="header-right">
       <!-- Read-Only Badge for Manager viewing Admin Profile -->
       <span class="read-only-badge" *ngIf="isReadOnlyAdminProfile()">
-        <mat-icon>lock</mat-icon> Admin Profile (View Only)
+        <mat-icon class="lock-icon">lock</mat-icon> Admin Profile (View Only)
       </span>
 
       <!-- Edit Controls (Only visible on Personal & Employment Tab) -->
       <ng-container *ngIf="canEditProfile() && selectedTabIndex() === 0">
-        <button mat-stroked-button color="primary" (click)="toggleEdit()" *ngIf="!isEditMode()">
-          <mat-icon>edit</mat-icon> Edit Profile
+        <button type="button" class="btn-edit-outline" (click)="toggleEdit()" *ngIf="!isEditMode()">
+          <mat-icon class="btn-icon text-cyan">edit</mat-icon>
+          <span>Edit Profile</span>
         </button>
-        <button mat-flat-button color="primary" (click)="saveProfile()" *ngIf="isEditMode()" [disabled]="isSaving()">
-          <mat-icon>save</mat-icon> {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+        <button type="button" class="btn-save-gold" (click)="saveProfile()" *ngIf="isEditMode()" [disabled]="isSaving()">
+          <mat-icon class="btn-icon" *ngIf="!isSaving()">save</mat-icon>
+          <span>{{ isSaving() ? 'Saving Changes...' : 'Save Changes' }}</span>
         </button>
-        <button mat-button (click)="toggleEdit()" *ngIf="isEditMode()">Cancel</button>
+        <button type="button" class="btn-cancel" (click)="toggleEdit()" *ngIf="isEditMode()">Cancel</button>
       </ng-container>
     </div>
-  </div>
+  </header>
 
   <!-- Loading State -->
   <div class="loading-wrap" *ngIf="isLoading()">
@@ -48,166 +51,368 @@
   </div>
 
   <!-- Profile Tabs -->
-  <mat-card class="profile-tabs-card" *ngIf="!isLoading()">
+  <div class="profile-tabs-card" *ngIf="!isLoading()">
     <mat-tab-group animationDuration="200ms" class="profile-tabs" [selectedIndex]="selectedTabIndex()" (selectedIndexChange)="onTabChange($event)">
       
-      <!-- ════════════════ TAB 1: PERSONAL & EMPLOYMENT DETAILS ════════════════ -->
+      <!-- TAB 1: PERSONAL & EMPLOYMENT DETAILS -->
       <mat-tab>
         <ng-template matTabLabel>
           <mat-icon class="tab-icon">person</mat-icon> Personal & Employment
         </ng-template>
 
         <div class="tab-body">
-          <!-- Active Edit Mode Visual Banner -->
-          <div class="edit-mode-banner" *ngIf="isEditMode()">
-            <mat-icon>edit_note</mat-icon>
-            <span>You are currently in <strong>Edit Mode</strong>. Make your changes below and click <strong>"Save Changes"</strong> when done.</span>
-          </div>
-
-          <form [formGroup]="profileForm" [class.edit-mode-active]="isEditMode()" [class.view-mode-active]="!isEditMode()">
+          
+          <!-- ═══════════ A. READ-ONLY VIEW MODE (CLEAN DATA PRESENTATION) ═══════════ -->
+          <div class="profile-details-view" *ngIf="!isEditMode()">
+            
             <!-- Section 1: Basic Information -->
             <div class="section-block">
-              <h3 class="section-title"><mat-icon>badge</mat-icon> Basic Information</h3>
-              <div class="form-grid-3">
-                <mat-form-field appearance="outline">
-                  <mat-label>Full Name</mat-label>
-                  <input matInput formControlName="displayName">
-                </mat-form-field>
+              <div class="section-header-row">
+                <mat-icon class="section-icon text-cyan">badge</mat-icon>
+                <h3 class="section-title">Basic Information</h3>
+              </div>
+              <div class="data-grid-3">
+                <div class="info-data-card">
+                  <span class="info-lbl">Full Name</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.displayName">
+                    {{ currentUser()?.displayName || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Phone Number</mat-label>
-                  <input matInput formControlName="phone" placeholder="0917-000-0000">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Phone Number</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.phone">
+                    {{ currentUser()?.phone || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Email Contact (Personal)</mat-label>
-                  <input matInput type="email" formControlName="contactEmail" placeholder="personal@example.com">
-                  <mat-hint>Personal contact email (separate from login email)</mat-hint>
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Email Contact (Personal)</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.contactEmail">
+                    {{ currentUser()?.contactEmail || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Gender</mat-label>
-                  <mat-select formControlName="gender">
-                    <mat-option value="MALE">Male</mat-option>
-                    <mat-option value="FEMALE">Female</mat-option>
-                    <mat-option value="OTHER">Other</mat-option>
-                    <mat-option value="PREFER_NOT_TO_SAY">Prefer not to say</mat-option>
-                  </mat-select>
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Gender</span>
+                  <span class="info-val">{{ getFormattedGender(currentUser()?.gender) }}</span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Date of Birth</mat-label>
-                  <input matInput type="date" formControlName="birthDate">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Date of Birth</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.birthDate">
+                    {{ (currentUser()?.birthDate | date:'mediumDate') || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Residential Address</mat-label>
-                  <input matInput formControlName="address" placeholder="Street, Barangay, City, Province">
-                </mat-form-field>
+                <div class="info-data-card col-span-full">
+                  <span class="info-lbl">Residential Address</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.address">
+                    {{ currentUser()?.address || 'Not Set' }}
+                  </span>
+                </div>
               </div>
             </div>
 
             <!-- Section 2: Emergency Contact -->
             <div class="section-block">
-              <h3 class="section-title"><mat-icon>contact_emergency</mat-icon> Emergency Contact</h3>
-              <div class="form-grid-3">
-                <mat-form-field appearance="outline">
-                  <mat-label>Contact Person Name</mat-label>
-                  <input matInput formControlName="emergencyName" placeholder="e.g. Maria Tindoy">
-                </mat-form-field>
+              <div class="section-header-row">
+                <mat-icon class="section-icon text-rose">contact_emergency</mat-icon>
+                <h3 class="section-title">Emergency Contact</h3>
+              </div>
+              <div class="data-grid-3">
+                <div class="info-data-card">
+                  <span class="info-lbl">Contact Person Name</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.emergencyContact?.name">
+                    {{ currentUser()?.emergencyContact?.name || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Relationship</mat-label>
-                  <input matInput formControlName="emergencyRelationship" placeholder="e.g. Spouse / Parent">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Relationship</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.emergencyContact?.relationship">
+                    {{ currentUser()?.emergencyContact?.relationship || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Emergency Phone</mat-label>
-                  <input matInput formControlName="emergencyPhone" placeholder="0918-000-0000">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Emergency Phone</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.emergencyContact?.phone">
+                    {{ currentUser()?.emergencyContact?.phone || 'Not Set' }}
+                  </span>
+                </div>
               </div>
             </div>
 
             <!-- Section 3: Government ID Numbers -->
             <div class="section-block">
-              <h3 class="section-title"><mat-icon>account_balance</mat-icon> Government Identifiers</h3>
-              <div class="form-grid-4">
-                <mat-form-field appearance="outline">
-                  <mat-label>SSS Number</mat-label>
-                  <input matInput formControlName="sssNumber" placeholder="00-0000000-0">
-                </mat-form-field>
+              <div class="section-header-row">
+                <mat-icon class="section-icon text-gold">account_balance</mat-icon>
+                <h3 class="section-title">Government Identifiers</h3>
+              </div>
+              <div class="data-grid-4">
+                <div class="info-data-card">
+                  <span class="info-lbl">SSS Number</span>
+                  <span class="info-val info-mono" [class.info-empty]="!currentUser()?.governmentIds?.sssNumber">
+                    {{ currentUser()?.governmentIds?.sssNumber || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>PhilHealth Number</mat-label>
-                  <input matInput formControlName="philHealthNumber" placeholder="00-000000000-0">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">PhilHealth Number</span>
+                  <span class="info-val info-mono" [class.info-empty]="!currentUser()?.governmentIds?.philHealthNumber">
+                    {{ currentUser()?.governmentIds?.philHealthNumber || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Pag-IBIG / HDMF</mat-label>
-                  <input matInput formControlName="pagIbigNumber" placeholder="0000-0000-0000">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Pag-IBIG / HDMF</span>
+                  <span class="info-val info-mono" [class.info-empty]="!currentUser()?.governmentIds?.pagIbigNumber">
+                    {{ currentUser()?.governmentIds?.pagIbigNumber || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Tax ID (TIN)</mat-label>
-                  <input matInput formControlName="tinNumber" placeholder="000-000-000-000">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Tax ID (TIN)</span>
+                  <span class="info-val info-mono" [class.info-empty]="!currentUser()?.governmentIds?.tinNumber">
+                    {{ currentUser()?.governmentIds?.tinNumber || 'Not Set' }}
+                  </span>
+                </div>
               </div>
             </div>
 
             <!-- Section 4: Employment & Compensation Details -->
             <div class="section-block">
-              <h3 class="section-title"><mat-icon>work</mat-icon> Employment & Salary Payout Details</h3>
-              <div class="form-grid-3">
-                <mat-form-field appearance="outline">
-                  <mat-label>Job Title / Position</mat-label>
-                  <input matInput formControlName="jobTitle" placeholder="e.g. Senior Fitness Coach">
-                  <mat-hint *ngIf="!isManagementOrAdmin">Managed by Admin / Management</mat-hint>
-                </mat-form-field>
+              <div class="section-header-row">
+                <mat-icon class="section-icon text-mint">work</mat-icon>
+                <h3 class="section-title">Employment & Salary Payout Details</h3>
+              </div>
+              <div class="data-grid-3">
+                <div class="info-data-card">
+                  <span class="info-lbl">Job Title / Position</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.employmentDetails?.jobTitle">
+                    {{ currentUser()?.employmentDetails?.jobTitle || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Employment Type</mat-label>
-                  <mat-select formControlName="employmentType">
-                    <mat-option value="FULL_TIME">Full-Time</mat-option>
-                    <mat-option value="PART_TIME">Part-Time</mat-option>
-                    <mat-option value="CONTRACT">Contract</mat-option>
-                    <mat-option value="COMMISSION_ONLY">Commission Only</mat-option>
-                    <mat-option value="SERVICE_PROVIDER">Service Provider</mat-option>
-                  </mat-select>
-                  <mat-hint *ngIf="!isManagementOrAdmin">Managed by Admin / Management</mat-hint>
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Employment Type</span>
+                  <span class="info-val">
+                    {{ getFormattedEmploymentType(currentUser()?.employmentDetails?.employmentType) }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Date Hired</mat-label>
-                  <input matInput type="date" formControlName="hireDate">
-                  <mat-hint *ngIf="!isManagementOrAdmin">Managed by Admin / Management</mat-hint>
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Date Hired</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.employmentDetails?.hireDate">
+                    {{ (currentUser()?.employmentDetails?.hireDate | date:'mediumDate') || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>GCash Number (For Salary)</mat-label>
-                  <input matInput formControlName="gcashNumber" placeholder="0917-000-0000">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">GCash Number (Salary)</span>
+                  <span class="info-val info-mono" [class.info-empty]="!currentUser()?.employmentDetails?.gcashNumber">
+                    {{ currentUser()?.employmentDetails?.gcashNumber || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Bank Name</mat-label>
-                  <input matInput formControlName="bankName" placeholder="e.g. BDO / BPI">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Bank Name</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.employmentDetails?.bankName">
+                    {{ currentUser()?.employmentDetails?.bankName || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Bank Account Number</mat-label>
-                  <input matInput formControlName="bankAccountNumber" placeholder="0000-0000-0000">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Bank Account Number</span>
+                  <span class="info-val info-mono" [class.info-empty]="!currentUser()?.employmentDetails?.bankAccountNumber">
+                    {{ currentUser()?.employmentDetails?.bankAccountNumber || 'Not Set' }}
+                  </span>
+                </div>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Bank Account Name</mat-label>
-                  <input matInput formControlName="bankAccountName" placeholder="Account Holder Name">
-                </mat-form-field>
+                <div class="info-data-card">
+                  <span class="info-lbl">Bank Account Name</span>
+                  <span class="info-val" [class.info-empty]="!currentUser()?.employmentDetails?.bankAccountName">
+                    {{ currentUser()?.employmentDetails?.bankAccountName || 'Not Set' }}
+                  </span>
+                </div>
               </div>
             </div>
-          </form>
+          </div>
+
+          <!-- ═══════════ B. INTERACTIVE EDIT MODE (FORM FIELDS) ═══════════ -->
+          <div class="profile-edit-mode" *ngIf="isEditMode()">
+            <!-- Active Edit Mode Visual Banner -->
+            <div class="edit-mode-banner" [@fadeIn]>
+              <mat-icon class="banner-icon">edit_note</mat-icon>
+              <div class="banner-text">
+                <strong>Active Edit Mode</strong>
+                <span>You are editing this profile. Make your changes below and click <strong>"Save Changes"</strong> when done.</span>
+              </div>
+            </div>
+
+            <form [formGroup]="profileForm">
+              <!-- Section 1: Basic Information -->
+              <div class="section-block">
+                <div class="section-header-row">
+                  <mat-icon class="section-icon text-cyan">badge</mat-icon>
+                  <h3 class="section-title">Basic Information</h3>
+                </div>
+                <div class="form-grid-3">
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Full Name</mat-label>
+                    <input matInput formControlName="displayName">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Phone Number</mat-label>
+                    <input matInput formControlName="phone" placeholder="0917-000-0000">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Email Contact (Personal)</mat-label>
+                    <input matInput type="email" formControlName="contactEmail" placeholder="personal@example.com">
+                    <mat-hint>Personal contact email (separate from login email)</mat-hint>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Gender</mat-label>
+                    <mat-select formControlName="gender">
+                      <mat-option value="MALE">Male</mat-option>
+                      <mat-option value="FEMALE">Female</mat-option>
+                      <mat-option value="OTHER">Other</mat-option>
+                      <mat-option value="PREFER_NOT_TO_SAY">Prefer not to say</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Date of Birth</mat-label>
+                    <input matInput [matDatepicker]="dobPicker" formControlName="birthDate" placeholder="Select date of birth">
+                    <mat-datepicker-toggle matIconSuffix [for]="dobPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #dobPicker></mat-datepicker>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Residential Address</mat-label>
+                    <input matInput formControlName="address" placeholder="Street, Barangay, City, Province">
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Section 2: Emergency Contact -->
+              <div class="section-block">
+                <div class="section-header-row">
+                  <mat-icon class="section-icon text-rose">contact_emergency</mat-icon>
+                  <h3 class="section-title">Emergency Contact</h3>
+                </div>
+                <div class="form-grid-3">
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Contact Person Name</mat-label>
+                    <input matInput formControlName="emergencyName" placeholder="e.g. Maria Tindoy">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Relationship</mat-label>
+                    <input matInput formControlName="emergencyRelationship" placeholder="e.g. Spouse / Parent">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Emergency Phone</mat-label>
+                    <input matInput formControlName="emergencyPhone" placeholder="0918-000-0000">
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Section 3: Government ID Numbers -->
+              <div class="section-block">
+                <div class="section-header-row">
+                  <mat-icon class="section-icon text-gold">account_balance</mat-icon>
+                  <h3 class="section-title">Government Identifiers</h3>
+                </div>
+                <div class="form-grid-4">
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>SSS Number</mat-label>
+                    <input matInput formControlName="sssNumber" placeholder="00-0000000-0">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>PhilHealth Number</mat-label>
+                    <input matInput formControlName="philHealthNumber" placeholder="00-000000000-0">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Pag-IBIG / HDMF</mat-label>
+                    <input matInput formControlName="pagIbigNumber" placeholder="0000-0000-0000">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Tax ID (TIN)</mat-label>
+                    <input matInput formControlName="tinNumber" placeholder="000-000-000-000">
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Section 4: Employment & Compensation Details -->
+              <div class="section-block">
+                <div class="section-header-row">
+                  <mat-icon class="section-icon text-mint">work</mat-icon>
+                  <h3 class="section-title">Employment & Salary Payout Details</h3>
+                </div>
+                <div class="form-grid-3">
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Job Title / Position</mat-label>
+                    <input matInput formControlName="jobTitle" placeholder="e.g. Senior Fitness Coach">
+                    <mat-hint *ngIf="!isManagementOrAdmin">Managed by Admin / Management</mat-hint>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Employment Type</mat-label>
+                    <mat-select formControlName="employmentType">
+                      <mat-option value="FULL_TIME">Full-Time</mat-option>
+                      <mat-option value="PART_TIME">Part-Time</mat-option>
+                      <mat-option value="CONTRACT">Contract</mat-option>
+                      <mat-option value="COMMISSION_ONLY">Commission Only</mat-option>
+                      <mat-option value="SERVICE_PROVIDER">Service Provider</mat-option>
+                    </mat-select>
+                    <mat-hint *ngIf="!isManagementOrAdmin">Managed by Admin / Management</mat-hint>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Date Hired</mat-label>
+                    <input matInput [matDatepicker]="hireDatePicker" formControlName="hireDate" placeholder="Select hire date">
+                    <mat-datepicker-toggle matIconSuffix [for]="hireDatePicker"></mat-datepicker-toggle>
+                    <mat-datepicker #hireDatePicker></mat-datepicker>
+                    <mat-hint *ngIf="!isManagementOrAdmin">Managed by Admin / Management</mat-hint>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>GCash Number (For Salary)</mat-label>
+                    <input matInput formControlName="gcashNumber" placeholder="0917-000-0000">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Bank Name</mat-label>
+                    <input matInput formControlName="bankName" placeholder="e.g. BDO / BPI">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Bank Account Number</mat-label>
+                    <input matInput formControlName="bankAccountNumber" placeholder="0000-0000-0000">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="custom-mat-field">
+                    <mat-label>Bank Account Name</mat-label>
+                    <input matInput formControlName="bankAccountName" placeholder="Account Holder Name">
+                  </mat-form-field>
+                </div>
+              </div>
+            </form>
+          </div>
+
         </div>
       </mat-tab>
 
-      <!-- ════════════════ TAB 2: EMPLOYEE DOCUMENTS & ATTACHMENTS ════════════════ -->
+      <!-- TAB 2: EMPLOYEE DOCUMENTS & ATTACHMENTS -->
       <mat-tab>
         <ng-template matTabLabel>
           <mat-icon class="tab-icon">folder_shared</mat-icon> Documents & Identity
@@ -217,19 +422,21 @@
         </ng-template>
 
         <div class="tab-body">
-          <!-- Upload Dropzone Card (Visible if user can edit/upload) -->
+          <!-- Upload Dropzone Card -->
           <div class="upload-card" *ngIf="canEditProfile()">
             <div class="upload-header">
               <div class="up-title">
-                <mat-icon>cloud_upload</mat-icon>
+                <div class="up-icon-wrap">
+                  <mat-icon>cloud_upload</mat-icon>
+                </div>
                 <div>
-                  <h4>Upload Employee Documents</h4>
-                  <p>Upload employee Identification (Valid ID), Employment Contract, or Certifications. Only <strong>Images (JPG, PNG, WebP)</strong> and <strong>PDF Documents</strong> are accepted.</p>
+                  <h4 class="up-heading">Upload Employee Documents</h4>
+                  <p class="up-desc">Upload Identification (Valid ID), Employment Contract, or Certifications. Accepted formats: <strong>Images (JPG, PNG, WebP)</strong> and <strong>PDF Documents</strong>.</p>
                 </div>
               </div>
 
               <div class="upload-controls">
-                <mat-form-field appearance="outline" class="category-select">
+                <mat-form-field appearance="outline" class="category-select custom-mat-field">
                   <mat-label>Document Type</mat-label>
                   <mat-select [(ngModel)]="selectedDocCategory">
                     <mat-option value="GOVERNMENT_ID">🪪 Valid Government ID</mat-option>
@@ -241,8 +448,9 @@
                 </mat-form-field>
 
                 <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*,application/pdf" style="display: none;">
-                <button mat-raised-button color="primary" class="upload-btn" (click)="fileInput.click()" [disabled]="isUploading()">
-                  <mat-icon>upload_file</mat-icon> {{ isUploading() ? 'Uploading...' : 'Select Image / PDF' }}
+                <button type="button" class="btn-upload-gold" (click)="fileInput.click()" [disabled]="isUploading()">
+                  <mat-icon class="btn-icon">upload_file</mat-icon>
+                  <span>{{ isUploading() ? 'Uploading...' : 'Select File to Upload' }}</span>
                 </button>
               </div>
             </div>
@@ -250,7 +458,7 @@
 
           <!-- Document List Grid -->
           <div class="docs-grid" *ngIf="currentUser()?.documents?.length; else noDocs">
-            <div class="doc-card mat-elevation-z1" *ngFor="let doc of currentUser()?.documents">
+            <div class="doc-card" *ngFor="let doc of currentUser()?.documents">
               <button type="button" class="doc-preview-box" (click)="viewDocument(doc)">
                 <img *ngIf="doc.fileType === 'IMAGE'" [src]="doc.downloadUrl" alt="Thumbnail" class="doc-thumb">
                 <div *ngIf="doc.fileType === 'PDF'" class="pdf-placeholder">
@@ -271,10 +479,10 @@
                   <span>{{ doc.fileType }} · {{ doc.uploadedAt | date:'mediumDate' }}</span>
                 </div>
                 <div class="doc-actions-row">
-                  <button mat-button color="primary" class="mini-action-btn" (click)="viewDocument(doc)">
+                  <button type="button" class="btn-view-doc" (click)="viewDocument(doc)">
                     <mat-icon>visibility</mat-icon> View
                   </button>
-                  <button mat-icon-button color="warn" class="mini-action-btn" (click)="deleteDocument(doc)" *ngIf="canEditProfile()" title="Delete document">
+                  <button type="button" class="btn-del-doc" (click)="deleteDocument(doc)" *ngIf="canEditProfile()" title="Delete document">
                     <mat-icon>delete_outline</mat-icon>
                   </button>
                 </div>
@@ -285,14 +493,14 @@
           <ng-template #noDocs>
             <div class="empty-docs-box">
               <mat-icon class="empty-icon">folder_open</mat-icon>
-              <h4>No Documents Uploaded</h4>
-              <p>Upload valid IDs and employment contracts above to store them securely.</p>
+              <h4 class="empty-title">No Documents Uploaded</h4>
+              <p class="empty-sub">Upload valid IDs and employment contracts above to store them securely.</p>
             </div>
           </ng-template>
         </div>
       </mat-tab>
 
-      <!-- ════════════════ TAB 3: CONFIDENTIAL WEEKLY PAYSLIPS ════════════════ -->
+      <!-- TAB 3: CONFIDENTIAL WEEKLY PAYSLIPS -->
       <mat-tab>
         <ng-template matTabLabel>
           <mat-icon class="tab-icon">payments</mat-icon> Weekly Payslips
@@ -300,12 +508,14 @@
         </ng-template>
 
         <div class="tab-body">
-          <!-- Confidentiality Warning Alert Banner (Friendly Staff Perspective) -->
+          <!-- Confidentiality Warning Alert Banner -->
           <div class="confidentiality-notice-card">
-            <mat-icon>security</mat-icon>
+            <div class="notice-icon-wrap">
+              <mat-icon>security</mat-icon>
+            </div>
             <div class="notice-text">
-              <strong>CONFIDENTIAL COMPENSATION STATEMENT</strong>
-              <p>This section contains your official weekly compensation records. For your privacy and security, payslips are confidential and will appear here automatically once each weekly salary payout is released.</p>
+              <strong class="notice-title">CONFIDENTIAL COMPENSATION STATEMENT</strong>
+              <p class="notice-desc">This section contains your official weekly compensation records. For your privacy and security, payslips are confidential and appear here automatically once each weekly salary payout is released.</p>
             </div>
           </div>
 
@@ -317,26 +527,27 @@
 
           <!-- Payslips List -->
           <div class="payslips-list-container" *ngIf="!isLoadingPayslips() && payslips().length > 0; else noPayslips">
-            <div class="payslip-row-card mat-elevation-z1" *ngFor="let p of payslips()">
+            <div class="payslip-row-card" *ngFor="let p of payslips()">
               <div class="p-left">
                 <div class="p-icon-box">
                   <mat-icon>receipt_long</mat-icon>
                 </div>
                 <div class="p-details">
-                  <h4>{{ p.title }}</h4>
+                  <h4 class="p-title">{{ p.title }}</h4>
                   <p class="p-period">Period: <strong>{{ p.billingPeriodStart | date:'mediumDate' }}</strong> – <strong>{{ p.billingPeriodEnd | date:'mediumDate' }}</strong> (Saturday Cutoff)</p>
-                  <small class="p-date">Paid on {{ p.paidDate | date:'mediumDate' }} via <strong>{{ p.paymentSource.replace('_', ' ') }}</strong></small>
+                  <small class="p-date">Paid on {{ p.paidDate | date:'mediumDate' }} via <span class="p-channel">{{ p.paymentSource.replace('_', ' ') }}</span></small>
                 </div>
               </div>
 
               <div class="p-right">
                 <div class="p-amount-box">
                   <span class="p-lbl">Net Take-Home Pay</span>
-                  <strong class="p-amt">₱{{ p.netAmount | number:'1.2-2' }}</strong>
+                  <strong class="p-amt text-gold">₱{{ p.netAmount | number:'1.2-2' }}</strong>
                   <small class="p-gross">Gross: ₱{{ p.baseCompensation | number:'1.2-2' }} ({{ p.daysPresent }} days)</small>
                 </div>
-                <button mat-raised-button color="primary" class="view-slip-btn" (click)="openPayslip(p)">
-                  <mat-icon>print</mat-icon> View & Print Payslip
+                <button type="button" class="btn-view-slip" (click)="openPayslip(p)">
+                  <mat-icon class="btn-icon">print</mat-icon>
+                  <span>View & Print Payslip</span>
                 </button>
               </div>
             </div>
@@ -345,13 +556,13 @@
           <ng-template #noPayslips>
             <div class="empty-docs-box" *ngIf="!isLoadingPayslips()">
               <mat-icon class="empty-icon">payments</mat-icon>
-              <h4>No Weekly Payslips Available</h4>
-              <p>Your official payslips will appear here automatically once your weekly salary payout is released.</p>
+              <h4 class="empty-title">No Weekly Payslips Available</h4>
+              <p class="empty-sub">Your official payslips will appear here automatically once your weekly salary payout is released.</p>
             </div>
           </ng-template>
         </div>
       </mat-tab>
 
     </mat-tab-group>
-  </mat-card>
+  </div>
 </div>

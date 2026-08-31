@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
@@ -22,152 +22,553 @@ import { MatSnackBar } from '@angular/material/snack-bar';
         MatRadioModule, FormsModule
     ],
     template: `
-    <h2 mat-dialog-title>Duplicate Resolver</h2>
-    <mat-dialog-content class="content-container">
-      
-      <!-- LOADING STATE -->
-      <div *ngIf="loading()" class="center-state">
-        <mat-spinner diameter="40"></mat-spinner>
-        <p>Scanning member database for possible duplicates...</p>
-      </div>
-
-      <!-- NO DUPLICATES FOUND -->
-      <div *ngIf="!loading() && duplicateGroups().length === 0" class="center-state">
-        <mat-icon class="large-icon text-success">check_circle</mat-icon>
-        <p>No duplicate members found!</p>
-        <button mat-button mat-dialog-close>Close</button>
-      </div>
-
-      <!-- LIST VIEW -->
-      <div *ngIf="!loading() && duplicateGroups().length > 0 && !selectedGroup()" class="list-view">
-        <div class="subtitle-container">
-           <p>Found <strong>{{ duplicateGroups().length }}</strong> potential duplicate groups.</p>
-           <small>Grouped by Gender & Birthday</small>
+    <div class="duplicate-resolver-container">
+      <div class="dialog-header">
+        <div class="header-left">
+          <mat-icon class="header-icon">merge_type</mat-icon>
+          <div>
+            <h2 class="dialog-title">Duplicate Member Resolver</h2>
+            <p class="dialog-subtitle">Scan and merge duplicate profiles to maintain clean attendance & progress history</p>
+          </div>
         </div>
+        <button mat-icon-button mat-dialog-close class="close-btn">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="dialog-body">
         
-        <mat-list>
-          <div *ngFor="let group of duplicateGroups(); let i = index">
-            <mat-card class="group-card" (click)="reviewGroup(group)">
+        <!-- LOADING STATE -->
+        <div *ngIf="loading()" class="center-state">
+          <mat-spinner diameter="42"></mat-spinner>
+          <p class="loading-text">Scanning member database for possible duplicate accounts...</p>
+        </div>
+
+        <!-- NO DUPLICATES FOUND -->
+        <div *ngIf="!loading() && duplicateGroups().length === 0" class="center-state">
+          <div class="clean-icon-wrap">
+            <mat-icon class="large-icon text-success">verified</mat-icon>
+          </div>
+          <h3 class="clean-title">Database Clean!</h3>
+          <p class="clean-sub">No duplicate member accounts were detected.</p>
+          <button mat-flat-button class="btn-close-clean" mat-dialog-close>Close Resolver</button>
+        </div>
+
+        <!-- LIST VIEW -->
+        <div *ngIf="!loading() && duplicateGroups().length > 0 && !selectedGroup()" class="list-view">
+          <div class="subtitle-container">
+             <span class="count-badge">{{ duplicateGroups().length }} Potential Duplicate Groups Found</span>
+             <p class="match-info">Grouped by matching Gender and Birthday</p>
+          </div>
+          
+          <div class="groups-list">
+            <div *ngFor="let group of duplicateGroups()" class="group-card" (click)="reviewGroup(group)">
               <div class="row-align">
                   <div class="card-section info-section">
-                    <span class="label">Born</span>
+                    <span class="label">Birthday</span>
                     <span class="value">{{ toDate(group[0].birthday) | date:'mediumDate' }}</span>
-                    <span class="badgewrap"><span class="gender-badge">{{ group[0].gender }}</span></span>
+                    <span class="gender-pill">{{ group[0].gender }}</span>
                   </div>
 
                   <div class="card-section names-section">
-                    <span class="label">Similar Names ({{ group.length }})</span>
+                    <span class="label">Matched Profiles ({{ group.length }})</span>
                     <div class="name-list">
-                        <span *ngFor="let m of group" class="name-item">{{ m.name }}</span>
+                        <span *ngFor="let m of group" class="name-item">
+                          <mat-icon class="item-icon">person</mat-icon>
+                          <span>{{ m.name }}</span>
+                          <span class="item-contact font-mono" *ngIf="m.contactNumber">({{ m.contactNumber }})</span>
+                        </span>
                     </div>
                   </div>
               </div>
-              <mat-icon class="action-icon">arrow_forward_ios</mat-icon>
-            </mat-card>
-          </div>
-        </mat-list>
-      </div>
-
-      <!-- REVIEW & MERGE VIEW -->
-      <div *ngIf="selectedGroup() as group" class="review-view">
-        <div class="review-header">
-           <button mat-icon-button (click)="cancelReview()"><mat-icon>arrow_back</mat-icon></button>
-           <h3>Compare & Merge</h3>
-        </div>
-
-        <p class="instruction">Select the <strong>Primary Member</strong> to keep. The other will be merged into it (Attendance & Progress transferred) and then deleted.</p>
-
-        <mat-radio-group [(ngModel)]="primaryId" class="comparison-container">
-          <div *ngFor="let member of group" class="member-column" [class.selected]="primaryId === member.id">
-            <mat-radio-button [value]="member.id" color="primary">
-              <strong>Select as Primary</strong>
-            </mat-radio-button>
-
-            <div class="details">
-              <h4>{{ member.name }}</h4>
-              <p><mat-icon>cake</mat-icon> {{ toDate(member.birthday) | date:'mediumDate' }}</p>
-              <p><mat-icon>phone</mat-icon> {{ member.contactNumber || 'N/A' }}</p>
-              <p><mat-icon>place</mat-icon> {{ member.address || 'N/A' }}</p>
-              <p><mat-icon>fitness_center</mat-icon> Last: {{ (toDate(member.trainingExpiration) | date:'shortDate') || 'N/A' }}</p>
-              <p><mat-icon>verified</mat-icon> {{ member.membershipStatus }}</p>
-              <small class="id-text">ID: {{ member.id }}</small>
+              <mat-icon class="action-arrow">arrow_forward</mat-icon>
             </div>
           </div>
-        </mat-radio-group>
+        </div>
+
+        <!-- REVIEW & MERGE VIEW -->
+        <div *ngIf="selectedGroup() as group" class="review-view">
+          <div class="review-header">
+             <button type="button" class="back-btn" (click)="cancelReview()">
+               <mat-icon>arrow_back</mat-icon>
+             </button>
+             <div>
+               <h3 class="review-title">Compare & Merge Accounts</h3>
+               <p class="review-subtitle">Select the primary profile to retain.</p>
+             </div>
+          </div>
+
+          <div class="instruction-box">
+            <mat-icon class="inst-icon">info</mat-icon>
+            <span>The profile you select as <strong>Primary</strong> will be preserved. The other profile's attendance logs, transactions, and scan reports will be merged into it before deletion.</span>
+          </div>
+
+          <mat-radio-group [(ngModel)]="primaryId" class="comparison-container">
+            <div *ngFor="let member of group" class="member-column" [class.selected]="primaryId === member.id" (click)="primaryId = member.id || ''">
+              <mat-radio-button [value]="member.id" color="primary">
+                <span class="radio-label">Select as Primary Profile</span>
+              </mat-radio-button>
+
+              <div class="details">
+                <h4 class="member-head-name">{{ member.name }}</h4>
+                <p><mat-icon class="detail-icon">cake</mat-icon> {{ toDate(member.birthday) | date:'mediumDate' }}</p>
+                <p><mat-icon class="detail-icon">phone</mat-icon> {{ member.contactNumber || 'No phone' }}</p>
+                <p><mat-icon class="detail-icon">place</mat-icon> {{ member.address || 'No address' }}</p>
+                <p><mat-icon class="detail-icon">verified</mat-icon> Status: <strong>{{ member.membershipStatus }}</strong></p>
+                <span class="id-tag font-mono">ID: {{ member.id }}</span>
+              </div>
+            </div>
+          </mat-radio-group>
+        </div>
+
       </div>
 
-    </mat-dialog-content>
-
-    <mat-dialog-actions align="end" *ngIf="selectedGroup()">
-      <button mat-button (click)="cancelReview()">Cancel</button>
-      <button mat-raised-button color="warn" [disabled]="!primaryId || merging()" (click)="executeMerge()">
-        {{ merging() ? 'Merging...' : 'Merge & Delete Other' }}
-      </button>
-    </mat-dialog-actions>
+      <div class="dialog-footer" *ngIf="selectedGroup()">
+        <button type="button" class="btn-cancel" (click)="cancelReview()">Back to List</button>
+        <button type="button" class="btn-merge-action" [disabled]="!primaryId || merging()" (click)="executeMerge()">
+          <mat-icon *ngIf="!merging()">merge_type</mat-icon>
+          <mat-spinner diameter="18" *ngIf="merging()"></mat-spinner>
+          <span>{{ merging() ? 'Merging Accounts...' : 'Merge & Retain Primary' }}</span>
+        </button>
+      </div>
+    </div>
   `,
     styles: [`
-    .content-container { min-height: 400px; min-width: 600px; }
-    .center-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; gap: 1rem; text-align: center; }
-    .large-icon { font-size: 48px; height: 48px; width: 48px; }
-    .text-success { color: #4caf50; }
-    
-    .list-view { padding: 1rem 0; overflow-y: auto; max-height: 60vh; }
-    .subtitle-container { padding: 0 1rem 1rem; border-bottom: 1px solid #eee; margin-bottom: 1rem; }
-    
-    /* Card Styling */
-    .group-card {
-      padding: 1rem;
-      margin-bottom: 0.75rem;
-      cursor: pointer;
-      border: 1px solid #e0e0e0;
-      display: flex; /* Flexrow by default for MatCard? No, block. */
-      flex-direction: row;
+    .duplicate-resolver-container {
+      background: var(--color-app);
+      color: var(--color-text-pure);
+      border-radius: var(--radius-2xl);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      max-height: 85vh;
+    }
+
+    .dialog-header {
+      display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--color-border);
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.95) 100%);
     }
-    .group-card:hover { background: #f5f5f5; border-color: #bdbdbd; }
-    
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-icon {
+      font-size: 26px !important;
+      width: 26px !important;
+      height: 26px !important;
+      color: var(--color-gold-light);
+    }
+
+    .dialog-title {
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-extrabold);
+      color: var(--color-text-pure);
+      margin: 0;
+    }
+
+    .dialog-subtitle {
+      font-size: var(--font-size-2xs);
+      color: var(--color-text-secondary);
+      margin: 2px 0 0 0;
+    }
+
+    .close-btn {
+      color: var(--color-text-secondary);
+    }
+
+    .close-btn:hover {
+      color: var(--color-text-pure);
+    }
+
+    .dialog-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      min-height: 360px;
+    }
+
+    .center-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .loading-text {
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xs);
+    }
+
+    .clean-icon-wrap {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-success-dim);
+      border: 1.5px solid rgba(52, 211, 153, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-mint-success);
+    }
+
+    .large-icon {
+      font-size: 36px !important;
+      width: 36px !important;
+      height: 36px !important;
+    }
+
+    .clean-title {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-pure);
+      margin: 0;
+    }
+
+    .clean-sub {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
+
+    .btn-close-clean {
+      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+      color: #090d16 !important;
+      font-weight: var(--font-weight-bold) !important;
+      border-radius: var(--radius-full) !important;
+      margin-top: 10px;
+    }
+
+    /* List View */
+    .subtitle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .count-badge {
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-gold-light);
+      background-color: var(--color-gold-dim);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+    }
+
+    .match-info {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
+
+    .groups-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .group-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 180ms ease;
+    }
+
+    .group-card:hover {
+      background-color: rgba(6, 182, 212, 0.08);
+      border-color: var(--color-cyan-light);
+      transform: translateY(-1px);
+    }
+
     .row-align {
-        display: flex;
-        flex: 1;
-        gap: 2rem;
-        align-items: flex-start;
+      display: flex;
+      gap: 24px;
+      flex: 1;
+      align-items: flex-start;
     }
-    
-    .card-section { display: flex; flex-direction: column; gap: 0.25rem; }
-    .info-section { min-width: 120px; }
-    .names-section { flex: 1; }
-    
-    .label { font-size: 0.75rem; text-transform: uppercase; color: #757575; font-weight: 600; }
-    .value { font-size: 1rem; font-weight: 500; color: #212121; }
-    
-    .badgewrap { margin-top: 0.25rem; }
-    .gender-badge { 
-        background: #e3f2fd; color: #1565c0; 
-        padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; 
+
+    .card-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
-    
-    .name-list { display: flex; flex-direction: column; gap: 0.25rem; }
-    .name-item { font-size: 1.1rem; font-weight: 500; color: #333; }
-    
-    .action-icon { color: #bdbdbd; }
+
+    .info-section {
+      min-width: 130px;
+    }
+
+    .names-section {
+      flex: 1;
+    }
+
+    .label {
+      font-size: 10px;
+      font-weight: var(--font-weight-bold);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-muted);
+    }
+
+    .value {
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-pure);
+    }
+
+    .gender-pill {
+      display: inline-block;
+      width: fit-content;
+      background-color: var(--color-cyan-dim);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: var(--color-cyan-light);
+      font-size: 10px;
+      font-weight: var(--font-weight-bold);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      margin-top: 4px;
+    }
+
+    .name-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .name-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-body);
+    }
+
+    .item-icon {
+      font-size: 14px !important;
+      width: 14px !important;
+      height: 14px !important;
+      color: var(--color-cyan-light);
+    }
+
+    .item-contact {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      font-weight: normal;
+    }
+
+    .action-arrow {
+      color: var(--color-text-secondary);
+      font-size: 20px !important;
+    }
 
     /* Review View */
-    .review-view { display: flex; flex-direction: column; height: 100%; }
-    .review-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
-    .instruction { background: #fff3e0; padding: 1rem; border-radius: 4px; color: #e65100; font-size: 0.9rem; }
-    .comparison-container { display: flex; gap: 1rem; margin-top: 1rem; }
-    .member-column { flex: 1; border: 2px solid #ddd; border-radius: 8px; padding: 1rem; transition: all 0.2s; }
-    .member-column.selected { border-color: #3f51b5; background: #f0f4ff; }
-    .details { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-    .details p { margin: 0; display: flex; align-items: center; gap: 0.5rem; color: #555; }
-    .details h4 { margin: 0; font-size: 1.2rem; color: #000; }
-    .id-text { color: #999; font-size: 0.7rem; margin-top: 1rem; display: block; }
-    
-    @media (max-width: 600px) {
-      .content-container { min-width: 100%; }
-      .comparison-container { flex-direction: column; }
-      .row-align { flex-direction: column; gap: 1rem; }
+    .review-view {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .review-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-lg);
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-pure);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .review-title {
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-pure);
+      margin: 0;
+    }
+
+    .review-subtitle {
+      font-size: var(--font-size-2xs);
+      color: var(--color-text-secondary);
+      margin: 2px 0 0 0;
+    }
+
+    .instruction-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background-color: var(--color-gold-dim);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: var(--radius-xl);
+      padding: 12px 16px;
+      color: var(--color-gold-light);
+      font-size: var(--font-size-xs);
+      line-height: 1.4;
+    }
+
+    .inst-icon {
+      font-size: 18px !important;
+      width: 18px !important;
+      height: 18px !important;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .comparison-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 6px;
+    }
+
+    .member-column {
+      background-color: var(--color-surface);
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      cursor: pointer;
+      transition: all 180ms ease;
+    }
+
+    .member-column:hover {
+      border-color: rgba(6, 182, 212, 0.5);
+    }
+
+    .member-column.selected {
+      border-color: var(--color-cyan-light);
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(15, 23, 42, 0.95) 100%);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
+    }
+
+    .radio-label {
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-pure);
+    }
+
+    .details {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .member-head-name {
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-black);
+      color: var(--color-text-pure);
+      margin: 0;
+    }
+
+    .details p {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-size-xs);
+      color: var(--color-text-body);
+    }
+
+    .detail-icon {
+      font-size: 16px !important;
+      width: 16px !important;
+      height: 16px !important;
+      color: var(--color-text-secondary);
+    }
+
+    .id-tag {
+      font-size: 10px;
+      color: var(--color-text-muted);
+      margin-top: 6px;
+    }
+
+    /* Dialog Footer */
+    .dialog-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--color-border);
+      background-color: var(--color-surface);
+    }
+
+    .btn-cancel {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      padding: 10px 20px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+      color: var(--color-text-pure);
+    }
+
+    .btn-merge-action {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #090d16;
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-black);
+      border: none;
+      border-radius: var(--radius-full);
+      padding: 10px 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+      transition: all 180ms ease;
+    }
+
+    .btn-merge-action:hover:not([disabled]) {
+      transform: translateY(-1px);
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
+    }
+
+    .btn-merge-action[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    @media (max-width: 640px) {
+      .comparison-container {
+        grid-template-columns: 1fr;
+      }
+      .row-align {
+        flex-direction: column;
+        gap: 10px;
+      }
     }
   `]
 })
@@ -179,7 +580,6 @@ export class MemberDuplicateResolver implements OnInit {
     duplicateGroups = signal<Member[][]>([]);
     selectedGroup = signal<Member[] | null>(null);
 
-    // Merge selections
     primaryId: string | null = null;
     merging = signal(false);
 
@@ -225,7 +625,6 @@ export class MemberDuplicateResolver implements OnInit {
 
         this.merging.set(true);
         try {
-            // Loop matches (usually just 1)
             for (const secondary of others) {
                 if (secondary.id) {
                     await this.memberService.mergeMembers(this.primaryId, secondary.id);
@@ -233,14 +632,9 @@ export class MemberDuplicateResolver implements OnInit {
             }
 
             this.snackBar.open('Merge successful', 'Close', { duration: 3000 });
-
-            // Remove this group from the list
             const currentList = this.duplicateGroups();
             this.duplicateGroups.set(currentList.filter(g => g !== group));
-
-            // Return to list
             this.cancelReview();
-
         } catch (err) {
             console.error(err);
             this.snackBar.open('Error merging members', 'Close');

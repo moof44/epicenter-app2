@@ -39,6 +39,7 @@ import { ProductCatalogComponent } from '../product-catalog/product-catalog';
 import { Functions, httpsCallable } from '@angular/fire/functions';
 
 import { ClaimVoucherDialog } from './claim-voucher-dialog/claim-voucher-dialog';
+import { ShiftControlModal } from '../shift-control-modal/shift-control-modal';
 
 @Component({
   selector: 'app-pos',
@@ -91,6 +92,13 @@ export class PosComponent {
 
   toggleCart(): void {
     this.cartExpanded.update(v => !v);
+  }
+
+  openShiftModal(): void {
+    this.dialog.open(ShiftControlModal, {
+      width: '520px',
+      maxWidth: '95vw'
+    });
   }
 
   openClaimVoucher(): void {

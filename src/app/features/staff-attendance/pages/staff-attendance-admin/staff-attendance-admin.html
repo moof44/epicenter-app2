@@ -1,18 +1,73 @@
 <div class="admin-attendance-container" [@fadeIn]>
 
-    <!-- Page Header -->
+    <!-- ── Page Header Deck ── -->
     <div class="page-header">
-        <div>
-            <h1>Staff Time & Attendance</h1>
-            <p class="subtitle">Weekly attendance reports, deficit & overtime tracking, payroll calculations, and kiosk devices.</p>
+        <div class="header-left-group">
+            <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Dashboard">
+                <mat-icon>arrow_back</mat-icon>
+            </button>
+            <div class="header-titles">
+                <h1 class="page-title">Staff Time, Attendance & Weekly Payroll</h1>
+                <p class="page-subtitle">Weekly attendance matrix, deficit & overtime audit, automated Saturday payroll, and kiosk terminals</p>
+            </div>
         </div>
-        
-        <button mat-raised-button color="accent" (click)="openKioskTerminal()">
-            <mat-icon>launch</mat-icon> Open Kiosk Terminal
-        </button>
+
+        <div class="header-actions">
+            <button type="button" class="btn-kiosk-cyan" (click)="openKioskTerminal()">
+                <mat-icon class="btn-icon">launch</mat-icon>
+                <span>Open Kiosk Terminal</span>
+            </button>
+        </div>
     </div>
 
-    <!-- TABS -->
+    <!-- ── 4-Card Executive Summary KPI Deck ── -->
+    <div class="summary-cards">
+        <!-- 1. Total Staff Evaluated -->
+        <div class="summary-card">
+            <div class="card-icon-seal icon-cyan">
+                <mat-icon>badge</mat-icon>
+            </div>
+            <div class="card-info">
+                <span class="label">Staff Active / Evaluated</span>
+                <strong class="value font-mono text-cyan">{{ displayedSummaries().length }} Staff</strong>
+            </div>
+        </div>
+
+        <!-- 2. Deficit / Undertime -->
+        <div class="summary-card">
+            <div class="card-icon-seal icon-rose">
+                <mat-icon>timer_off</mat-icon>
+            </div>
+            <div class="card-info">
+                <span class="label">Total Week Deficit</span>
+                <strong class="value font-mono text-rose">{{ totalWeeklyDeficitHours() }} hrs</strong>
+            </div>
+        </div>
+
+        <!-- 3. Overtime Hours -->
+        <div class="summary-card">
+            <div class="card-icon-seal icon-mint">
+                <mat-icon>more_time</mat-icon>
+            </div>
+            <div class="card-info">
+                <span class="label">Approved Overtime</span>
+                <strong class="value font-mono text-mint">{{ totalWeeklyOvertimeHours() }} hrs</strong>
+            </div>
+        </div>
+
+        <!-- 4. Estimated Weekly Payroll -->
+        <div class="summary-card">
+            <div class="card-icon-seal icon-gold">
+                <mat-icon>payments</mat-icon>
+            </div>
+            <div class="card-info">
+                <span class="label">Weekly Payroll Total</span>
+                <strong class="value font-mono text-gold">₱{{ totalWeeklyCompensation() | number:'1.2-2' }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TABS ── -->
     <mat-tab-group animationDuration="200ms" class="admin-tabs">
         
         <!-- ════════════════ TAB 1: WEEKLY PAYROLL & ATTENDANCE ════════════════ -->
@@ -23,26 +78,26 @@
 
             <div class="tab-content">
                 
-                <!-- Week Navigator Bar -->
-                <mat-card class="filter-card">
+                <!-- Week Navigator & Filter Bar -->
+                <div class="filter-card">
                     <div class="week-navigator">
-                        <button mat-icon-button (click)="navigateWeek(-1)" title="Previous Week">
+                        <button type="button" class="nav-btn-circle" (click)="navigateWeek(-1)" title="Previous Week">
                             <mat-icon>chevron_left</mat-icon>
                         </button>
                         
                         <div class="week-range-text">
-                            <mat-icon>date_range</mat-icon>
-                            <span>{{ currentSunday() | date:'mediumDate' }} &nbsp;–&nbsp; {{ currentSaturday() | date:'mediumDate' }}</span>
-                            <span class="week-label">(Sunday to Saturday)</span>
+                            <mat-icon class="text-cyan">date_range</mat-icon>
+                            <span class="week-dates text-white font-mono">{{ currentSunday() | date:'mediumDate' }} &nbsp;–&nbsp; {{ currentSaturday() | date:'mediumDate' }}</span>
+                            <span class="week-label text-muted">(Sunday to Saturday)</span>
                         </div>
 
-                        <button mat-icon-button (click)="navigateWeek(1)" title="Next Week">
+                        <button type="button" class="nav-btn-circle" (click)="navigateWeek(1)" title="Next Week">
                             <mat-icon>chevron_right</mat-icon>
                         </button>
                     </div>
 
                     <div class="filter-actions" [formGroup]="dateForm">
-                        <mat-form-field appearance="outline" class="status-select-field">
+                        <mat-form-field appearance="outline" class="status-select-field custom-mat-field" subscriptSizing="dynamic">
                             <mat-label>Employee Status</mat-label>
                             <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
                                 <mat-option value="ACTIVE">Active Employees Only</mat-option>
@@ -51,48 +106,51 @@
                             </mat-select>
                         </mat-form-field>
 
-                        <mat-form-field appearance="outline" class="date-picker-field">
+                        <mat-form-field appearance="outline" class="date-picker-field custom-mat-field" subscriptSizing="dynamic">
                             <mat-label>Jump to Week</mat-label>
                             <input matInput [matDatepicker]="picker" formControlName="selectedDate" (dateChange)="onDateChange()">
                             <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
                             <mat-datepicker #picker></mat-datepicker>
                         </mat-form-field>
 
-                        <button mat-flat-button color="primary" (click)="openAddRecordDialog()">
-                            <mat-icon>add_circle</mat-icon> Add Manual Entry
+                        <button type="button" class="btn-action-outline" (click)="openAddRecordDialog()">
+                            <mat-icon>add_circle</mat-icon> Manual Entry
                         </button>
 
-                        <button mat-stroked-button color="primary" (click)="exportToCSV()">
-                            <mat-icon>download</mat-icon> Export Payroll CSV
-                        </button>
-                    </div>
-                </mat-card>
-
-                <!-- Weekly Saturday Payroll Action Banner -->
-                <div class="weekly-payroll-banner mat-elevation-z1">
-                    <div class="payroll-banner-left">
-                        <div class="pay-icon-box">
-                            <mat-icon>payments</mat-icon>
-                        </div>
-                        <div class="pay-info">
-                            <div class="pay-title">Weekly Saturday Payroll · Week Ending {{ currentSaturday() | date:'mediumDate' }}</div>
-                            <div class="pay-subtitle">Sunday to Saturday compensation for {{ displayedSummaries().length }} staff members</div>
-                        </div>
-                    </div>
-                    <div class="payroll-banner-right">
-                        <div class="pay-total-box">
-                            <span class="pay-label">Total Compensation Due</span>
-                            <strong class="pay-amount">₱{{ totalWeeklyCompensation() | number:'1.2-2' }}</strong>
-                        </div>
-                        <button mat-raised-button color="accent" class="post-payroll-btn" (click)="postWeeklyPayrollToPayables()" [disabled]="isPostingPayroll() || totalWeeklyCompensation() <= 0">
-                            <mat-icon>post_add</mat-icon> {{ isPostingPayroll() ? 'Posting...' : 'Post to Bills & Payables →' }}
+                        <button type="button" class="btn-action-outline" (click)="exportToCSV()">
+                            <mat-icon>download</mat-icon> Export CSV
                         </button>
                     </div>
                 </div>
 
-                <!-- Weekly Summary Matrix Table -->
-                <mat-card class="matrix-card">
-                    <div class="table-responsive-wrapper">
+                <!-- Weekly Saturday Payroll Action Banner -->
+                <div class="weekly-payroll-banner">
+                    <div class="payroll-banner-left">
+                        <div class="pay-icon-box">
+                            <mat-icon>account_balance_wallet</mat-icon>
+                        </div>
+                        <div class="pay-info">
+                            <div class="pay-title text-white">Weekly Saturday Payroll · Week Ending {{ currentSaturday() | date:'mediumDate' }}</div>
+                            <div class="pay-subtitle text-muted">Auto-computed Sunday-to-Saturday compensation for {{ displayedSummaries().length }} staff members</div>
+                        </div>
+                    </div>
+                    <div class="payroll-banner-right">
+                        <div class="pay-total-box">
+                            <span class="pay-label text-muted">Total Payroll Due:</span>
+                            <strong class="pay-amount font-mono text-gold">₱{{ totalWeeklyCompensation() | number:'1.2-2' }}</strong>
+                        </div>
+                        <button type="button" class="btn-post-payroll-gold" (click)="postWeeklyPayrollToPayables()" [disabled]="isPostingPayroll() || totalWeeklyCompensation() <= 0">
+                            <mat-icon>post_add</mat-icon>
+                            <span>{{ isPostingPayroll() ? 'Posting to Bills...' : 'Post to Bills & Payables →' }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Weekly Summary Matrix Card -->
+                <div class="matrix-card">
+                    
+                    <!-- ── Desktop Matrix Table (≥ 640px) ── -->
+                    <div class="desktop-table-wrapper">
                         <table mat-table [dataSource]="displayedSummaries()" class="summary-table">
                             
                             <!-- Staff Name -->
@@ -100,153 +158,149 @@
                                 <th mat-header-cell *matHeaderCellDef class="sticky-col"> Employee </th>
                                 <td mat-cell *matCellDef="let s" class="sticky-col">
                                     <div class="staff-info">
-                                        <span class="staff-name">{{ s.staffName }}</span>
-                                        <span class="flags-row">
+                                        <span class="staff-name text-white font-bold">{{ s.staffName }}</span>
+                                        <div class="flags-row">
                                             <span class="flag-chip missed" *ngIf="s.hasMissedCheckout" matTooltip="Has missed check-out this week">Missed Checkout</span>
                                             <span class="flag-chip pending" *ngIf="s.hasPendingAdjustment" matTooltip="Has pending check-in adjustment">Pending Adjustment</span>
-                                        </span>
+                                        </div>
                                     </div>
                                 </td>
                             </ng-container>
 
-                        <!-- Roles -->
-                        <ng-container matColumnDef="roles">
-                            <th mat-header-cell *matHeaderCellDef> Role </th>
-                            <td mat-cell *matCellDef="let s">
-                                <mat-chip-set>
-                                    <mat-chip *ngFor="let r of s.roles">{{ r }}</mat-chip>
-                                </mat-chip-set>
-                            </td>
-                        </ng-container>
+                            <!-- Roles -->
+                            <ng-container matColumnDef="roles">
+                                <th mat-header-cell *matHeaderCellDef> Role </th>
+                                <td mat-cell *matCellDef="let s">
+                                    <div class="role-pills-wrap">
+                                        <span class="role-mini-pill font-mono" *ngFor="let r of s.roles">{{ r }}</span>
+                                    </div>
+                                </td>
+                            </ng-container>
 
-                        <!-- Days Present -->
-                        <ng-container matColumnDef="daysPresent">
-                            <th mat-header-cell *matHeaderCellDef> Days Present </th>
-                            <td mat-cell *matCellDef="let s" class="center-align">
-                                <strong class="present-count">{{ s.daysPresent }} / 7</strong>
-                            </td>
-                        </ng-container>
+                            <!-- Days Present -->
+                            <ng-container matColumnDef="daysPresent">
+                                <th mat-header-cell *matHeaderCellDef class="center-align"> Days Present </th>
+                                <td mat-cell *matCellDef="let s" class="center-align font-mono">
+                                    <strong class="present-count text-cyan">{{ s.daysPresent }} / 7</strong>
+                                </td>
+                            </ng-container>
 
-                        <!-- Late Mins -->
-                        <ng-container matColumnDef="lateMins">
-                            <th mat-header-cell *matHeaderCellDef> Late (mins) </th>
-                            <td mat-cell *matCellDef="let s" class="center-align">
-                                <span [class.warn-text]="s.totalLateMinutes > 0">{{ s.totalLateMinutes }}m</span>
-                            </td>
-                        </ng-container>
+                            <!-- Late Mins -->
+                            <ng-container matColumnDef="lateMins">
+                                <th mat-header-cell *matHeaderCellDef class="center-align"> Late </th>
+                                <td mat-cell *matCellDef="let s" class="center-align font-mono">
+                                    <span [class.warn-text]="s.totalLateMinutes > 0" [class.text-muted]="s.totalLateMinutes === 0">{{ s.totalLateMinutes }}m</span>
+                                </td>
+                            </ng-container>
 
-                        <!-- Early Mins -->
-                        <ng-container matColumnDef="earlyMins">
-                            <th mat-header-cell *matHeaderCellDef> Early (mins) </th>
-                            <td mat-cell *matCellDef="let s" class="center-align">
-                                <span class="success-text" *ngIf="s.totalEarlyMinutes > 0">+{{ s.totalEarlyMinutes }}m</span>
-                                <span *ngIf="s.totalEarlyMinutes === 0">0m</span>
-                            </td>
-                        </ng-container>
+                            <!-- Early Mins -->
+                            <ng-container matColumnDef="earlyMins">
+                                <th mat-header-cell *matHeaderCellDef class="center-align"> Early </th>
+                                <td mat-cell *matCellDef="let s" class="center-align font-mono">
+                                    <span class="success-text" *ngIf="s.totalEarlyMinutes > 0">+{{ s.totalEarlyMinutes }}m</span>
+                                    <span class="text-muted" *ngIf="s.totalEarlyMinutes === 0">0m</span>
+                                </td>
+                            </ng-container>
 
-                        <!-- Deficit Mins -->
-                        <ng-container matColumnDef="deficitMins">
-                            <th mat-header-cell *matHeaderCellDef> Deficit (from 7h) </th>
-                            <td mat-cell *matCellDef="let s" class="center-align">
-                                <span [class.danger-text]="s.totalDeficitMinutes > 0">
-                                    {{ s.totalDeficitMinutes > 0 ? (s.totalDeficitMinutes + 'm') : '-' }}
-                                </span>
-                            </td>
-                        </ng-container>
+                            <!-- Deficit Mins -->
+                            <ng-container matColumnDef="deficitMins">
+                                <th mat-header-cell *matHeaderCellDef class="center-align"> Deficit </th>
+                                <td mat-cell *matCellDef="let s" class="center-align font-mono">
+                                    <span [class.danger-text]="s.totalDeficitMinutes > 0" [class.text-muted]="s.totalDeficitMinutes === 0">
+                                        {{ s.totalDeficitMinutes > 0 ? (s.totalDeficitMinutes + 'm') : '-' }}
+                                    </span>
+                                </td>
+                            </ng-container>
 
-                        <!-- Overtime Hours -->
-                        <ng-container matColumnDef="otHours">
-                            <th mat-header-cell *matHeaderCellDef matTooltip="Earned only when worked >= 10 hours in a shift"> Overtime (hrs) </th>
-                            <td mat-cell *matCellDef="let s" class="center-align">
-                                <strong class="ot-text" *ngIf="s.totalOvertimeHours > 0">{{ s.totalOvertimeHours }}h</strong>
-                                <span *ngIf="s.totalOvertimeHours === 0">-</span>
-                            </td>
-                        </ng-container>
+                            <!-- Overtime Hours -->
+                            <ng-container matColumnDef="otHours">
+                                <th mat-header-cell *matHeaderCellDef class="center-align" matTooltip="Earned when worked >= 10 hours in a shift"> Overtime </th>
+                                <td mat-cell *matCellDef="let s" class="center-align font-mono">
+                                    <strong class="ot-text" *ngIf="s.totalOvertimeHours > 0">{{ s.totalOvertimeHours }}h</strong>
+                                    <span class="text-muted" *ngIf="s.totalOvertimeHours === 0">-</span>
+                                </td>
+                            </ng-container>
 
-                        <!-- Daily Rate -->
-                        <ng-container matColumnDef="dailyRate">
-                            <th mat-header-cell *matHeaderCellDef> Daily Rate </th>
-                            <td mat-cell *matCellDef="let s" class="right-align">
-                                ₱{{ s.dailySalaryRate | number:'1.2-2' }}
-                            </td>
-                        </ng-container>
+                            <!-- Daily Rate -->
+                            <ng-container matColumnDef="dailyRate">
+                                <th mat-header-cell *matHeaderCellDef class="right-align"> Daily Rate </th>
+                                <td mat-cell *matCellDef="let s" class="right-align font-mono text-muted">
+                                    ₱{{ s.dailySalaryRate | number:'1.2-2' }}
+                                </td>
+                            </ng-container>
 
-                        <!-- Total Compensation -->
-                        <ng-container matColumnDef="totalComp">
-                            <th mat-header-cell *matHeaderCellDef> Total Compensation </th>
-                            <td mat-cell *matCellDef="let s" class="right-align highlight-pay">
-                                ₱{{ s.totalCompensation | number:'1.2-2' }}
-                            </td>
-                        </ng-container>
+                            <!-- Total Compensation -->
+                            <ng-container matColumnDef="totalComp">
+                                <th mat-header-cell *matHeaderCellDef class="right-align"> Net Total Comp </th>
+                                <td mat-cell *matCellDef="let s" class="right-align font-mono font-black text-gold">
+                                    ₱{{ s.totalCompensation | number:'1.2-2' }}
+                                </td>
+                            </ng-container>
 
-                        <!-- Actions (Expand Row) -->
-                        <ng-container matColumnDef="actions">
-                            <th mat-header-cell *matHeaderCellDef> Details </th>
-                            <td mat-cell *matCellDef="let s" class="center-align">
-                                <button mat-icon-button (click)="toggleExpand(s.staffId)" title="View 7-day breakdown">
-                                    <mat-icon>{{ expandedStaffId() === s.staffId ? 'expand_less' : 'expand_more' }}</mat-icon>
-                                </button>
-                            </td>
-                        </ng-container>
+                            <!-- Actions (Modal Trigger) -->
+                            <ng-container matColumnDef="actions">
+                                <th mat-header-cell *matHeaderCellDef class="center-align"> 7-Day Matrix </th>
+                                <td mat-cell *matCellDef="let s" class="center-align">
+                                    <button type="button" class="btn-matrix-modal-trigger" (click)="openWeeklyMatrixModal(s)" title="Inspect 7-Day Attendance Matrix">
+                                        <mat-icon>calendar_view_week</mat-icon>
+                                        <span>View Matrix</span>
+                                    </button>
+                                </td>
+                            </ng-container>
 
-                        <tr mat-header-row *matHeaderRowDef="reportColumns"></tr>
-                        <tr mat-row *matRowDef="let row; columns: reportColumns;"></tr>
-                    </table>
+                            <tr mat-header-row *matHeaderRowDef="reportColumns; sticky: true"></tr>
+                            <tr mat-row *matRowDef="let row; columns: reportColumns;" class="matrix-element-row" ></tr>
+                        </table>
                     </div>
 
-                    <!-- Expandable Daily Breakdown Matrix -->
-                    <div class="expanded-details" *ngFor="let s of displayedSummaries()">
-                        <div class="daily-matrix-container" *ngIf="expandedStaffId() === s.staffId" [@fadeIn]>
-                            <h4>7-Day Attendance Matrix: {{ s.staffName }}</h4>
-                            <div class="matrix-grid">
-                                <div class="day-card" *ngFor="let day of s.dailyMatrix" [class.absent]="!day.isPresent">
-                                    <div class="day-header">
-                                        <span class="day-name">{{ day.dayName }}</span>
-                                        <span class="day-date">{{ day.date | date:'shortDate' }}</span>
+                    <!-- ── Mobile Cards Deck (< 640px - Failure #25 Prevention) ── -->
+                    <div class="mobile-cards-deck">
+                        <div *ngFor="let s of displayedSummaries()" class="mobile-staff-card">
+                            <div class="m-staff-top">
+                                <div class="m-staff-id-group">
+                                    <div class="m-avatar-seal">
+                                        {{ s.staffName.charAt(0).toUpperCase() }}
                                     </div>
-
-                                    <div class="day-body" *ngIf="day.isPresent && day.record">
-                                        <div class="shift-name">{{ day.record.shiftName }}</div>
-                                        <div class="time-row">
-                                            <span>In:</span> <strong>{{ day.record.checkInTime | date:'h:mm a':'Asia/Manila' }}</strong>
+                                    <div class="m-staff-names">
+                                        <strong class="m-name text-white">{{ s.staffName }}</strong>
+                                        <div class="role-pills-wrap">
+                                            <span class="role-mini-pill font-mono" *ngFor="let r of s.roles">{{ r }}</span>
                                         </div>
-                                        <div class="time-row">
-                                            <span>Out:</span> 
-                                            <strong *ngIf="day.record.checkOutTime">{{ day.record.checkOutTime | date:'h:mm a':'Asia/Manila' }}</strong>
-                                            <span *ngIf="!day.record.checkOutTime" class="warn-text">Missing</span>
-                                        </div>
-                                        <div class="metrics-row">
-                                            <span *ngIf="day.record.lateMinutes > 0" class="warn-text">Late {{ day.record.lateMinutes }}m</span>
-                                            <span *ngIf="day.record.earlyMinutes > 0" class="success-text">Early {{ day.record.earlyMinutes }}m</span>
-                                        </div>
-                                        <div class="ot-deficit-row">
-                                            <span *ngIf="day.deficitMinutes > 0" class="danger-text">Deficit {{ day.deficitMinutes }}m</span>
-                                            <span *ngIf="day.overtimeHours > 0" class="ot-text">OT {{ day.overtimeHours }}h</span>
-                                        </div>
-                                        <div class="remarks-chips" *ngIf="day.remarks.length > 0">
-                                            <span class="mini-chip" *ngFor="let rem of day.remarks">{{ rem }}</span>
-                                        </div>
-                                        <div class="day-card-actions">
-                                            <button mat-icon-button class="card-mini-btn" (click)="openEditRecordDialog(day.record)" title="Edit Record">
-                                                <mat-icon>edit</mat-icon>
-                                            </button>
-                                            <button mat-icon-button class="card-mini-btn warn-btn" (click)="deleteRecord(day.record)" title="Delete Record">
-                                                <mat-icon>delete_outline</mat-icon>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div class="day-body absent-body" *ngIf="!day.isPresent">
-                                        <span class="absent-label">Absent / Off</span>
-                                        <button mat-button class="add-log-btn" (click)="openAddRecordDialog(s.staffId, day.date)">
-                                            <mat-icon>add</mat-icon> Log Entry
-                                        </button>
                                     </div>
                                 </div>
+                                <span class="present-pill font-mono text-cyan">{{ s.daysPresent }}/7 Days</span>
                             </div>
+
+                            <div class="m-staff-stats-grid font-mono">
+                                <div class="stat-col">
+                                    <span class="stat-lbl text-muted">Daily Rate</span>
+                                    <span class="stat-val text-white">₱{{ s.dailySalaryRate | number:'1.2-2' }}</span>
+                                </div>
+                                <div class="stat-col">
+                                    <span class="stat-lbl text-muted">Deficit</span>
+                                    <span class="stat-val text-rose">{{ s.totalDeficitMinutes > 0 ? (s.totalDeficitMinutes + 'm') : '0m' }}</span>
+                                </div>
+                                <div class="stat-col">
+                                    <span class="stat-lbl text-muted">Overtime</span>
+                                    <span class="stat-val text-mint">{{ s.totalOvertimeHours > 0 ? (s.totalOvertimeHours + 'h') : '0h' }}</span>
+                                </div>
+                            </div>
+
+                            <div class="m-staff-total-bar">
+                                <span class="tot-label text-muted">Week Net Compensation:</span>
+                                <strong class="tot-amount font-mono text-gold">₱{{ s.totalCompensation | number:'1.2-2' }}</strong>
+                            </div>
+
+                            <button type="button" class="btn-mobile-matrix-modal-trigger" (click)="openWeeklyMatrixModal(s)">
+                                <mat-icon>calendar_view_week</mat-icon>
+                                <span>Inspect 7-Day Shift Matrix</span>
+                            </button>
                         </div>
                     </div>
-                </mat-card>
+
+
+
+                </div>
 
             </div>
         </mat-tab>
@@ -258,74 +312,79 @@
             </ng-template>
 
             <div class="tab-content" *ngIf="pendingAdjustments$ | async as pending">
-                <mat-card class="admin-card">
-                    <mat-card-header>
-                        <mat-icon mat-card-avatar color="warn">pending_actions</mat-icon>
-                        <mat-card-title>Pending Check-In Adjustments</mat-card-title>
-                        <mat-card-subtitle>Approve or deny staff check-in arrival time adjustment requests</mat-card-subtitle>
-                    </mat-card-header>
+                <div class="admin-deck-card">
+                    <div class="deck-header">
+                        <div class="deck-title-wrap">
+                            <mat-icon class="text-gold">pending_actions</mat-icon>
+                            <h3 class="text-white">Pending Check-In Adjustments</h3>
+                        </div>
+                        <span class="count-pill">{{ pending.length }} Request{{ pending.length === 1 ? '' : 's' }}</span>
+                    </div>
 
-                    <mat-card-content>
-                        <div class="table-responsive-wrapper" *ngIf="pending.length > 0; else noPending">
+                    <div class="desktop-table-wrapper" *ngIf="pending.length > 0; else noPending">
                         <table mat-table [dataSource]="pending" class="admin-table">
                             
                             <ng-container matColumnDef="staffName">
                                 <th mat-header-cell *matHeaderCellDef class="sticky-col"> Employee </th>
-                                <td mat-cell *matCellDef="let p" class="sticky-col"> <strong>{{ p.staffName }}</strong> </td>
+                                <td mat-cell *matCellDef="let p" class="sticky-col font-bold text-white"> {{ p.staffName }} </td>
                             </ng-container>
 
                             <ng-container matColumnDef="date">
                                 <th mat-header-cell *matHeaderCellDef> Date </th>
-                                <td mat-cell *matCellDef="let p"> {{ p.date }} </td>
+                                <td mat-cell *matCellDef="let p" class="font-mono text-muted"> {{ p.date }} </td>
                             </ng-container>
 
                             <ng-container matColumnDef="shiftName">
                                 <th mat-header-cell *matHeaderCellDef> Shift </th>
-                                <td mat-cell *matCellDef="let p"> {{ p.shiftName }} ({{ formatTime12Hour(p.scheduledStartTime) }}) </td>
+                                <td mat-cell *matCellDef="let p" class="text-white"> {{ p.shiftName }} ({{ formatTime12Hour(p.scheduledStartTime) }}) </td>
                             </ng-container>
 
                             <ng-container matColumnDef="systemCheckIn">
                                 <th mat-header-cell *matHeaderCellDef> System Check-In </th>
-                                <td mat-cell *matCellDef="let p"> {{ p.checkInTime | date:'h:mm a':'Asia/Manila' }} </td>
+                                <td mat-cell *matCellDef="let p" class="font-mono text-muted"> {{ p.checkInTime | date:'h:mm a':'Asia/Manila' }} </td>
                             </ng-container>
 
                             <ng-container matColumnDef="requestedTime">
                                 <th mat-header-cell *matHeaderCellDef> Requested Arrival </th>
-                                <td mat-cell *matCellDef="let p" class="highlight-time">
+                                <td mat-cell *matCellDef="let p" class="font-mono text-cyan font-bold">
                                     {{ p.requestedCheckInTime | date:'h:mm a':'Asia/Manila' }}
                                 </td>
                             </ng-container>
 
                             <ng-container matColumnDef="reason">
                                 <th mat-header-cell *matHeaderCellDef> Reason </th>
-                                <td mat-cell *matCellDef="let p"> <em>{{ p.adjustmentReason || 'No reason provided' }}</em> </td>
+                                <td mat-cell *matCellDef="let p" class="text-muted"> <em>{{ p.adjustmentReason || 'No reason provided' }}</em> </td>
                             </ng-container>
 
                             <ng-container matColumnDef="actions">
-                                <th mat-header-cell *matHeaderCellDef> Review </th>
-                                <td mat-cell *matCellDef="let p">
-                                    <button mat-flat-button color="primary" class="mini-btn" (click)="reviewAdjustment(p, 'APPROVED')">
-                                        <mat-icon>check</mat-icon> Approve
-                                    </button>
-                                    <button mat-stroked-button color="warn" class="mini-btn" (click)="reviewAdjustment(p, 'DENIED')">
-                                        <mat-icon>close</mat-icon> Deny
-                                    </button>
+                                <th mat-header-cell *matHeaderCellDef class="center-align"> Review </th>
+                                <td mat-cell *matCellDef="let p" class="center-align">
+                                    <div class="review-btn-row">
+                                        <button type="button" class="btn-review btn-approve-mini" (click)="reviewAdjustment(p, 'APPROVED')">
+                                            <mat-icon>check</mat-icon> Approve
+                                        </button>
+                                        <button type="button" class="btn-review btn-deny-mini" (click)="reviewAdjustment(p, 'DENIED')">
+                                            <mat-icon>close</mat-icon> Deny
+                                        </button>
+                                    </div>
                                 </td>
                             </ng-container>
 
                             <tr mat-header-row *matHeaderRowDef="adjustmentColumns"></tr>
                             <tr mat-row *matRowDef="let row; columns: adjustmentColumns;"></tr>
                         </table>
-                        </div>
+                    </div>
 
-                        <ng-template #noPending>
-                            <div class="empty-state">
-                                <mat-icon class="empty-icon">check_circle</mat-icon>
-                                <p>No pending check-in adjustment requests.</p>
+                    <ng-template #noPending>
+                        <div class="empty-state-card">
+                            <div class="empty-icon-seal">
+                                <mat-icon>check_circle</mat-icon>
                             </div>
-                        </ng-template>
-                    </mat-card-content>
-                </mat-card>
+                            <h4 class="text-white">All caught up!</h4>
+                            <p class="text-muted">There are no pending check-in adjustment requests from staff.</p>
+                        </div>
+                    </ng-template>
+                </div>
             </div>
         </mat-tab>
 
@@ -336,49 +395,51 @@
             </ng-template>
 
             <div class="tab-content" *ngIf="registeredDevices$ | async as devices">
-                <mat-card class="admin-card">
-                    <mat-card-header>
-                        <mat-icon mat-card-avatar color="primary">devices</mat-icon>
-                        <mat-card-title>Authorized Attendance Terminals</mat-card-title>
-                        <mat-card-subtitle>Manage hardware terminals authorized for employee clock-in/out</mat-card-subtitle>
-                    </mat-card-header>
+                <div class="admin-deck-card">
+                    <div class="deck-header">
+                        <div class="deck-title-wrap">
+                            <mat-icon class="text-cyan">devices</mat-icon>
+                            <h3 class="text-white">Authorized Attendance Terminals</h3>
+                        </div>
+                        <span class="count-pill">{{ devices.length }} Device{{ devices.length === 1 ? '' : 's' }}</span>
+                    </div>
 
-                    <mat-card-content>
-                        <table mat-table [dataSource]="devices" class="admin-table" *ngIf="devices.length > 0; else noDevices">
+                    <div class="desktop-table-wrapper" *ngIf="devices.length > 0; else noDevices">
+                        <table mat-table [dataSource]="devices" class="admin-table">
                             
                             <ng-container matColumnDef="deviceName">
                                 <th mat-header-cell *matHeaderCellDef> Terminal Name </th>
-                                <td mat-cell *matCellDef="let d"> <strong>{{ d.deviceName }}</strong> </td>
+                                <td mat-cell *matCellDef="let d" class="font-bold text-white"> {{ d.deviceName }} </td>
                             </ng-container>
 
                             <ng-container matColumnDef="deviceId">
                                 <th mat-header-cell *matHeaderCellDef> Device Identifier </th>
-                                <td mat-cell *matCellDef="let d"> <code>{{ d.deviceId }}</code> </td>
+                                <td mat-cell *matCellDef="let d" class="font-mono text-cyan"> <code>{{ d.deviceId }}</code> </td>
                             </ng-container>
 
                             <ng-container matColumnDef="registeredBy">
                                 <th mat-header-cell *matHeaderCellDef> Registered By </th>
-                                <td mat-cell *matCellDef="let d"> {{ d.registeredByName }} </td>
+                                <td mat-cell *matCellDef="let d" class="text-muted"> {{ d.registeredByName }} </td>
                             </ng-container>
 
                             <ng-container matColumnDef="registeredAt">
                                 <th mat-header-cell *matHeaderCellDef> Registration Date </th>
-                                <td mat-cell *matCellDef="let d"> {{ d.registeredAt | date:'mediumDate' }} </td>
+                                <td mat-cell *matCellDef="let d" class="font-mono text-muted"> {{ d.registeredAt | date:'mediumDate' }} </td>
                             </ng-container>
 
                             <ng-container matColumnDef="status">
                                 <th mat-header-cell *matHeaderCellDef> Status </th>
                                 <td mat-cell *matCellDef="let d">
                                     <mat-slide-toggle [checked]="d.isActive" (change)="toggleDevice(d)" color="primary">
-                                        {{ d.isActive ? 'Active' : 'Disabled' }}
+                                        <span class="font-bold" [class.text-mint]="d.isActive" [class.text-muted]="!d.isActive">{{ d.isActive ? 'Active' : 'Disabled' }}</span>
                                     </mat-slide-toggle>
                                 </td>
                             </ng-container>
 
                             <ng-container matColumnDef="actions">
-                                <th mat-header-cell *matHeaderCellDef> Actions </th>
-                                <td mat-cell *matCellDef="let d">
-                                    <button mat-icon-button color="warn" (click)="revokeDevice(d)" title="Revoke Device Registration">
+                                <th mat-header-cell *matHeaderCellDef class="center-align"> Actions </th>
+                                <td mat-cell *matCellDef="let d" class="center-align">
+                                    <button type="button" class="btn-revoke-device" (click)="revokeDevice(d)" title="Revoke Device Registration">
                                         <mat-icon>delete_forever</mat-icon>
                                     </button>
                                 </td>
@@ -387,17 +448,24 @@
                             <tr mat-header-row *matHeaderRowDef="deviceColumns"></tr>
                             <tr mat-row *matRowDef="let row; columns: deviceColumns;"></tr>
                         </table>
+                    </div>
 
-                        <ng-template #noDevices>
-                            <div class="empty-state">
-                                <mat-icon class="empty-icon">devices_other</mat-icon>
-                                <p>No kiosk devices registered yet.</p>
+                    <ng-template #noDevices>
+                        <div class="empty-state-card">
+                            <div class="empty-icon-seal">
+                                <mat-icon>devices_other</mat-icon>
                             </div>
-                        </ng-template>
-                    </mat-card-content>
-                </mat-card>
+                            <h4 class="text-white">No Registered Terminals</h4>
+                            <p class="text-muted">No kiosk devices have been authorized yet for employee clock-in.</p>
+                        </div>
+                    </ng-template>
+                </div>
             </div>
         </mat-tab>
 
     </mat-tab-group>
+
+    <!-- ── Safe Area Physical Scroll Spacer (Failure #24 & #26 Prevention) ── -->
+    <div class="bottom-scroll-spacer"></div>
+
 </div>

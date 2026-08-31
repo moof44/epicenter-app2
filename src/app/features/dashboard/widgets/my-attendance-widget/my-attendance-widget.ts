@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { StaffAttendanceService } from '../../../../core/services/staff-attendance.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { safeToDate } from '../../../../core/utils/date.utils';
 import { StaffAttendanceRecord } from '../../../../core/models/staff-attendance.model';
 import { firstValueFrom } from 'rxjs';
 

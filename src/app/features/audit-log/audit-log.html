@@ -1,101 +1,197 @@
 <div class="audit-container" [@fadeIn]>
-    <div class="page-header">
-        <h1>Audit Log</h1>
-        <p class="page-subtitle">Investigate and trace gym activity across all operations</p>
+
+  <!-- ── Page Header Deck ── -->
+  <div class="page-header">
+    <div class="header-left-group">
+      <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-titles">
+        <h1 class="page-title">System Activity & Governance Audit Log</h1>
+        <p class="page-subtitle">Investigate and trace transactions, staff shifts, cash movements, and check-in events in real-time</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4-Card Executive Summary KPI Deck ── -->
+  <div class="summary-cards">
+    <!-- 1. Total Audit Events -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-cyan">
+        <mat-icon>manage_search</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Total Loaded Events</span>
+        <strong class="value font-mono text-cyan">{{ totalCount() }} Events</strong>
+      </div>
     </div>
 
-    <!-- Filters -->
-    <div class="filters-row">
-        <mat-form-field appearance="outline" class="date-field">
-            <mat-label>Start Date</mat-label>
-            <input matInput [matDatepicker]="startPicker" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)">
-            <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
-            <mat-datepicker #startPicker></mat-datepicker>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="date-field">
-            <mat-label>End Date</mat-label>
-            <input matInput [matDatepicker]="endPicker" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)">
-            <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
-            <mat-datepicker #endPicker></mat-datepicker>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="staff-field">
-            <mat-label>Staff</mat-label>
-            <mat-select [ngModel]="selectedStaff()" (ngModelChange)="selectedStaff.set($event)">
-                <mat-option value="">All Staff</mat-option>
-                @for (staff of staffList(); track staff.uid) {
-                    <mat-option [value]="staff.uid">{{ staff.name }}</mat-option>
-                }
-            </mat-select>
-        </mat-form-field>
-
-        <button mat-raised-button color="primary" (click)="search()" class="search-btn">
-            <mat-icon>search</mat-icon> Search
-        </button>
+    <!-- 2. Financial Transactions -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-gold">
+        <mat-icon>point_of_sale</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Sales & Voids</span>
+        <strong class="value font-mono text-gold">{{ salesCount() }} Operations</strong>
+      </div>
     </div>
 
-    <!-- Event Type Chips -->
-    <div class="type-chips">
+    <!-- 3. Register & Shift Operations -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-mint">
+        <mat-icon>account_balance_wallet</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Till & Shifts</span>
+        <strong class="value font-mono text-mint">{{ shiftsCount() }} Records</strong>
+      </div>
+    </div>
+
+    <!-- 4. Member Check-Ins -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-purple">
+        <mat-icon>how_to_reg</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Access Check-Ins</span>
+        <strong class="value font-mono text-white">{{ checkinsCount() }} Visits</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Filter & Search Controls Deck ── -->
+  <div class="filters-card">
+    <div class="filters-top-row">
+      <mat-form-field appearance="outline" class="custom-mat-field date-field" subscriptSizing="dynamic">
+        <mat-label>Start Date</mat-label>
+        <input matInput [matDatepicker]="startPicker" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)">
+        <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="custom-mat-field date-field" subscriptSizing="dynamic">
+        <mat-label>End Date</mat-label>
+        <input matInput [matDatepicker]="endPicker" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)">
+        <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="custom-mat-field staff-field" subscriptSizing="dynamic">
+        <mat-label>Filter by Staff Member</mat-label>
+        <mat-select [ngModel]="selectedStaff()" (ngModelChange)="selectedStaff.set($event)">
+          <mat-option value="">All Staff Members</mat-option>
+          @for (staff of staffList(); track staff.uid) {
+            <mat-option [value]="staff.uid">{{ staff.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <button type="button" class="btn-search-cyan" (click)="search()" [disabled]="isLoading()">
+        <mat-icon class="btn-icon">{{ isLoading() ? 'hourglass_top' : 'search' }}</mat-icon>
+        <span>{{ isLoading() ? 'Filtering...' : 'Search Events' }}</span>
+      </button>
+    </div>
+
+    <!-- Category Filter Chips -->
+    <div class="chips-selector-row">
+      <span class="chips-label text-muted font-mono text-xs">Event Filter:</span>
+      <div class="type-chips-wrap">
         @for (t of eventTypes; track t.key) {
-            <button mat-stroked-button
-                [class.active]="isTypeSelected(t.key)"
-                (click)="toggleType(t.key); search()">
-                <mat-icon>{{ t.icon }}</mat-icon>
-                {{ t.label }}
-            </button>
+          <button type="button" class="type-chip-btn font-mono"
+            [class.active]="isTypeSelected(t.key)"
+            (click)="toggleType(t.key); search()">
+            <mat-icon class="chip-icon">{{ t.icon }}</mat-icon>
+            <span>{{ t.label }}</span>
+          </button>
         }
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Master Event Stream Deck Card ── -->
+  <div class="timeline-deck-card">
+    <div class="deck-header">
+      <div class="deck-title-wrap">
+        <mat-icon class="text-cyan">history</mat-icon>
+        <h3 class="text-white">Audit Event Activity Log</h3>
+      </div>
+      <span class="count-pill font-mono">{{ totalCount() }} Total Events</span>
     </div>
 
-    <!-- Loading -->
+    <!-- Loading State -->
     @if (isLoading()) {
-        <div class="loading-state">
-            <mat-spinner diameter="40"></mat-spinner>
-        </div>
+      <div class="loading-box">
+        <mat-spinner diameter="40"></mat-spinner>
+        <span class="text-muted text-xs">Querying audit trail from secure ledger...</span>
+      </div>
     }
 
-    <!-- Empty -->
+    <!-- Empty State -->
     @if (isEmpty()) {
-        <div class="empty-state">
-            <mat-icon class="empty-icon">search_off</mat-icon>
-            <span class="empty-text">No events found for this date range</span>
-            <span class="empty-subtext">Try adjusting your filters or date range</span>
+      <div class="empty-state-box">
+        <div class="empty-icon-seal">
+          <mat-icon>search_off</mat-icon>
         </div>
+        <h4 class="text-white">No audit events found</h4>
+        <p class="text-muted">There are no logged activity records matching your current date range and filter criteria.</p>
+      </div>
     }
 
-    <!-- Timeline -->
+    <!-- Timeline List -->
     @if (!isLoading() && pagedEvents().length > 0) {
-        <div class="timeline">
-            @for (event of pagedEvents(); track event.timestamp) {
-                <div class="timeline-item" [class]="event.type">
-                    <div class="timeline-dot" [class]="event.color"></div>
-                    <div class="timeline-content">
-                        <div class="event-header">
-                            <mat-icon class="event-icon" [class]="event.color">{{ event.icon }}</mat-icon>
-                            <span class="event-title">{{ event.title }}</span>
-                            <span class="event-time">{{ getRelativeTime(event.timestamp) }}</span>
-                        </div>
-                        <div class="event-detail">{{ event.detail }}</div>
-                        <div class="event-performer">
-                            <mat-icon class="performer-icon">person</mat-icon>
-                            {{ event.performer }} · {{ formatDate(event.timestamp) }} {{ formatTime(event.timestamp) }}
-                        </div>
-                    </div>
+      <div class="timeline-stream">
+        @for (event of pagedEvents(); track event.timestamp) {
+          <div class="timeline-card-row" [class]="event.type">
+            <div class="timeline-glow-dot" [class]="event.color"></div>
+            
+            <div class="timeline-body-wrap">
+              <div class="event-main-header">
+                <div class="event-title-line">
+                  <div class="event-icon-seal" [class]="'seal-' + event.color">
+                    <mat-icon>{{ event.icon }}</mat-icon>
+                  </div>
+                  <strong class="event-title-text text-white">{{ event.title }}</strong>
                 </div>
-            }
-        </div>
 
-        <!-- Pagination -->
-        @if (totalPages() > 1) {
-            <div class="pagination-row">
-                <button mat-icon-button (click)="prevPage()" [disabled]="!canGoPrev()">
-                    <mat-icon>chevron_left</mat-icon>
-                </button>
-                <span class="page-info">Page {{ currentPage() + 1 }} of {{ totalPages() }} ({{ totalCount() }} events)</span>
-                <button mat-icon-button (click)="nextPage()" [disabled]="!canGoNext()">
-                    <mat-icon>chevron_right</mat-icon>
-                </button>
+                <div class="event-time-badges font-mono">
+                  <span class="amount-badge font-bold" *ngIf="event.amount !== null" [class.amt-pos]="event.amount >= 0" [class.amt-neg]="event.amount < 0">
+                    ₱{{ event.amount | number:'1.2-2' }}
+                  </span>
+                  <span class="relative-time-pill text-cyan">{{ getRelativeTime(event.timestamp) }}</span>
+                </div>
+              </div>
+
+              <div class="event-detail-text text-muted">{{ event.detail }}</div>
+
+              <div class="event-performer-bar font-mono text-xs">
+                <span class="performer-tag text-gold">👤 {{ event.performer }}</span>
+                <span class="text-muted">·</span>
+                <span class="timestamp-tag text-muted">🕒 {{ formatDate(event.timestamp) }} {{ formatTime(event.timestamp) }}</span>
+              </div>
             </div>
+          </div>
         }
+      </div>
+
+      <!-- Pagination Deck -->
+      @if (totalPages() > 1) {
+        <div class="pagination-bar">
+          <button type="button" class="btn-page-step" (click)="prevPage()" [disabled]="!canGoPrev()">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span class="page-info font-mono text-muted text-xs">
+            Page <strong class="text-white">{{ currentPage() + 1 }}</strong> of {{ totalPages() }} ({{ totalCount() }} events)
+          </span>
+          <button type="button" class="btn-page-step" (click)="nextPage()" [disabled]="!canGoNext()">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      }
     }
+  </div>
+
+  <!-- ── Safe Area Physical Scroll Spacer (Failure #24 & #26 Prevention) ── -->
+  <div class="bottom-scroll-spacer"></div>
+
 </div>

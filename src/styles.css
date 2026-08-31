@@ -1,284 +1,1073 @@
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 @import 'https://fonts.googleapis.com/icon?family=Material+Icons';
 
-@media screen and (max-width: 768px) {
-  table.mat-mdc-table.mobile-card-table {
-    display: block !important;
-    background: transparent !important;
-    box-shadow: none !important;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ==========================================================================
+       1. COLOR PALETTE TOKENS
+       ========================================================================== */
+    --color-canvas: #090d16;
+    --color-app: #0f172a;
+    --color-surface: #1e293b;
+    --color-surface-alt: #243247;
+    --color-surface-input: #0b0f19;
+
+    --color-border: #334155;
+    --color-border-light: #475569;
+    --color-border-focus: #22d3ee;
+
+    --color-cyan-primary: #06b6d4;
+    --color-cyan-hover: #0891b2;
+    --color-cyan-light: #22d3ee;
+    --color-cyan-dim: rgba(6, 182, 212, 0.15);
+
+    --color-gold-primary: #f59e0b;
+    --color-gold-light: #fbbf24;
+    --color-gold-dark: #d97706;
+    --color-gold-dim: rgba(245, 158, 11, 0.15);
+
+    --color-success: #34d399;
+    --color-mint-success: #34d399;
+    --color-mint-dim: rgba(52, 211, 153, 0.15);
+    --color-rose-danger: #f87171;
+    --color-rose-dim: rgba(248, 113, 113, 0.15);
+    --color-surface-elevated: #243247;
+    --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --color-violet-recovery: #c084fc;
+    --color-violet-dim: rgba(192, 132, 252, 0.15);
+    --color-success-dim: rgba(52, 211, 153, 0.15);
+    --color-danger: #fb7185;
+    --color-danger-dim: rgba(251, 113, 133, 0.15);
+    --color-warning: #fbbf24;
+    --color-warning-dim: rgba(251, 191, 36, 0.15);
+
+    --color-text-pure: #ffffff;
+    --color-text-primary: #f8fafc;
+    --color-text-body: #e2e8f0;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-text-inverse: #020617;
+
+    /* Backward compatibility bridge */
+    --canvas-bg: var(--color-canvas);
+    --app-bg: var(--color-app);
+    --surface-bg: var(--color-surface);
+    --border-color: var(--color-border);
+    --border-input: var(--color-border-light);
+    --cyan-accent: var(--color-cyan-light);
+    --gold-accent: var(--color-gold-light);
+    --text-main: var(--color-text-primary);
+
+    /* Material MDC Variable Inversions */
+    --mat-app-text-color: var(--color-text-primary);
+    --mat-sys-on-surface: var(--color-text-primary);
+    --mat-sys-on-surface-variant: var(--color-text-secondary);
+    --mat-sys-surface: var(--color-surface);
+    --mat-sys-surface-container: var(--color-app);
+    --mat-sys-surface-container-highest: var(--color-surface);
+    --mat-sys-outline: var(--color-border-light);
+    --mat-sys-outline-variant: var(--color-border);
+
+    /* ==========================================================================
+       2. TYPOGRAPHY TOKENS
+       ========================================================================== */
+    --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+    --font-size-2xs: 0.625rem;  /* 10px */
+    --font-size-xs: 0.75rem;    /* 12px */
+    --font-size-sm: 0.875rem;   /* 14px */
+    --font-size-base: 1rem;     /* 16px */
+    --font-size-lg: 1.125rem;   /* 18px */
+    --font-size-xl: 1.25rem;    /* 20px */
+    --font-size-2xl: 1.5rem;    /* 24px */
+    --font-size-3xl: 1.875rem;  /* 30px */
+    --font-size-4xl: 2.25rem;   /* 36px */
+
+    --line-height-tight: 1.15;
+    --line-height-snug: 1.3;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.625;
+
+    --font-weight-light: 300;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-extrabold: 800;
+    --font-weight-black: 900;
+
+    /* ==========================================================================
+       3. DIMENSIONS & SIZING TOKENS
+       ========================================================================== */
+    --height-header: 60px;
+    --height-bottom-nav: 64px;
+    --height-ticker: 30px;
+
+    --width-sidebar: 260px;
+    --width-sidebar-collapsed: 72px;
+
+    --max-width-login-card: 420px;
+    --max-width-container-narrow: 768px;
+    --max-width-container-standard: 1280px;
+    --max-width-container-wide: 1600px;
+
+    --height-control-sm: 36px;
+    --height-control-md: 44px;
+    --height-control-lg: 48px;
+
+    --size-logo-header: 36px;
+    --size-logo-sidebar: 40px;
+    --size-logo-login: 80px;
+    --size-logo-kiosk: 120px;
+
+    /* ==========================================================================
+       4. CORNER RADIUS & SHADOW ELEVATIONS
+       ========================================================================== */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-3xl: 28px;
+    --radius-full: 9999px;
+
+    --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+    --shadow-card-elevated: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+    --shadow-glow-cyan: 0 0 25px rgba(6, 182, 212, 0.25);
+    --shadow-glow-gold: 0 0 25px rgba(245, 158, 11, 0.2);
+
+    --z-index-header: 30;
+    --z-index-nav: 40;
+    --z-index-sheet: 50;
+    --z-index-modal: 50;
+    --z-index-toast: 60;
   }
 
-  table.mat-mdc-table.mobile-card-table thead {
+  html, body {
+    background-color: var(--color-canvas) !important;
+    color: var(--color-text-primary) !important;
+    font-family: var(--font-family-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-pure);
+  }
+
+  p {
+    color: var(--color-text-secondary);
+  }
+
+  /* Force accessible links */
+  a, a:hover, a:focus, a:visited {
+    text-decoration: none !important;
+    color: inherit;
+  }
+
+  /* WCAG 2.4.7 High-Visibility Keyboard Focus Ring */
+  :focus-visible {
+    outline: 2px solid var(--color-border-focus) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Safe Area Helpers */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Custom Sleek Dark Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-canvas);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: var(--radius-full);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-light);
+  }
+
+  /* Global Dashboard Widget Defaults & Contrast Guarantees */
+  .dashboard-grid,
+  .widget-slot,
+  .health-card,
+  .stock-card,
+  .voids-card,
+  .disc-card,
+  .feed-card,
+  .checkin-card,
+  .progress-card,
+  .revenue-card,
+  .gym-card,
+  .trend-card,
+  .month-card,
+  .product-card,
+  .sparkline-card,
+  .split-card,
+  .peak-card,
+  .bests-card,
+  .widget-card,
+  .leaderboard-card {
+    color: var(--color-text-pure);
+  }
+
+  /* Global Skeleton Loading Animation */
+  .skeleton-card {
+    background-color: var(--color-app) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-2xl) !important;
+    padding: 20px !important;
+  }
+  .skeleton-line {
+    background-color: var(--color-surface) !important;
+    border-radius: var(--radius-sm) !important;
+    animation: pulse-shimmer 1.8s ease-in-out infinite !important;
+  }
+  .skeleton-line.short { width: 40% !important; height: 14px !important; margin-bottom: 8px !important; }
+  .skeleton-line.medium { width: 70% !important; height: 14px !important; margin-bottom: 8px !important; }
+  .skeleton-line.large { width: 50% !important; height: 32px !important; margin-bottom: 8px !important; }
+  .skeleton-row {
+    height: 40px !important;
+    background-color: var(--color-surface) !important;
+    border-radius: var(--radius-lg) !important;
+    margin-bottom: 6px !important;
+    animation: pulse-shimmer 1.8s ease-in-out infinite !important;
+  }
+  .skeleton-ring {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: var(--radius-full) !important;
+    background-color: var(--color-surface) !important;
+    margin: 0 auto 12px auto !important;
+    animation: pulse-shimmer 1.8s ease-in-out infinite !important;
+  }
+  .skeleton-chart {
+    height: 80px !important;
+    background-color: var(--color-surface) !important;
+    border-radius: var(--radius-lg) !important;
+    animation: pulse-shimmer 1.8s ease-in-out infinite !important;
+  }
+}
+/* ==========================================================================
+     GLOBAL FORM & MATERIAL INPUT DARK CONTRAST SHIELD
+     Guarantees ALL inputs, selects, textareas, prefixes, and option dropdowns
+     render pure white (#ffffff) or high-contrast token colors in dark mode.
+     ========================================================================== */
+  
+  /* Input & Textarea text */
+  input, textarea, select,
+  .mat-mdc-input-element,
+  .mdc-text-field__input,
+  .mat-mdc-form-field input,
+  .mat-mdc-form-field textarea {
+    color: var(--color-text-pure) !important;
+    caret-color: var(--color-cyan-light) !important;
+    font-family: var(--font-family-sans);
+  }
+
+  /* Input Placeholders */
+  input::placeholder,
+  textarea::placeholder,
+  .mat-mdc-input-element::placeholder {
+    color: var(--color-text-muted) !important;
+  }
+
+  /* Select Values & Placeholders */
+  .mat-mdc-select-value,
+  .mat-mdc-select-value-text,
+  .mat-mdc-select-min-line {
+    color: var(--color-text-pure) !important;
+  }
+
+  .mat-mdc-select-placeholder {
+    color: var(--color-text-muted) !important;
+  }
+
+  .mat-mdc-select-arrow svg {
+    fill: var(--color-text-secondary) !important;
+  }
+
+  /* Form Field Prefixes & Suffixes (Icons) */
+  .mat-mdc-form-field-icon-prefix,
+  .mat-mdc-form-field-icon-suffix,
+  .mat-mdc-form-field-icon-prefix mat-icon,
+  .mat-mdc-form-field-icon-suffix mat-icon,
+  .mat-datepicker-toggle button {
+    color: var(--color-cyan-light) !important;
+  }
+
+  /* Floating Labels & Hints */
+  .mat-mdc-form-field .mdc-floating-label,
+  .mat-mdc-form-field .mat-mdc-floating-label {
+    color: var(--color-text-secondary) !important;
+  }
+
+  .mat-mdc-form-field.mat-focused .mdc-floating-label {
+    color: var(--color-cyan-light) !important;
+  }
+
+  .mat-mdc-form-field-hint {
+    color: var(--color-text-secondary) !important;
+  }
+
+  /* Outlined Container Strokes */
+  .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__leading,
+  .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__notch,
+  .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-notched-outline__trailing {
+    border-color: var(--color-border) !important;
+  }
+
+  .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+  .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+  .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+    border-color: var(--color-cyan-light) !important;
+    border-width: 1.5px !important;
+  }
+
+  /* ==========================================================================
+     GLOBAL MDC SELECT, AUTOCOMPLETE & MENU DROPDOWN SHIELD
+     ========================================================================== */
+  .mat-mdc-select-panel,
+  .mat-mdc-autocomplete-panel,
+  .mat-mdc-menu-panel {
+    background-color: #0f172a !important;
+    border: 1.5px solid var(--color-border, #334155) !important;
+    border-radius: var(--radius-2xl, 16px) !important;
+    padding: 6px !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75), 0 0 25px rgba(6, 182, 212, 0.18) !important;
+    box-sizing: border-box !important;
+  }
+
+  .mat-mdc-option {
+    color: var(--color-text-body, #e2e8f0) !important;
+    border-radius: var(--radius-xl, 12px) !important;
+    margin: 2px 0 !important;
+    padding: 8px 14px !important;
+    min-height: 48px !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease !important;
+  }
+
+  .mat-mdc-option .mdc-list-item__primary-text {
+    color: inherit !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+
+  .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+  .mat-mdc-option.mat-mdc-option-active {
+    background-color: var(--color-cyan-dim, rgba(6, 182, 212, 0.15)) !important;
+    color: #ffffff !important;
+  }
+
+  .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.25) 0%, rgba(59, 130, 246, 0.2) 100%) !important;
+    color: var(--color-cyan-light, #22d3ee) !important;
+    border: 1px solid rgba(6, 182, 212, 0.5) !important;
+  }
+
+  .mat-mdc-option.mdc-list-item--selected .mdc-list-item__primary-text {
+    color: var(--color-cyan-light, #22d3ee) !important;
+    font-weight: var(--font-weight-bold, 700) !important;
+  }
+
+  /* Global Reusable Autocomplete Option Layout */
+  .option-member-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    width: 100% !important;
+    padding: 4px 2px !important;
+    box-sizing: border-box !important;
+  }
+
+  .option-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    border-radius: var(--radius-full, 9999px) !important;
+    background: rgba(6, 182, 212, 0.2) !important;
+    border: 1.5px solid var(--color-cyan-light, #22d3ee) !important;
+    color: var(--color-cyan-light, #22d3ee) !important;
+    font-size: 13px !important;
+    font-weight: var(--font-weight-black, 900) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.25) !important;
+  }
+
+  .option-meta {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+  }
+
+  .option-name {
+    font-size: var(--font-size-sm, 14px) !important;
+    font-weight: var(--font-weight-bold, 700) !important;
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+  }
+
+  .option-status-badge {
+    font-size: 10px !important;
+    font-weight: var(--font-weight-extrabold, 800) !important;
+    padding: 2px 8px !important;
+    border-radius: var(--radius-full, 9999px) !important;
+    width: fit-content !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    line-height: 1.2 !important;
+  }
+
+  .badge-active {
+    background: rgba(52, 211, 153, 0.18) !important;
+    color: var(--color-mint-success, #34d399) !important;
+    border: 1px solid rgba(52, 211, 153, 0.5) !important;
+  }
+
+  .badge-inactive {
+    background: rgba(248, 113, 113, 0.18) !important;
+    color: var(--color-danger, #fb7185) !important;
+    border: 1px solid rgba(248, 113, 113, 0.5) !important;
+  }
+
+  /* ==========================================================================
+     GLOBAL MDC DATEPICKER & CALENDAR CONTRAST SHIELD
+     ========================================================================== */
+  .mat-datepicker-content {
+    background-color: #0f172a !important;
+    border: 1.5px solid var(--color-border, #334155) !important;
+    border-radius: var(--radius-2xl, 16px) !important;
+    color: #ffffff !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 25px rgba(6, 182, 212, 0.15) !important;
+    padding: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  .mat-calendar {
+    background-color: transparent !important;
+    color: #ffffff !important;
+    font-family: var(--font-family-sans) !important;
+  }
+
+  /* Header Month/Year Selector & Navigation */
+  .mat-calendar-controls {
+    margin: 4px 0 12px 0 !important;
+  }
+
+  .mat-calendar-period-button {
+    color: #ffffff !important;
+    font-size: var(--font-size-sm, 14px) !important;
+    font-weight: var(--font-weight-black, 900) !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+  }
+
+  .mat-calendar-period-button .mdc-button__label {
+    color: #ffffff !important;
+    font-weight: var(--font-weight-black, 900) !important;
+  }
+
+  .mat-calendar-arrow {
+    fill: var(--color-cyan-light, #22d3ee) !important;
+    border-top-color: var(--color-cyan-light, #22d3ee) !important;
+    margin-left: 6px !important;
+  }
+
+  .mat-calendar-previous-button,
+  .mat-calendar-next-button {
+    color: var(--color-cyan-light, #22d3ee) !important;
+  }
+
+  .mat-calendar-previous-button::after,
+  .mat-calendar-next-button::after {
+    color: var(--color-cyan-light, #22d3ee) !important;
+    fill: var(--color-cyan-light, #22d3ee) !important;
+  }
+
+  .mat-calendar-controls .mat-mdc-icon-button svg {
+    fill: var(--color-cyan-light, #22d3ee) !important;
+    color: var(--color-cyan-light, #22d3ee) !important;
+  }
+
+  /* Table Headers (S M T W T F S) */
+  .mat-calendar-table-header th {
+    color: var(--color-text-secondary, #cbd5e1) !important;
+    font-size: 11px !important;
+    font-weight: var(--font-weight-extrabold, 800) !important;
+    text-transform: uppercase !important;
+    padding-bottom: 8px !important;
+  }
+
+  .mat-calendar-table-header-divider::after {
+    background-color: var(--color-border, #334155) !important;
+  }
+
+  /* Month Name Label in First Row (e.g. "AUG") */
+  .mat-calendar-body-label {
+    color: var(--color-cyan-light, #22d3ee) !important;
+    font-size: 11px !important;
+    font-weight: var(--font-weight-black, 900) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  /* Calendar Date Cells */
+  .mat-calendar-body-cell-content {
+    color: var(--color-text-body, #e2e8f0) !important;
+    font-size: var(--font-size-xs, 12px) !important;
+    font-weight: var(--font-weight-bold, 700) !important;
+    border-radius: var(--radius-full, 9999px) !important;
+    transition: all 150ms ease !important;
+  }
+
+  .mat-calendar-body-cell:hover:not(.mat-calendar-body-disabled) .mat-calendar-body-cell-content:not(.mat-calendar-body-selected) {
+    background-color: var(--color-cyan-dim, rgba(6, 182, 212, 0.15)) !important;
+    color: #ffffff !important;
+  }
+
+  /* Today Cell Outline */
+  .mat-calendar-body-today:not(.mat-calendar-body-selected):not(.mat-calendar-body-comparison-identical) .mat-calendar-body-cell-content {
+    border: 1.5px solid var(--color-cyan-light, #22d3ee) !important;
+    color: var(--color-cyan-light, #22d3ee) !important;
+    font-weight: var(--font-weight-black, 900) !important;
+  }
+
+  /* Selected Date Cell */
+  .mat-calendar-body-selected {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    color: #090d16 !important;
+    font-weight: var(--font-weight-black, 900) !important;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.6) !important;
+    border-radius: var(--radius-full, 9999px) !important;
+  }
+
+  .mat-calendar-body-selected .mat-calendar-body-cell-content {
+    color: #090d16 !important;
+    font-weight: var(--font-weight-black, 900) !important;
+  }
+
+  /* Datepicker Toggle Icon inside Form Fields */
+  .mat-datepicker-toggle button {
+    color: var(--color-cyan-light, #22d3ee) !important;
+  }
+
+  .mat-datepicker-toggle button:hover {
+    background-color: var(--color-cyan-dim, rgba(6, 182, 212, 0.15)) !important;
+  }
+/* ==========================================================================
+     GLOBAL REUSABLE MODAL & DIALOG ARCHITECTURE
+     Guarantees ALL modals (QRDialog, DuplicateResolver, Kiosk, Custom Alerts)
+     render on deep dark canvas with seamless rounded corners and zero white bleed.
+     ========================================================================== */
+  
+  .mat-mdc-dialog-container,
+  .mat-mdc-dialog-surface,
+  .mdc-dialog__surface,
+  .cdk-dialog-container {
+    background-color: var(--color-app) !important;
+    color: var(--color-text-pure) !important;
+    border-radius: var(--radius-2xl) !important;
+    border: 1.5px solid var(--color-border) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 35px rgba(6, 182, 212, 0.15) !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+  }
+
+  .cdk-overlay-backdrop {
+    background-color: rgba(9, 13, 22, 0.82) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  .mat-mdc-dialog-title {
+    color: var(--color-text-pure) !important;
+    font-family: var(--font-family-sans) !important;
+    font-weight: var(--font-weight-extrabold) !important;
+  }
+
+  .mat-mdc-dialog-content {
+    color: var(--color-text-body) !important;
+    font-family: var(--font-family-sans) !important;
+  }
+
+  .mat-mdc-dialog-actions {
+    border-top: 1px solid var(--color-border) !important;
+    background-color: var(--color-surface) !important;
+    padding: 12px 20px !important;
+  }
+/* ==========================================================================
+   GLOBAL MATERIAL MDC PAGINATOR CONTRAST SHIELD
+   ========================================================================== */
+.mat-mdc-paginator {
+  background-color: transparent !important;
+  color: var(--color-text-secondary, #cbd5e1) !important;
+  font-family: var(--font-family-sans) !important;
+}
+
+.mat-mdc-paginator-container {
+  color: var(--color-text-secondary, #cbd5e1) !important;
+  min-height: 48px !important;
+  padding: 0 16px !important;
+}
+
+.mat-mdc-paginator-range-label,
+.mat-mdc-paginator-page-size-label {
+  color: var(--color-text-secondary, #cbd5e1) !important;
+  font-size: var(--font-size-xs) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+.mat-mdc-paginator-icon {
+  fill: var(--color-cyan-light, #22d3ee) !important;
+  color: var(--color-cyan-light, #22d3ee) !important;
+}
+
+.mat-mdc-paginator .mat-mdc-icon-button {
+  color: var(--color-cyan-light, #22d3ee) !important;
+}
+
+.mat-mdc-paginator .mat-mdc-icon-button:hover:not([disabled]) {
+  background-color: var(--color-cyan-dim, rgba(6, 182, 212, 0.15)) !important;
+}
+
+.mat-mdc-paginator .mat-mdc-icon-button[disabled] {
+  opacity: 0.35 !important;
+}
+
+.mat-mdc-paginator .mat-mdc-icon-button[disabled] .mat-mdc-paginator-icon {
+  fill: var(--color-text-muted, #94a3b8) !important;
+  color: var(--color-text-muted, #94a3b8) !important;
+}
+
+.mat-mdc-paginator-page-size-select .mat-mdc-select-value {
+  color: var(--color-text-pure, #ffffff) !important;
+  font-weight: var(--font-weight-bold) !important;
+}
+
+.mat-mdc-paginator-page-size-select .mat-mdc-select-arrow {
+  color: var(--color-cyan-light, #22d3ee) !important;
+}
+
+  /* ==========================================================================
+     GLOBAL MDC SELECT, AUTOCOMPLETE & MENU DROPDOWN SHIELD
+     ========================================================================== */
+  .mat-mdc-select-panel,
+  .mat-mdc-autocomplete-panel,
+  .mat-mdc-menu-panel {
+    background-color: #0f172a !important;
+    border: 1.5px solid var(--color-border, #334155) !important;
+    border-radius: var(--radius-2xl, 16px) !important;
+    padding: 6px !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75), 0 0 25px rgba(6, 182, 212, 0.18) !important;
+    box-sizing: border-box !important;
+  }
+
+  .mat-mdc-option {
+    color: var(--color-text-body, #e2e8f0) !important;
+    border-radius: var(--radius-xl, 12px) !important;
+    margin: 2px 0 !important;
+    padding: 8px 14px !important;
+    min-height: 48px !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease !important;
+  }
+
+  .mat-mdc-option .mdc-list-item__primary-text {
+    color: inherit !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+
+  .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+  .mat-mdc-option.mat-mdc-option-active {
+    background-color: var(--color-cyan-dim, rgba(6, 182, 212, 0.15)) !important;
+    color: #ffffff !important;
+  }
+
+  .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.25) 0%, rgba(59, 130, 246, 0.2) 100%) !important;
+    color: var(--color-cyan-light, #22d3ee) !important;
+    border: 1px solid rgba(6, 182, 212, 0.5) !important;
+  }
+
+  .mat-mdc-option.mdc-list-item--selected .mdc-list-item__primary-text {
+    color: var(--color-cyan-light, #22d3ee) !important;
+    font-weight: var(--font-weight-bold, 700) !important;
+  }
+
+  /* Global Reusable Autocomplete Option Layout */
+  .option-member-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    width: 100% !important;
+    padding: 4px 2px !important;
+    box-sizing: border-box !important;
+  }
+
+  .option-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    border-radius: var(--radius-full, 9999px) !important;
+    background: rgba(6, 182, 212, 0.2) !important;
+    border: 1.5px solid var(--color-cyan-light, #22d3ee) !important;
+    color: var(--color-cyan-light, #22d3ee) !important;
+    font-size: 13px !important;
+    font-weight: var(--font-weight-black, 900) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.25) !important;
+  }
+
+  .option-meta {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+  }
+
+  .option-name {
+    font-size: var(--font-size-sm, 14px) !important;
+    font-weight: var(--font-weight-bold, 700) !important;
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+  }
+
+  .option-status-badge {
+    font-size: 10px !important;
+    font-weight: var(--font-weight-extrabold, 800) !important;
+    padding: 2px 8px !important;
+    border-radius: var(--radius-full, 9999px) !important;
+    width: fit-content !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    line-height: 1.2 !important;
+  }
+
+  .badge-active {
+    background: rgba(52, 211, 153, 0.18) !important;
+    color: var(--color-mint-success, #34d399) !important;
+    border: 1px solid rgba(52, 211, 153, 0.5) !important;
+  }
+
+  .badge-inactive {
+    background: rgba(248, 113, 113, 0.18) !important;
+    color: var(--color-danger, #fb7185) !important;
+    border: 1px solid rgba(248, 113, 113, 0.5) !important;
+  }
+
+  /* ==========================================================================
+     GLOBAL RESPONSIVE DOCK & VISIBILITY CONTROLS
+     ========================================================================== */
+  .desktop-only {
+    display: block !important;
+  }
+  .mobile-only {
     display: none !important;
   }
 
-  table.mat-mdc-table.mobile-card-table tbody {
-    display: block !important;
+  @media (max-width: 768px) {
+    .desktop-only {
+      display: none !important;
+    }
+    .mobile-only {
+      display: flex !important;
+      flex-direction: column !important;
+    }
   }
 
-  table.mat-mdc-table.mobile-card-table tr.mat-mdc-row {
-    display: block !important;
-    margin-bottom: 16px;
-    border-radius: 12px;
-    padding: 16px;
-    background: var(--mat-sys-surface-container, #ffffff);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    height: auto !important;
-    /* Override mat-row height */
+/* ==========================================================================
+     GLOBAL MDC MENU ITEM CONTRAST SHIELD
+     ========================================================================== */
+  .mat-mdc-menu-item {
+    color: var(--color-text-body, #e2e8f0) !important;
+    border-radius: var(--radius-lg, 8px) !important;
+    margin: 2px 0 !important;
+    transition: background-color 150ms ease, color 150ms ease !important;
   }
 
-  table.mat-mdc-table.mobile-card-table td.mat-mdc-cell {
+  .mat-mdc-menu-item .mdc-list-item__primary-text {
+    color: inherit !important;
     display: flex !important;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
-    padding: 12px 0 !important;
-    min-height: 44px;
-    /* Touch target */
-    font-size: 16px;
-    /* Legible on mobile */
+    align-items: center !important;
+    width: 100% !important;
   }
 
-  table.mat-mdc-table.mobile-card-table td.mat-mdc-cell:last-child {
-    border-bottom: none;
+  .mat-mdc-menu-item:hover:not([disabled]),
+  .mat-mdc-menu-item.cdk-program-focused:not([disabled]),
+  .mat-mdc-menu-item.cdk-keyboard-focused:not([disabled]) {
+    background-color: var(--color-cyan-dim, rgba(6, 182, 212, 0.15)) !important;
+    color: #ffffff !important;
   }
 
-  /* Add label via data-label attribute */
-  table.mat-mdc-table.mobile-card-table td.mat-mdc-cell::before {
-    content: attr(data-label);
-    font-weight: 500;
-    color: var(--mat-sys-on-surface-variant, #666);
-    margin-right: 16px;
-    font-size: 14px;
-  }
-}
-
-/* Global Touch Target Fixes */
-button.mat-mdc-button-base,
-.mat-mdc-form-field-infix {
-  min-height: 44px;
-}
-
-:root {
-  --primary-color: #3f51b5;
-  /* Indigo */
-  --primary-dark: #303f9f;
-  /* Responsive Variables - Mobile First Defaults */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.25rem;
-  --font-size-xl: 1.5rem;
-
-  --container-padding: 1rem;
-  /* Standard mobile padding */
-
-  --bg-color: #fafafa;
-  --surface-color: #ffffff;
-  --text-main: #1e293b;
-  --text-secondary: #64748b;
-  --danger-color: #ef4444;
-  --success-color: #22c55e;
-  --border-radius: 12px;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-/* Tablet and up */
-@media (min-width: 768px) {
-  :root {
-    --spacing-md: 1.5rem;
-    --spacing-lg: 2rem;
-    --spacing-xl: 3rem;
-
-    --font-size-lg: 1.5rem;
-    --font-size-xl: 2rem;
-
-    --container-padding: 2rem;
-    /* Increased padding for desktop */
-  }
-}
-
-body {
-  margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text-main);
-}
-
-h1 {
-  margin: 0 0 1rem 0;
-  font-weight: 700;
-  font-size: var(--font-size-xl);
-}
-
-h2 {
-  margin: 0 0 1rem 0;
-  font-weight: 700;
-  font-size: var(--font-size-lg);
-}
-
-h3 {
-  margin: 0 0 1rem 0;
-  font-weight: 700;
-  font-size: var(--font-size-base);
-}
-
-button {
-  cursor: pointer;
-}
-
-.loading-shade {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.7);
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: inherit;
-  /* Inherit border radius from parent if possible */
-}
-
-
-/* Global Mobile Dialog Styles */
-@media (max-width: 600px) {
-  .mobile-dialog .mat-mdc-dialog-surface {
-    border-radius: 16px 16px 0 0 !important;
-    max-height: 90vh !important;
+  .mat-mdc-menu-item:hover:not([disabled]) .mdc-list-item__primary-text {
+    color: #ffffff !important;
   }
 
-  .cdk-overlay-pane.mobile-dialog {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    max-width: 100vw !important;
-    width: 100vw !important;
+  .mat-mdc-menu-item .mat-icon {
+    color: inherit !important;
+    margin-right: 8px !important;
   }
 
-  /* Ensure all mat-dialogs are responsive */
-  .cdk-overlay-pane:not(.mobile-dialog) {
-    max-width: 95vw !important;
-  }
-}
-
-/* Touch-friendly targets */
-@media (pointer: coarse) {
-
-  button,
-  a,
-  [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
+  /* ==========================================================================
+     GLOBAL MDC TABS CONTRAST SHIELD
+     ========================================================================== */
+  .mat-mdc-tab-header {
+    border-bottom: 1.5px solid var(--color-border, #334155) !important;
   }
 
-  input,
-  select,
-  textarea {
-    min-height: 44px;
-    font-size: 16px;
-    /* Prevents zoom on iOS */
+  .mat-mdc-tab {
+    color: var(--color-text-secondary, #cbd5e1) !important;
+    opacity: 1 !important;
   }
+
+  .mat-mdc-tab .mdc-tab__text-label {
+    color: var(--color-text-secondary, #cbd5e1) !important;
+    font-size: var(--font-size-xs, 12px) !important;
+    font-weight: var(--font-weight-bold, 700) !important;
+    letter-spacing: 0.03em !important;
+    transition: color 150ms ease !important;
+  }
+
+  .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+    color: var(--color-cyan-light, #22d3ee) !important;
+    font-weight: var(--font-weight-black, 900) !important;
+  }
+
+  .mat-mdc-tab:hover:not(.mdc-tab--active) .mdc-tab__text-label {
+    color: #ffffff !important;
+  }
+
+  .mat-mdc-tab .tab-icon,
+  .mat-mdc-tab .mat-icon {
+    color: inherit !important;
+  }
+
+  .mat-mdc-tab-group.mat-primary .mat-mdc-tab-header .mdc-tab-indicator__content--underline,
+  .mat-mdc-tab-header .mdc-tab-indicator__content--underline {
+    border-color: var(--color-cyan-light, #22d3ee) !important;
+    border-top-width: 3px !important;
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.6) !important;
+  }
+
+  /* Material Form Field Hints & Select Value Contrast */
+  .mat-mdc-select-value,
+  .mat-mdc-select-value-text,
+  .mat-mdc-select-placeholder {
+    color: var(--color-text-body, #e2e8f0) !important;
+  }
+
+  .mat-mdc-select-arrow svg {
+    fill: var(--color-cyan-light, #22d3ee) !important;
+  }
+
+  .mat-mdc-form-field-hint {
+    color: var(--color-text-muted, #94a3b8) !important;
+  }
+
+/* ==========================================================================
+     GLOBAL MDC CHECKBOX, RADIO BUTTON & SLIDE TOGGLE CONTRAST SHIELD
+     ========================================================================== */
+  .mat-mdc-checkbox label,
+  .mat-mdc-checkbox .mdc-label,
+  .mat-mdc-checkbox .mdc-form-field label {
+    color: var(--color-text-body, #e2e8f0) !important;
+    font-size: var(--font-size-xs, 12px) !important;
+    font-weight: var(--font-weight-medium, 500) !important;
+    cursor: pointer !important;
+    line-height: 1.4 !important;
+  }
+
+  .mat-mdc-checkbox:hover .mdc-label {
+    color: #ffffff !important;
+  }
+
+  .mat-mdc-checkbox .mdc-checkbox__native-control:enabled:not(:checked):not(:indeterminate) ~ .mdc-checkbox__background {
+    border-color: var(--color-border, #334155) !important;
+    background-color: var(--color-surface, #1e293b) !important;
+  }
+
+  .mat-mdc-checkbox .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background,
+  .mat-mdc-checkbox .mdc-checkbox--selected ~ .mdc-checkbox__background {
+    background-color: var(--color-cyan-light, #22d3ee) !important;
+    border-color: var(--color-cyan-light, #22d3ee) !important;
+  }
+
+  .mat-mdc-checkbox .mdc-checkbox__checkmark {
+    color: #020617 !important;
+  }
+
+  /* Radio Buttons */
+  .mat-mdc-radio-button label,
+  .mat-mdc-radio-button .mdc-label {
+    color: var(--color-text-body, #e2e8f0) !important;
+    font-size: var(--font-size-xs, 12px) !important;
+    font-weight: var(--font-weight-medium, 500) !important;
+    cursor: pointer !important;
+  }
+
+  .mat-mdc-radio-button .mdc-radio__outer-circle {
+    border-color: var(--color-border, #334155) !important;
+  }
+
+  .mat-mdc-radio-button.mat-mdc-radio-checked .mdc-radio__inner-circle {
+    border-color: var(--color-cyan-light, #22d3ee) !important;
+  }
+
+  /* Slide Toggles */
+  .mat-mdc-slide-toggle label,
+  .mat-mdc-slide-toggle .mdc-label {
+    color: var(--color-text-body, #e2e8f0) !important;
+    font-size: var(--font-size-xs, 12px) !important;
+  }
+
+/* ==========================================================================
+     GLOBAL MDC DISABLED / READ-ONLY FORM FIELD CONTRAST SHIELD
+     ========================================================================== */
+  .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-text-field-wrapper {
+    background-color: rgba(15, 23, 42, 0.3) !important;
+    cursor: not-allowed !important;
+  }
+
+  .mat-mdc-form-field.mat-form-field-disabled .mdc-notched-outline__leading,
+  .mat-mdc-form-field.mat-form-field-disabled .mdc-notched-outline__notch,
+  .mat-mdc-form-field.mat-form-field-disabled .mdc-notched-outline__trailing {
+    border-color: rgba(51, 65, 85, 0.4) !important;
+  }
+
+  .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-input-element,
+  .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-select-value,
+  .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-select-value-text {
+    color: var(--color-text-secondary, #cbd5e1) !important;
+    -webkit-text-fill-color: var(--color-text-secondary, #cbd5e1) !important;
+    cursor: not-allowed !important;
+  }
+
+  .mat-mdc-form-field.mat-form-field-disabled .mdc-floating-label {
+    color: var(--color-text-muted, #94a3b8) !important;
+  }
+/* ==========================================================================
+   GLOBAL MDC STEPPER CONTRAST & DARK THEME SHIELD (Failure #22 Prevention)
+   Guarantees 100% dark canvas, Level AAA contrast, pure white text,
+   and electric cyan / gold accents across all screen sizes (Mobile/Tablet/Desktop).
+   ========================================================================== */
+.mat-stepper-horizontal,
+.mat-stepper-vertical {
+  background-color: var(--color-app, #090d16) !important;
+  color: var(--color-text-body, #e2e8f0) !important;
+  font-family: var(--font-family-base) !important;
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+.mat-horizontal-stepper-header-container {
+  background-color: var(--color-surface, #0f172a) !important;
+  border-bottom: 1.5px solid var(--color-border, #334155) !important;
+  padding: 8px 16px !important;
 }
 
-/* Better focus styles for accessibility */
-:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
+.mat-step-header {
+  padding: 10px 14px !important;
+  border-radius: var(--radius-xl, 12px) !important;
+  transition: all 180ms ease !important;
 }
 
-/* Hide scrollbar but keep functionality */
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.mat-step-header:hover {
+  background-color: rgba(255, 255, 255, 0.04) !important;
 }
 
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* ── POS Stepper global overrides (tablet/mobile) ─────────
-   ::ng-deep from within the component is unreliable in Angular 17+
-   because the MDC stepper uses shadow-piercing encapsulation.
-   These selectors are scoped to .pos-stepper to avoid side effects.
-   ─────────────────────────────────────────────────────────── */
-.pos-stepper.mat-stepper-horizontal {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  background: transparent;
-}
-
-/* Header row must NOT grow — only the content area grows */
-.pos-stepper .mat-horizontal-stepper-header-container {
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-  z-index: 10;
-  flex-shrink: 0;
-  flex-grow: 0;      /* ← critical: prevents header from gobbling all flex space */
-}
-
-.pos-stepper .mat-horizontal-stepper-wrapper,
-.pos-stepper .mat-horizontal-content-container {
-  padding: 0 !important;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Active step fills the container */
-.pos-stepper .mat-horizontal-stepper-content {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Inactive steps must be hidden so they don't add to the layout height.
-   Angular Material 17 MDC stepper uses -previous and -next variants. */
-.pos-stepper .mat-horizontal-stepper-content[aria-expanded="false"],
-.pos-stepper .mat-horizontal-stepper-content-previous,
-.pos-stepper .mat-horizontal-stepper-content-next {
+.mat-step-header .mat-step-header-ripple {
   display: none !important;
-  height: 0 !important;
-  overflow: hidden !important;
-  visibility: hidden !important;
 }
 
-/* ── Shift Control Dialog Modern Styling & No-Scrollbar Container ── */
-.shift-control-dialog-panel {
-  --mat-dialog-container-max-width: 620px;
+/* Inactive Step Label */
+.mat-step-header .mat-step-label,
+.mat-step-header .mat-step-text-label {
+  color: var(--color-text-secondary, #cbd5e1) !important;
+  font-size: var(--font-size-xs, 12px) !important;
+  font-weight: var(--font-weight-bold, 700) !important;
+  letter-spacing: 0.02em !important;
 }
 
-.shift-control-dialog-panel .mat-mdc-dialog-container {
+/* Active / Selected Step Label */
+.mat-step-header.cdk-keyboard-focused .mat-step-label,
+.mat-step-header.cdk-program-focused .mat-step-label,
+.mat-step-header .mat-step-label.mat-step-label-selected,
+.mat-step-header .mat-step-label.mat-step-label-active {
+  color: #ffffff !important;
+  font-weight: var(--font-weight-black, 900) !important;
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.5) !important;
+}
+
+/* Step Icons */
+.mat-step-header .mat-step-icon {
+  background-color: var(--color-surface-elevated, #1e293b) !important;
+  color: var(--color-text-secondary, #cbd5e1) !important;
+  border: 1.5px solid var(--color-border, #334155) !important;
+  font-weight: var(--font-weight-black, 900) !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: var(--radius-full, 9999px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Selected Step Icon (Electric Cyan) */
+.mat-step-header .mat-step-icon-selected {
+  background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%) !important;
+  color: #090d16 !important;
+  border-color: var(--color-cyan-light, #22d3ee) !important;
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.6) !important;
+}
+
+/* Completed Step Icon (Mint Success) */
+.mat-step-header .mat-step-icon-state-done,
+.mat-step-header .mat-step-icon-state-edit {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: #090d16 !important;
+  border-color: var(--color-mint-success, #34d399) !important;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.5) !important;
+}
+
+/* Stepper Connector Lines */
+.mat-stepper-horizontal-line {
+  border-top-color: var(--color-border, #334155) !important;
+  border-top-width: 2px !important;
+}
+
+/* Content Container */
+.mat-horizontal-content-container,
+.mat-vertical-content-container {
+  background-color: var(--color-app, #090d16) !important;
+  color: var(--color-text-body, #e2e8f0) !important;
   padding: 0 !important;
-  border-radius: 20px !important;
-  overflow: hidden !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
 }
-
-.shift-control-dialog-panel .mat-mdc-dialog-surface {
-  padding: 0 !important;
-  border-radius: 20px !important;
-  overflow-x: hidden !important;
-}
-

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef, DestroyRef } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef, DestroyRef, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -13,7 +13,7 @@ import { ProductService } from '../../../../core/services/product.service';
 import { InventoryService } from '../../../../core/services/inventory.service';
 import { PurchaseRequestService } from '../../../../core/services/purchase-request.service';
 import { PurchaseRequestItem } from '../../../../core/models/purchase-request.model';
-import { Product } from '../../../../core/models/store.model';
+import { Product, ProductCategory } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
@@ -42,35 +42,124 @@ export class StockTakeComponent implements OnInit {
 
   dataSource = new MatTableDataSource<Product>([]);
   displayedColumns = ['name', 'systemStock', 'physicalCount', 'variance'];
-  
+
+  // State Signals
+  products = signal<Product[]>([]);
   auditValues: Record<string, number> = {};
-  isLoading = true;
-  isDraftingPR = false;
+  auditVersion = signal<number>(0); // Trigger reactivity on auditValues updates
+  isLoading = signal<boolean>(true);
+  isDraftingPR = signal<boolean>(false);
+  isUpdating = signal<boolean>(false);
+
+  // Filters
+  searchQuery = signal<string>('');
+  selectedCategory = signal<string>('ALL');
+  varianceFilter = signal<'ALL' | 'COUNTED' | 'DISCREPANCY' | 'PENDING'>('ALL');
+  categories: ProductCategory[] = ['Training', 'Supplements', 'Drinks', 'Boxing'];
+
+  // Computed Metrics
+  totalItems = computed(() => this.products().length);
+
+  countedItemsCount = computed(() => {
+    this.auditVersion(); // reactive dependency
+    return Object.keys(this.auditValues).length;
+  });
+
+  matchCount = computed(() => {
+    this.auditVersion();
+    return this.products().filter(p => this.hasValue(p) && this.getVariance(p) === 0).length;
+  });
+
+  discrepancyCount = computed(() => {
+    this.auditVersion();
+    return this.products().filter(p => this.hasValue(p) && this.getVariance(p) !== 0).length;
+  });
+
+  // Filtered Products for Table & Mobile Cards
+  filteredProducts = computed(() => {
+    this.auditVersion();
+    let list = this.products();
+    const q = this.searchQuery().trim().toLowerCase();
+    const cat = this.selectedCategory();
+    const vf = this.varianceFilter();
+
+    if (cat !== 'ALL') {
+      list = list.filter(p => p.category === cat);
+    }
+
+    if (vf === 'COUNTED') {
+      list = list.filter(p => this.hasValue(p));
+    } else if (vf === 'DISCREPANCY') {
+      list = list.filter(p => this.hasValue(p) && this.getVariance(p) !== 0);
+    } else if (vf === 'PENDING') {
+      list = list.filter(p => !this.hasValue(p));
+    }
+
+    if (q) {
+      list = list.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.category && p.category.toLowerCase().includes(q))
+      );
+    }
+
+    return list;
+  });
+
+  constructor() {
+    effect(() => {
+      this.dataSource.data = this.filteredProducts();
+      this.cdr.markForCheck();
+    });
+  }
 
   ngOnInit() {
     this.productService.getProducts().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (products) => {
-        this.dataSource.data = products;
-        this.isLoading = false;
+        this.products.set(products);
+        this.isLoading.set(false);
         this.cdr.markForCheck();
       },
       error: () => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         this.cdr.markForCheck();
       }
     });
   }
 
-  updateAuditValue(id: string, value: number) {
-    if (value === null || value === undefined) {
+  updateAuditValue(id: string, value: any) {
+    if (value === null || value === undefined || value === '') {
       delete this.auditValues[id];
     } else {
-      this.auditValues[id] = value;
+      this.auditValues[id] = Number(value);
     }
+    this.auditVersion.update(v => v + 1);
+    this.cdr.markForCheck();
+  }
+
+  incrementCount(product: Product): void {
+    if (!product.id) return;
+    const current = this.auditValues[product.id] !== undefined ? this.auditValues[product.id] : product.stock;
+    this.updateAuditValue(product.id, current + 1);
+  }
+
+  decrementCount(product: Product): void {
+    if (!product.id) return;
+    const current = this.auditValues[product.id] !== undefined ? this.auditValues[product.id] : product.stock;
+    this.updateAuditValue(product.id, Math.max(0, current - 1));
+  }
+
+  setSameAsSystem(product: Product): void {
+    if (!product.id) return;
+    this.updateAuditValue(product.id, product.stock);
+  }
+
+  clearCount(product: Product): void {
+    if (!product.id) return;
+    this.updateAuditValue(product.id, null);
   }
 
   hasValue(product: Product): boolean {
-    return this.auditValues[product.id!] !== undefined;
+    return product.id ? this.auditValues[product.id] !== undefined : false;
   }
 
   getVariance(product: Product): number {
@@ -83,15 +172,28 @@ export class StockTakeComponent implements OnInit {
     if (!this.hasValue(product)) return '';
     const v = this.getVariance(product);
     if (v === 0) return 'match';
-    if (v < 0) return 'mismatch'; // Missing items
-    return 'positive'; // Found extra
+    if (v < 0) return 'mismatch';
+    return 'positive';
   }
 
-  getCountedItems(): number {
-    return Object.keys(this.auditValues).length;
+  onSearchChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchQuery.set(input.value);
   }
 
-  async finalizeAdjustment() {
+  clearSearch(): void {
+    this.searchQuery.set('');
+  }
+
+  setCategoryFilter(category: string): void {
+    this.selectedCategory.set(category);
+  }
+
+  setVarianceFilter(filter: 'ALL' | 'COUNTED' | 'DISCREPANCY' | 'PENDING'): void {
+    this.varianceFilter.set(filter);
+  }
+
+  async finalizeAdjustment(): Promise<void> {
     const auditData = Object.entries(this.auditValues).map(([productId, physicalCount]) => ({
       productId,
       physicalCount
@@ -99,21 +201,25 @@ export class StockTakeComponent implements OnInit {
 
     if (auditData.length === 0) return;
 
-    if (!confirm(`Submit inventory adjustments for ${auditData.length} items? This will update stock levels.`)) return;
+    if (!confirm(`Submit inventory adjustments for ${auditData.length} items? This will update live stock levels.`)) return;
 
+    this.isUpdating.set(true);
     try {
       await this.inventoryService.reconcileInventory(auditData);
-      this.snackBar.open('Inventory reconciliation complete', 'Close', { duration: 3000 });
-      this.auditValues = {}; // Reset form
-      // Note: Data source updates automatically via subscription
+      this.snackBar.open(`Successfully updated stock levels for ${auditData.length} items!`, 'Close', { duration: 3000 });
+      this.auditValues = {};
+      this.auditVersion.update(v => v + 1);
     } catch (err) {
       console.error(err);
       this.snackBar.open('Error reconciling inventory', 'Close', { duration: 3000 });
+    } finally {
+      this.isUpdating.set(false);
+      this.cdr.markForCheck();
     }
   }
 
   async draftPurchaseRequestFromDeficits(): Promise<void> {
-    const products = this.dataSource.data;
+    const products = this.products();
     const shortages = products.filter(p => {
       const current = this.auditValues[p.id!] !== undefined ? this.auditValues[p.id!] : p.stock;
       const minLevel = p.minStockLevel ?? 3;
@@ -143,7 +249,7 @@ export class StockTakeComponent implements OnInit {
 
     if (!confirm(`Draft a Restock Purchase Request for ${items.length} shortage items?`)) return;
 
-    this.isDraftingPR = true;
+    this.isDraftingPR.set(true);
     try {
       await this.purchaseRequestService.createPurchaseRequest({
         title: `Restock PR - Shortages from Stock Take (${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`,
@@ -165,7 +271,18 @@ export class StockTakeComponent implements OnInit {
       console.error('Failed to draft PR from stock take:', err);
       this.snackBar.open(err.message || 'Failed to draft purchase request', 'Close', { duration: 3000 });
     } finally {
-      this.isDraftingPR = false;
+      this.isDraftingPR.set(false);
+      this.cdr.markForCheck();
+    }
+  }
+
+  getCategoryColor(category?: ProductCategory): string {
+    switch (category) {
+      case 'Training': return '#38bdf8';
+      case 'Supplements': return '#fbbf24';
+      case 'Drinks': return '#34d399';
+      case 'Boxing': return '#f87171';
+      default: return '#94a3b8';
     }
   }
 }

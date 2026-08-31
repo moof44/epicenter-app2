@@ -1,15 +1,22 @@
-<div class="kiosk-header-banner" *ngIf="isAuthorized()">
+<div class="kiosk-header-banner mandatory-dock" *ngIf="isAuthorized()">
     <div class="banner-info">
-        <div class="icon-wrap">
-            <mat-icon class="terminal-icon">touch_app</mat-icon>
+        <div class="icon-wrap pulse-urgent">
+            <mat-icon class="terminal-icon">fingerprint</mat-icon>
         </div>
-        <div>
-            <h3 class="banner-title">Staff Attendance Terminal</h3>
-            <span class="banner-subtitle">🟢 {{ deviceName() }} (Authorized Terminal)</span>
+        <div class="banner-content">
+            <div class="banner-badge-row">
+                <span class="mandatory-tag">
+                    <span class="pulsing-beacon"></span> MANDATORY ATTENDANCE
+                </span>
+                <span class="terminal-id">🟢 {{ deviceName() }} · Authorized Terminal</span>
+            </div>
+            <h3 class="banner-title">Staff Shift Time Clock</h3>
+            <span class="banner-subtitle">All staff must record clock-in and clock-out at this station before and after every shift.</span>
         </div>
     </div>
     
-    <button mat-raised-button color="accent" class="launch-btn" (click)="openKioskModal()">
-        <mat-icon>schedule</mat-icon> Open Terminal Modal
+    <button mat-flat-button class="launch-btn-mandatory" (click)="openKioskModal()">
+        <mat-icon class="btn-icon">alarm_on</mat-icon>
+        <span>Clock In / Out Now</span>
     </button>
 </div>

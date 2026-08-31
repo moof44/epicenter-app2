@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -16,8 +16,9 @@ import { fadeIn } from '../../../../core/animations/animations';
 
 @Component({
   selector: 'app-financial-health',
+  standalone: true,
   imports: [
-    CommonModule, FormsModule, MatButtonModule, MatIconModule, MatCardModule,
+    CommonModule, FormsModule, RouterModule, MatButtonModule, MatIconModule, MatCardModule,
     MatChipsModule, MatSnackBarModule, MatProgressSpinnerModule, MatTooltipModule,
     NgApexchartsModule
   ],
@@ -40,10 +41,50 @@ export class FinancialHealthComponent implements OnInit {
   donutChartLabels: string[] = [];
   donutChartColors: string[] = [];
   donutChartOptions: any = {
-    chart: { type: 'donut', height: 320 },
-    legend: { position: 'bottom' },
-    dataLabels: { enabled: true },
-    plotOptions: { pie: { donut: { size: '65%' } } }
+    chart: {
+      type: 'donut',
+      height: 320,
+      background: 'transparent',
+      toolbar: { show: false }
+    },
+    theme: { mode: 'dark' },
+    stroke: { colors: ['#1e293b'], width: 2 },
+    legend: {
+      position: 'bottom',
+      labels: { colors: '#cbd5e1' },
+      fontFamily: 'Inter, sans-serif'
+    },
+    dataLabels: {
+      enabled: true,
+      style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '12px' }
+    },
+    tooltip: {
+      theme: 'dark',
+      y: {
+        formatter: (val: number) => '₱' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      }
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '70%',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Total Spend',
+              color: '#cbd5e1',
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: '700',
+              formatter: (w: any) => {
+                const total = w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0);
+                return '₱' + total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+              }
+            }
+          }
+        }
+      }
+    }
   };
 
   ngOnInit(): void {
@@ -105,11 +146,15 @@ export class FinancialHealthComponent implements OnInit {
 
   getGradeColor(grade?: string): string {
     switch (grade) {
-      case 'A': return '#10b981';
-      case 'B': return '#0284c7';
-      case 'C': return '#f59e0b';
-      case 'D': return '#ef4444';
-      default: return '#64748b';
+      case 'A': return '#34d399';
+      case 'B': return '#22d3ee';
+      case 'C': return '#fbbf24';
+      case 'D': return '#f87171';
+      default: return '#94a3b8';
     }
+  }
+
+  goBack() {
+    this.router.navigate(['/store/manage']);
   }
 }

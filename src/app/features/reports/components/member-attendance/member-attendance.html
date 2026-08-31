@@ -1,7 +1,23 @@
-<div class="chart-wrapper">
-    <div class="chart-container">
-        <apx-chart [series]="chartOptions.series!" [chart]="chartOptions.chart!" [xaxis]="chartOptions.xaxis!"
-            [yaxis]="chartOptions.yaxis!" [plotOptions]="chartOptions.plotOptions!" [colors]="chartOptions.colors!"
-            [title]="chartOptions.title!"></apx-chart>
+<div class="member-attendance-container">
+  <div class="chart-header">
+    <div class="header-left">
+      <h3 class="text-white">🏆 Top Gym Goers Attendance Leaderboard</h3>
+      <p class="text-muted">Most dedicated members with highest physical gym check-ins</p>
     </div>
+  </div>
+
+  <div class="chart-content">
+    <apx-chart
+      [series]="chartOptions.series!"
+      [chart]="chartOptions.chart!"
+      [xaxis]="chartOptions.xaxis!"
+      [yaxis]="chartOptions.yaxis!"
+      [title]="chartOptions.title!"
+      [plotOptions]="chartOptions.plotOptions!"
+      [dataLabels]="chartOptions.dataLabels!"
+      [grid]="chartOptions.grid!"
+      [tooltip]="chartOptions.tooltip!"
+      [colors]="chartOptions.colors!">
+    </apx-chart>
+  </div>
 </div>

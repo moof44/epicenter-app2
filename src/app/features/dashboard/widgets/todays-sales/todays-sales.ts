@@ -42,8 +42,16 @@ export class TodaysSalesWidget {
         return 'same';
     });
 
-    isEmpty = computed(() => this.todayTotal() === 0 && this.todayCount() === 0 && !this.isLoading());
+    isEmpty = computed(() => this.todayTotal() === 0 && !this.isLoading());
     showAverage = computed(() => this.todayCount() > 1);
+
+    motivationMessage = computed(() => {
+        const total = this.todayTotal();
+        if (total === 0) return 'You have not made a sale yet today! Offer arriving members cold drinks, energy boosters, or day passes.';
+        if (total < 1500) return '🔥 You unlocked your first sales today! Keep offering supplements & cold drinks!';
+        if (total < 4000) return '⚡ Great hustle today! Keep offering merch & package renewals to incoming members!';
+        return '🚀 Outstanding personal sales today! You are crushing your shift targets!';
+    });
 
     comparisonText = computed(() => {
         const today = this.todayTotal();
@@ -90,8 +98,6 @@ export class TodaysSalesWidget {
 
             this.todayTotal.set(todayTotal || 0);
             this.yesterdayTotal.set(yesterdayTotal || 0);
-            // Count approximation: use today's total / average product price, or just show total only
-            // For now, we skip count to save reads (Phase 2 spec recommends aggregation-only)
         } catch (err) {
             console.error('Failed to load today\'s sales:', err);
         } finally {
@@ -101,5 +107,9 @@ export class TodaysSalesWidget {
 
     navigateToHistory(): void {
         this.router.navigate(['/store/history']);
+    }
+
+    navigateToPos(): void {
+        this.router.navigate(['/store/pos']);
     }
 }

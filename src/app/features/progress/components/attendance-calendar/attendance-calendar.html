@@ -1,20 +1,53 @@
-<mat-card class="calendar-card">
-  <mat-card-header>
-    <div class="header-content">
-      <mat-card-title>Attendance Consistency</mat-card-title>
+<div class="attendance-card">
+  <!-- Card Header with Motivational Consistency Stats -->
+  <div class="calendar-header">
+    <div class="header-left">
+      <div class="header-icon-wrap">
+        <mat-icon class="header-icon">event_available</mat-icon>
+      </div>
+      <div>
+        <h2 class="calendar-title">Training Consistency & Habit Rhythm</h2>
+        <p class="calendar-subtitle">Monthly gym attendance, active training momentum, and muscle recovery</p>
+      </div>
+    </div>
+
+    <!-- Motivational Badges & Month Nav -->
+    <div class="header-right">
+      <div class="stat-pills-row">
+        <!-- Monthly Workout Count -->
+        <div class="cal-stat-pill pill-mint" title="Total workouts completed this month">
+          <mat-icon class="pill-stat-icon">fitness_center</mat-icon>
+          <span class="pill-text">{{ monthlyWorkoutCount }} Sessions Completed</span>
+        </div>
+
+        <!-- Monthly Target Adherence -->
+        <div class="cal-stat-pill pill-gold" title="Monthly training target score">
+          <mat-icon class="pill-stat-icon">local_fire_department</mat-icon>
+          <span class="pill-text">{{ consistencyScore }}% Target Met</span>
+        </div>
+
+        <!-- Active Streak -->
+        <div class="cal-stat-pill pill-cyan" *ngIf="activeStreak > 0" title="Active consecutive training streak">
+          <mat-icon class="pill-stat-icon">bolt</mat-icon>
+          <span class="pill-text">{{ activeStreak }}-Day Streak!</span>
+        </div>
+      </div>
+
+      <!-- Month Navigation -->
       <div class="month-selector">
-        <button mat-icon-button (click)="changeMonth(-1)">
+        <button type="button" class="nav-arrow-btn" (click)="changeMonth(-1)" title="Previous Month">
           <mat-icon>chevron_left</mat-icon>
         </button>
         <span class="current-month">{{ currentDate | date:'MMMM yyyy' }}</span>
-        <button mat-icon-button (click)="changeMonth(1)">
+        <button type="button" class="nav-arrow-btn" (click)="changeMonth(1)" title="Next Month">
           <mat-icon>chevron_right</mat-icon>
         </button>
       </div>
     </div>
-  </mat-card-header>
-  
-  <mat-card-content>
+  </div>
+
+  <!-- Calendar Body -->
+  <div class="calendar-body">
     <div class="calendar-grid">
       <!-- Weekday Headers -->
       <div class="weekday-header" *ngFor="let day of weekDays">{{ day }}</div>
@@ -25,27 +58,34 @@
            [ngClass]="[day.colorClass, day.isToday ? 'today' : '']"
            [class.faded]="!day.isInCurrentMonth">
         
-        <span class="day-number">{{ day.dayOfMonth }}</span>
+        <div class="day-cell-top">
+          <span class="day-number">{{ day.dayOfMonth }}</span>
+        </div>
         
-        <div class="status-icon" *ngIf="day.icon">
-          <mat-icon>{{ day.icon }}</mat-icon>
+        <div class="day-cell-center" *ngIf="day.icon">
+          <mat-icon class="day-icon">{{ day.icon }}</mat-icon>
         </div>
       </div>
     </div>
     
-    <div class="legend">
+    <!-- Legend -->
+    <div class="calendar-legend">
       <div class="legend-item">
-        <div class="legend-dot present"></div>
-        <span>Workout</span>
+        <span class="legend-dot present"></span>
+        <span class="legend-text">Workout Session (Active Growth)</span>
       </div>
       <div class="legend-item">
-        <div class="legend-dot rest"></div>
-        <span>Rest</span>
+        <span class="legend-dot rest"></span>
+        <span class="legend-text">Rest & Muscle Recovery</span>
       </div>
       <div class="legend-item">
-        <div class="legend-dot skipped"></div>
-        <span>Skipped</span>
+        <span class="legend-dot neutral"></span>
+        <span class="legend-text">Off Day</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot future"></span>
+        <span class="legend-text">Upcoming</span>
       </div>
     </div>
-  </mat-card-content>
-</mat-card>
+  </div>
+</div>

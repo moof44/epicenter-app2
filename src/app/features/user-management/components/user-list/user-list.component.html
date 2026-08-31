@@ -1,173 +1,272 @@
-<div class="container">
-    <div class="page-header">
-        <h1>Staff Management</h1>
-        <div class="action-buttons" *ngIf="isAdmin">
-            <button mat-raised-button color="primary" (click)="openAddUserDialog()">
-                <mat-icon>add</mat-icon> Add Staff
-            </button>
-        </div>
+<div class="user-list-container" @fadeIn>
+
+  <!-- ── Page Header Deck ── -->
+  <div class="page-header">
+    <div class="header-left-group">
+      <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-titles">
+        <h1 class="page-title">Staff & Trainer Directory</h1>
+        <p class="page-subtitle">Manage gym staff, personal trainers, front desk team, salary rates, and user credentials</p>
+      </div>
     </div>
 
-    <!-- Filter & Search Bar -->
-    <div class="filter-bar">
-        <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Search Staff</mat-label>
-            <mat-icon matPrefix>search</mat-icon>
-            <input matInput 
-                   [ngModel]="searchQuery$.value" 
-                   (ngModelChange)="searchQuery$.next($event)" 
-                   placeholder="Search by name, email, or phone...">
-        </mat-form-field>
+    <div class="header-actions" *ngIf="isAdmin">
+      <button type="button" class="btn-add-staff-gold" (click)="openAddUserDialog()">
+        <mat-icon class="btn-icon">person_add</mat-icon>
+        <span>Add Staff Member</span>
+      </button>
+    </div>
+  </div>
 
-        <mat-form-field appearance="outline" class="status-field">
-            <mat-label>Status Filter</mat-label>
-            <mat-icon matPrefix>filter_list</mat-icon>
-            <mat-select [ngModel]="statusFilter$.value" (ngModelChange)="statusFilter$.next($event)">
-                <mat-option value="ACTIVE">Active Only</mat-option>
-                <mat-option value="INACTIVE">Deactivated Only</mat-option>
-                <mat-option value="ALL">All Statuses</mat-option>
-            </mat-select>
-        </mat-form-field>
+  <!-- ── 4-Card Executive Summary KPI Deck ── -->
+  <div class="summary-cards">
+    <!-- 1. Total Staff -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-cyan">
+        <mat-icon>people</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Total Workforce</span>
+        <strong class="value font-mono text-cyan">{{ (totalCount$ | async) || 0 }} Staff</strong>
+      </div>
     </div>
 
-    <ng-container *ngIf="filteredUsers$ | async as users">
-        <!-- Desktop Table View -->
-        <table mat-table [dataSource]="users" class="desktop-table">
-            <!-- Photo Column -->
-            <ng-container matColumnDef="photo">
-                <th mat-header-cell *matHeaderCellDef> Photo </th>
-                <td mat-cell *matCellDef="let user" [class.dimmed]="user.isActive === false">
-                    <div class="avatar-placeholder" [class.admin]="user.roles?.includes('ADMIN')">
-                        {{ user.displayName.charAt(0).toUpperCase() }}
-                    </div>
-                </td>
-            </ng-container>
+    <!-- 2. Active Trainers -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-mint">
+        <mat-icon>fitness_center</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Fitness Trainers</span>
+        <strong class="value font-mono text-mint">{{ (trainersCount$ | async) || 0 }} Active</strong>
+      </div>
+    </div>
 
-            <!-- Name Column -->
-            <ng-container matColumnDef="displayName">
-                <th mat-header-cell *matHeaderCellDef> Name </th>
-                <td mat-cell *matCellDef="let user" [class.dimmed]="user.isActive === false">
-                    <div class="user-name">
-                        <span>{{ user.displayName }}</span>
-                        <span class="user-email">{{ user.email }}</span>
-                    </div>
-                </td>
-            </ng-container>
+    <!-- 3. Front Desk & Operations -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-purple">
+        <mat-icon>co_present</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Front Desk Staff</span>
+        <strong class="value font-mono text-white">{{ (staffCount$ | async) || 0 }} Staff</strong>
+      </div>
+    </div>
 
-            <!-- Roles Column -->
-            <ng-container matColumnDef="roles">
-                <th mat-header-cell *matHeaderCellDef> Roles </th>
-                <td mat-cell *matCellDef="let user" [class.dimmed]="user.isActive === false">
-                    <mat-chip-set>
-                        @for (role of user.roles; track role) {
-                        <mat-chip [color]="getRoleColor(role)" highlighted>{{ role }}</mat-chip>
-                        }
-                    </mat-chip-set>
-                </td>
-            </ng-container>
+    <!-- 4. Leadership & Admins -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-gold">
+        <mat-icon>admin_panel_settings</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Admins & Managers</span>
+        <strong class="value font-mono text-gold">{{ (adminsCount$ | async) || 0 }} Leaders</strong>
+      </div>
+    </div>
+  </div>
 
-            <!-- Daily Salary Rate Column -->
-            <ng-container matColumnDef="dailySalaryRate">
-                <th mat-header-cell *matHeaderCellDef> Daily Salary </th>
-                <td mat-cell *matCellDef="let user" [class.dimmed]="user.isActive === false">
-                    {{ user.dailySalaryRate ? ('₱' + (user.dailySalaryRate | number:'1.2-2')) : 'Default' }}
-                </td>
-            </ng-container>
+  <!-- ── Filter & Search Controls Deck ── -->
+  <div class="filters-card">
+    <div class="filters-chips-row">
+      <div class="chips-group">
+        <span class="chips-label text-muted">Status:</span>
+        <button type="button" class="tab-chip" [class.active]="(statusFilter$ | async) === 'ALL'" (click)="setStatusFilter('ALL')">All</button>
+        <button type="button" class="tab-chip chip-mint" [class.active]="(statusFilter$ | async) === 'ACTIVE'" (click)="setStatusFilter('ACTIVE')">Active</button>
+        <button type="button" class="tab-chip chip-rose" [class.active]="(statusFilter$ | async) === 'INACTIVE'" (click)="setStatusFilter('INACTIVE')">Inactive</button>
+      </div>
 
-            <!-- Status Column -->
-            <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef> Status </th>
-                <td mat-cell *matCellDef="let user" [class.dimmed]="user.isActive === false">
-                    <span class="status-badge" [class.active]="user.isActive !== false"
-                        [class.inactive]="user.isActive === false">
-                        {{ user.isActive !== false ? 'Active' : 'Inactive' }}
-                    </span>
-                </td>
-            </ng-container>
+      <div class="chips-group">
+        <span class="chips-label text-muted">Role:</span>
+        <button type="button" class="tab-chip" [class.active]="(roleFilter$ | async) === 'ALL'" (click)="setRoleFilter('ALL')">All Roles</button>
+        <button type="button" class="tab-chip chip-gold" [class.active]="(roleFilter$ | async) === 'ADMIN'" (click)="setRoleFilter('ADMIN')">Admin</button>
+        <button type="button" class="tab-chip chip-cyan" [class.active]="(roleFilter$ | async) === 'MANAGER'" (click)="setRoleFilter('MANAGER')">Manager</button>
+        <button type="button" class="tab-chip chip-mint" [class.active]="(roleFilter$ | async) === 'TRAINER'" (click)="setRoleFilter('TRAINER')">Trainer</button>
+        <button type="button" class="tab-chip chip-purple" [class.active]="(roleFilter$ | async) === 'STAFF'" (click)="setRoleFilter('STAFF')">Staff</button>
+      </div>
+    </div>
 
-            <!-- Actions Column -->
-            <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef> Actions </th>
-                <td mat-cell *matCellDef="let user">
-                    <button mat-icon-button [matMenuTriggerFor]="menu" [matMenuTriggerData]="{user: user}"
-                        aria-label="Example icon-button with a menu">
-                        <mat-icon>more_vert</mat-icon>
-                    </button>
-                </td>
-            </ng-container>
+    <div class="filters-search-row">
+      <mat-form-field appearance="outline" class="custom-mat-field search-span" subscriptSizing="dynamic">
+        <mat-label>Search staff by name, email, or phone number...</mat-label>
+        <mat-icon matPrefix class="search-icon">search</mat-icon>
+        <input matInput [ngModel]="searchQuery$.value" (ngModelChange)="searchQuery$.next($event)" placeholder="e.g. John Doe, trainer@gym.com">
+      </mat-form-field>
+    </div>
+  </div>
 
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
+  <!-- ── Master Staff Directory Deck Card ── -->
+  <div class="staff-deck-card" *ngIf="filteredUsers$ | async as users">
+    <div class="deck-header">
+      <div class="deck-title-wrap">
+        <mat-icon class="text-gold">badge</mat-icon>
+        <h3 class="text-white">Registered Staff Members</h3>
+      </div>
+      <span class="count-pill">{{ users.length }} Member{{ users.length === 1 ? '' : 's' }}</span>
+    </div>
 
-        <!-- Mobile Card View -->
-        <div class="mobile-cards">
-            @for (user of users; track user.uid) {
-            <div class="user-card" [class.dimmed-card]="user.isActive === false">
-                <div class="card-header">
-                    <div class="avatar-placeholder big" [class.admin]="user.roles.includes('ADMIN')">
-                        {{ user.displayName.charAt(0).toUpperCase() }}
-                    </div>
-                    <div class="header-info">
-                        <h3>{{ user.displayName }}</h3>
-                        <span class="email">{{ user.email }}</span>
-                    </div>
-                    <button mat-icon-button [matMenuTriggerFor]="menu" [matMenuTriggerData]="{user: user}">
-                        <mat-icon>more_vert</mat-icon>
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="role-list">
-                        @for (role of user.roles; track role) {
-                        <span class="role-badge" [class.admin-role]="role === 'ADMIN'">{{ role }}</span>
-                        }
-                    </div>
-                    <div class="info-row">
-                        <mat-icon>phone</mat-icon>
-                        <span>{{ user.phone || 'N/A' }}</span>
-                    </div>
-                    <div class="info-row status-row">
-                        <span class="status-badge" [class.active]="user.isActive !== false"
-                            [class.inactive]="user.isActive === false">
-                            {{ user.isActive !== false ? 'Active' : 'Inactive' }}
-                        </span>
-                    </div>
-                </div>
+    <!-- Empty State -->
+    <div class="empty-history-state" *ngIf="users.length === 0">
+      <div class="empty-icon-seal">
+        <mat-icon>person_search</mat-icon>
+      </div>
+      <h4 class="text-white">No staff members found</h4>
+      <p class="text-muted">There are no team records matching your active filters or search terms.</p>
+    </div>
+
+    <!-- ── Desktop Table (≥ 640px) ── -->
+    <div class="desktop-table-wrapper" *ngIf="users.length > 0">
+      <table mat-table [dataSource]="users" class="desktop-staff-table">
+
+        <!-- Photo Avatar Column -->
+        <ng-container matColumnDef="photo">
+          <th mat-header-cell *matHeaderCellDef class="col-photo"> Photo </th>
+          <td mat-cell *matCellDef="let user" class="col-photo" [class.dimmed-row]="user.isActive === false">
+            <div class="avatar-seal" [class.admin-seal]="user.roles.includes('ADMIN')">
+              {{ (user.displayName ? user.displayName.charAt(0) : 'U') | uppercase }}
             </div>
-            }
+          </td>
+        </ng-container>
+
+        <!-- Name & Email Column -->
+        <ng-container matColumnDef="displayName">
+          <th mat-header-cell *matHeaderCellDef class="col-name"> Name & Contact </th>
+          <td mat-cell *matCellDef="let user" class="col-name" [class.dimmed-row]="user.isActive === false">
+            <div class="user-identity">
+              <span class="user-full-name text-white font-bold">{{ user.displayName }}</span>
+              <span class="user-email font-mono text-muted">{{ user.email }}</span>
+              <span class="user-phone font-mono text-muted" *ngIf="user.phone">📞 {{ user.phone }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Roles Column -->
+        <ng-container matColumnDef="roles">
+          <th mat-header-cell *matHeaderCellDef class="col-roles"> System Roles </th>
+          <td mat-cell *matCellDef="let user" class="col-roles" [class.dimmed-row]="user.isActive === false">
+            <div class="role-badges-wrap">
+              <span *ngFor="let role of user.roles" class="role-badge font-mono" [ngClass]="'role-' + role.toLowerCase()">
+                {{ role }}
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Daily Salary Rate Column -->
+        <ng-container matColumnDef="dailySalaryRate">
+          <th mat-header-cell *matHeaderCellDef class="col-rate right-align"> Daily Salary Rate </th>
+          <td mat-cell *matCellDef="let user" class="col-rate right-align font-mono font-bold" [class.dimmed-row]="user.isActive === false">
+            <span class="text-gold" *ngIf="user.dailySalaryRate">₱{{ user.dailySalaryRate | number:'1.2-2' }}</span>
+            <span class="text-muted" *ngIf="!user.dailySalaryRate">Default</span>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef class="col-status center-align"> Status </th>
+          <td mat-cell *matCellDef="let user" class="col-status center-align">
+            <span class="status-pill" [class.status-active]="user.isActive !== false" [class.status-inactive]="user.isActive === false">
+              {{ user.isActive !== false ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="col-actions center-align"> Actions </th>
+          <td mat-cell *matCellDef="let user" class="col-actions center-align">
+            <button type="button" class="btn-more-actions" [matMenuTriggerFor]="menu" [matMenuTriggerData]="{user: user}">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="staff-element-row"></tr>
+      </table>
+    </div>
+
+    <!-- ── Mobile Cards Deck (< 640px - Failure #25 Prevention) ── -->
+    <div class="mobile-cards-deck" *ngIf="users.length > 0">
+      <div *ngFor="let user of users" class="mobile-user-card" [class.dimmed-card]="user.isActive === false">
+        
+        <div class="mobile-card-top-row">
+          <div class="mobile-avatar-group">
+            <div class="avatar-seal" [class.admin-seal]="user.roles.includes('ADMIN')">
+              {{ (user.displayName ? user.displayName.charAt(0) : 'U') | uppercase }}
+            </div>
+            <div class="mobile-name-info">
+              <strong class="mobile-user-name text-white">{{ user.displayName }}</strong>
+              <span class="mobile-user-email font-mono text-muted">{{ user.email }}</span>
+            </div>
+          </div>
+          <span class="status-pill" [class.status-active]="user.isActive !== false" [class.status-inactive]="user.isActive === false">
+            {{ user.isActive !== false ? 'Active' : 'Inactive' }}
+          </span>
         </div>
 
-        <!-- Empty State -->
-        @if (users.length === 0) {
-        <div class="empty-state">
-            <mat-icon>group_off</mat-icon>
-            <p>No staff members found.</p>
-        </div>
-        }
+        <div class="mobile-card-body">
+          <div class="role-badges-wrap">
+            <span *ngFor="let role of user.roles" class="role-badge font-mono" [ngClass]="'role-' + role.toLowerCase()">
+              {{ role }}
+            </span>
+          </div>
 
-    </ng-container>
+          <div class="mobile-rate-bar font-mono">
+            <span class="text-muted text-xs">Daily Salary Rate:</span>
+            <strong class="text-gold text-sm" *ngIf="user.dailySalaryRate">₱{{ user.dailySalaryRate | number:'1.2-2' }}</strong>
+            <span class="text-muted text-sm" *ngIf="!user.dailySalaryRate">Default</span>
+          </div>
+
+          <div class="mobile-contact-line font-mono text-muted text-xs" *ngIf="user.phone">
+            <span>📞 {{ user.phone }}</span>
+          </div>
+        </div>
+
+        <div class="mobile-card-actions-row">
+          <button type="button" class="btn-card-action btn-view-profile" (click)="viewUserProfile(user)">
+            <mat-icon>person</mat-icon> Profile
+          </button>
+
+          <button type="button" class="btn-card-action btn-edit-profile" *ngIf="canEditUser(user)" (click)="editUser(user)">
+            <mat-icon>edit</mat-icon> Edit
+          </button>
+
+          <button type="button" class="btn-card-action btn-toggle-state" *ngIf="canToggleStatus(user)" (click)="toggleUserStatus(user)">
+            <mat-icon>{{ user.isActive !== false ? 'block' : 'check_circle' }}</mat-icon>
+            {{ user.isActive !== false ? 'Deactivate' : 'Activate' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Context Menu for Desktop Actions -->
+  <mat-menu #menu="matMenu" class="dark-pro-menu">
+    <ng-template matMenuContent let-user="user">
+      <button mat-menu-item (click)="viewUserProfile(user)">
+        <mat-icon class="text-cyan">person</mat-icon>
+        <span>View Full Profile</span>
+      </button>
+
+      <button mat-menu-item *ngIf="canEditUser(user)" (click)="editUser(user)">
+        <mat-icon class="text-gold">edit</mat-icon>
+        <span>Edit Account & Roles</span>
+      </button>
+
+      <button mat-menu-item *ngIf="canToggleStatus(user)" (click)="toggleUserStatus(user)">
+        <mat-icon [class.text-rose]="user.isActive !== false" [class.text-mint]="user.isActive === false">
+          {{ user.isActive !== false ? 'block' : 'check_circle' }}
+        </mat-icon>
+        <span>{{ user.isActive !== false ? 'Deactivate Account' : 'Activate Account' }}</span>
+      </button>
+    </ng-template>
+  </mat-menu>
+
+  <!-- ── Safe Area Physical Scroll Spacer (Failure #24 & #26 Prevention) ── -->
+  <div class="bottom-scroll-spacer"></div>
 
 </div>
-
-<mat-menu #menu="matMenu">
-    <ng-template matMenuContent let-user="user">
-        <button mat-menu-item (click)="viewUserProfile(user)">
-            <mat-icon color="primary">account_circle</mat-icon>
-            <span>View Profile & Documents</span>
-        </button>
-        <button mat-menu-item (click)="editUser(user)" *ngIf="canEditUser(user)">
-            <mat-icon>edit</mat-icon>
-            <span>Edit Account</span>
-        </button>
-        <button mat-menu-item (click)="toggleUserStatus(user)" *ngIf="canToggleStatus(user)">
-            <ng-container *ngIf="user.isActive !== false; else unblockIcon">
-                <mat-icon color="warn">block</mat-icon>
-                <span>Deactivate</span>
-            </ng-container>
-            <ng-template #unblockIcon>
-                <mat-icon color="primary">check_circle</mat-icon>
-                <span>Activate</span>
-            </ng-template>
-        </button>
-    </ng-template>
-</mat-menu>

@@ -23,6 +23,7 @@ import { MemberDuplicateResolver } from '../member-duplicate-resolver/member-dup
 
 @Component({
   selector: 'app-member-list',
+  standalone: true,
   imports: [
     CommonModule, RouterLink, MatTableModule, MatButtonModule, MatIconModule,
     MatChipsModule, MatTooltipModule, MatProgressSpinnerModule, MatPaginatorModule,
@@ -78,6 +79,13 @@ export class MemberList implements OnInit {
     });
   }
 
+  getAvatarInitials(name: string): string {
+    if (!name) return 'M';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
   async openScanPreview(member: Member) {
     if (member.latestScanImageUrl || member.pendingProgressScanUrl) {
       this.previewingImageUrl = member.latestScanImageUrl || member.pendingProgressScanUrl || null;
@@ -114,7 +122,8 @@ export class MemberList implements OnInit {
       width: '800px',
       maxWidth: '95vw',
       maxHeight: '90vh',
-      autoFocus: false
+      autoFocus: false,
+      panelClass: 'duplicate-resolver-dialog'
     });
   }
 
@@ -196,6 +205,11 @@ export class MemberList implements OnInit {
   applyFilters() {
     this.pageIndex = 0;
     this.updateUrlAndEmit();
+  }
+
+  clearSearch() {
+    this.searchQuery = '';
+    this.applyFilters();
   }
 
   onPageChange(event: PageEvent) {

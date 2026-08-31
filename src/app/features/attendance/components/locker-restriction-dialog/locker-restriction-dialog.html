@@ -1,0 +1,25 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <div class="header-icon-wrap">
+      <mat-icon>lock</mat-icon>
+    </div>
+    <div>
+      <h2 class="dialog-title">Locker Reservation Notice</h2>
+      <p class="dialog-subtitle">{{ data.member.name }}</p>
+    </div>
+  </div>
+
+  <div class="dialog-body">
+    <p class="dialog-msg">
+      <strong>{{ data.member.name }}</strong> does not currently have an active monthly subscription. Lockers are reserved for active subscription members.
+    </p>
+    <p class="dialog-prompt">Would you like to proceed with check-in without a locker assignment?</p>
+  </div>
+
+  <div class="dialog-actions">
+    <button type="button" class="btn-cancel" (click)="onAction('cancel')">Cancel</button>
+    <button type="button" class="btn-submit-gold" (click)="onAction('check-in-no-locker')">
+      Check In (No Locker)
+    </button>
+  </div>
+</div>

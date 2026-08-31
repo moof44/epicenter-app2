@@ -12,6 +12,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
 import { ShiftScheduleService, formatShiftSchedule, formatTime12Hour } from '../../../../core/services/shift-schedule.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserService } from '../../../../core/services/user.service';
@@ -34,7 +35,7 @@ import { fadeIn } from '../../../../core/animations/animations';
   imports: [
     CommonModule, FormsModule, MatCardModule, MatButtonModule, MatIconModule,
     MatSelectModule, MatFormFieldModule, MatChipsModule, MatDialogModule,
-    MatSnackBarModule, MatProgressSpinnerModule, MatTooltipModule, MatMenuModule
+    MatSnackBarModule, MatProgressSpinnerModule, MatTooltipModule, MatMenuModule, MatDividerModule
   ],
   templateUrl: './shift-schedules.html',
   styleUrl: './shift-schedules.css',
@@ -275,6 +276,12 @@ export class ShiftSchedulesComponent implements OnInit, OnDestroy {
   }
 
   // Modals
+  getTotalWeeklyRosterHours(): number {
+    const sched = this.currentSchedule();
+    if (!sched?.assignments) return 0;
+    return Object.values(sched.assignments).reduce((acc, a) => acc + (a.totalScheduledHours || 0), 0);
+  }
+
   openShiftDefinitions(): void {
     this.dialog.open(ShiftDefinitionModalComponent, {
       width: '640px',

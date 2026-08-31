@@ -56,4 +56,40 @@ Every UI component, dashboard, matrix, and modal in the application must strictl
    - Expanded data matrices utilizing maximum horizontal space (up to `1400px` container).
    - Side-by-side master-detail panels and tabbed workspaces.
 
+---
 
+## 🎨 Mandatory Token Variable & Zero-Magic-Numbers Architecture Protocol
+
+Every AI agent and developer must strictly adhere to [`docs/DESIGN_SYSTEM_TOKENS.md`](file:///e:/Programming/epicenter-app2/docs/DESIGN_SYSTEM_TOKENS.md):
+
+1. **All CSS Properties MUST Use Defined Variables**:
+   - Every color, font-size, line-height, margin, padding, border, radius, shadow, and dimension MUST be bound to a CSS Custom Property (`var(--color-...)`, `var(--font-size-...)`, `var(--height-...)`) declared in `src/styles.css` and mapped in `tailwind.config.js`.
+2. **Zero Magic Numbers (No Arbitrary Values)**:
+   - Hardcoding arbitrary pixel values (e.g. `w-[37px]`, `style="height: 43px"`), unmapped padding, or ad-hoc hex colors (`#123abc`) is **strictly prohibited**.
+3. **WCAG 2.2 Level AAA/AA Contrast Compliance**:
+   - Headings: `var(--color-text-pure)` (`#ffffff`, 19.4:1 contrast ratio).
+   - Primary Body & Table Data: `var(--color-text-body)` (`#e2e8f0`, 15.2:1 contrast ratio).
+   - Subtitles & Metadata: `var(--color-text-secondary)` (`#cbd5e1`, 12.5:1 contrast ratio).
+   - Dim / Floor Text: `var(--color-text-muted)` (`#94a3b8`, 7.2:1 contrast ratio). Never use dark grey text on dark canvas.
+4. **Declare First Rule**:
+   - If a new dimension, component size, or color variant is needed, it MUST be formally declared in `:root` in `src/styles.css`, mapped in `tailwind.config.js`, and documented in `docs/DESIGN_SYSTEM_TOKENS.md` before being used in any component template or stylesheet.
+---
+
+## 🚫 Mandatory Dark Contrast, Zero-Black-Text & Template Audit Protocol
+
+Every AI agent and developer must strictly adhere to the following **Zero Dark-on-Dark Text Rules**:
+
+1. **Explicit High-Contrast Declarations on Every HTML Element**:
+   - In dark mode (`#090d16` canvas / `#0f172a` surface), **NO text element may ever be left unstyled to inherit browser defaults**.
+   - Headings: `var(--color-text-pure)` (`#ffffff`, 19.4:1 contrast ratio).
+   - Body & Table Data: `var(--color-text-body)` (`#e2e8f0`, 15.2:1 contrast ratio).
+   - Subtitles & Metadata: `var(--color-text-secondary)` (`#cbd5e1`, 12.5:1 contrast ratio).
+   - Accents / Numbers: `var(--color-cyan-light)` (`#22d3ee`), `var(--color-gold-light)` (`#fbbf24`), `var(--color-mint-success)` (`#34d399`).
+   - **Strictly Prohibited**: Never use dark grey (`#64748b` or darker), dark indigo, or unmapped black text on dark surfaces.
+
+2. **Template-First Audit (Mandatory Before Editing CSS)**:
+   - Before writing or modifying any scoped `.css` file, inspect the target `.html` template to extract all class names.
+   - Every class used in HTML MUST be explicitly declared in the stylesheet with token colors.
+
+3. **Multi-Role Symmetry Protocol**:
+   - Always check both Admin (`isManagerView()`) and Staff/Trainer (`!isManagerView()`) templates to guarantee identical design quality and emotional feedback across all user permission tiers.

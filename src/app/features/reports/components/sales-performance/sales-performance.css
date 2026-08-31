@@ -1,7 +1,8 @@
-.chart-wrapper {
-    height: 100%;
-}
+.sales-perf-container { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+.chart-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border, #334155); padding-bottom: 12px; }
+.header-left h3 { margin: 0; font-size: var(--font-size-base, 16px); font-weight: var(--font-weight-black, 900); }
+.header-left p { margin: 2px 0 0; font-size: var(--font-size-xs, 12px); }
+.text-white { color: #ffffff !important; }
+.text-muted { color: var(--color-text-secondary, #cbd5e1) !important; }
 
-.chart-container {
-    min-height: 350px;
-}
+.chart-content { width: 100%; min-height: 300px; }

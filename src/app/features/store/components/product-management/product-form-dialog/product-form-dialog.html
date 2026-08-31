@@ -1,0 +1,96 @@
+<div class="product-dialog-container">
+
+  <!-- ── Header ── -->
+  <div class="dialog-header">
+    <div class="dialog-title-row">
+      <div class="dialog-icon-seal">
+        <mat-icon>{{ isEditing ? 'edit' : 'add_box' }}</mat-icon>
+      </div>
+      <div>
+        <h2 class="dialog-title">{{ isEditing ? 'Edit Product' : (isRetail ? 'Add New Product' : 'Add New Consumable') }}</h2>
+        <span class="dialog-sub">{{ isRetail ? 'Retail inventory item with pricing' : 'Internal gym supply & consumable' }}</span>
+      </div>
+    </div>
+    <button type="button" class="btn-close-dialog" (click)="onClose()" matTooltip="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ── Body Form ── -->
+  <form [formGroup]="productForm" (ngSubmit)="save()" class="dialog-form">
+    <div class="dialog-body">
+
+      <!-- Product Name -->
+      <mat-form-field appearance="outline" class="full-width custom-mat-field">
+        <mat-label>Product Name</mat-label>
+        <input matInput formControlName="name" placeholder="e.g. Whey Protein Isolate 2lbs" required autofocus>
+        <mat-error *ngIf="productForm.get('name')?.hasError('required')">Name is required</mat-error>
+      </mat-form-field>
+
+      <!-- Description -->
+      <mat-form-field appearance="outline" class="full-width custom-mat-field">
+        <mat-label>Description (Optional)</mat-label>
+        <textarea matInput formControlName="description" rows="2" placeholder="Flavors, specifications, or usage details..."></textarea>
+      </mat-form-field>
+
+      <!-- Category (Retail Only) -->
+      <mat-form-field appearance="outline" class="full-width custom-mat-field" *ngIf="isRetail">
+        <mat-label>Category</mat-label>
+        <mat-select formControlName="category" required>
+          <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="productForm.get('category')?.hasError('required')">Category is required</mat-error>
+      </mat-form-field>
+
+      <div class="form-row-2">
+        <!-- Price (Retail Only) -->
+        <mat-form-field appearance="outline" class="custom-mat-field" *ngIf="isRetail">
+          <mat-label>Retail Price</mat-label>
+          <span matTextPrefix>₱&nbsp;</span>
+          <input matInput type="number" formControlName="price" min="0" step="0.01" placeholder="0.00" required>
+          <mat-error *ngIf="productForm.get('price')?.hasError('required')">Price is required</mat-error>
+        </mat-form-field>
+
+        <!-- Unit of Measure -->
+        <mat-form-field appearance="outline" class="custom-mat-field">
+          <mat-label>Unit</mat-label>
+          <input matInput formControlName="unit" placeholder="e.g. Bottle, Tub, Pcs, Scoop" required>
+          <mat-error *ngIf="productForm.get('unit')?.hasError('required')">Unit is required</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row-2">
+        <!-- Min Stock Level -->
+        <mat-form-field appearance="outline" class="custom-mat-field">
+          <mat-label>Min Stock Threshold</mat-label>
+          <input matInput type="number" formControlName="minStockLevel" min="0" placeholder="5" required>
+          <mat-hint>Triggers Low Stock alert when remaining</mat-hint>
+        </mat-form-field>
+
+        <!-- Image URL -->
+        <mat-form-field appearance="outline" class="custom-mat-field">
+          <mat-label>Image URL (Optional)</mat-label>
+          <input matInput formControlName="imageUrl" placeholder="https://...">
+        </mat-form-field>
+      </div>
+
+      <!-- Live Thumbnail Preview if URL provided -->
+      <div class="image-preview-card" *ngIf="productForm.get('imageUrl')?.value">
+        <span class="preview-label">Image Preview:</span>
+        <img [src]="productForm.get('imageUrl')?.value" alt="Preview" class="preview-img" (error)="$any($event.target).style.display='none'">
+      </div>
+
+    </div>
+
+    <!-- ── Actions Bar ── -->
+    <div class="dialog-actions-bar">
+      <button type="button" class="btn-cancel" (click)="onClose()" [disabled]="isSaving">Cancel</button>
+      <button type="submit" class="btn-confirm-gold" [disabled]="productForm.invalid || isSaving">
+        <mat-icon class="btn-icon" *ngIf="!isSaving">save</mat-icon>
+        <mat-spinner diameter="16" *ngIf="isSaving"></mat-spinner>
+        <span>{{ isSaving ? 'Saving...' : (isEditing ? 'Update Product' : 'Create Product') }}</span>
+      </button>
+    </div>
+  </form>
+
+</div>

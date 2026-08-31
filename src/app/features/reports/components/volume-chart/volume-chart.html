@@ -1,16 +1,34 @@
-<div class="chart-wrapper">
-    <div class="chart-container">
-        <apx-chart [series]="chartOptions.series!" [chart]="chartOptions.chart!" [xaxis]="chartOptions.xaxis!"
-            [yaxis]="chartOptions.yaxis!" [stroke]="chartOptions.stroke!" [title]="chartOptions.title!"></apx-chart>
+<div class="volume-chart-container">
+  <div class="chart-header">
+    <div class="header-left">
+      <h3 class="text-white">Daily Gym Attendance Volume</h3>
+      <p class="text-muted">Total check-in volume throughout the selected period</p>
     </div>
+  </div>
 
-    <div class="peak-hours">
-        <h4>Peak Hours</h4>
-        <div class="peak-list">
-            <div *ngFor="let peak of peakHours" class="peak-item">
-                <span class="time">{{ formatTime(peak.hour) }}</span>
-                <span class="count">{{ peak.count }} Visits</span>
-            </div>
-        </div>
+  <div class="chart-content">
+    <apx-chart
+      [series]="chartOptions.series!"
+      [chart]="chartOptions.chart!"
+      [xaxis]="chartOptions.xaxis!"
+      [yaxis]="chartOptions.yaxis!"
+      [title]="chartOptions.title!"
+      [stroke]="chartOptions.stroke!"
+      [dataLabels]="chartOptions.dataLabels!"
+      [fill]="chartOptions.fill!"
+      [grid]="chartOptions.grid!"
+      [tooltip]="chartOptions.tooltip!">
+    </apx-chart>
+  </div>
+
+  <!-- Peak Hours Grid -->
+  <div class="peak-hours-section" *ngIf="peakHours && peakHours.length > 0">
+    <h4 class="text-white">Peak Check-In Hours</h4>
+    <div class="peak-grid font-mono">
+      <div *ngFor="let p of peakHours" class="peak-pill">
+        <span class="text-cyan">{{ formatTime(p.hour) }}</span>
+        <strong class="text-gold">{{ p.count }} check-ins</strong>
+      </div>
     </div>
+  </div>
 </div>

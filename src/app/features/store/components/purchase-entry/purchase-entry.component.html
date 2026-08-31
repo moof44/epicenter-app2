@@ -1,102 +1,312 @@
-<div class="page-container" @fadeIn>
+<div class="purchase-page-container" @fadeIn>
+
+  <!-- ── Page Header Deck ── -->
   <div class="page-header">
-    <h1>Restock Inventory</h1>
+    <div class="header-left-group">
+      <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Store Management">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-titles">
+        <h1 class="page-title">Restock Inventory & Purchase Entry</h1>
+        <p class="page-subtitle">Receive supplier stock, log purchase costs, and update store quantities</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-add-item-cyan" (click)="addItem()">
+        <mat-icon class="btn-icon">add</mat-icon>
+        <span>Add Item Row</span>
+      </button>
+    </div>
   </div>
 
-  <form [formGroup]="purchaseForm">
-    <!-- Meta Data Card -->
-    <div class="form-card">
-      <h2 class="section-title">Purchase Details</h2>
-      <div class="meta-row">
-        <mat-form-field appearance="outline" class="meta-field">
-          <mat-label>Supplier Name</mat-label>
-          <input matInput formControlName="supplierName" placeholder="e.g. Costco">
+  <!-- ── 4-Card Executive Summary Metrics Deck ── -->
+  <div class="summary-cards">
+    <!-- 1. Total Items -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-cyan">
+        <mat-icon>inventory_2</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Distinct Items</span>
+        <span class="value text-white">{{ items.length }} item{{ items.length === 1 ? '' : 's' }}</span>
+      </div>
+    </div>
+
+    <!-- 2. Total Units -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-mint">
+        <mat-icon>add_shopping_cart</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Total Units</span>
+        <span class="value text-mint">{{ totalUnits }} units</span>
+      </div>
+    </div>
+
+    <!-- 3. Grand Total Cost -->
+    <div class="summary-card gold-pulse-card">
+      <div class="card-icon-seal icon-gold">
+        <mat-icon>payments</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Total Purchase Cost</span>
+        <span class="value text-gold">₱{{ totalCost | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <!-- 4. Supplier / Reference -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-purple">
+        <mat-icon>receipt_long</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Supplier & Ref</span>
+        <span class="value text-white truncate-text">
+          {{ purchaseForm.get('supplierName')?.value || 'Pending Entry' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="purchaseForm" class="purchase-form-flow">
+
+    <!-- ── Purchase Details Meta Card ── -->
+    <div class="meta-details-card">
+      <div class="card-section-header">
+        <div class="section-title-wrap">
+          <mat-icon class="text-cyan">local_shipping</mat-icon>
+          <h3>Supplier & Invoice Details</h3>
+        </div>
+        <span class="badge-status">Step 1: Order Metadata</span>
+      </div>
+
+      <div class="meta-grid">
+        <!-- Supplier Name -->
+        <mat-form-field appearance="outline" class="custom-mat-field">
+          <mat-label>Supplier / Vendor Name</mat-label>
+          <input matInput formControlName="supplierName" placeholder="e.g. Optimum Nutrition PH, Red Bull Dist.">
           <mat-icon matSuffix>store</mat-icon>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="meta-field">
-          <mat-label>Date</mat-label>
+        <!-- Date -->
+        <mat-form-field appearance="outline" class="custom-mat-field">
+          <mat-label>Purchase / Invoice Date</mat-label>
           <input matInput [matDatepicker]="picker" formControlName="date">
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="meta-field">
-          <mat-label>Reference #</mat-label>
-          <input matInput formControlName="referenceNumber" placeholder="Receipt Number">
+        <!-- Reference # -->
+        <mat-form-field appearance="outline" class="custom-mat-field">
+          <mat-label>Reference # / Invoice #</mat-label>
+          <input matInput formControlName="referenceNumber" placeholder="e.g. INV-2026-8841">
           <mat-icon matSuffix>receipt</mat-icon>
         </mat-form-field>
       </div>
     </div>
 
-    <!-- Items Card -->
-    <div class="form-card">
-      <div class="items-header">
-        <h3>Items</h3>
-        <button mat-stroked-button color="primary" type="button" (click)="addItem()">
-          <mat-icon>add</mat-icon> Add Item
-        </button>
-      </div>
-
-      <div class="items-section" formArrayName="items">
-        <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="item-row">
-          <!-- Product Selection -->
-          <mat-form-field appearance="outline" class="product-select">
-            <mat-label>Product</mat-label>
-            <mat-select formControlName="productId" (selectionChange)="onProductSelected(i, $event.value)" #matSelect>
-              <mat-option>
-                <button mat-button class="w-full text-left" color="primary" (click)="openNewProductDialog(i); matSelect.close()">
-                  <mat-icon>add</mat-icon> Create New Product
-                </button>
-              </mat-option>
-              <mat-optgroup label="Retail">
-                <mat-option *ngFor="let p of retailProducts" [value]="p.id">
-                  {{ p.name }} (Stock: {{ p.stock }})
-                </mat-option>
-              </mat-optgroup>
-              <mat-optgroup label="Consumables">
-                <mat-option *ngFor="let p of consumableProducts" [value]="p.id">
-                  {{ p.name }} (Stock: {{ p.stock }})
-                </mat-option>
-              </mat-optgroup>
-            </mat-select>
-          </mat-form-field>
-
-          <!-- Qty -->
-          <mat-form-field appearance="outline" class="number-input">
-            <mat-label>Qty</mat-label>
-            <input matInput type="number" formControlName="quantity" min="1">
-          </mat-form-field>
-
-          <!-- Unit Cost -->
-          <mat-form-field appearance="outline" class="number-input">
-            <mat-label>Unit Cost</mat-label>
-            <span matTextPrefix>$&nbsp;</span>
-            <input matInput type="number" formControlName="unitCost" min="0">
-          </mat-form-field>
-
-          <!-- Total -->
-          <div class="row-total">
-            {{ (item.get('quantity')?.value * item.get('unitCost')?.value) | currency }}
-          </div>
-
-          <button mat-icon-button class="remove-btn" type="button" (click)="removeItem(i)" matTooltip="Remove Item">
-            <mat-icon>delete_outline</mat-icon>
+    <!-- ── Restock Items Deck ── -->
+    <div class="items-deck-card">
+      <div class="card-section-header">
+        <div class="section-title-wrap">
+          <mat-icon class="text-cyan">fact_check</mat-icon>
+          <h3>Restock Line Items</h3>
+        </div>
+        <div class="header-right-meta">
+          <span class="count-pill">{{ items.length }} Line Item{{ items.length === 1 ? '' : 's' }}</span>
+          <button type="button" class="btn-add-inline" (click)="addItem()">
+            <mat-icon>add</mat-icon> Add Row
           </button>
         </div>
       </div>
-       <div *ngIf="items.length === 0" class="no-items-placeholder">
-          No items added. Click "Add Item" to start.
-       </div>
+
+      <div class="items-section-body" formArrayName="items">
+        
+        <!-- Empty State -->
+        <div class="empty-items-state" *ngIf="items.length === 0">
+          <div class="empty-icon-seal">
+            <mat-icon>production_quantity_limits</mat-icon>
+          </div>
+          <h4>No restock items added yet</h4>
+          <p>Click "Add Item Row" to select products and input incoming quantities.</p>
+          <button type="button" class="btn-add-item-cyan" (click)="addItem()">
+            <mat-icon class="btn-icon">add</mat-icon>
+            <span>Add First Item</span>
+          </button>
+        </div>
+
+        <!-- ── Desktop / Tablet Table View (≥ 640px) ── -->
+        <div class="desktop-items-table-wrapper" *ngIf="items.length > 0">
+          <table class="desktop-items-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-product">Product Selection</th>
+                <th class="col-qty">Quantity</th>
+                <th class="col-cost">Unit Cost</th>
+                <th class="col-total">Row Subtotal</th>
+                <th class="col-action">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="item-table-row">
+                <!-- Index -->
+                <td class="col-num text-muted">{{ i + 1 }}</td>
+
+                <!-- Product Picker -->
+                <td class="col-product">
+                  <mat-form-field appearance="outline" class="custom-mat-field table-mat-field" subscriptSizing="dynamic">
+                    <mat-label>Select Product</mat-label>
+                    <mat-select formControlName="productId" #matSelect>
+                      <mat-option>
+                        <button type="button" class="btn-create-product-option" (click)="openNewProductDialog(i); matSelect.close()">
+                          <mat-icon>add_circle</mat-icon>
+                          <span>+ Create New Product</span>
+                        </button>
+                      </mat-option>
+                      <mat-optgroup label="Retail Products">
+                        <mat-option *ngFor="let p of retailProducts()" [value]="p.id">
+                          <div class="option-row">
+                            <span class="option-name">{{ p.name }}</span>
+                            <span class="option-stock-badge">Stock: {{ p.stock }}</span>
+                          </div>
+                        </mat-option>
+                      </mat-optgroup>
+                      <mat-optgroup label="Consumables">
+                        <mat-option *ngFor="let p of consumableProducts()" [value]="p.id">
+                          <div class="option-row">
+                            <span class="option-name">{{ p.name }}</span>
+                            <span class="option-stock-badge">Stock: {{ p.stock }}</span>
+                          </div>
+                        </mat-option>
+                      </mat-optgroup>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+
+                <!-- Quantity -->
+                <td class="col-qty">
+                  <mat-form-field appearance="outline" class="custom-mat-field table-mat-field" subscriptSizing="dynamic">
+                    <input matInput type="number" formControlName="quantity" min="1">
+                  </mat-form-field>
+                </td>
+
+                <!-- Unit Cost -->
+                <td class="col-cost">
+                  <mat-form-field appearance="outline" class="custom-mat-field table-mat-field" subscriptSizing="dynamic">
+                    <span matTextPrefix class="currency-prefix">₱&nbsp;</span>
+                    <input matInput type="number" formControlName="unitCost" min="0" step="0.01">
+                  </mat-form-field>
+                </td>
+
+                <!-- Row Subtotal -->
+                <td class="col-total font-mono text-cyan font-bold">
+                  ₱{{ ((item.get('quantity')?.value || 0) * (item.get('unitCost')?.value || 0)) | number:'1.2-2' }}
+                </td>
+
+                <!-- Remove Action -->
+                <td class="col-action">
+                  <button type="button" class="btn-remove-row" (click)="removeItem(i)" matTooltip="Remove row">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── Mobile Cards Deck (< 640px) ── -->
+        <div class="mobile-items-cards-deck" *ngIf="items.length > 0">
+          <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="mobile-item-card">
+            
+            <div class="mobile-card-header">
+              <span class="item-badge">Item #{{ i + 1 }}</span>
+              <button type="button" class="btn-remove-mobile" (click)="removeItem(i)">
+                <mat-icon>delete</mat-icon> Remove
+              </button>
+            </div>
+
+            <!-- Product Select -->
+            <mat-form-field appearance="outline" class="custom-mat-field">
+              <mat-label>Product</mat-label>
+              <mat-select formControlName="productId" #mobileMatSelect>
+                <mat-option>
+                  <button type="button" class="btn-create-product-option" (click)="openNewProductDialog(i); mobileMatSelect.close()">
+                    <mat-icon>add_circle</mat-icon>
+                    <span>+ Create New Product</span>
+                  </button>
+                </mat-option>
+                <mat-optgroup label="Retail Products">
+                  <mat-option *ngFor="let p of retailProducts()" [value]="p.id">
+                    {{ p.name }} (Stock: {{ p.stock }})
+                  </mat-option>
+                </mat-optgroup>
+                <mat-optgroup label="Consumables">
+                  <mat-option *ngFor="let p of consumableProducts()" [value]="p.id">
+                    {{ p.name }} (Stock: {{ p.stock }})
+                  </mat-option>
+                </mat-optgroup>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Quantity with Steppers & Unit Cost -->
+            <div class="mobile-inputs-row">
+              <div class="mobile-qty-block">
+                <span class="input-sublabel text-muted">Quantity</span>
+                <div class="stepper-wrap">
+                  <button type="button" class="btn-step" (click)="stepQuantity(i, -1)" matTooltip="Decrease">-</button>
+                  <input type="number" formControlName="quantity" class="mobile-qty-field" min="1">
+                  <button type="button" class="btn-step" (click)="stepQuantity(i, 1)" matTooltip="Increase">+</button>
+                </div>
+              </div>
+
+              <!-- Unit Cost -->
+              <div class="mobile-cost-block">
+                <span class="input-sublabel text-muted">Unit Cost</span>
+                <div class="custom-cost-input-wrap">
+                  <span class="cost-currency-prefix">₱</span>
+                  <input type="number" formControlName="unitCost" class="custom-cost-input" min="0" step="0.01" placeholder="0.00">
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile Subtotal Bar -->
+            <div class="mobile-subtotal-bar">
+              <span class="text-muted">Line Subtotal:</span>
+              <span class="font-mono text-cyan font-bold">
+                ₱{{ ((item.get('quantity')?.value || 0) * (item.get('unitCost')?.value || 0)) | number:'1.2-2' }}
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
     </div>
 
-    <!-- Sticky Footer -->
-    <div class="actions-bar">
-      <div class="total-label">Total Cost: <span class="total-amount">{{ totalCost | currency }}</span></div>
-      
-      <button mat-raised-button color="primary" [disabled]="purchaseForm.invalid || items.length === 0" (click)="save()">
-        <mat-icon>save</mat-icon> Record Purchase
+  </form>
+
+  <!-- ── Safe Area Physical Scroll Spacer (Failure #26 Prevention) ── -->
+  <div class="bottom-scroll-spacer"></div>
+
+  <!-- ── Fixed Docked Action Bar ── -->
+  <div class="docked-action-bar">
+    <div class="docked-content-container">
+      <div class="docked-total-block">
+        <span class="docked-label text-muted">Total Restock Cost:</span>
+        <span class="docked-amount text-gold">₱{{ totalCost | number:'1.2-2' }}</span>
+      </div>
+
+      <button type="button"
+              class="btn-save-purchase-gold"
+              [disabled]="purchaseForm.invalid || items.length === 0 || isSubmitting()"
+              (click)="save()">
+        <mat-icon class="btn-icon" *ngIf="!isSubmitting()">save</mat-icon>
+        <span *ngIf="!isSubmitting()">Record Purchase ({{ items.length }} Item{{ items.length === 1 ? '' : 's' }})</span>
+        <span *ngIf="isSubmitting()">Recording Purchase...</span>
       </button>
     </div>
-  </form>
+  </div>
+
 </div>

@@ -1,80 +1,67 @@
 .quota-widget {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-right: 16px;
-    background: white;
-    padding: 4px;
-    border-radius: 20px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 3px 6px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-card);
+  user-select: none;
 }
 
 .status-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: 16px;
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family-sans);
+  transition: all 150ms ease;
+  white-space: nowrap;
 }
 
 .status-item mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.monthly-status {
+  background-color: var(--color-cyan-dim) !important;
+  color: var(--color-cyan-light) !important;
+}
+
+.daily-status {
+  background-color: var(--color-gold-dim) !important;
+  color: var(--color-gold-light) !important;
 }
 
 .divider {
-    width: 1px;
-    height: 24px;
-    background-color: #e0e0e0;
+  width: 1px;
+  height: 18px;
+  background-color: var(--color-border);
 }
 
-/* Specific text shadows to ensure readability on yellow */
-.status-item[style*="rgb(255, 235, 59)"] {
-    /* Yellow */
-    color: #fbc02d !important;
-    /* Darker yellow text */
+@media (max-width: 768px) {
+  .status-text {
+    font-size: var(--font-size-2xs);
+  }
+  .status-item {
+    padding: 2px 6px;
+  }
 }
 
-@media (max-width: 900px) {
-    .status-text {
-        font-size: 12px;
-    }
-
-    .status-item {
-        padding: 4px 8px;
-    }
-}
-
-@media (max-width: 600px) {
-
-    /* Originally hidden, now we show it but selectively */
-    .quota-widget {
-        display: flex;
-        margin-right: 8px;
-        /* Reduce margin */
-        gap: 4px;
-    }
-
-    /* Hide monthly and divider on mobile to save space */
-    .monthly-status,
-    .divider {
-        display: none !important;
-    }
-
-    /* Keep daily status visible and compact */
-    .daily-status {
-        padding: 4px 8px;
-        font-size: 11px;
-    }
-
-    .daily-status mat-icon {
-        width: 16px;
-        height: 16px;
-        font-size: 16px;
-    }
+@media (max-width: 640px) {
+  /* On small mobile screens, hide the wide monthly quota and keep the daily target */
+  .monthly-status,
+  .divider {
+    display: none !important;
+  }
+  .quota-widget {
+    padding: 2px 4px;
+    gap: 0;
+  }
 }

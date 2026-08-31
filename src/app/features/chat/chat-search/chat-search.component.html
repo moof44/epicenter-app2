@@ -1,0 +1,181 @@
+<div class="search-page-container" [@fadeIn]>
+
+  <!-- ── Header Deck ── -->
+  <div class="page-header">
+    <div class="header-left-group">
+      <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-titles">
+        <h1 class="page-title">Vigilance Chat History & Search</h1>
+        <p class="page-subtitle">Inspect historical team communications, audit alerts, and staff mentions</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-query-gold" (click)="fetchFromFirestore()" [disabled]="loading()">
+        <mat-icon class="btn-icon" [class.spinning]="loading()">sync</mat-icon>
+        <span>{{ loading() ? 'Querying...' : 'Query Database' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 4-Card Executive Summary Metrics Deck ── -->
+  <div class="summary-cards">
+    <!-- 1. Total Results -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-cyan">
+        <mat-icon>chat</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Matching Messages</span>
+        <span class="value text-white">{{ totalResultsCount() }} results</span>
+      </div>
+    </div>
+
+    <!-- 2. User Chats -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-mint">
+        <mat-icon>people</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Team Messages</span>
+        <span class="value text-mint">{{ userMessageCount() }} chats</span>
+      </div>
+    </div>
+
+    <!-- 3. Security Alerts -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-rose">
+        <mat-icon>security</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">System Alerts</span>
+        <span class="value text-rose">{{ systemAlertCount() }} alerts</span>
+      </div>
+    </div>
+
+    <!-- 4. Active Date Filter -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-gold">
+        <mat-icon>date_range</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Search Scope</span>
+        <span class="value text-gold">{{ filters.startDate ? 'Custom Range' : 'Recent 200' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Filter Controls Deck ── -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <div class="filters-title-row">
+        <mat-icon class="text-cyan">filter_alt</mat-icon>
+        <span class="filters-title">Search Parameters</span>
+      </div>
+      <button type="button" class="btn-reset-filters" (click)="resetFilters()">
+        <mat-icon>restart_alt</mat-icon> Reset Filters
+      </button>
+    </div>
+
+    <div class="filters-grid">
+      <!-- 1. Keyword -->
+      <mat-form-field appearance="outline" class="custom-mat-field">
+        <mat-label>Keyword Search</mat-label>
+        <input matInput placeholder="Search message text..." [(ngModel)]="filters.keyword" (ngModelChange)="applyFilters()">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <!-- 2. Sender -->
+      <mat-form-field appearance="outline" class="custom-mat-field">
+        <mat-label>Filter by Sender</mat-label>
+        <input matInput placeholder="Username or Bot name..." [(ngModel)]="filters.sender" (ngModelChange)="applyFilters()">
+        <mat-icon matSuffix>person</mat-icon>
+      </mat-form-field>
+
+      <!-- 3. Type -->
+      <mat-form-field appearance="outline" class="custom-mat-field">
+        <mat-label>Message Type</mat-label>
+        <mat-select [(ngModel)]="filters.type" (selectionChange)="applyFilters()">
+          <mat-option value="all">All Messages & Alerts</mat-option>
+          <mat-option value="user">User Chats Only</mat-option>
+          <mat-option value="system">System Security Alerts</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- 4. Date Start -->
+      <mat-form-field appearance="outline" class="custom-mat-field">
+        <mat-label>Start Date</mat-label>
+        <input matInput [matDatepicker]="startPicker" [(ngModel)]="filters.startDate" (dateChange)="onDateChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
+
+      <!-- 5. Date End -->
+      <mat-form-field appearance="outline" class="custom-mat-field">
+        <mat-label>End Date</mat-label>
+        <input matInput [matDatepicker]="endPicker" [(ngModel)]="filters.endDate" (dateChange)="onDateChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- ── Results Feed Card ── -->
+  <div class="results-card">
+    <div class="results-header">
+      <div class="results-title-wrap">
+        <mat-icon class="text-cyan">history</mat-icon>
+        <h3>Search Results Feed</h3>
+      </div>
+      <span class="count-pill">{{ filteredMessages().length }} record{{ filteredMessages().length === 1 ? '' : 's' }}</span>
+    </div>
+
+    <!-- Loading State -->
+    <div class="status-indicator-card" *ngIf="loading()">
+      <div class="status-icon-seal">
+        <mat-icon class="spinning">sync</mat-icon>
+      </div>
+      <h4>Querying Firestore database...</h4>
+      <p>Retrieving historical chat records and system security alerts.</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="status-indicator-card" *ngIf="!loading() && filteredMessages().length === 0">
+      <div class="status-icon-seal">
+        <mat-icon>search_off</mat-icon>
+      </div>
+      <h4>No matching messages found</h4>
+      <p>Try adjusting your search keywords, sender filters, or click "Query Database".</p>
+    </div>
+
+    <!-- Feed Results List -->
+    <div class="results-list" *ngIf="!loading() && filteredMessages().length > 0">
+      <div *ngFor="let msg of filteredMessages(); trackBy: trackByFn"
+           class="result-item-card"
+           [class.system-result]="msg.type === 'system'">
+        
+        <div class="result-top-line">
+          <div class="sender-info-wrap">
+            <img class="result-avatar" [src]="msg.senderAvatar || 'assets/default-avatar.png'" alt="avatar" *ngIf="msg.type === 'user'" (error)="$any($event.target).src='assets/default-avatar.png'">
+            <div class="system-seal-mini" *ngIf="msg.type === 'system'">
+              <mat-icon>security</mat-icon>
+            </div>
+            <strong class="sender-title text-white">{{ msg.type === 'system' ? 'SYSTEM AUDIT BOT' : (msg.senderName || 'Staff Member') }}</strong>
+            <span class="type-pill" [class.type-user]="msg.type === 'user'" [class.type-sys]="msg.type === 'system'">
+              {{ msg.type === 'system' ? 'System Alert' : 'User Chat' }}
+            </span>
+          </div>
+
+          <span class="timestamp-text text-muted">{{ formatTime(msg.timestamp) }}</span>
+        </div>
+
+        <p class="result-content-body text-body">{{ msg.content }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-scroll-spacer"></div>
+
+</div>

@@ -4,6 +4,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 import { fadeIn } from '../../core/animations/animations';
+import { PageContainerComponent } from '../../shared/ui';
 import { TodaysSalesWidget } from './widgets/todays-sales/todays-sales';
 import { CommendationWidget } from './widgets/commendation/commendation';
 import { MembersCheckedInWidget } from './widgets/members-checked-in/members-checked-in';
@@ -31,6 +32,7 @@ import { StaffKioskWidgetComponent } from './widgets/staff-kiosk-widget/staff-ki
     selector: 'app-dashboard',
     standalone: true,
     imports: [
+        PageContainerComponent,
         CommonModule, MatExpansionModule, MatIconModule,
         TodaysSalesWidget, CommendationWidget, MembersCheckedInWidget,
         MonthlyProgressWidget, WeekTrendWidget, VsLastMonthWidget, TopProductWidget,
@@ -53,49 +55,34 @@ export class DashboardComponent {
         return name.split(' ')[0];
     });
 
+    isManagerView = computed(() => {
+        return this.authService.hasAnyRole(['ADMIN', 'MANAGER']);
+    });
+
+    hasSalesRole = computed(() => {
+        return this.authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF']);
+    });
+
+    hasInventoryRole = computed(() => {
+        return this.authService.hasAnyRole(['ADMIN', 'MANAGER']);
+    });
+
     greeting = computed(() => {
         const hour = new Date().getHours();
-        const name = this.firstName();
-        const label = name ? `, ${name}` : '';
+        const first = this.firstName();
+        const namePart = first ? `, ${first}` : '';
 
-        if (hour >= 5 && hour < 12) return `Good morning${label}`;
-        if (hour >= 12 && hour < 17) return `Good afternoon${label}`;
-        return `Good evening${label}`;
+        if (hour < 12) return `Good morning${namePart}`;
+        if (hour < 18) return `Good afternoon${namePart}`;
+        return `Good evening${namePart}`;
     });
 
-    todayDate = computed(() =>
-        new Intl.DateTimeFormat('en-US', {
+    todayDate = computed(() => {
+        return new Intl.DateTimeFormat('en-US', {
             weekday: 'long',
-            year: 'numeric',
             month: 'long',
             day: 'numeric',
-        }).format(new Date())
-    );
-
-    // Role checks for conditional widget rendering
-    isManagerView = computed(() =>
-        this.authService.hasAnyRole(['ADMIN', 'MANAGER']) &&
-        !this.isStaffOnlyView()
-    );
-
-    private isStaffOnlyView = computed(() => {
-        const user = this.authService.userProfile();
-        if (!user?.roles) return false;
-        // Staff-only: has STAFF but NOT ADMIN or MANAGER
-        return user.roles.includes('STAFF') &&
-            !user.roles.includes('ADMIN') &&
-            !user.roles.includes('MANAGER');
+            year: 'numeric'
+        }).format(new Date());
     });
-
-    hasSalesRole = computed(() =>
-        this.authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])
-    );
-
-    hasInventoryRole = computed(() =>
-        this.authService.hasAnyRole(['ADMIN', 'MANAGER'])
-    );
-
-    hasAnyRole = computed(() =>
-        this.authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])
-    );
 }

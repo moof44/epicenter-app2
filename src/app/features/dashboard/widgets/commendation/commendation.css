@@ -1,36 +1,28 @@
 .commendation-card {
-    background: linear-gradient(135deg, #e8eaf6 0%, #f3e5f5 100%);
-    border-radius: 8px;
-    padding: 32px 24px;
-    min-height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  background: radial-gradient(circle at top left, rgba(245, 158, 11, 0.2), transparent 70%), var(--color-app);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: var(--radius-2xl);
+  padding: 22px;
+  box-shadow: var(--shadow-card), 0 0 20px rgba(245, 158, 11, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 100%;
+}
+
+.commendation-icon {
+  font-size: 36px !important;
+  width: 36px !important;
+  height: 36px !important;
+  color: var(--color-gold-light);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.5));
 }
 
 .commendation-text {
-    margin: 0;
-    font-size: 16px;
-    font-style: italic;
-    line-height: 1.6;
-    text-align: center;
-    color: var(--mat-sys-on-surface, #1f2937);
-    max-width: 600px;
-}
-
-@media (max-width: 1199px) {
-    .commendation-text {
-        font-size: 15px;
-    }
-}
-
-@media (max-width: 599px) {
-    .commendation-card {
-        padding: 20px 16px;
-        min-height: 64px;
-    }
-
-    .commendation-text {
-        font-size: 14px;
-    }
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-pure);
+  font-family: var(--font-family-sans);
+  line-height: 1.5;
 }

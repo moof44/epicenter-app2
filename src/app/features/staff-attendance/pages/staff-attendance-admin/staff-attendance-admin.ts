@@ -44,6 +44,7 @@ import {
 import { fadeIn } from '../../../../core/animations/animations';
 import { firstValueFrom, Observable } from 'rxjs';
 import { AttendanceRecordDialogComponent } from '../../components/attendance-record-dialog/attendance-record-dialog';
+import { StaffWeeklyMatrixDialogComponent } from '../../components/staff-weekly-matrix-dialog/staff-weekly-matrix-dialog';
 import {
     PayrollAdjustmentDialogComponent,
     PayrollDialogResult
@@ -77,6 +78,9 @@ import {
     animations: [fadeIn]
 })
 export class StaffAttendanceAdminComponent implements OnInit {
+    goBack() {
+        this.router.navigate(['/dashboard']);
+    }
     private attendanceService = inject(StaffAttendanceService);
     private userService = inject(UserService);
     private settingsService = inject(SettingsService);
@@ -128,6 +132,15 @@ export class StaffAttendanceAdminComponent implements OnInit {
 
     totalWeeklyCompensation = computed(() => {
         return this.displayedSummaries().reduce((sum, s) => sum + (s.totalCompensation || 0), 0);
+    });
+
+    totalWeeklyDeficitHours = computed(() => {
+        const mins = this.displayedSummaries().reduce((sum, s) => sum + (s.totalDeficitMinutes || 0), 0);
+        return (mins / 60).toFixed(1);
+    });
+
+    totalWeeklyOvertimeHours = computed(() => {
+        return this.displayedSummaries().reduce((sum, s) => sum + (s.totalOvertimeHours || 0), 0);
     });
 
     // Pending Adjustments
@@ -230,6 +243,18 @@ export class StaffAttendanceAdminComponent implements OnInit {
         } finally {
             this.isLoadingReport.set(false);
         }
+    }
+
+        openWeeklyMatrixModal(summary: StaffWeeklyAttendanceSummary) {
+        this.dialog.open(StaffWeeklyMatrixDialogComponent, {
+            width: '1100px',
+            maxWidth: '96vw',
+            panelClass: 'dark-pro-dialog',
+            data: {
+                summary,
+                refreshCallback: () => this.loadWeeklyReport()
+            }
+        });
     }
 
     toggleExpand(staffId: string) {

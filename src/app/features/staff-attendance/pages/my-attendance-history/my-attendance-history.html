@@ -1,115 +1,272 @@
-<div class="history-container" [@fadeIn]>
-    
-    <div class="page-header">
-        <div>
-            <h1>My Attendance History</h1>
-            <p class="subtitle">Read-only history of your staff attendance clock-in/out records and working hours.</p>
+<div class="my-attendance-page" [@fadeIn]>
+
+  <!-- Top Header & Identity -->
+  <header class="page-header">
+    <div class="header-left">
+      <a routerLink="/attendance" class="back-btn" title="Back to Operations">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <div class="header-icon-wrap">
+        <mat-icon class="header-icon">badge</mat-icon>
+      </div>
+      <div>
+        <h1 class="page-title">My Attendance History</h1>
+        <p class="page-subtitle">Read-only history of your staff attendance clock-in/out records, worked hours, and shift adjustments</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- 4-Card Shift Telemetry Pulse Ribbon -->
+  <section class="telemetry-ribbon" [@staggerList]>
+    <!-- Total Worked Hours -->
+    <div class="pulse-card card-hours">
+      <div class="pulse-top">
+        <span class="pulse-label">Total Worked Hours</span>
+        <div class="pulse-icon-pill icon-cyan">
+          <mat-icon>schedule</mat-icon>
         </div>
+      </div>
+      <div class="pulse-body">
+        <span class="pulse-val text-cyan">{{ (totalWorkedHours$ | async) ?? 0 }}</span>
+        <span class="pulse-unit">Hours</span>
+      </div>
+      <div class="pulse-footer">
+        <span class="pulse-sub">Cumulative Clocked Time</span>
+      </div>
     </div>
 
-    <mat-card class="history-card">
-        <ng-container *ngIf="historyRecords$ | async as records">
-            <table mat-table [dataSource]="records" class="history-table" *ngIf="records.length > 0; else noRecords">
-                
-                <!-- Date -->
-                <ng-container matColumnDef="date">
-                    <th mat-header-cell *matHeaderCellDef> Date </th>
-                    <td mat-cell *matCellDef="let r"> <strong>{{ r.date }}</strong> </td>
-                </ng-container>
+    <!-- Completed Shifts -->
+    <div class="pulse-card card-shifts">
+      <div class="pulse-top">
+        <span class="pulse-label">Completed Shifts</span>
+        <div class="pulse-icon-pill icon-mint">
+          <mat-icon>task_alt</mat-icon>
+        </div>
+      </div>
+      <div class="pulse-body">
+        <span class="pulse-val text-mint">{{ (completedShiftsCount$ | async) ?? 0 }}</span>
+        <span class="pulse-unit">Shifts</span>
+      </div>
+      <div class="pulse-footer">
+        <span class="pulse-sub">Total Attended Roster</span>
+      </div>
+    </div>
 
-                <!-- Shift Name -->
-                <ng-container matColumnDef="shiftName">
-                    <th mat-header-cell *matHeaderCellDef> Shift </th>
-                    <td mat-cell *matCellDef="let r"> {{ r.shiftName }} </td>
-                </ng-container>
+    <!-- Total Overtime -->
+    <div class="pulse-card card-overtime">
+      <div class="pulse-top">
+        <span class="pulse-label">Overtime Hours</span>
+        <div class="pulse-icon-pill icon-gold">
+          <mat-icon>bolt</mat-icon>
+        </div>
+      </div>
+      <div class="pulse-body">
+        <span class="pulse-val text-gold">+{{ (totalOvertimeHours$ | async) ?? 0 }}</span>
+        <span class="pulse-unit">Hours OT</span>
+      </div>
+      <div class="pulse-footer">
+        <span class="pulse-sub">Valid for >=10h Shifts</span>
+      </div>
+    </div>
 
-                <!-- Scheduled Times -->
-                <ng-container matColumnDef="scheduledTimes">
-                    <th mat-header-cell *matHeaderCellDef> Schedule </th>
-                    <td mat-cell *matCellDef="let r"> {{ formatShiftSchedule({ startTime: r.scheduledStartTime, endTime: r.scheduledEndTime }) }} </td>
-                </ng-container>
+    <!-- Deficit / Late Record -->
+    <div class="pulse-card card-deficit">
+      <div class="pulse-top">
+        <span class="pulse-label">Total Deficit</span>
+        <div class="pulse-icon-pill icon-rose">
+          <mat-icon>timer_off</mat-icon>
+        </div>
+      </div>
+      <div class="pulse-body">
+        <span class="pulse-val text-rose">{{ (totalDeficitMinutes$ | async) ?? 0 }}</span>
+        <span class="pulse-unit">Mins Late/Deficit</span>
+      </div>
+      <div class="pulse-footer">
+        <span class="pulse-sub">7-Hour Benchmark</span>
+      </div>
+    </div>
+  </section>
 
-                <!-- Check-in Time -->
-                <ng-container matColumnDef="checkInTime">
-                    <th mat-header-cell *matHeaderCellDef> Check-In </th>
-                    <td mat-cell *matCellDef="let r">
-                        <div class="time-col">
-                            <span>{{ r.checkInTime | date:'h:mm a':'Asia/Manila' }}</span>
-                            <small class="warn-text" *ngIf="r.lateMinutes > 0">Late {{ r.lateMinutes }}m</small>
-                            <small class="success-text" *ngIf="r.earlyMinutes > 0">Early {{ r.earlyMinutes }}m</small>
-                        </div>
-                    </td>
-                </ng-container>
+  <!-- Attendance History Table Card -->
+  <div class="table-card">
+    <div class="card-section-header">
+      <div class="header-left">
+        <mat-icon class="section-icon text-cyan">history</mat-icon>
+        <div>
+          <h2 class="section-title">Staff Clock-in / Out Roster</h2>
+          <p class="section-subtitle">Chronological record of verified clock-in and out timestamps</p>
+        </div>
+      </div>
+      <span class="record-count-pill" *ngIf="historyRecords$ | async as records">
+        {{ records.length }} {{ records.length === 1 ? 'Record' : 'Records' }} Found
+      </span>
+    </div>
 
-                <!-- Check-out Time -->
-                <ng-container matColumnDef="checkOutTime">
-                    <th mat-header-cell *matHeaderCellDef> Check-Out </th>
-                    <td mat-cell *matCellDef="let r">
-                        <span *ngIf="r.checkOutTime">{{ r.checkOutTime | date:'h:mm a':'Asia/Manila' }}</span>
-                        <span *ngIf="!r.checkOutTime" class="warn-text">In Progress</span>
-                    </td>
-                </ng-container>
+    <ng-container *ngIf="historyRecords$ | async as records">
+      
+      <!-- Desktop Data Table -->
+      <div class="table-scroll-wrap desktop-only" *ngIf="records.length > 0; else noRecords">
+        <table mat-table [dataSource]="records" class="staff-history-table">
 
-                <!-- Worked Time -->
-                <ng-container matColumnDef="workedTime">
-                    <th mat-header-cell *matHeaderCellDef> Worked Time </th>
-                    <td mat-cell *matCellDef="let r">
-                        <span *ngIf="r.workedMinutes > 0">{{ (r.workedMinutes / 60) | number:'1.1-1' }}h ({{ r.workedMinutes }}m)</span>
-                        <span *ngIf="r.workedMinutes === 0">-</span>
-                    </td>
-                </ng-container>
+          <!-- Date Column -->
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef class="col-date">Date</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="date-badge">{{ r.date }}</span>
+            </td>
+          </ng-container>
 
-                <!-- Deficit -->
-                <ng-container matColumnDef="deficit">
-                    <th mat-header-cell *matHeaderCellDef> Deficit (from 7h) </th>
-                    <td mat-cell *matCellDef="let r">
-                        <span [class.danger-text]="r.deficitMinutes > 0">
-                            {{ r.deficitMinutes > 0 ? (r.deficitMinutes + 'm') : '-' }}
-                        </span>
-                    </td>
-                </ng-container>
+          <!-- Shift Name Column -->
+          <ng-container matColumnDef="shiftName">
+            <th mat-header-cell *matHeaderCellDef>Shift</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="shift-name-text">{{ r.shiftName }}</span>
+            </td>
+          </ng-container>
 
-                <!-- Overtime -->
-                <ng-container matColumnDef="overtime">
-                    <th mat-header-cell *matHeaderCellDef matTooltip="Valid only when worked >= 10 hours"> Overtime </th>
-                    <td mat-cell *matCellDef="let r">
-                        <strong class="ot-text" *ngIf="r.overtimeHours > 0">{{ r.overtimeHours }}h</strong>
-                        <span *ngIf="r.overtimeHours === 0">-</span>
-                    </td>
-                </ng-container>
+          <!-- Schedule Column -->
+          <ng-container matColumnDef="scheduledTimes">
+            <th mat-header-cell *matHeaderCellDef>Schedule</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="schedule-text">{{ formatShiftSchedule({ startTime: r.scheduledStartTime, endTime: r.scheduledEndTime }) }}</span>
+            </td>
+          </ng-container>
 
-                <!-- Adjustment Status -->
-                <ng-container matColumnDef="adjustmentStatus">
-                    <th mat-header-cell *matHeaderCellDef> Time Adjustment </th>
-                    <td mat-cell *matCellDef="let r">
-                        <mat-chip-set *ngIf="r.adjustmentRequested">
-                            <mat-chip [ngClass]="r.adjustmentStatus?.toLowerCase() || 'pending'">
-                                {{ r.adjustmentStatus || 'PENDING' }}
-                            </mat-chip>
-                        </mat-chip-set>
-                        <span *ngIf="!r.adjustmentRequested">-</span>
-                    </td>
-                </ng-container>
+          <!-- Check-in Column -->
+          <ng-container matColumnDef="checkInTime">
+            <th mat-header-cell *matHeaderCellDef>Check-In</th>
+            <td mat-cell *matCellDef="let r">
+              <div class="time-in-wrap">
+                <span class="time-main-text">{{ r.checkInTime | date:'h:mm a':'Asia/Manila' }}</span>
+                <span class="punctuality-badge badge-late" *ngIf="r.lateMinutes > 0">Late {{ r.lateMinutes }}m</span>
+                <span class="punctuality-badge badge-early" *ngIf="r.earlyMinutes > 0">Early {{ r.earlyMinutes }}m</span>
+                <span class="punctuality-badge badge-ontime" *ngIf="r.lateMinutes === 0 && r.earlyMinutes === 0">On Time</span>
+              </div>
+            </td>
+          </ng-container>
 
-                <!-- Remarks -->
-                <ng-container matColumnDef="remarks">
-                    <th mat-header-cell *matHeaderCellDef> Remarks </th>
-                    <td mat-cell *matCellDef="let r">
-                        <span *ngIf="r.remarks" class="remarks-text">{{ r.remarks }}</span>
-                        <span *ngIf="!r.remarks">-</span>
-                    </td>
-                </ng-container>
+          <!-- Check-out Column -->
+          <ng-container matColumnDef="checkOutTime">
+            <th mat-header-cell *matHeaderCellDef>Check-Out</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="time-main-text" *ngIf="r.checkOutTime">{{ r.checkOutTime | date:'h:mm a':'Asia/Manila' }}</span>
+              <span class="in-progress-badge" *ngIf="!r.checkOutTime">
+                <span class="pulse-dot"></span> In Progress
+              </span>
+            </td>
+          </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-            </table>
+          <!-- Worked Time Column -->
+          <ng-container matColumnDef="workedTime">
+            <th mat-header-cell *matHeaderCellDef>Worked Time</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="worked-hours-text" *ngIf="r.workedMinutes > 0">
+                <strong>{{ (r.workedMinutes / 60) | number:'1.1-1' }}h</strong>
+                <small class="worked-mins-sub">({{ r.workedMinutes }}m)</small>
+              </span>
+              <span class="muted-dash" *ngIf="!r.workedMinutes || r.workedMinutes === 0">-</span>
+            </td>
+          </ng-container>
 
-            <ng-template #noRecords>
-                <div class="empty-state">
-                    <mat-icon class="empty-icon">history</mat-icon>
-                    <p>No attendance records found.</p>
-                </div>
-            </ng-template>
-        </ng-container>
-    </mat-card>
+          <!-- Deficit Column -->
+          <ng-container matColumnDef="deficit">
+            <th mat-header-cell *matHeaderCellDef>Deficit (from 7h)</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="deficit-badge" *ngIf="r.deficitMinutes > 0">{{ r.deficitMinutes }}m</span>
+              <span class="muted-dash" *ngIf="!r.deficitMinutes || r.deficitMinutes === 0">-</span>
+            </td>
+          </ng-container>
+
+          <!-- Overtime Column -->
+          <ng-container matColumnDef="overtime">
+            <th mat-header-cell *matHeaderCellDef matTooltip="Valid only when worked >= 10 hours">Overtime</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="overtime-badge" *ngIf="r.overtimeHours > 0">+{{ r.overtimeHours }}h OT</span>
+              <span class="muted-dash" *ngIf="!r.overtimeHours || r.overtimeHours === 0">-</span>
+            </td>
+          </ng-container>
+
+          <!-- Adjustment Status Column -->
+          <ng-container matColumnDef="adjustmentStatus">
+            <th mat-header-cell *matHeaderCellDef>Time Adjustment</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="status-chip" *ngIf="r.adjustmentRequested" [ngClass]="(r.adjustmentStatus || 'pending').toLowerCase()">
+                {{ r.adjustmentStatus || 'PENDING' }}
+              </span>
+              <span class="muted-dash" *ngIf="!r.adjustmentRequested">-</span>
+            </td>
+          </ng-container>
+
+          <!-- Remarks Column -->
+          <ng-container matColumnDef="remarks">
+            <th mat-header-cell *matHeaderCellDef>Remarks</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="remarks-cell" *ngIf="r.remarks" [title]="r.remarks">
+                <mat-icon class="remarks-icon">info</mat-icon>
+                <span>{{ r.remarks }}</span>
+              </span>
+              <span class="muted-dash" *ngIf="!r.remarks">-</span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="staff-row"></tr>
+        </table>
+      </div>
+
+      <!-- Mobile Card List -->
+      <div class="mobile-card-list mobile-only" *ngIf="records.length > 0" [@staggerList]>
+        <div class="mobile-record-card" *ngFor="let r of records">
+          <div class="card-top-row">
+            <span class="date-badge">{{ r.date }}</span>
+            <span class="shift-tag">{{ r.shiftName }}</span>
+          </div>
+
+          <div class="card-grid">
+            <div class="grid-item">
+              <span class="grid-label">Schedule</span>
+              <span class="grid-val">{{ formatShiftSchedule({ startTime: r.scheduledStartTime, endTime: r.scheduledEndTime }) }}</span>
+            </div>
+            <div class="grid-item">
+              <span class="grid-label">Check-In</span>
+              <div class="grid-val-wrap">
+                <span class="grid-val">{{ r.checkInTime | date:'h:mm a':'Asia/Manila' }}</span>
+                <span class="punctuality-badge badge-late" *ngIf="r.lateMinutes > 0">Late {{ r.lateMinutes }}m</span>
+                <span class="punctuality-badge badge-early" *ngIf="r.earlyMinutes > 0">Early {{ r.earlyMinutes }}m</span>
+              </div>
+            </div>
+            <div class="grid-item">
+              <span class="grid-label">Check-Out</span>
+              <span class="grid-val" *ngIf="r.checkOutTime">{{ r.checkOutTime | date:'h:mm a':'Asia/Manila' }}</span>
+              <span class="in-progress-badge" *ngIf="!r.checkOutTime">In Progress</span>
+            </div>
+            <div class="grid-item">
+              <span class="grid-label">Worked Time</span>
+              <span class="worked-hours-text" *ngIf="r.workedMinutes > 0">
+                <strong>{{ (r.workedMinutes / 60) | number:'1.1-1' }}h</strong> ({{ r.workedMinutes }}m)
+              </span>
+              <span class="muted-dash" *ngIf="!r.workedMinutes">-</span>
+            </div>
+          </div>
+
+          <div class="card-footer-tags" *ngIf="r.deficitMinutes > 0 || r.overtimeHours > 0 || r.remarks">
+            <span class="deficit-badge" *ngIf="r.deficitMinutes > 0">Deficit: {{ r.deficitMinutes }}m</span>
+            <span class="overtime-badge" *ngIf="r.overtimeHours > 0">+{{ r.overtimeHours }}h OT</span>
+            <span class="remarks-cell" *ngIf="r.remarks">{{ r.remarks }}</span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noRecords>
+        <div class="empty-state-box">
+          <mat-icon class="empty-icon">history</mat-icon>
+          <h3 class="empty-title">No Attendance Records Found</h3>
+          <p class="empty-subtitle">You have no recorded clock-in or clock-out timestamps yet.</p>
+        </div>
+      </ng-template>
+
+    </ng-container>
+
+  </div>
+
 </div>

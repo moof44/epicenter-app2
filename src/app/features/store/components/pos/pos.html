@@ -1,56 +1,73 @@
 <div class="pos-container">
 
-  <!-- Closed‑register warning shown on both layouts -->
+  <!-- Closed-register Actionable Amber Warning Banner -->
   <div class="banner-container" *ngIf="!(isShiftOpen$ | async)">
     <div class="warning-banner">
-      <mat-icon>lock</mat-icon>
-      <span>Register is currently <strong>CLOSED</strong>. Open a shift in Cash Register to make sales.</span>
+      <div class="banner-left">
+        <mat-icon class="banner-icon">lock</mat-icon>
+        <div class="banner-text">
+          <strong class="banner-title">Cash Register is CLOSED</strong>
+          <span class="banner-desc">You must open a shift in Cash Register before processing product sales or checkouts.</span>
+        </div>
+      </div>
+      <button type="button" class="btn-open-shift" (click)="openShiftModal()">
+        <mat-icon>key</mat-icon> Open Shift Now
+      </button>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════
-       DESKTOP LAYOUT  (≥ 960 px) — two‑column POS
-       Hidden on tablet/mobile via CSS media query
+       DESKTOP LAYOUT (≥ 960 px) — Two-Column POS Matrix
        ═══════════════════════════════════════════════════════ -->
   <div class="pos-desktop-layout" *ngIf="products$ | async as products">
 
-    <!-- ── Left column: member search + product grid ── -->
+    <!-- ── Left column: Member Search + Product Catalog ── -->
     <div class="desktop-products-col">
 
-      <!-- Member search bar -->
+      <!-- Member Search Bar -->
       <div class="desktop-member-bar">
-        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
-          <mat-label>Search Member (optional)</mat-label>
-          <mat-icon matPrefix>person_search</mat-icon>
-          <input type="text" matInput [formControl]="memberControl"
-                 [matAutocomplete]="desktopAuto"
-                 placeholder="Type name to attach member…">
-          <button *ngIf="selectedMember()" matSuffix mat-icon-button (click)="clearMember()" matTooltip="Clear">
-            <mat-icon>close</mat-icon>
-          </button>
-          <mat-autocomplete #desktopAuto="matAutocomplete" [displayWith]="displayMember"
-                            (optionSelected)="selectMember($event.option.value)">
-            <mat-option *ngFor="let m of members$ | async" [value]="m">{{ m.name }}</mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
+        <div class="member-search-wrap">
+          <mat-form-field appearance="outline" class="member-search-field" subscriptSizing="dynamic">
+            <mat-label>Search Member (Optional)</mat-label>
+            <mat-icon matPrefix class="search-icon text-cyan">person_search</mat-icon>
+            <input type="text" matInput [formControl]="memberControl"
+                   [matAutocomplete]="desktopAuto"
+                   placeholder="Type member name to attach...">
+            <button *ngIf="selectedMember()" matSuffix mat-icon-button (click)="clearMember()" matTooltip="Clear Member" class="clear-member-btn">
+              <mat-icon>close</mat-icon>
+            </button>
+            <mat-autocomplete #desktopAuto="matAutocomplete" [displayWith]="displayMember"
+                              (optionSelected)="selectMember($event.option.value)">
+              <mat-option *ngFor="let m of members$ | async" [value]="m">
+                <div class="option-member-row">
+                  <div class="option-avatar">{{ (m.name || 'M').substring(0, 2).toUpperCase() }}</div>
+                  <div class="option-meta">
+                    <span class="option-name">{{ m.name }}</span>
+                    <span class="option-status-badge badge-active" *ngIf="m.membershipStatus === 'Active' || !m.membershipStatus">Active Member</span>
+                    <span class="option-status-badge badge-inactive" *ngIf="m.membershipStatus === 'Inactive'">Inactive</span>
+                  </div>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </div>
 
-        <button mat-flat-button color="accent" (click)="openClaimVoucher()" matTooltip="Fulfill Member Reward Claim Code" style="height: 56px; border-radius: 12px; font-weight: 700; white-space: nowrap;">
-          <mat-icon>confirmation_number</mat-icon>
-          🎁 Claim Voucher
+        <button type="button" class="btn-claim-voucher" (click)="openClaimVoucher()" matTooltip="Fulfill Member Reward Claim Code">
+          <mat-icon class="btn-icon">confirmation_number</mat-icon>
+          <span>🎁 Claim Voucher</span>
         </button>
 
-
-        <!-- Selected member chip & badges -->
+        <!-- Selected Member Chip & Badges -->
         <div class="selected-member-container" *ngIf="selectedMember()">
           <div class="selected-member-chip">
-            <mat-icon>check_circle</mat-icon>
-            <span>{{ selectedMember()?.name }}</span>
+            <mat-icon class="member-check-icon">check_circle</mat-icon>
+            <span class="member-name">{{ selectedMember()?.name }}</span>
           </div>
           <div class="member-badges" *ngIf="selectedMember()?.tags?.length">
             <span *ngFor="let tag of selectedMember()?.tags" 
                   class="badge-chip"
-                  [style.background-color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex || '#e0e0e0'"
-                  [style.color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex ? '#ffffff' : '#333333'"
+                  [style.background-color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex || '#1e293b'"
+                  [style.color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex ? '#ffffff' : '#e2e8f0'"
                   [matTooltip]="badgeDefinitions()[tag.toUpperCase()]?.description || ''">
               {{ badgeDefinitions()[tag.toUpperCase()]?.name || tag }}
             </span>
@@ -58,132 +75,164 @@
         </div>
       </div>
 
-      <!-- Category filter & catalog button -->
+      <!-- Category Filter Pills & Catalog Button -->
       <div class="products-header">
-        <mat-chip-listbox [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)"
-                          class="category-filter">
-          <mat-chip-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-chip-option>
-        </mat-chip-listbox>
+        <div class="category-pills-row">
+          <button type="button" class="cat-pill" *ngFor="let cat of categories"
+                  [class.cat-pill-active]="selectedCategory() === cat"
+                  (click)="selectedCategory.set(cat)">
+            {{ cat }}
+          </button>
+        </div>
 
-        <button mat-stroked-button color="primary" (click)="openCatalog()" class="catalog-btn">
-          <mat-icon>menu_book</mat-icon> Catalog
+        <button type="button" class="btn-catalog-outline" (click)="openCatalog()">
+          <mat-icon class="btn-icon text-cyan">menu_book</mat-icon>
+          <span>Catalog</span>
         </button>
       </div>
 
-      <!-- Product grid -->
+      <!-- Product Grid -->
       <div class="products-grid-container">
         <div class="products-grid">
-          <mat-card *ngFor="let product of filterProducts(products); trackBy: trackProduct"
-                    class="product-card"
-                    [class.out-of-stock]="product.stock <= 0"
-                    [class.disabled-state]="!(isShiftOpen$ | async)"
-                    (click)="addToCart(product)" [@fadeIn]>
-            <div class="product-image">
-              <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
-              <mat-icon *ngIf="!product.imageUrl" class="placeholder-icon">
-                {{ getCategoryIcon(product.category) }}
-              </mat-icon>
+          <div *ngFor="let product of filterProducts(products); trackBy: trackProduct"
+               class="product-card"
+               [class.out-of-stock]="product.stock <= 0"
+               [class.disabled-state]="!(isShiftOpen$ | async)"
+               (click)="addToCart(product)" [@fadeIn]>
+            
+            <div class="product-image-box">
+              <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="prod-img">
+              <div *ngIf="!product.imageUrl" class="prod-icon-placeholder">
+                <mat-icon class="placeholder-icon">{{ getCategoryIcon(product.category) }}</mat-icon>
+              </div>
+              <span class="stock-badge" [class.stock-out]="product.stock <= 0" [class.stock-low]="product.stock > 0 && product.stock < 10" [class.stock-ok]="product.stock >= 10">
+                {{ product.stock <= 0 ? 'Out of Stock' : product.stock + ' in Stock' }}
+              </span>
             </div>
-            <mat-card-content>
-              <p class="product-name">{{ product.name }}</p>
-              <p class="product-price">₱{{ product.price | number:'1.2-2' }}</p>
-              <p class="product-stock" [class.low]="product.stock < 10">Stock: {{ product.stock }}</p>
-            </mat-card-content>
-          </mat-card>
 
-          <div *ngIf="filterProducts(products).length === 0" class="empty-state">
-            <mat-icon>inventory_2</mat-icon>
-            <p>No products in this category</p>
+            <div class="product-info-box">
+              <h4 class="product-name" [title]="product.name">{{ product.name }}</h4>
+              <div class="product-bottom-row">
+                <span class="product-price">₱{{ product.price | number:'1.2-2' }}</span>
+                <span class="product-cat-tag">{{ product.category }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="filterProducts(products).length === 0" class="empty-products-state">
+            <mat-icon class="empty-icon text-cyan">inventory_2</mat-icon>
+            <h4>No products found</h4>
+            <p>No available merchandise or drinks in this category.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ── Right column: cart panel ── -->
+    <!-- ── Right column: Real-Time Cart Panel ── -->
     <div class="desktop-cart-col">
       <div class="cart-header">
-        <h2>
-          <mat-icon>shopping_cart</mat-icon>
-          Cart
-          <span *ngIf="(cart$ | async)?.length" style="font-size:13px;color:#888;font-weight:400;">
-            ({{ (cart$ | async)?.length }} item{{ (cart$ | async)?.length === 1 ? '' : 's' }})
-          </span>
-        </h2>
-        <button mat-icon-button color="warn" (click)="clearCart()"
-                [disabled]="!(cart$ | async)?.length" matTooltip="Clear cart">
-          <mat-icon>delete_sweep</mat-icon>
+        <div class="cart-title-wrap">
+          <div class="cart-icon-seal">
+            <mat-icon>shopping_cart</mat-icon>
+          </div>
+          <div class="cart-title-meta">
+            <h2>Current Order</h2>
+            <span class="cart-count-pill" *ngIf="(cart$ | async)?.length">
+              {{ (cart$ | async)?.length }} item{{ (cart$ | async)?.length === 1 ? '' : 's' }}
+            </span>
+          </div>
+        </div>
+
+        <button type="button" class="btn-clear-cart" (click)="clearCart()"
+                [disabled]="!(cart$ | async)?.length" matTooltip="Clear all items">
+          <mat-icon class="clear-icon">delete_sweep</mat-icon>
         </button>
       </div>
 
-      <div class="cart-items" *ngIf="cart$ | async as cartItems">
+      <div class="cart-items-wrapper" *ngIf="cart$ | async as cartItems">
         <!-- Empty state -->
-        <div class="empty-cart" *ngIf="cartItems.length === 0">
-          <mat-icon>remove_shopping_cart</mat-icon>
-          <p>Cart is empty.<br><small>Tap a product to add it.</small></p>
+        <div class="empty-cart-box" *ngIf="cartItems.length === 0">
+          <mat-icon class="empty-cart-icon">remove_shopping_cart</mat-icon>
+          <h4>Cart is Empty</h4>
+          <p>Click any product card on the left to add items to this sale.</p>
         </div>
 
-        <!-- Cart rows -->
-        <div *ngFor="let item of cartItems" class="cart-item" [@fadeIn]>
-          <div class="item-info">
-            <span class="item-name">{{ item.productName }}</span>
-            <span class="item-override-reason" *ngIf="item.isPriceOverridden && item.overrideReason">{{ item.overrideReason }}</span>
-            <div class="price-container">
-              <span class="original-price" *ngIf="item.isPriceOverridden">₱{{ item.originalPrice | number:'1.2-2' }}</span>
-              <span class="item-price" [class.overridden]="item.isPriceOverridden">₱{{ item.price | number:'1.2-2' }}</span>
-              <button mat-icon-button class="edit-price-btn" (click)="openPriceOverrideDialog(item)" matTooltip="Edit price">
-                <mat-icon>edit</mat-icon>
+        <!-- Cart items rows -->
+        <div class="cart-items-list" *ngIf="cartItems.length > 0">
+          <div *ngFor="let item of cartItems" class="cart-item-card" [@fadeIn]>
+            <div class="item-main-row">
+              <div class="item-title-col">
+                <span class="item-name">{{ item.productName }}</span>
+                <span class="item-override-reason" *ngIf="item.isPriceOverridden && item.overrideReason">
+                  📝 {{ item.overrideReason }}
+                </span>
+                <div class="price-pill-row">
+                  <span class="original-price" *ngIf="item.isPriceOverridden">₱{{ item.originalPrice | number:'1.2-2' }}</span>
+                  <span class="item-price" [class.overridden]="item.isPriceOverridden">₱{{ item.price | number:'1.2-2' }}</span>
+                  <button type="button" class="btn-edit-price" (click)="openPriceOverrideDialog(item)" matTooltip="Edit price">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <div class="item-subtotal-col">
+                <span class="item-subtotal">₱{{ item.subtotal | number:'1.2-2' }}</span>
+              </div>
+            </div>
+
+            <div class="item-actions-row">
+              <div class="item-qty-controls">
+                <button type="button" class="qty-btn" (click)="updateQuantity(item, -1)">
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span class="qty-val">{{ item.quantity }}</span>
+                <button type="button" class="qty-btn" (click)="updateQuantity(item, 1)">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+
+              <button type="button" class="btn-remove-item" (click)="removeItem(item.productId)" matTooltip="Remove item">
+                <mat-icon>delete_outline</mat-icon>
               </button>
             </div>
           </div>
-
-          <div class="item-controls">
-            <button mat-icon-button class="mini-btn" (click)="updateQuantity(item, -1)">
-              <mat-icon>remove</mat-icon>
-            </button>
-            <span class="quantity">{{ item.quantity }}</span>
-            <button mat-icon-button class="mini-btn" (click)="updateQuantity(item, 1)">
-              <mat-icon>add</mat-icon>
-            </button>
-            <button mat-icon-button color="warn" class="mini-btn" (click)="removeItem(item.productId)">
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-
-          <div class="item-subtotal">₱{{ item.subtotal | number:'1.2-2' }}</div>
         </div>
       </div>
 
+      <!-- Cart Footer / Checkout Deck -->
       <div class="cart-footer">
-        <div class="cart-total">
-          <span>Total Due</span>
-          <span class="total-amount">₱{{ (cartTotal$ | async) | number:'1.2-2' }}</span>
+        <div class="cart-total-box">
+          <span class="total-lbl">Total Amount Due</span>
+          <span class="total-amount text-gold">₱{{ (cartTotal$ | async) | number:'1.2-2' }}</span>
         </div>
-        <button mat-raised-button color="primary" class="checkout-btn" appPreventDoubleClick
+
+        <button type="button" class="btn-checkout-gold" appPreventDoubleClick
                 (throttledClick)="checkout()"
                 [disabled]="isProcessing() || !(cart$ | async)?.length || !(isShiftOpen$ | async)">
-          <mat-icon>payments</mat-icon>
-          {{ isProcessing() ? 'Processing…' : 'Pay Now' }}
+          <mat-icon class="btn-icon">payments</mat-icon>
+          <span>{{ isProcessing() ? 'Processing Sale...' : 'Proceed to Checkout' }}</span>
         </button>
       </div>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════
-       MOBILE / TABLET LAYOUT — stepper flow
-       Shown on screens < 960 px via CSS media query
+       MOBILE / TABLET LAYOUT — Stepper Flow (< 960 px)
        ═══════════════════════════════════════════════════════ -->
   <mat-stepper #stepper class="pos-stepper" [linear]="false" animationDuration="200">
 
     <!-- STEP 1: Identification -->
     <mat-step label="Member" state="person">
       <div class="step-content centered-content">
-        <h2>Who is buying?</h2>
-        <p class="step-helper">Select a member to track this sale, or proceed as a guest.</p>
+        <div class="step-header-wrap">
+          <h2 class="step-title">Customer Identification</h2>
+          <p class="step-helper">Select an active gym member to attach rewards, or proceed as a walk-in guest.</p>
+        </div>
 
         <div class="member-selection-card">
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="full-width custom-mat-field">
             <mat-label>Search Member</mat-label>
-            <mat-icon matPrefix>person_search</mat-icon>
+            <mat-icon matPrefix class="text-cyan">person_search</mat-icon>
             <input type="text" matInput [formControl]="memberControl" [matAutocomplete]="mobileAuto"
               placeholder="Start typing name..." (keyup.enter)="onMemberSelected()">
             <button *ngIf="selectedMember()" matSuffix mat-icon-button (click)="clearMember()">
@@ -192,35 +241,42 @@
             <mat-autocomplete #mobileAuto="matAutocomplete" [displayWith]="displayMember"
               (optionSelected)="selectMember($event.option.value)">
               <mat-option *ngFor="let member of members$ | async" [value]="member">
-                {{ member.name }}
+                <div class="option-member-row">
+                  <div class="option-avatar">{{ (member.name || 'M').substring(0, 2).toUpperCase() }}</div>
+                  <div class="option-meta">
+                    <span class="option-name">{{ member.name }}</span>
+                    <span class="option-status-badge badge-active">Active</span>
+                  </div>
+                </div>
               </mat-option>
             </mat-autocomplete>
           </mat-form-field>
 
           <div class="selected-member-info" *ngIf="selectedMember()">
-            <mat-icon class="check-icon">check_circle</mat-icon>
-            <div>
-              <h3>{{ selectedMember()?.name }}</h3>
-              <span>Member Selected</span>
+            <mat-icon class="check-icon text-mint">check_circle</mat-icon>
+            <div class="sel-meta">
+              <h3 class="sel-name">{{ selectedMember()?.name }}</h3>
+              <span class="sel-tag">Member Attached</span>
               <div class="member-badges mobile-badges" *ngIf="selectedMember()?.tags?.length">
                 <span *ngFor="let tag of selectedMember()?.tags" 
                       class="badge-chip"
-                      [style.background-color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex || '#e0e0e0'"
-                      [style.color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex ? '#ffffff' : '#333333'"
-                      [matTooltip]="badgeDefinitions()[tag.toUpperCase()]?.description || ''">
+                      [style.background-color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex || '#1e293b'"
+                      [style.color]="badgeDefinitions()[tag.toUpperCase()]?.colorHex ? '#ffffff' : '#e2e8f0'">
                   {{ badgeDefinitions()[tag.toUpperCase()]?.name || tag }}
                 </span>
               </div>
             </div>
           </div>
 
-          <div class="action-buttons">
-            <button mat-stroked-button color="primary" class="large-btn" (click)="skipMemberSelection()">
-              <mat-icon>person_off</mat-icon> Guest / Walk-in
+          <div class="action-buttons-row">
+            <button type="button" class="btn-guest-outline" (click)="skipMemberSelection()">
+              <mat-icon>person_off</mat-icon>
+              <span>Walk-in / Guest</span>
             </button>
-            <button mat-raised-button color="primary" class="large-btn" [disabled]="!selectedMember()"
+            <button type="button" class="btn-next-gold" [disabled]="!selectedMember()"
               (click)="stepper.next()">
-              Next <mat-icon>arrow_forward</mat-icon>
+              <span>Next Step</span>
+              <mat-icon>arrow_forward</mat-icon>
             </button>
           </div>
         </div>
@@ -233,49 +289,54 @@
         <div class="products-layout">
           <!-- Filter Header -->
           <div class="products-header">
-            <mat-chip-listbox [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)"
-              class="category-filter">
-              <mat-chip-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-chip-option>
-            </mat-chip-listbox>
+            <div class="category-pills-row">
+              <button type="button" class="cat-pill" *ngFor="let cat of categories"
+                      [class.cat-pill-active]="selectedCategory() === cat"
+                      (click)="selectedCategory.set(cat)">
+                {{ cat }}
+              </button>
+            </div>
 
-            <button mat-raised-button color="primary" (click)="openCatalog()" class="catalog-btn"
-              style="margin-right: 1rem;">
-              <mat-icon>menu_book</mat-icon> Catalog
-            </button>
-
-            <button mat-raised-button color="accent" matStepperNext [disabled]="!(cart$ | async)?.length"
-              class="review-btn-desktop">
-              Review Cart ({{ (cart$ | async)?.length || 0 }}) <mat-icon>shopping_cart_checkout</mat-icon>
+            <button type="button" class="btn-catalog-outline" (click)="openCatalog()">
+              <mat-icon class="text-cyan">menu_book</mat-icon>
+              <span>Catalog</span>
             </button>
           </div>
 
           <!-- Product Grid -->
-          <div class="products-grid-container">
-            <div class="products-grid" *ngIf="products$ | async as stepProducts">
-              <mat-card *ngFor="let product of filterProducts(stepProducts); trackBy: trackProduct" class="product-card"
-                [class.out-of-stock]="product.stock <= 0" [class.disabled-state]="!(isShiftOpen$ | async)"
-                (click)="addToCart(product)" [@fadeIn]>
-                <div class="product-image">
-                  <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
-                  <mat-icon *ngIf="!product.imageUrl" class="placeholder-icon">
-                    {{ getCategoryIcon(product.category) }}
-                  </mat-icon>
+          <div class="products-grid-container" *ngIf="products$ | async as stepProducts">
+            <div class="products-grid">
+              <div *ngFor="let product of filterProducts(stepProducts); trackBy: trackProduct"
+                   class="product-card"
+                   [class.out-of-stock]="product.stock <= 0"
+                   [class.disabled-state]="!(isShiftOpen$ | async)"
+                   (click)="addToCart(product)" [@fadeIn]>
+                <div class="product-image-box">
+                  <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="prod-img">
+                  <div *ngIf="!product.imageUrl" class="prod-icon-placeholder">
+                    <mat-icon class="placeholder-icon">{{ getCategoryIcon(product.category) }}</mat-icon>
+                  </div>
+                  <span class="stock-badge" [class.stock-out]="product.stock <= 0" [class.stock-low]="product.stock > 0 && product.stock < 10" [class.stock-ok]="product.stock >= 10">
+                    {{ product.stock <= 0 ? 'Out of Stock' : product.stock + ' in Stock' }}
+                  </span>
                 </div>
-                <mat-card-content>
-                  <p class="product-name">{{ product.name }}</p>
-                  <p class="product-price">₱{{ product.price | number:'1.2-2' }}</p>
-                  <p class="product-stock" [class.low]="product.stock < 10">Stock: {{ product.stock }}</p>
-                </mat-card-content>
-              </mat-card>
-              <div *ngIf="filterProducts(stepProducts).length === 0" class="empty-state">
-                <mat-icon>inventory_2</mat-icon>
-                <p>No products in this category</p>
+                <div class="product-info-box">
+                  <h4 class="product-name">{{ product.name }}</h4>
+                  <div class="product-bottom-row">
+                    <span class="product-price">₱{{ product.price | number:'1.2-2' }}</span>
+                    <span class="product-cat-tag">{{ product.category }}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <!-- Mobile FAB for Next Step -->
-            <button mat-fab color="accent" class="mobile-review-fab" matStepperNext *ngIf="(cart$ | async)?.length">
-              <mat-icon>shopping_cart_checkout</mat-icon>
-            </button>
+
+            <!-- Mobile Review Cart Button Bar -->
+            <div class="mobile-bottom-bar" *ngIf="(cart$ | async)?.length">
+              <button type="button" class="btn-review-cart-gold" matStepperNext>
+                <mat-icon>shopping_cart_checkout</mat-icon>
+                <span>Review Cart ({{ (cart$ | async)?.length || 0 }} items · ₱{{ (cartTotal$ | async) | number:'1.2-2' }})</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -286,64 +347,69 @@
       <div class="step-content full-height-step">
         <div class="cart-review-layout">
           <div class="cart-header-row">
-            <h2>Order Summary</h2>
-            <button mat-button color="warn" (click)="clearCart()" [disabled]="!(cart$ | async)?.length">
-              Clear All <mat-icon>delete_sweep</mat-icon>
+            <h2 class="review-title">Order Summary</h2>
+            <button type="button" class="btn-clear-cart-text" (click)="clearCart()" [disabled]="!(cart$ | async)?.length">
+              <mat-icon class="btn-icon">delete_sweep</mat-icon>
+              <span>Clear All</span>
             </button>
           </div>
 
           <div class="cart-items-list" *ngIf="cart$ | async as cartItems">
-            <div *ngIf="cartItems.length === 0" class="empty-cart-message">
-              <mat-icon>remove_shopping_cart</mat-icon>
-              <p>Your cart is empty.</p>
-              <button mat-button color="primary" matStepperPrevious>Go back to Items</button>
+            <div *ngIf="cartItems.length === 0" class="empty-cart-box">
+              <mat-icon class="empty-cart-icon">remove_shopping_cart</mat-icon>
+              <h4>Your cart is empty.</h4>
+              <button type="button" class="btn-back-outline" matStepperPrevious>Go back to Items</button>
             </div>
 
-            <div *ngFor="let item of cartItems" class="cart-item-row" [@fadeIn]>
-              <div class="item-details">
-                <span class="name">{{ item.productName }}</span>
-                <span class="item-override-reason" *ngIf="item.isPriceOverridden && item.overrideReason">{{ item.overrideReason }}</span>
-                <div class="price-line">
-                  <span class="original" *ngIf="item.isPriceOverridden">₱{{ item.originalPrice }}</span>
-                  <span class="current">₱{{ item.price | number:'1.2-2' }}</span>
-                  <button mat-icon-button class="mini-btn" (click)="openPriceOverrideDialog(item)">
-                    <mat-icon>edit</mat-icon>
-                  </button>
+            <div *ngFor="let item of cartItems" class="cart-item-card" [@fadeIn]>
+              <div class="item-main-row">
+                <div class="item-title-col">
+                  <span class="item-name">{{ item.productName }}</span>
+                  <span class="item-override-reason" *ngIf="item.isPriceOverridden && item.overrideReason">{{ item.overrideReason }}</span>
+                  <div class="price-pill-row">
+                    <span class="original-price" *ngIf="item.isPriceOverridden">₱{{ item.originalPrice }}</span>
+                    <span class="item-price" [class.overridden]="item.isPriceOverridden">₱{{ item.price | number:'1.2-2' }}</span>
+                    <button type="button" class="btn-edit-price" (click)="openPriceOverrideDialog(item)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  </div>
+                </div>
+                <div class="item-subtotal-col">
+                  <span class="item-subtotal">₱{{ item.subtotal | number:'1.2-2' }}</span>
                 </div>
               </div>
 
-              <div class="qty-controls">
-                <button mat-icon-button class="mini-btn" (click)="updateQuantity(item, -1)">
-                  <mat-icon>remove</mat-icon>
-                </button>
-                <span>{{ item.quantity }}</span>
-                <button mat-icon-button class="mini-btn" (click)="updateQuantity(item, 1)">
-                  <mat-icon>add</mat-icon>
-                </button>
-              </div>
+              <div class="item-actions-row">
+                <div class="item-qty-controls">
+                  <button type="button" class="qty-btn" (click)="updateQuantity(item, -1)">
+                    <mat-icon>remove</mat-icon>
+                  </button>
+                  <span class="qty-val">{{ item.quantity }}</span>
+                  <button type="button" class="qty-btn" (click)="updateQuantity(item, 1)">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
 
-              <div class="item-total">
-                ₱{{ item.subtotal | number:'1.2-2' }}
-                <button mat-icon-button color="warn" class="mini-btn remove-btn" (click)="removeItem(item.productId)">
-                  <mat-icon>close</mat-icon>
+                <button type="button" class="btn-remove-item" (click)="removeItem(item.productId)">
+                  <mat-icon>delete_outline</mat-icon>
                 </button>
               </div>
             </div>
           </div>
 
-          <div class="checkout-footer">
+          <div class="checkout-footer-card">
             <div class="totals-row">
-              <span>Total Due:</span>
-              <span class="grand-total">₱{{ (cartTotal$ | async) | number:'1.2-2' }}</span>
+              <span class="total-lbl">Total Amount Due</span>
+              <span class="total-amount text-gold">₱{{ (cartTotal$ | async) | number:'1.2-2' }}</span>
             </div>
 
-            <div class="checkout-actions">
-              <button mat-button matStepperPrevious>Back</button>
-              <button mat-raised-button color="primary" class="pay-btn" appPreventDoubleClick
+            <div class="checkout-actions-row">
+              <button type="button" class="btn-cancel" matStepperPrevious>Back</button>
+              <button type="button" class="btn-checkout-gold" appPreventDoubleClick
                 (throttledClick)="checkout()"
                 [disabled]="isProcessing() || !(cart$ | async)?.length || !(isShiftOpen$ | async)">
-                <mat-icon>payments</mat-icon>
-                {{ isProcessing() ? 'Processing...' : 'Pay Now' }}
+                <mat-icon class="btn-icon">payments</mat-icon>
+                <span>{{ isProcessing() ? 'Processing...' : 'Pay Now' }}</span>
               </button>
             </div>
           </div>

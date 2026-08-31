@@ -15,388 +15,437 @@ import { PurchaseRequestItem, PurchaseRequestPriority } from '../../../../../cor
 import { PurchaseRequestService } from '../../../../../core/services/purchase-request.service';
 
 interface FormLineItem {
-    itemType: 'CATALOG_PRODUCT' | 'CUSTOM_SUPPLY';
-    productId?: string;
-    name: string;
-    category?: string;
-    currentStock?: number;
-    requestedQuantity: number;
-    unit: string;
-    estimatedUnitCost: number;
+  itemType: 'CATALOG_PRODUCT' | 'CUSTOM_SUPPLY';
+  productId?: string;
+  name: string;
+  category?: string;
+  currentStock?: number;
+  requestedQuantity: number;
+  unit: string;
+  estimatedUnitCost: number;
 }
 
 @Component({
-    selector: 'app-purchase-request-modal',
-    standalone: true,
-    imports: [
-        CommonModule,
-        FormsModule,
-        MatDialogModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule,
-        MatIconModule,
-        MatRadioModule,
-        MatSnackBarModule,
-    ],
-    template: `
-        <div class="pr-modal-container">
-            <h2 mat-dialog-title class="dialog-title">
-                <mat-icon color="primary">add_shopping_cart</mat-icon>
-                New Purchase / Refill Request
-            </h2>
-
-            <mat-dialog-content class="dialog-content">
-                <!-- Request Summary Fields -->
-                <div class="form-row">
-                    <mat-form-field appearance="outline" class="flex-2">
-                        <mat-label>Request Title / Purpose</mat-label>
-                        <input matInput [(ngModel)]="title" placeholder="e.g. Weekly Drinks & Supplements Refill" required />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="flex-1">
-                        <mat-label>Priority Level</mat-label>
-                        <mat-select [(ngModel)]="priority">
-                            <mat-option value="LOW">🟢 Low</mat-option>
-                            <mat-option value="NORMAL">🔵 Normal</mat-option>
-                            <mat-option value="HIGH">🟠 High</mat-option>
-                            <mat-option value="URGENT">🔴 Urgent</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <!-- Items Section -->
-                <div class="items-header">
-                    <h3>Requested Items & Quantities</h3>
-                    <button mat-stroked-button color="primary" type="button" (click)="addItem()">
-                        <mat-icon>add</mat-icon> Add Line Item
-                    </button>
-                </div>
-
-                <div class="items-list">
-                    <div *ngFor="let item of items; let idx = index" class="item-card">
-                        <div class="item-type-toggle">
-                            <mat-radio-group [(ngModel)]="item.itemType" (ngModelChange)="onItemTypeChange(item)">
-                                <mat-radio-button value="CATALOG_PRODUCT">Catalog Product</mat-radio-button>
-                                <mat-radio-button value="CUSTOM_SUPPLY">Custom Supply / Facility Item</mat-radio-button>
-                            </mat-radio-group>
-
-                            <button mat-icon-button color="warn" type="button" (click)="removeItem(idx)" [disabled]="items.length === 1">
-                                <mat-icon>delete_outline</mat-icon>
-                            </button>
-                        </div>
-
-                        <div class="item-fields-grid">
-                            <!-- Product Dropdown if Catalog -->
-                            <mat-form-field appearance="outline" *ngIf="item.itemType === 'CATALOG_PRODUCT'" class="field-product">
-                                <mat-label>Select Product</mat-label>
-                                <mat-select [(ngModel)]="item.productId" (ngModelChange)="onProductSelected(item, $event)">
-                                    <mat-option *ngFor="let p of products()" [value]="p.id">
-                                        {{ p.name }} (Current stock: {{ p.stock }} {{ p.unit || 'Item' }})
-                                    </mat-option>
-                                </mat-select>
-                            </mat-form-field>
-
-                            <!-- Custom Name if Custom Supply -->
-                            <mat-form-field appearance="outline" *ngIf="item.itemType === 'CUSTOM_SUPPLY'" class="field-product">
-                                <mat-label>Item / Supply Name</mat-label>
-                                <input matInput [(ngModel)]="item.name" placeholder="e.g. Mop heads, Disinfectant Gallon" />
-                            </mat-form-field>
-
-                            <mat-form-field appearance="outline" class="field-qty">
-                                <mat-label>Qty</mat-label>
-                                <input matInput type="number" min="1" [(ngModel)]="item.requestedQuantity" />
-                            </mat-form-field>
-
-                            <mat-form-field appearance="outline" class="field-unit">
-                                <mat-label>Unit</mat-label>
-                                <input matInput [(ngModel)]="item.unit" placeholder="pcs, tubs, gals" />
-                            </mat-form-field>
-
-                            <mat-form-field appearance="outline" class="field-cost">
-                                <mat-label>Est. Unit Cost (₱)</mat-label>
-                                <input matInput type="number" min="0" [(ngModel)]="item.estimatedUnitCost" />
-                            </mat-form-field>
-
-                            <div class="field-subtotal">
-                                <span class="subtotal-label">Subtotal</span>
-                                <span class="subtotal-val">₱{{ (item.requestedQuantity * item.estimatedUnitCost) | number:'1.2-2' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Total & Reason -->
-                <div class="total-bar">
-                    <span class="total-label">Estimated Total Outgoing:</span>
-                    <span class="total-amount">₱{{ calculateTotal() | number:'1.2-2' }}</span>
-                </div>
-
-                <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Reason / Notes for Admin</mat-label>
-                    <textarea matInput [(ngModel)]="notes" rows="2" placeholder="e.g. Running out of whey protein before weekend peak hours"></textarea>
-                </mat-form-field>
-            </mat-dialog-content>
-
-            <mat-dialog-actions align="end" class="dialog-actions">
-                <button mat-button mat-dialog-close [disabled]="submitting()">Cancel</button>
-                <button mat-flat-button color="primary" (click)="submitRequest()" [disabled]="submitting() || !isValid()">
-                    <mat-icon *ngIf="!submitting()">send</mat-icon>
-                    <span>{{ submitting() ? 'Submitting...' : 'Submit Request' }}</span>
-                </button>
-            </mat-dialog-actions>
+  selector: 'app-purchase-request-modal',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatIconModule,
+    MatRadioModule,
+    MatSnackBarModule,
+  ],
+  template: `
+    <div class="pr-modal-container">
+      <div class="modal-header">
+        <div class="modal-title">
+          <mat-icon class="text-gold">add_shopping_cart</mat-icon>
+          <h2>New Purchase / Refill Request</h2>
         </div>
-    `,
-    styles: [`
-        .pr-modal-container {
-            padding: 4px;
-            width: 100%;
-            max-width: 800px;
-            box-sizing: border-box;
-        }
-        .dialog-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 20px;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 16px;
-        }
-        .dialog-content {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            max-height: 75vh;
-            overflow-y: auto;
-            padding: 0 4px;
-        }
-        .form-row {
-            display: flex;
-            gap: 12px;
-        }
-        .flex-1 { flex: 1; }
-        .flex-2 { flex: 2; }
-        .w-full { width: 100%; }
-        .items-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 8px;
-            margin-top: 8px;
-            gap: 8px;
-            h3 {
-                margin: 0;
-                font-size: 15px;
-                font-weight: 700;
-                color: #334155;
-            }
-        }
-        .items-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .item-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 12px;
-        }
-        .item-type-toggle {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .item-fields-grid {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .field-product { flex: 3; min-width: 200px; }
-        .field-qty { width: 85px; }
-        .field-unit { width: 95px; }
-        .field-cost { width: 130px; }
-        .field-subtotal {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            min-width: 100px;
-            .subtotal-label { font-size: 11px; color: #64748b; }
-            .subtotal-val { font-size: 14px; font-weight: 700; color: #0f172a; }
-        }
-        .total-bar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            background: #eff6ff;
-            border-radius: 8px;
-            border: 1px solid #bfdbfe;
-            .total-label { font-weight: 600; color: #1e40af; }
-            .total-amount { font-size: 18px; font-weight: 800; color: #1e3a8a; }
-        }
-        .dialog-actions {
-            padding: 16px 0 8px;
-        }
+        <button type="button" class="btn-modal-close" (click)="dialogRef.close()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
 
-        @media (max-width: 600px) {
-            .dialog-title {
-                font-size: 18px;
-            }
-            .form-row {
-                flex-direction: column;
-                gap: 0;
-            }
-            .item-fields-grid {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0;
-            }
-            .field-product,
-            .field-qty,
-            .field-unit,
-            .field-cost {
-                width: 100% !important;
-                min-width: 0;
-            }
-            .field-subtotal {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-                padding: 8px 4px;
-                border-top: 1px dashed #cbd5e1;
-            }
-            .total-bar {
-                justify-content: space-between;
-            }
-            .dialog-actions {
-                flex-direction: column-reverse;
-                gap: 8px;
-                button {
-                    width: 100%;
-                    height: 44px;
-                }
-            }
-        }
-    `],
+      <div class="dialog-content">
+        <!-- Request Summary Fields -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="flex-2" subscriptSizing="dynamic">
+            <mat-label>Request Title / Purpose</mat-label>
+            <input matInput [(ngModel)]="title" placeholder="e.g. Weekly Drinks & Supplements Refill" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="flex-1" subscriptSizing="dynamic">
+            <mat-label>Priority Level</mat-label>
+            <mat-select [(ngModel)]="priority">
+              <mat-option value="LOW">🟢 Low</mat-option>
+              <mat-option value="NORMAL">🔵 Normal</mat-option>
+              <mat-option value="HIGH">🟠 High</mat-option>
+              <mat-option value="URGENT">🔴 Urgent</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Items Section -->
+        <div class="items-header">
+          <h3 class="text-white">Requested Items & Quantities</h3>
+          <button type="button" class="btn-add-line" (click)="addItem()">
+            <mat-icon>add</mat-icon> Add Line Item
+          </button>
+        </div>
+
+        <div class="items-list">
+          <div *ngFor="let item of items; let idx = index" class="item-card">
+            <div class="item-type-toggle">
+              <mat-radio-group [(ngModel)]="item.itemType" (ngModelChange)="onItemTypeChange(item)" class="radio-row">
+                <mat-radio-button value="CATALOG_PRODUCT">Catalog Product</mat-radio-button>
+                <mat-radio-button value="CUSTOM_SUPPLY">Custom / Non-Inventory</mat-radio-button>
+              </mat-radio-group>
+
+              <button type="button" class="btn-remove-item" *ngIf="items.length > 1" (click)="removeItem(idx)">
+                <mat-icon>delete_outline</mat-icon> Remove
+              </button>
+            </div>
+
+            <!-- Catalog Item Selector -->
+            <div class="item-fields-grid" *ngIf="item.itemType === 'CATALOG_PRODUCT'">
+              <mat-form-field appearance="outline" class="field-product" subscriptSizing="dynamic">
+                <mat-label>Select Product</mat-label>
+                <mat-select [ngModel]="item.productId" (ngModelChange)="onProductSelected(item, $event)">
+                  <mat-option *ngFor="let p of products()" [value]="p.id">
+                    {{ p.name }} (Stock: {{ p.stock }})
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="field-qty" subscriptSizing="dynamic">
+                <mat-label>Qty</mat-label>
+                <input matInput type="number" min="1" [(ngModel)]="item.requestedQuantity" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="field-unit" subscriptSizing="dynamic">
+                <mat-label>Unit</mat-label>
+                <input matInput [(ngModel)]="item.unit" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="field-cost" subscriptSizing="dynamic">
+                <mat-label>Est. Unit Cost (₱)</mat-label>
+                <span matTextPrefix class="currency-prefix">₱&nbsp;</span>
+                <input matInput type="number" min="0" step="0.01" [(ngModel)]="item.estimatedUnitCost" />
+              </mat-form-field>
+
+              <div class="field-subtotal">
+                <span class="subtotal-label text-muted">Subtotal</span>
+                <strong class="subtotal-val font-mono text-gold">₱{{ (item.requestedQuantity * item.estimatedUnitCost) | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+
+            <!-- Custom / Non-Inventory Item Fields -->
+            <div class="item-fields-grid" *ngIf="item.itemType === 'CUSTOM_SUPPLY'">
+              <mat-form-field appearance="outline" class="field-product" subscriptSizing="dynamic">
+                <mat-label>Item Name / Description</mat-label>
+                <input matInput [(ngModel)]="item.name" placeholder="e.g. Cleaning Detergent 5L" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="field-qty" subscriptSizing="dynamic">
+                <mat-label>Qty</mat-label>
+                <input matInput type="number" min="1" [(ngModel)]="item.requestedQuantity" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="field-unit" subscriptSizing="dynamic">
+                <mat-label>Unit</mat-label>
+                <input matInput [(ngModel)]="item.unit" placeholder="pcs/btl" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="field-cost" subscriptSizing="dynamic">
+                <mat-label>Est. Unit Cost (₱)</mat-label>
+                <span matTextPrefix class="currency-prefix">₱&nbsp;</span>
+                <input matInput type="number" min="0" step="0.01" [(ngModel)]="item.estimatedUnitCost" />
+              </mat-form-field>
+
+              <div class="field-subtotal">
+                <span class="subtotal-label text-muted">Subtotal</span>
+                <strong class="subtotal-val font-mono text-gold">₱{{ (item.requestedQuantity * item.estimatedUnitCost) | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Optional Notes -->
+        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+          <mat-label>Notes / Justification (Optional)</mat-label>
+          <textarea matInput [(ngModel)]="notes" rows="2" placeholder="e.g. Low stock alert from inventory check"></textarea>
+        </mat-form-field>
+
+        <!-- Grand Total Bar -->
+        <div class="total-bar">
+          <span class="total-label text-muted">Estimated Total Cost:</span>
+          <strong class="total-amount font-mono text-gold">₱{{ totalEstimatedCost() | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" (click)="dialogRef.close()">Cancel</button>
+        <button type="button" class="btn-submit-gold" (click)="submit()" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Submitting...' : 'Submit Purchase Request' }}
+        </button>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .pr-modal-container {
+      background: var(--color-surface, #1e293b);
+      border: 1.5px solid var(--color-border, #334155);
+      border-radius: var(--radius-2xl, 16px);
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1.5px solid var(--color-border, #334155);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-title h2 {
+      margin: 0;
+      font-size: var(--font-size-base, 16px);
+      font-weight: var(--font-weight-black, 900);
+      color: #ffffff !important;
+    }
+    .btn-modal-close {
+      background: transparent;
+      border: none;
+      color: var(--color-text-secondary, #cbd5e1);
+      cursor: pointer;
+    }
+    .btn-modal-close:hover { color: #ffffff; }
+
+    .dialog-content {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .form-row { display: flex; gap: 12px; }
+    .flex-1 { flex: 1; }
+    .flex-2 { flex: 2; }
+    .w-full { width: 100%; }
+
+    .items-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--color-border, #334155);
+      padding-bottom: 8px;
+    }
+    .items-header h3 { margin: 0; font-size: var(--font-size-sm, 14px); font-weight: var(--font-weight-bold, 700); }
+
+    .btn-add-line {
+      background: rgba(6, 182, 212, 0.15);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      color: var(--color-cyan-light, #22d3ee);
+      font-size: 11px;
+      font-weight: var(--font-weight-bold, 700);
+      padding: 4px 12px;
+      border-radius: var(--radius-full, 9999px);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-add-line mat-icon { font-size: 16px !important; width: 16px !important; height: 16px !important; }
+
+    .items-list { display: flex; flex-direction: column; gap: 12px; }
+    .item-card {
+      background: var(--color-canvas, #090d16);
+      border: 1px solid var(--color-border, #334155);
+      border-radius: var(--radius-xl, 12px);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .item-type-toggle { display: flex; justify-content: space-between; align-items: center; }
+    .radio-row { display: flex; gap: 16px; font-size: 12px; color: var(--color-text-secondary, #cbd5e1); }
+
+    .btn-remove-item {
+      background: transparent;
+      border: none;
+      color: var(--color-rose-danger, #f87171);
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-remove-item mat-icon { font-size: 16px !important; width: 16px !important; height: 16px !important; }
+
+    .item-fields-grid { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .field-product { flex: 3; min-width: 180px; }
+    .field-qty { width: 80px; }
+    .field-unit { width: 80px; }
+    .field-cost { width: 120px; }
+    .field-subtotal { display: flex; flex-direction: column; align-items: flex-end; min-width: 90px; }
+    .subtotal-label { font-size: 10px; text-transform: uppercase; }
+    .subtotal-val { font-size: 14px; }
+
+    .total-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--color-canvas, #090d16);
+      border: 1px solid var(--color-border, #334155);
+      border-radius: var(--radius-lg, 8px);
+    }
+    .total-label { font-size: 12px; font-weight: var(--font-weight-extrabold, 800); text-transform: uppercase; }
+    .total-amount { font-size: 18px; font-weight: var(--font-weight-black, 900); }
+
+    .modal-actions {
+      padding: 16px 20px;
+      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid var(--color-border, #334155);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--color-border, #334155);
+      color: var(--color-text-secondary, #cbd5e1);
+      font-size: 12px;
+      font-weight: var(--font-weight-bold, 700);
+      border-radius: var(--radius-full, 9999px);
+      padding: 8px 18px;
+      cursor: pointer;
+    }
+    .btn-submit-gold {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #090d16 !important;
+      font-size: 12px;
+      font-weight: var(--font-weight-black, 900);
+      border: none;
+      border-radius: var(--radius-full, 9999px);
+      padding: 8px 24px;
+      cursor: pointer;
+    }
+
+    .font-mono { font-family: var(--font-family-mono); }
+    .text-white { color: #ffffff !important; }
+    .text-cyan { color: var(--color-cyan-light, #22d3ee) !important; }
+    .text-gold { color: var(--color-gold-light, #fbbf24) !important; }
+    .text-muted { color: var(--color-text-secondary, #cbd5e1) !important; }
+    .currency-prefix { color: var(--color-gold-light, #fbbf24) !important; font-weight: var(--font-weight-bold, 700); }
+  `]
 })
 export class PurchaseRequestModalComponent implements OnInit {
-    private dialogRef = inject(MatDialogRef<PurchaseRequestModalComponent>);
-    private productService = inject(ProductService);
-    private prService = inject(PurchaseRequestService);
-    private snackBar = inject(MatSnackBar);
+  dialogRef = inject(MatDialogRef<PurchaseRequestModalComponent>);
+  private productService = inject(ProductService);
+  private prService = inject(PurchaseRequestService);
+  private snackBar = inject(MatSnackBar);
 
-    products = signal<Product[]>([]);
-    title = '';
-    priority: PurchaseRequestPriority = 'NORMAL';
-    notes = '';
-    submitting = signal(false);
+  products = signal<Product[]>([]);
+  title = '';
+  priority: PurchaseRequestPriority = 'NORMAL';
+  notes = '';
+  isSubmitting = false;
 
-    items: FormLineItem[] = [
-        {
-            itemType: 'CATALOG_PRODUCT',
-            name: '',
-            requestedQuantity: 1,
-            unit: 'Item',
-            estimatedUnitCost: 0,
-        },
-    ];
+  items: FormLineItem[] = [
+    {
+      itemType: 'CATALOG_PRODUCT',
+      name: '',
+      requestedQuantity: 1,
+      unit: 'pcs',
+      estimatedUnitCost: 0,
+    },
+  ];
 
-    ngOnInit(): void {
-        this.productService.getProducts().subscribe((data) => {
-            // Sort retail products
-            const sorted = [...data].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-            this.products.set(sorted);
-        });
+  ngOnInit(): void {
+    this.productService.getProducts().subscribe((list) => {
+      this.products.set(list);
+    });
+  }
+
+  addItem(): void {
+    this.items.push({
+      itemType: 'CATALOG_PRODUCT',
+      name: '',
+      requestedQuantity: 1,
+      unit: 'pcs',
+      estimatedUnitCost: 0,
+    });
+  }
+
+  removeItem(idx: number): void {
+    this.items.splice(idx, 1);
+  }
+
+  onItemTypeChange(item: FormLineItem): void {
+    item.productId = undefined;
+    item.name = '';
+    item.estimatedUnitCost = 0;
+  }
+
+  onProductSelected(item: FormLineItem, productId: string): void {
+    item.productId = productId;
+    const p = this.products().find((x) => x.id === productId);
+    if (p) {
+      item.name = p.name;
+      item.category = p.category;
+      item.currentStock = p.stock || 0;
+      item.unit = p.unit || 'pcs';
+      item.estimatedUnitCost = (p as any).cost || p.price || 0;
+    }
+  }
+
+  totalEstimatedCost(): number {
+    return this.items.reduce((sum, i) => sum + (i.requestedQuantity || 0) * (i.estimatedUnitCost || 0), 0);
+  }
+
+  async submit(): Promise<void> {
+    if (!this.title.trim()) {
+      this.snackBar.open('Please enter a request title.', 'Close', { duration: 3000 });
+      return;
     }
 
-    addItem(): void {
-        this.items.push({
-            itemType: 'CATALOG_PRODUCT',
-            name: '',
-            requestedQuantity: 1,
-            unit: 'Item',
-            estimatedUnitCost: 0,
-        });
+    for (const item of this.items) {
+      if (!item.name.trim()) {
+        this.snackBar.open('Please select or enter an item name for all lines.', 'Close', { duration: 3000 });
+        return;
+      }
+      if (!item.requestedQuantity || item.requestedQuantity < 1) {
+        this.snackBar.open('Quantity must be at least 1.', 'Close', { duration: 3000 });
+        return;
+      }
     }
 
-    removeItem(index: number): void {
-        if (this.items.length > 1) {
-            this.items.splice(index, 1);
-        }
+    this.isSubmitting = true;
+    try {
+      const lineItems: PurchaseRequestItem[] = this.items.map((i) => ({
+        itemType: i.itemType,
+        productId: i.productId || undefined,
+        name: i.name,
+        category: i.category || 'General',
+        currentStockAtRequest: i.currentStock,
+        requestedQuantity: i.requestedQuantity,
+        unit: i.unit,
+        estimatedUnitCost: i.estimatedUnitCost,
+        estimatedSubtotal: i.requestedQuantity * i.estimatedUnitCost,
+      }));
+
+      await this.prService.createPurchaseRequest({
+        title: this.title.trim(),
+        priority: this.priority,
+        notes: this.notes.trim() || undefined,
+        items: lineItems,
+        
+      });
+
+      this.snackBar.open('Purchase request submitted successfully!', 'Close', { duration: 3000 });
+      this.dialogRef.close(true);
+    } catch (err: any) {
+      this.snackBar.open(err.message || 'Failed to submit request.', 'Close', { duration: 4000 });
+    } finally {
+      this.isSubmitting = false;
     }
-
-    onItemTypeChange(item: FormLineItem): void {
-        item.productId = undefined;
-        item.name = '';
-        item.estimatedUnitCost = 0;
-    }
-
-    onProductSelected(item: FormLineItem, productId: string): void {
-        const product = this.products().find((p) => p.id === productId);
-        if (product) {
-            item.name = product.name;
-            item.category = product.category;
-            item.unit = product.unit || 'Item';
-            item.currentStock = product.stock || 0;
-            item.estimatedUnitCost = product.lastCostPrice || product.price || 0;
-        }
-    }
-
-    calculateTotal(): number {
-        return this.items.reduce((sum, item) => sum + (item.requestedQuantity || 0) * (item.estimatedUnitCost || 0), 0);
-    }
-
-    isValid(): boolean {
-        if (!this.title.trim()) return false;
-        if (this.items.length === 0) return false;
-        for (const item of this.items) {
-            if (item.itemType === 'CATALOG_PRODUCT' && !item.productId) return false;
-            if (item.itemType === 'CUSTOM_SUPPLY' && !item.name.trim()) return false;
-            if (!item.requestedQuantity || item.requestedQuantity <= 0) return false;
-        }
-        return true;
-    }
-
-    async submitRequest(): Promise<void> {
-        if (!this.isValid() || this.submitting()) return;
-        this.submitting.set(true);
-
-        try {
-            const requestItems: PurchaseRequestItem[] = this.items.map((i) => ({
-                productId: i.productId,
-                name: i.name,
-                category: i.category,
-                itemType: i.itemType,
-                requestedQuantity: Number(i.requestedQuantity),
-                unit: i.unit || 'Item',
-                estimatedUnitCost: Number(i.estimatedUnitCost) || 0,
-                estimatedTotalCost: (Number(i.requestedQuantity) || 0) * (Number(i.estimatedUnitCost) || 0),
-                currentStockSnapshot: i.currentStock,
-            }));
-
-            await this.prService.createPurchaseRequest({
-                title: this.title.trim(),
-                priority: this.priority,
-                items: requestItems,
-                notes: this.notes.trim(),
-            });
-
-            this.snackBar.open('🎉 Purchase Request submitted successfully!', 'Close', { duration: 3000 });
-            this.dialogRef.close(true);
-        } catch (err) {
-            console.error('Failed to submit purchase request:', err);
-            this.snackBar.open('Failed to submit request. Please try again.', 'Close', { duration: 3500 });
-        } finally {
-            this.submitting.set(false);
-        }
-    }
+  }
 }

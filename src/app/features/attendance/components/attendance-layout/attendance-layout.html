@@ -1,0 +1,99 @@
+<div class="attendance-page" [@fadeIn]>
+
+  <!-- Top Header & Floor Operations Identity -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-icon-wrap">
+        <mat-icon class="header-icon">event_available</mat-icon>
+      </div>
+      <div>
+        <h1 class="page-title">Attendance & Floor Operations</h1>
+        <p class="page-subtitle">Real-time kiosk check-in, active gym floor sessions, locker management, and logs</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Live Floor Telemetry Pulse Ribbon (3 KPI Cards) -->
+  <section class="floor-pulse-ribbon" [@staggerList]>
+    <!-- Active On Floor -->
+    <div class="pulse-card card-active">
+      <div class="pulse-top">
+        <span class="pulse-label">Active On Floor</span>
+        <div class="pulse-icon-pill icon-mint">
+          <mat-icon>directions_run</mat-icon>
+        </div>
+      </div>
+      <div class="pulse-body">
+        <span class="pulse-val text-mint">{{ (activeCount$ | async) ?? 0 }}</span>
+        <span class="pulse-unit">Members</span>
+      </div>
+      <div class="pulse-footer">
+        <span class="status-indicator-dot dot-live"></span>
+        <span class="pulse-sub">Live Gym Floor Occupancy</span>
+      </div>
+    </div>
+
+    <!-- Available Lockers -->
+    <div class="pulse-card card-lockers">
+      <div class="pulse-top">
+        <span class="pulse-label">Available Lockers</span>
+        <div class="pulse-icon-pill icon-cyan">
+          <mat-icon>lock_open</mat-icon>
+        </div>
+      </div>
+      <div class="pulse-body">
+        <span class="pulse-val text-cyan">{{ (availableLockers$ | async) ?? 12 }} <small class="pulse-unit">/ 12</small></span>
+      </div>
+      <div class="pulse-footer">
+        <span class="pulse-sub">Locker Bay Status</span>
+      </div>
+    </div>
+
+    <!-- Shift Reminder Notice -->
+    <div class="pulse-card card-notice">
+      <div class="pulse-top">
+        <span class="pulse-label">Checkout Protocol</span>
+        <div class="pulse-icon-pill icon-gold">
+          <mat-icon>info</mat-icon>
+        </div>
+      </div>
+      <div class="pulse-body">
+        <span class="notice-text">Remember to retrieve locker keys upon member check-out</span>
+      </div>
+      <div class="pulse-footer">
+        <span class="pulse-sub">Key Security Protocol</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- High-Contrast Navigation Tab Capsule Deck -->
+  <nav class="custom-tab-deck">
+    <button type="button" class="tab-pill" [class.active]="activeTab === 'kiosk'" (click)="selectTab('kiosk')">
+      <mat-icon class="tab-pill-icon">touch_app</mat-icon>
+      <span>Check-in Kiosk</span>
+    </button>
+    <button type="button" class="tab-pill" [class.active]="activeTab === 'active'" (click)="selectTab('active')">
+      <mat-icon class="tab-pill-icon">group</mat-icon>
+      <span>Active Sessions</span>
+      <span class="tab-badge" *ngIf="(activeCount$ | async) as count">{{ count }}</span>
+    </button>
+    <button type="button" class="tab-pill" [class.active]="activeTab === 'history'" (click)="selectTab('history')">
+      <mat-icon class="tab-pill-icon">history</mat-icon>
+      <span>Attendance Logs</span>
+    </button>
+  </nav>
+
+  <!-- Tab Views -->
+  <main class="tab-content-area" [@fadeIn]>
+    <div *ngIf="activeTab === 'kiosk'">
+      <app-check-in-kiosk></app-check-in-kiosk>
+    </div>
+    <div *ngIf="activeTab === 'active'">
+      <app-active-sessions></app-active-sessions>
+    </div>
+    <div *ngIf="activeTab === 'history'">
+      <app-attendance-history></app-attendance-history>
+    </div>
+  </main>
+
+</div>

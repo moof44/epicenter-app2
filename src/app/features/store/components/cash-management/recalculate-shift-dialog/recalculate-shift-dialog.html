@@ -1,0 +1,87 @@
+<div class="recalc-dialog-container">
+  <!-- Header -->
+  <div class="recalc-header">
+    <div class="dialog-title-row">
+      <div class="dialog-icon-seal">
+        <mat-icon [class.spinning]="isCalculating()">sync</mat-icon>
+      </div>
+      <div>
+        <h2 class="dialog-title">Recalculate Shift Totals</h2>
+        <span class="dialog-sub">Audit transaction ledger & sync cash register</span>
+      </div>
+    </div>
+    <button type="button" class="btn-close-dialog" (click)="onClose()" matTooltip="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="dialog-body">
+
+    <!-- 1. Confirmation State (Before Execution) -->
+    <ng-container *ngIf="!result()">
+      <div class="shift-context-card">
+        <div class="context-row">
+          <span class="context-lbl">Shift Performer:</span>
+          <strong class="context-val text-white">{{ data.shift.openedBy || 'Staff' }}</strong>
+        </div>
+        <div class="context-row">
+          <span class="context-lbl">Current Stored Revenue:</span>
+          <strong class="context-val text-gold">₱{{ (data.shift.totalRevenue || data.shift.totalSales || 0) | number:'1.2-2' }}</strong>
+        </div>
+        <div class="context-row">
+          <span class="context-lbl">Recorded Transactions:</span>
+          <span class="context-val text-cyan">{{ data.shift.transactions.length || 0 }} items</span>
+        </div>
+      </div>
+
+      <div class="info-alert">
+        <mat-icon class="text-cyan">info</mat-icon>
+        <div class="info-text">
+          <span>This will replay all raw transaction receipts in Firestore, verify voided sales, and re-compute expected closing cash, cash sales, and GCash revenue.</span>
+        </div>
+      </div>
+
+      <div class="error-alert" *ngIf="errorMessage()">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    </ng-container>
+
+    <!-- 2. Result State (After Execution) -->
+    <ng-container *ngIf="result() as res">
+      <div class="success-banner">
+        <mat-icon class="text-mint">check_circle</mat-icon>
+        <div class="success-meta">
+          <strong>Shift Totals Synchronized Successfully</strong>
+          <span>All transaction receipts re-verified and ledger balances updated in Firestore.</span>
+        </div>
+      </div>
+
+      <div class="result-metrics-grid">
+        <div class="metric-card highlight-card">
+          <span class="metric-lbl">Ledger Adjustment</span>
+          <strong class="metric-val" [class.text-mint]="res.salesDiff === 0" [class.text-gold]="res.salesDiff > 0" [class.text-rose]="res.salesDiff < 0">
+            {{ res.salesDiff === 0 ? 'Exact Match (₱0.00)' : ((res.salesDiff > 0 ? '+' : '') + '₱' + (res.salesDiff | number:'1.2-2')) }}
+          </strong>
+          <small class="metric-sub text-muted">Difference between stored total and verified receipts</small>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+
+  <!-- Actions -->
+  <div class="dialog-actions-bar">
+    <button type="button" class="btn-cancel" (click)="onClose()" *ngIf="!result()" [disabled]="isCalculating()">Cancel</button>
+    <button type="button" class="btn-confirm-gold" (click)="onRecalculate()" *ngIf="!result()" [disabled]="isCalculating()">
+      <mat-icon class="btn-icon" *ngIf="!isCalculating()">sync</mat-icon>
+      <mat-spinner diameter="16" *ngIf="isCalculating()"></mat-spinner>
+      <span>{{ isCalculating() ? 'Recalculating...' : 'Recalculate Now' }}</span>
+    </button>
+    <button type="button" class="btn-confirm-gold" (click)="onClose()" *ngIf="result()">
+      <mat-icon class="btn-icon">check</mat-icon>
+      <span>Done</span>
+    </button>
+  </div>
+</div>

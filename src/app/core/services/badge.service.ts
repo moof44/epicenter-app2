@@ -62,4 +62,9 @@ export class BadgeService {
         );
         return updateDoc(docRef, data);
     }
+
+    deleteBadgeDefinition(id: string): Promise<void> {
+        const docRef = doc(this.firestore, 'badge_definitions', id);
+        return deleteDoc(docRef);
+    }
 }

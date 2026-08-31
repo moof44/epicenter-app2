@@ -6,70 +6,88 @@
 .shift-status {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 20px;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
   cursor: pointer;
-  transition: background-color 0.2s;
-  min-height: 44px;
+  transition: all 150ms ease;
+  height: 34px;
+  user-select: none;
+  font-family: var(--font-family-sans);
 }
 
 .shift-status.open {
-  background: rgba(76, 175, 80, 0.15);
-  color: #4caf50;
+  background: var(--color-success-dim);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  color: var(--color-success);
 }
 
 .shift-status.open:hover {
-  background: rgba(76, 175, 80, 0.25);
+  background: rgba(52, 211, 153, 0.25);
+  border-color: rgba(52, 211, 153, 0.6);
 }
 
-.shift-status.open:active {
-  background: rgba(76, 175, 80, 0.35);
+.shift-status mat-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
 }
 
 .shift-info {
   display: flex;
-  flex-direction: column;
-  line-height: 1.2;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
 }
 
 .status-label {
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.8;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
 }
 
 .cash-amount {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-extrabold);
 }
 
 .open-shift-btn {
-  border-color: currentColor;
-  min-height: 44px;
+  background-color: var(--color-gold-dim) !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  color: var(--color-gold-light) !important;
+  border-radius: var(--radius-full) !important;
+  font-size: var(--font-size-xs) !important;
+  font-weight: var(--font-weight-bold) !important;
+  font-family: var(--font-family-sans) !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  transition: all 150ms ease !important;
+  white-space: nowrap !important;
 }
 
-/* Mobile */
-@media (max-width: 600px) {
-  .shift-status {
-    padding: 4px 8px;
-  }
+.open-shift-btn:hover {
+  background-color: rgba(245, 158, 11, 0.25) !important;
+  border-color: rgba(245, 158, 11, 0.6) !important;
+}
 
-  .shift-info {
+.open-shift-btn mat-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+@media (max-width: 640px) {
+  .status-label {
     display: none;
   }
-
-  .shift-status mat-icon {
-    margin: 0;
-  }
-
-  .open-shift-btn {
-    padding: 0 8px;
-    min-width: 44px;
-  }
-
   .open-shift-btn span {
     display: none;
+  }
+  .open-shift-btn {
+    padding: 0 8px !important;
   }
 }

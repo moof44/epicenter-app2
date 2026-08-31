@@ -18,8 +18,9 @@ import { fadeIn } from '../../../../core/animations/animations';
 
 @Component({
   selector: 'app-progress-form',
+  standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, RouterLink, MatInputModule,
+    CommonModule, ReactiveFormsModule, MatInputModule,
     MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule,
     MatDatepickerModule, MatNativeDateModule, MatSnackBarModule
   ],
@@ -42,7 +43,7 @@ export class ProgressForm implements OnInit {
   memberId: string | null = null;
   entryId: string | null = null;
   isEditMode = false;
-  formTitle = 'New Measurement Entry';
+  formTitle = 'New Progress Checkup';
 
   // Image Upload state
   selectedFile: File | null = null;
@@ -79,7 +80,7 @@ export class ProgressForm implements OnInit {
 
     if (this.entryId) {
       this.isEditMode = true;
-      this.formTitle = 'Edit Measurement Entry';
+      this.formTitle = 'Edit Progress Checkup';
       this.loadEntry();
     }
   }
@@ -108,6 +109,14 @@ export class ProgressForm implements OnInit {
     this.cdr.markForCheck();
   }
 
+  cancel() {
+    if (this.memberId) {
+      this.router.navigate(['/members', this.memberId, 'progress']);
+    } else {
+      this.router.navigate(['/members']);
+    }
+  }
+
   private async loadEntry(): Promise<void> {
     if (!this.memberId || !this.entryId) return;
 
@@ -117,7 +126,6 @@ export class ProgressForm implements OnInit {
       const entry = measurements?.find(m => m.id === this.entryId);
 
       if (entry) {
-        // Convert Firestore timestamp to Date if needed
         const date = entry.date instanceof Date ? entry.date : new Date(entry.date);
         this.existingImageUrl = entry.reportImageUrl || null;
         this.existingStoragePath = entry.storagePath || null;
@@ -144,11 +152,11 @@ export class ProgressForm implements OnInit {
         });
       } else {
         this.snackBar.open('Entry not found', 'Close', { duration: 3000 });
-        this.router.navigate(['/members', this.memberId, 'progress']);
+        this.cancel();
       }
     } catch {
       this.snackBar.open('Failed to load entry', 'Close', { duration: 3000 });
-      this.router.navigate(['/members', this.memberId, 'progress']);
+      this.cancel();
     } finally {
       this.loading = false;
       this.cdr.markForCheck();
@@ -165,7 +173,6 @@ export class ProgressForm implements OnInit {
       let reportImageUrl = this.existingImageUrl;
       let storagePath = this.existingStoragePath;
 
-      // If a new image file was selected, upload it to Storage
       if (this.selectedFile) {
         this.uploadingImage = true;
         this.cdr.markForCheck();
@@ -175,7 +182,6 @@ export class ProgressForm implements OnInit {
         this.uploadingImage = false;
       }
 
-      // Build data payload omitting empty strings
       const raw = this.form.value;
       const data: Partial<Measurement> = {
         date: raw.date
@@ -200,13 +206,13 @@ export class ProgressForm implements OnInit {
 
       if (this.isEditMode && this.entryId) {
         await this.progressService.updateEntry(this.memberId, this.entryId, data);
-        this.snackBar.open('Measurement entry updated!', 'Close', { duration: 2500 });
+        this.snackBar.open('Progress checkup updated successfully!', 'Close', { duration: 2500 });
       } else {
         await this.progressService.addEntry(this.memberId, data as Measurement);
-        this.snackBar.open('Measurement entry saved!', 'Close', { duration: 2500 });
+        this.snackBar.open('Progress checkup saved successfully!', 'Close', { duration: 2500 });
       }
 
-      this.router.navigate(['/members', this.memberId, 'progress']);
+      this.cancel();
     } catch (err: any) {
       console.error('Error saving measurement:', err);
       this.snackBar.open('Failed to save entry: ' + (err.message || 'Error'), 'Close', { duration: 3500 });

@@ -22,6 +22,7 @@ import { ProductFormDialog } from './product-form-dialog/product-form-dialog';
 
 @Component({
   selector: 'app-product-management',
+  standalone: true,
   imports: [
     CommonModule, FormsModule, MatTableModule, MatButtonModule, MatIconModule,
     MatInputModule, MatFormFieldModule, MatSelectModule, MatDialogModule,
@@ -43,21 +44,54 @@ export class ProductManagement implements AfterViewInit {
   displayedColumns = ['name', 'category', 'price', 'stock', 'actions'];
   categories: ProductCategory[] = ['Training', 'Supplements', 'Drinks', 'Boxing'];
 
-  // Data State - Reactive
+  // Data State
   products$ = this.productService.getProducts();
   products = toSignal(this.products$, { initialValue: [] as Product[] });
 
-  // UI State - Signals
+  // Filters & State
   currentFilter = signal<ProductType>('RETAIL');
+  searchQuery = signal<string>('');
+  selectedCategory = signal<string>('ALL');
 
-  // Computed filtered data
-  filteredProducts = computed(() => {
+  // Products filtered by type (for metrics)
+  typeProducts = computed(() => {
     const all = this.products();
-    const filter = this.currentFilter();
-    return all.filter(p => {
-      const type = p.type || 'RETAIL';
-      return type === filter;
-    });
+    const type = this.currentFilter();
+    return all.filter(p => (p.type || 'RETAIL') === type);
+  });
+
+  // Summary Metrics
+  totalSkus = computed(() => this.typeProducts().length);
+  totalInventoryValue = computed(() => {
+    if (this.currentFilter() !== 'RETAIL') return 0;
+    return this.typeProducts().reduce((sum, p) => sum + (p.price || 0) * (p.stock || 0), 0);
+  });
+  lowStockCount = computed(() => {
+    return this.typeProducts().filter(p => p.stock > 0 && p.stock <= (p.minStockLevel || 5)).length;
+  });
+  outOfStockCount = computed(() => {
+    return this.typeProducts().filter(p => (p.stock || 0) <= 0).length;
+  });
+
+  // Fully filtered products for table
+  filteredProducts = computed(() => {
+    let list = this.typeProducts();
+    const q = this.searchQuery().trim().toLowerCase();
+    const cat = this.selectedCategory();
+
+    if (cat !== 'ALL') {
+      list = list.filter(p => p.category === cat);
+    }
+
+    if (q) {
+      list = list.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.category && p.category.toLowerCase().includes(q)) ||
+        (p.description && p.description.toLowerCase().includes(q))
+      );
+    }
+
+    return list;
   });
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -81,29 +115,45 @@ export class ProductManagement implements AfterViewInit {
 
   onTabChange(index: number) {
     this.currentFilter.set(index === 0 ? 'RETAIL' : 'CONSUMABLE');
+    this.selectedCategory.set('ALL');
+  }
+
+  onSearchChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchQuery.set(input.value);
+  }
+
+  clearSearch(): void {
+    this.searchQuery.set('');
+  }
+
+  setCategoryFilter(category: string): void {
+    this.selectedCategory.set(category);
   }
 
   openAddForm(): void {
     this.dialog.open(ProductFormDialog, {
-      width: '500px',
-      maxWidth: '95vw',
+      width: '560px',
+      maxWidth: '94vw',
+      maxHeight: '92vh',
       data: { type: this.currentFilter() }
     });
   }
 
   openEditForm(product: Product): void {
     this.dialog.open(ProductFormDialog, {
-      width: '500px',
-      maxWidth: '95vw',
+      width: '560px',
+      maxWidth: '94vw',
+      maxHeight: '92vh',
       data: { product: product }
     });
   }
 
   async deleteProduct(product: Product): Promise<void> {
-    if (!product.id || !confirm(`Delete "${product.name}"?`)) return;
+    if (!product.id || !confirm(`Delete "${product.name}" from inventory?`)) return;
     try {
       await this.productService.deleteProduct(product.id);
-      this.snackBar.open('Product deleted', 'Close', { duration: 3000 });
+      this.snackBar.open(`"${product.name}" deleted successfully`, 'Close', { duration: 3000 });
     } catch {
       this.snackBar.open('Error deleting product', 'Close', { duration: 3000 });
     } finally {
@@ -124,13 +174,13 @@ export class ProductManagement implements AfterViewInit {
     }
   }
 
-  getCategoryColor(category: ProductCategory): string {
-    const colors: Record<ProductCategory, string> = {
-      'Supplements': 'primary',
-      'Drinks': 'accent',
-      'Boxing': 'warn',
-      'Training': 'warn'
-    };
-    return colors[category] || 'primary';
+  getCategoryColor(category?: ProductCategory): string {
+    switch (category) {
+      case 'Training': return '#38bdf8';
+      case 'Supplements': return '#fbbf24';
+      case 'Drinks': return '#34d399';
+      case 'Boxing': return '#f87171';
+      default: return '#94a3b8';
+    }
   }
 }

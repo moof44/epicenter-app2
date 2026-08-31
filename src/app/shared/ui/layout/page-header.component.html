@@ -1,0 +1,19 @@
+<header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-border/50">
+  <div class="flex items-center gap-3">
+    <div *ngIf="icon" class="w-10 h-10 rounded-xl bg-cyan-primary/15 border border-cyan-focus/40 flex items-center justify-center text-cyan-light flex-shrink-0 shadow-sm">
+      <mat-icon class="text-[22px] w-[22px] h-[22px]">{{ icon }}</mat-icon>
+    </div>
+    <div>
+      <h1 class="text-xl sm:text-2xl font-extrabold text-text-pure tracking-tight font-inter leading-tight">
+        {{ title }}
+      </h1>
+      <p *ngIf="subtitle" class="text-xs sm:text-sm font-medium text-text-secondary mt-0.5 font-inter">
+        {{ subtitle }}
+      </p>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2.5 flex-wrap">
+    <ng-content select="[actions]"></ng-content>
+  </div>
+</header>

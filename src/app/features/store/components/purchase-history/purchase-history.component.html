@@ -1,135 +1,295 @@
-<div class="container" @fadeIn>
-  <div class="header">
-    <h1>Purchase History</h1>
+<div class="purchase-history-container" @fadeIn>
+
+  <!-- ── Page Header Deck ── -->
+  <div class="page-header">
+    <div class="header-left-group">
+      <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Store Management">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-titles">
+        <h1 class="page-title">Purchase Orders & Supplier Invoices</h1>
+        <p class="page-subtitle">Track incoming wholesale inventory restocks, vendor costs, and purchase receipts</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <a routerLink="/store/restock" class="btn-restock-gold">
+        <mat-icon class="btn-icon">add_shopping_cart</mat-icon>
+        <span>Restock Entry</span>
+      </a>
+    </div>
   </div>
 
-  <div class="filters-section">
-    <mat-form-field appearance="outline">
-      <mat-label>Date Range</mat-label>
-      <mat-date-range-input [rangePicker]="picker">
-        <input matStartDate [(ngModel)]="startDate" placeholder="Start date">
-        <input matEndDate [(ngModel)]="endDate" placeholder="End date" (dateChange)="applyFilters()">
-      </mat-date-range-input>
-      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-      <mat-date-range-picker #picker></mat-date-range-picker>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Supplier</mat-label>
-      <input matInput [(ngModel)]="supplierFilter" (keyup.enter)="applyFilters()" placeholder="Filter by supplier...">
-      <button mat-icon-button matSuffix (click)="applyFilters()">
-        <mat-icon>search</mat-icon>
-      </button>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Product Name</mat-label>
-      <input matInput [(ngModel)]="productFilter" (keyup.enter)="applyFilters()" placeholder="Filter by product...">
-      <button mat-icon-button matSuffix (click)="applyFilters()">
-        <mat-icon>search</mat-icon>
-      </button>
-    </mat-form-field>
-
-    <button mat-stroked-button (click)="applyFilters()">Apply Filters</button>
-  </div>
-
+  <!-- ── 4-Card Executive Summary Deck ── -->
   <div class="summary-cards">
-    <div class="card">
-      <div class="card-title">Total Spent (All Time)</div>
-      <div class="card-value">{{ totalSpent | currency }}</div>
+    <!-- 1. Total Spent -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-gold">
+        <mat-icon>account_balance_wallet</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Total Spent (All Time)</span>
+        <strong class="value font-mono text-gold">₱{{ totalSpent() | number:'1.2-2' }}</strong>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-title">Orders This Month</div>
-      <div class="card-value">{{ ordersThisMonth }}</div>
+
+    <!-- 2. Orders This Month -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-cyan">
+        <mat-icon>receipt_long</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Orders This Month</span>
+        <strong class="value font-mono text-cyan">{{ ordersThisMonth() }} orders</strong>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-title">Recent Spending (30d)</div>
-      <div class="card-value">{{ recentSpending | currency }}</div>
+
+    <!-- 3. Recent 30d Spend -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-mint">
+        <mat-icon>trending_up</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Recent Spending (30d)</span>
+        <strong class="value font-mono text-mint">₱{{ recentSpending() | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <!-- 4. Average PO Size -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-purple">
+        <mat-icon>analytics</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Average Order Size</span>
+        <strong class="value font-mono text-white">₱{{ avgOrderValue() | number:'1.2-2' }}</strong>
+      </div>
     </div>
   </div>
 
-  <div class="table-container">
-    <table mat-table [dataSource]="dataSource" multiTemplateDataRows>
+  <!-- ── Filter Controls Deck ── -->
+  <div class="filters-card">
+    <div class="filters-top-row">
+      <div class="filters-title-wrap">
+        <mat-icon class="text-cyan">filter_list</mat-icon>
+        <span class="filters-heading">Filter Purchase Orders</span>
+      </div>
 
-      <!-- Date Column -->
-      <ng-container matColumnDef="date">
-        <th mat-header-cell *matHeaderCellDef> Date </th>
-        <td mat-cell *matCellDef="let element"> {{element.date?.toDate() | date}} </td>
-      </ng-container>
+      <button type="button" class="btn-reset-text" (click)="resetFilters()">
+        <mat-icon>restart_alt</mat-icon> Reset Filters
+      </button>
+    </div>
 
-      <!-- Supplier Column -->
-      <ng-container matColumnDef="supplier">
-        <th mat-header-cell *matHeaderCellDef> Supplier </th>
-        <td mat-cell *matCellDef="let element"> {{element.supplierName}} </td>
-      </ng-container>
+    <div class="filters-grid">
+      <!-- Date Range -->
+      <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+        <mat-label>Date Range</mat-label>
+        <mat-date-range-input [rangePicker]="picker">
+          <input matStartDate [(ngModel)]="startDate" placeholder="Start date">
+          <input matEndDate [(ngModel)]="endDate" placeholder="End date" (dateChange)="applyFilters()">
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-date-range-picker #picker></mat-date-range-picker>
+      </mat-form-field>
 
-      <!-- Items Count -->
-      <ng-container matColumnDef="items">
-        <th mat-header-cell *matHeaderCellDef> Items </th>
-        <td mat-cell *matCellDef="let element"> {{element.items.length}} </td>
-      </ng-container>
+      <!-- Supplier Search -->
+      <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+        <mat-label>Supplier / Vendor Name</mat-label>
+        <input matInput [(ngModel)]="supplierFilter" (keyup.enter)="applyFilters()" placeholder="e.g. WheyKing, GymTech...">
+        <button mat-icon-button matSuffix (click)="applyFilters()">
+          <mat-icon>search</mat-icon>
+        </button>
+      </mat-form-field>
 
-      <!-- Total Cost -->
-      <ng-container matColumnDef="total">
-        <th mat-header-cell *matHeaderCellDef> Total Cost </th>
-        <td mat-cell *matCellDef="let element">
-          <strong>{{element.totalCost | currency}}</strong>
-        </td>
-      </ng-container>
+      <!-- Product Search -->
+      <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+        <mat-label>Product Item</mat-label>
+        <input matInput [(ngModel)]="productFilter" (keyup.enter)="applyFilters()" placeholder="e.g. Isolate, Creatine...">
+        <button mat-icon-button matSuffix (click)="applyFilters()">
+          <mat-icon>search</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+  </div>
 
-      <!-- Expand Toggle -->
-      <ng-container matColumnDef="expand">
-        <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
-        <td mat-cell *matCellDef="let element">
-          <button mat-icon-button aria-label="expand row"
-            (click)="(expandedElement = expandedElement === element ? null : element); $event.stopPropagation()">
-            <mat-icon *ngIf="expandedElement !== element">keyboard_arrow_down</mat-icon>
-            <mat-icon *ngIf="expandedElement === element">keyboard_arrow_up</mat-icon>
-          </button>
-        </td>
-      </ng-container>
+  <!-- ── Master Orders Deck Card ── -->
+  <div class="orders-deck-card">
+    <div class="deck-header">
+      <div class="deck-title-wrap">
+        <mat-icon class="text-gold">inventory</mat-icon>
+        <h3>Purchase Order Invoices</h3>
+      </div>
+      <span class="count-pill">{{ dataSource.data.length }} PO{{ dataSource.data.length === 1 ? '' : 's' }}</span>
+    </div>
 
-      <!-- Expanded Content Column -->
-      <ng-container matColumnDef="expandedDetail">
-        <td mat-cell *matCellDef="let element" [attr.colspan]="columnsToDisplayWithExpand.length">
-          <div class="element-detail" [@detailExpand]="element === expandedElement ? 'expanded' : 'collapsed'">
-            <div class="detail-content">
-              <h4>Order Details <span style="font-weight: normal; color: #666;">(Ref: {{element.referenceNumber ||
-                  'N/A'}})</span></h4>
-              <table class="detail-table" style="width: 100%; text-align: left;">
-                <tr>
-                  <th>Product</th>
-                  <th>Qty</th>
-                  <th>Unit Cost</th>
-                  <th>Total</th>
-                </tr>
-                <tr *ngFor="let item of element.items">
-                  <td>{{item.productName}}</td>
-                  <td>{{item.quantity}}</td>
-                  <td>{{item.unitCost | currency}}</td>
-                  <td>{{item.totalRowCost | currency}}</td>
-                </tr>
-              </table>
+    <!-- Loading State -->
+    <div class="loading-state-card" *ngIf="isLoading() && dataSource.data.length === 0">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading purchase orders...</span>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-history-state" *ngIf="!isLoading() && dataSource.data.length === 0">
+      <div class="empty-icon-seal">
+        <mat-icon>shopping_bag</mat-icon>
+      </div>
+      <h4>No purchase orders found</h4>
+      <p>There are no restock purchase records matching your filter criteria.</p>
+    </div>
+
+    <!-- ── Desktop Expandable Table (≥ 640px) ── -->
+    <div class="desktop-table-wrapper" *ngIf="dataSource.data.length > 0">
+      <table mat-table [dataSource]="dataSource" multiTemplateDataRows class="desktop-orders-table">
+
+        <!-- Date Column -->
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef class="col-date"> Order Date </th>
+          <td mat-cell *matCellDef="let element" class="col-date font-mono text-muted">
+            {{ (element.date?.toDate ? element.date.toDate() : element.date) | date:'mediumDate' }}
+          </td>
+        </ng-container>
+
+        <!-- Supplier Column -->
+        <ng-container matColumnDef="supplier">
+          <th mat-header-cell *matHeaderCellDef class="col-sup"> Supplier / Vendor </th>
+          <td mat-cell *matCellDef="let element" class="col-sup font-bold text-white">
+            {{ element.supplierName }}
+          </td>
+        </ng-container>
+
+        <!-- Reference Column -->
+        <ng-container matColumnDef="reference">
+          <th mat-header-cell *matHeaderCellDef class="col-ref"> Invoice Ref # </th>
+          <td mat-cell *matCellDef="let element" class="col-ref font-mono text-cyan font-semibold">
+            {{ element.referenceNumber || 'N/A' }}
+          </td>
+        </ng-container>
+
+        <!-- Items Count -->
+        <ng-container matColumnDef="items">
+          <th mat-header-cell *matHeaderCellDef class="col-items"> Items </th>
+          <td mat-cell *matCellDef="let element" class="col-items text-muted">
+            <span class="items-count-pill">{{ element.items.length || 0 }} Items</span>
+          </td>
+        </ng-container>
+
+        <!-- Total Cost -->
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef class="col-total"> Grand Total </th>
+          <td mat-cell *matCellDef="let element" class="col-total font-mono font-black text-gold">
+            ₱{{ element.totalCost | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <!-- Expand Toggle Column -->
+        <ng-container matColumnDef="expand">
+          <th mat-header-cell *matHeaderCellDef class="col-expand">&nbsp;</th>
+          <td mat-cell *matCellDef="let element" class="col-expand">
+            <button type="button" class="btn-expand-circle" (click)="toggleExpand(element, $event)">
+              <mat-icon>{{ expandedElement === element ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <!-- Expanded Detail Row -->
+        <ng-container matColumnDef="expandedDetail">
+          <td mat-cell *matCellDef="let element" [attr.colspan]="columnsToDisplayWithExpand.length" class="expanded-cell">
+            <div class="element-detail" [@detailExpand]="element === expandedElement ? 'expanded' : 'collapsed'">
+              <div class="detail-content-wrap">
+                <div class="detail-top-bar">
+                  <span class="detail-heading text-white">Itemized Purchase Breakdown</span>
+                  <span class="detail-ref text-muted">Ref: {{ element.referenceNumber || 'N/A' }}</span>
+                </div>
+
+                <table class="detail-items-table">
+                  <thead>
+                    <tr>
+                      <th>Product Name</th>
+                      <th class="text-center">Qty Received</th>
+                      <th class="text-right">Unit Cost</th>
+                      <th class="text-right">Line Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of element.items">
+                      <td class="text-white font-semibold">{{ item.productName }}</td>
+                      <td class="text-center font-mono text-cyan">{{ item.quantity }}</td>
+                      <td class="text-right font-mono text-muted">₱{{ item.unitCost | number:'1.2-2' }}</td>
+                      <td class="text-right font-mono text-gold font-bold">₱{{ item.totalRowCost | number:'1.2-2' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnsToDisplayWithExpand; sticky: true"></tr>
+        <tr mat-row *matRowDef="let element; columns: columnsToDisplayWithExpand;"
+            class="order-element-row"
+            [class.expanded-row]="expandedElement === element"
+            (click)="toggleExpand(element)">
+        </tr>
+        <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="detail-row"></tr>
+      </table>
+    </div>
+
+    <!-- ── Mobile Cards Deck (< 640px - Failure #25 Prevention) ── -->
+    <div class="mobile-cards-deck" *ngIf="dataSource.data.length > 0">
+      <div *ngFor="let order of dataSource.data" class="mobile-order-card">
+        
+        <div class="mobile-card-top-line">
+          <div class="supplier-wrap">
+            <mat-icon class="sup-icon text-cyan">storefront</mat-icon>
+            <strong class="mobile-sup-name text-white">{{ order.supplierName }}</strong>
+          </div>
+          <span class="mobile-order-date font-mono text-muted">
+            {{ (order.date?.toDate ? order.date.toDate() : order.date) | date:'MMM d, y' }}
+          </span>
+        </div>
+
+        <div class="mobile-card-meta-line">
+          <span class="text-muted" *ngIf="order.referenceNumber">Ref: <strong class="text-cyan font-mono">{{ order.referenceNumber }}</strong></span>
+          <span class="items-count-pill">{{ order.items.length || 0 }} Items</span>
+        </div>
+
+        <div class="mobile-card-total-bar">
+          <span class="mobile-sublabel text-muted">Order Total:</span>
+          <strong class="font-mono text-gold text-base">₱{{ order.totalCost | number:'1.2-2' }}</strong>
+        </div>
+
+        <!-- Mobile Expand Button -->
+        <button type="button" class="btn-mobile-toggle" (click)="toggleExpand(order)">
+          <span>{{ expandedElement === order ? 'Hide Breakdown' : 'View Itemized Details (' + (order.items.length || 0) + ')' }}</span>
+          <mat-icon>{{ expandedElement === order ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </button>
+
+        <!-- Mobile Expand Items Drawer -->
+        <div *ngIf="expandedElement === order" class="mobile-items-drawer" [@fadeIn]>
+          <div *ngFor="let item of order.items" class="mobile-drawer-item-row">
+            <div class="m-item-title text-white font-semibold">{{ item.productName }}</div>
+            <div class="m-item-fin-row font-mono">
+              <span class="text-cyan">{{ item.quantity }} units @ ₱{{ item.unitCost | number:'1.2-2' }}</span>
+              <strong class="text-gold">₱{{ item.totalRowCost | number:'1.2-2' }}</strong>
             </div>
           </div>
-        </td>
-      </ng-container>
+        </div>
 
-      <tr mat-header-row *matHeaderRowDef="columnsToDisplayWithExpand"></tr>
-      <tr mat-row *matRowDef="let element; columns: columnsToDisplayWithExpand;" class="element-row"
-        [class.example-expanded-row]="expandedElement === element"
-        (click)="expandedElement = expandedElement === element ? null : element">
-      </tr>
-      <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="detail-row"></tr>
-    </table>
-    <mat-paginator [pageSizeOptions]="[10, 20]" showFirstLastButtons></mat-paginator>
+      </div>
+    </div>
+
+    <!-- Load More Action -->
+    <div class="load-more-footer" *ngIf="hasMore() && dataSource.data.length > 0">
+      <button type="button" class="btn-load-more" (click)="loadOrders(true)" [disabled]="isLoading()">
+        <mat-spinner diameter="18" *ngIf="isLoading()"></mat-spinner>
+        <mat-icon *ngIf="!isLoading()">expand_more</mat-icon>
+        <span>{{ isLoading() ? 'Loading More POs...' : 'Load More Purchase Orders' }}</span>
+      </button>
+    </div>
+
   </div>
 
-  <div class="load-more-container" *ngIf="hasMore">
-    <button mat-stroked-button color="primary" (click)="loadOrders()" [disabled]="isLoading">
-      <mat-icon *ngIf="!isLoading">expand_more</mat-icon>
-      <mat-spinner *ngIf="isLoading" diameter="20" style="display:inline-block; margin-right: 8px"></mat-spinner>
-      {{ isLoading ? 'Loading...' : 'Load Older Orders' }}
-    </button>
-  </div>
+  <!-- ── Safe Area Physical Scroll Spacer (Failure #24 & #26 Prevention) ── -->
+  <div class="bottom-scroll-spacer"></div>
+
 </div>

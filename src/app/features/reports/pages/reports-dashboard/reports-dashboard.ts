@@ -1,8 +1,12 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ReportsService } from '../../../../core/services/reports.service';
 import { SettingsService } from '../../../../core/services/settings.service';
@@ -11,84 +15,101 @@ import { SalesPerformanceComponent } from '../../components/sales-performance/sa
 import { StaffSalesComponent } from '../../components/staff-sales/staff-sales';
 import { ProductBreakdownComponent } from '../../components/product-breakdown/product-breakdown';
 import { MemberAttendanceComponent } from '../../components/member-attendance/member-attendance';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { firstValueFrom } from 'rxjs';
+import { fadeIn } from '../../../../core/animations/animations';
 
 @Component({
-    selector: 'app-reports-dashboard',
-    standalone: true,
-    imports: [
-        CommonModule,
-        MatDatepickerModule,
-        MatFormFieldModule,
-        MatNativeDateModule,
-        FormsModule,
-        ReactiveFormsModule,
-        MatButtonModule,
-        MatIconModule,
-        VolumeChartComponent,
-        SalesPerformanceComponent,
-        StaffSalesComponent,
-        ProductBreakdownComponent,
-        MemberAttendanceComponent
-    ],
-    templateUrl: './reports-dashboard.html',
-    styleUrl: './reports-dashboard.css'
+  selector: 'app-reports-dashboard',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatNativeDateModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+    VolumeChartComponent,
+    SalesPerformanceComponent,
+    StaffSalesComponent,
+    ProductBreakdownComponent,
+    MemberAttendanceComponent
+  ],
+  templateUrl: './reports-dashboard.html',
+  styleUrl: './reports-dashboard.css',
+  animations: [fadeIn]
 })
 export class ReportsDashboardComponent {
-    private reportsService = inject(ReportsService);
-    private settingsService = inject(SettingsService);
+  private reportsService = inject(ReportsService);
+  private settingsService = inject(SettingsService);
+  private router = inject(Router);
 
-    range = new FormGroup({
-        start: new FormControl<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1)),
-        end: new FormControl<Date>(new Date())
-    });
+  range = new FormGroup({
+    start: new FormControl<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1)),
+    end: new FormControl<Date>(new Date())
+  });
 
-    // Data
-    volumeData: { date: string, count: number }[] = [];
-    peakHours: { hour: string, count: number }[] = [];
+  isLoading = signal(false);
 
-    salesData: { date: string, total: number }[] = [];
-    monthlyQuota = 0;
+  // Data
+  volumeData: { date: string; count: number }[] = [];
+  peakHours: { hour: string; count: number }[] = [];
+  salesData: { date: string; total: number }[] = [];
+  monthlyQuota = 0;
+  staffData: { name: string; total: number }[] = [];
+  productData: { name: string; quantity: number; revenue: number }[] = [];
+  memberData: { name: string; count: number }[] = [];
 
-    staffData: { name: string, total: number }[] = [];
-    productData: { name: string, quantity: number, revenue: number }[] = [];
-    memberData: { name: string, count: number }[] = [];
+  // Summary Metrics
+  totalVolume = computed(() => this.volumeData.reduce((sum, v) => sum + v.count, 0));
+  totalSales = computed(() => this.salesData.reduce((sum, s) => sum + s.total, 0));
+  topProductName = computed(() => {
+    if (this.productData.length === 0) return 'None';
+    const sorted = [...this.productData].sort((a, b) => b.revenue - a.revenue);
+    return sorted[0]?.name || 'None';
+  });
+  topStaffName = computed(() => {
+    if (this.staffData.length === 0) return 'None';
+    const sorted = [...this.staffData].sort((a, b) => b.total - a.total);
+    return sorted[0]?.name || 'None';
+  });
 
-    constructor() {
-        this.refreshCharts();
+  constructor() {
+    this.refreshCharts();
+  }
+
+  async refreshCharts() {
+    if (!this.range.value.start || !this.range.value.end) return;
+    const start = this.range.value.start;
+    const end = this.range.value.end;
+
+    this.isLoading.set(true);
+    try {
+      const [volume, sales, attendees, settings] = await Promise.all([
+        this.reportsService.getVolumeAnalytics(start, end),
+        this.reportsService.getSalesAnalytics(start, end),
+        this.reportsService.getTopAttendees(start, end),
+        firstValueFrom(this.settingsService.getSettings())
+      ]);
+
+      this.volumeData = volume.dailyVolume;
+      this.peakHours = volume.peakHours;
+      this.salesData = sales.dailySales;
+      this.staffData = sales.staffPerformance;
+      this.productData = sales.topProducts;
+      this.memberData = attendees;
+      this.monthlyQuota = settings.monthlyQuota || 0;
+    } catch (error) {
+      console.error('Error loading reports:', error);
+    } finally {
+      this.isLoading.set(false);
     }
+  }
 
-    async refreshCharts() {
-        if (!this.range.value.start || !this.range.value.end) return;
-        const start = this.range.value.start;
-        const end = this.range.value.end;
-
-        try {
-            // Parallel fetch for speed
-            // Note: getTopAttendees (Goal 5) is missing in ReportsService from previous step? 
-            // I checked ReportsService creation step, it DOES include getTopAttendees.
-
-            const [volume, sales, attendees, settings] = await Promise.all([
-                this.reportsService.getVolumeAnalytics(start, end),
-                this.reportsService.getSalesAnalytics(start, end),
-                this.reportsService.getTopAttendees(start, end),
-                firstValueFrom(this.settingsService.getSettings())
-            ]);
-
-            this.volumeData = volume.dailyVolume;
-            this.peakHours = volume.peakHours;
-
-            this.salesData = sales.dailySales;
-            this.staffData = sales.staffPerformance;
-            this.productData = sales.topProducts;
-
-            this.memberData = attendees;
-            this.monthlyQuota = settings.monthlyQuota || 0;
-
-        } catch (error) {
-            console.error('Error loading reports:', error);
-        }
-    }
+  goBack() {
+    this.router.navigate(['/dashboard']);
+  }
 }

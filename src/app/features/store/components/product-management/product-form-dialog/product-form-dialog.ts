@@ -6,14 +6,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { ProductService } from '../../../../../core/services/product.service';
 import { Product, ProductCategory, ProductType } from '../../../../../core/models/store.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 export interface ProductFormDialogData {
-  product?: Product; // If provided, editing
-  type?: ProductType; // If adding, sets default type
+  product?: Product;
+  type?: ProductType;
 }
 
 @Component({
@@ -21,93 +22,11 @@ export interface ProductFormDialogData {
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule,
-    MatInputModule, MatFormFieldModule, MatSelectModule, MatDialogModule
+    MatInputModule, MatFormFieldModule, MatSelectModule, MatDialogModule,
+    MatProgressSpinnerModule
   ],
-  template: `
-    <h2 mat-dialog-title>{{ isEditing ? 'Edit Product' : 'Add Product' }}</h2>
-    <mat-dialog-content>
-      <form [formGroup]="productForm" class="product-form-content">
-        
-        <!-- Name -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Product Name</mat-label>
-          <input matInput formControlName="name" placeholder="e.g. Whey Protein Isolate">
-          <mat-error *ngIf="productForm.get('name')?.hasError('required')">Name is required</mat-error>
-        </mat-form-field>
-
-        <!-- Description -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="3" placeholder="Product details..."></textarea>
-        </mat-form-field>
-
-        <!-- Category (Show if RETAIL only, but form holds value) -->
-        <mat-form-field appearance="outline" class="full-width" *ngIf="isRetail">
-          <mat-label>Category</mat-label>
-          <mat-select formControlName="category">
-            <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
-          </mat-select>
-          <mat-error *ngIf="productForm.get('category')?.hasError('required')">Category is required</mat-error>
-        </mat-form-field>
-
-        <div class="row-fields">
-          <!-- Price (Retail Only) -->
-          <mat-form-field appearance="outline" *ngIf="isRetail">
-            <mat-label>Price</mat-label>
-            <span matTextPrefix>₱&nbsp;</span>
-            <input matInput type="number" formControlName="price" min="0">
-             <mat-error *ngIf="productForm.get('price')?.hasError('required')">Price is required</mat-error>
-          </mat-form-field>
-
-          <!-- Unit -->
-          <mat-form-field appearance="outline">
-            <mat-label>Unit</mat-label>
-            <input matInput formControlName="unit" placeholder="e.g. Bottle, Pcs">
-          </mat-form-field>
-        </div>
-
-        <div class="row-fields">
-          <!-- Min Stock -->
-          <mat-form-field appearance="outline">
-            <mat-label>Min Stock Level</mat-label>
-            <input matInput type="number" formControlName="minStockLevel" min="0">
-          </mat-form-field>
-
-          <!-- Image URL -->
-          <mat-form-field appearance="outline">
-            <mat-label>Image URL</mat-label>
-            <input matInput formControlName="imageUrl" placeholder="https://...">
-          </mat-form-field>
-        </div>
-        
-      </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancel</button>
-      <button mat-raised-button color="primary" [disabled]="productForm.invalid || isSaving" (click)="save()">
-        {{ isSaving ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
-      </button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    .product-form-content {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      min-width: 300px;
-    }
-    .full-width { width: 100%; }
-    .row-fields {
-      display: flex;
-      gap: 1rem;
-    }
-    .row-fields mat-form-field {
-      flex: 1;
-    }
-    @media (max-width: 600px) {
-      .row-fields { flex-direction: column; gap: 0; }
-    }
-  `]
+  templateUrl: './product-form-dialog.html',
+  styleUrl: './product-form-dialog.css'
 })
 export class ProductFormDialog {
   private fb = inject(FormBuilder);
@@ -120,7 +39,6 @@ export class ProductFormDialog {
   isSaving = false;
 
   categories: ProductCategory[] = ['Training', 'Supplements', 'Drinks', 'Boxing'];
-
   public data = inject<ProductFormDialogData>(MAT_DIALOG_DATA);
 
   constructor() {
@@ -137,10 +55,8 @@ export class ProductFormDialog {
       minStockLevel: [product?.minStockLevel || 5, [Validators.required, Validators.min(0)]],
       imageUrl: [product?.imageUrl || ''],
       type: [product?.type || defaultType],
-      stock: [product?.stock || 0] // Hidden, preserved
+      stock: [product?.stock || 0]
     });
-
-    // Update validators if type changes (unlikely in this logic but safe to know)
   }
 
   get isRetail(): boolean {
@@ -153,10 +69,8 @@ export class ProductFormDialog {
     this.isSaving = true;
     const formValue = this.productForm.value;
 
-    // Ensure Consumables have price 0 if not set (though hidden)
     if (formValue.type === 'CONSUMABLE') {
       formValue.price = 0;
-      // Category might be irrelevant but we keep it or set default
     }
 
     try {
@@ -174,5 +88,9 @@ export class ProductFormDialog {
     } finally {
       this.isSaving = false;
     }
+  }
+
+  onClose(): void {
+    this.dialogRef.close(false);
   }
 }

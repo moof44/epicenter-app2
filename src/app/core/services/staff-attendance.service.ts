@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { safeToDate } from '../utils/date.utils';
 import {
     Firestore,
     collection,
@@ -884,9 +885,9 @@ export class StaffAttendanceService {
     private parseRecord(data: any): StaffAttendanceRecord {
         return {
             ...data,
-            checkInTime: data.checkInTime?.toDate ? data.checkInTime.toDate() : new Date(data.checkInTime),
-            checkOutTime: data.checkOutTime ? (data.checkOutTime?.toDate ? data.checkOutTime.toDate() : new Date(data.checkOutTime)) : undefined,
-            requestedCheckInTime: data.requestedCheckInTime ? (data.requestedCheckInTime?.toDate ? data.requestedCheckInTime.toDate() : new Date(data.requestedCheckInTime)) : undefined
+            checkInTime: safeToDate(data.checkInTime),
+            checkOutTime: data.checkOutTime ? safeToDate(data.checkOutTime) : undefined,
+            requestedCheckInTime: data.requestedCheckInTime ? safeToDate(data.requestedCheckInTime) : undefined
         };
     }
 

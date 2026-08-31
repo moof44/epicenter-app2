@@ -1,0 +1,38 @@
+<div *ngIf="isOpen" class="fixed inset-0 z-sheet flex flex-col justify-end">
+  <!-- Accessible Backdrop Overlay Button -->
+  <button
+    type="button"
+    class="fixed inset-0 w-full h-full bg-black/60 backdrop-blur-sm transition-opacity border-none cursor-default"
+    (click)="onClose()"
+    aria-label="Close bottom sheet backdrop"
+  ></button>
+
+  <!-- Sheet Surface -->
+  <div
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="title || 'Bottom Sheet Dialog'"
+    class="relative z-10 w-full max-w-lg mx-auto bg-slate-app border-t border-slate-border rounded-t-3xl p-6 pb-safe shadow-card-elevated flex flex-col max-h-[85vh]"
+  >
+    <!-- Drag Handle Indicator -->
+    <div class="w-10 h-1 bg-slate-border-light rounded-full mx-auto mb-4" aria-hidden="true"></div>
+
+    <!-- Header -->
+    <div *ngIf="title" class="flex items-center justify-between pb-4 border-b border-slate-border/50 mb-4">
+      <h3 class="text-lg font-bold text-text-pure font-inter">{{ title }}</h3>
+      <button
+        type="button"
+        (click)="onClose()"
+        aria-label="Close dialog"
+        class="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-pure hover:bg-slate-surface focus-visible:ring-2 focus-visible:ring-cyan-focus focus:outline-none"
+      >
+        <mat-icon class="text-[18px] w-[18px] h-[18px]" aria-hidden="true">close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto">
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

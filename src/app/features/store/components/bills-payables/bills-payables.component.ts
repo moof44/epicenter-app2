@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,6 +17,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PayablesService } from '../../../../core/services/payables.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
@@ -31,11 +33,13 @@ import { fadeIn } from '../../../../core/animations/animations';
 
 @Component({
   selector: 'app-bills-payables',
+  standalone: true,
   imports: [
-    CommonModule, FormsModule, MatTableModule, MatButtonModule, MatIconModule,
+    CommonModule, FormsModule, RouterModule, MatTableModule, MatButtonModule, MatIconModule,
     MatInputModule, MatFormFieldModule, MatSelectModule, MatCardModule,
     MatChipsModule, MatTabsModule, MatSnackBarModule, MatDialogModule,
-    MatTooltipModule, MatDatepickerModule, MatNativeDateModule, MatDividerModule
+    MatTooltipModule, MatDatepickerModule, MatNativeDateModule, MatDividerModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './bills-payables.component.html',
   styleUrl: './bills-payables.component.css',
@@ -45,6 +49,7 @@ export class BillsPayablesComponent implements OnInit {
   private payablesService = inject(PayablesService);
   private authService = inject(AuthService);
   private cashRegisterService = inject(CashRegisterService);
+  private router = inject(Router);
   private snackBar = inject(MatSnackBar);
 
   readonly categories = OUTFLOW_CATEGORIES;
@@ -171,6 +176,14 @@ export class BillsPayablesComponent implements OnInit {
     });
   }
 
+  setCategoryFilter(cat: string) {
+    this.selectedCategory.set(cat);
+  }
+
+  setStatusFilter(status: string) {
+    this.selectedStatus.set(status);
+  }
+
   openCreateModal(): void {
     this.newBill = {
       title: '',
@@ -293,18 +306,26 @@ export class BillsPayablesComponent implements OnInit {
     return this.cashRegisterService.isShiftOpen();
   }
 
-  isOverdue(dueDate: Date, status: BillStatus): boolean {
+  isOverdue(dueDate: any, status: BillStatus): boolean {
     if (status === 'PAID' || status === 'CANCELLED') return false;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return new Date(dueDate).getTime() < today.getTime();
+    const d = dueDate?.toDate ? dueDate.toDate() : new Date(dueDate);
+    return d.getTime() < today.getTime();
   }
 
-  getStatusClass(status: BillStatus, dueDate: Date): string {
+  getStatusClass(status: BillStatus, dueDate: any): string {
     if (status === 'PAID') return 'status-paid';
     if (this.isOverdue(dueDate, status)) return 'status-overdue';
     if (status === 'PARTIALLY_PAID') return 'status-partial';
     return 'status-unpaid';
+  }
+
+  getStatusLabel(status: BillStatus, dueDate: any): string {
+    if (status === 'PAID') return 'Fully Paid';
+    if (this.isOverdue(dueDate, status)) return 'Overdue';
+    if (status === 'PARTIALLY_PAID') return 'Partially Paid';
+    return 'Unpaid';
   }
 
   getPaymentSourceLabel(source: OutflowPaymentSource): string {
@@ -315,5 +336,9 @@ export class BillsPayablesComponent implements OnInit {
       case 'OWNER_ADVANCE': return '👤 Owner Advance';
       default: return source;
     }
+  }
+
+  goBack() {
+    this.router.navigate(['/store/manage']);
   }
 }

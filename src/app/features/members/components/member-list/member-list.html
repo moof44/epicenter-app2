@@ -1,196 +1,209 @@
-<div class="page-header">
-    <h1>Members</h1>
-    <div class="action-buttons">
-        <button mat-stroked-button color="warn" (click)="openDuplicateResolver()">
-            <mat-icon>merge_type</mat-icon> Resolve Duplicates
-        </button>
-        <a mat-raised-button color="primary" routerLink="/members/add">
-            <mat-icon>add</mat-icon> Add Member
-        </a>
-    </div>
-</div>
+<div class="member-directory-page" [@fadeIn]>
 
-<div class="filters-container">
-    <mat-form-field appearance="outline" class="search-field">
-        <mat-label>Search Members</mat-label>
-        <input matInput [(ngModel)]="searchQuery" (keyup)="applyFilters()" placeholder="Name or Contact #">
-        <mat-icon matSuffix>search</mat-icon>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
-        <mat-select [(ngModel)]="statusFilter" (selectionChange)="applyFilters()">
-            <mat-option value="All">All Status</mat-option>
-            <mat-option value="Active">Active</mat-option>
-            <mat-option value="Inactive">Inactive</mat-option>
-        </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-        <mat-label>Subscription</mat-label>
-        <mat-select [(ngModel)]="subscriptionFilter" (selectionChange)="applyFilters()">
-            <mat-option value="All">All Members</mat-option>
-            <mat-option value="HasSubscription">Has Subscription</mat-option>
-            <mat-option value="NoSubscription">No Subscription</mat-option>
-        </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-        <mat-label>Progress Report</mat-label>
-        <mat-select [(ngModel)]="progressFilter" (selectionChange)="applyFilters()">
-            <mat-option value="All">All Progress</mat-option>
-            <mat-option value="PendingScan">⏳ Pending Scan Data Entry</mat-option>
-            <mat-option value="UpToDate">✓ Progress Up to Date</mat-option>
-        </mat-select>
-    </mat-form-field>
-</div>
-
-<div class="mat-elevation-z2 table-container" [@fadeIn]>
-    <!-- Loading removed or handled by dataSource logic manually if needed, 
-         but MatTableDataSource handles empty arrays gracefully. 
-         Spinner can be conditional on an 'isLoading' flag if we added one. 
-         For simplicity, keeping it simple. -->
-
-    <table mat-table [dataSource]="dataSource" [trackBy]="trackByMemberId" class="full-width-table mobile-card-table"
-        *ngIf="totalMembers > 0; else emptyState">
-
-        <!-- Name Column -->
-        <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef> Name </th>
-            <td mat-cell *matCellDef="let member" data-label="Name">
-                <div class="name-container">
-                    <div class="member-name">{{ member.name }}</div>
-                    <div *ngIf="member.hasPendingProgressScan" class="pending-scan-tag" [routerLink]="['/members', member.id, 'progress']" matTooltip="Scan report uploaded. Numeric metrics pending manual transcription. Click to transcribe.">
-                        <mat-icon class="pulse-icon">document_scanner</mat-icon>
-                        <span>Pending Scan Data</span>
-                    </div>
-                </div>
-                <div class="member-email">{{ member.contactNumber }}</div>
-            </td>
-        </ng-container>
-
-
-        <!-- Remarks Column -->
-        <ng-container matColumnDef="remarks">
-            <th mat-header-cell *matHeaderCellDef> Remarks </th>
-            <td mat-cell *matCellDef="let member" data-label="Remarks">
-                <span *ngIf="member.remarks" class="remarks-text" [matTooltip]="member.remarks">
-                    <mat-icon class="remark-icon"
-                        style="font-size: 18px; height: 18px; width: 18px; vertical-align: middle;">comment</mat-icon>
-                </span>
-                <span *ngIf="!member.remarks" class="no-remark">-</span>
-            </td>
-        </ng-container>
-
-        <!-- Status Column -->
-        <ng-container matColumnDef="membershipStatus">
-            <th mat-header-cell *matHeaderCellDef> Status </th>
-            <td mat-cell *matCellDef="let member" data-label="Status">
-                <mat-chip-set>
-                    <mat-chip [color]="member.membershipStatus === 'Active' ? 'accent' : 'warn'" selected>
-                        {{ member.membershipStatus | titlecase }}
-                    </mat-chip>
-                </mat-chip-set>
-            </td>
-        </ng-container>
-
-        <!-- Expiration Column -->
-        <ng-container matColumnDef="membershipExpiration">
-            <th mat-header-cell *matHeaderCellDef> Expiration </th>
-            <td mat-cell *matCellDef="let member" [class.expired]="isExpired(member)" data-label="Expiration">
-                <ng-container *ngIf="member.membershipExpiration?.seconds; else dateObj">
-                    {{ member.membershipExpiration.seconds * 1000 | date:'mediumDate' }}
-                </ng-container>
-                <ng-template #dateObj>
-                    {{ member.membershipExpiration | date:'mediumDate' }}
-                </ng-template>
-            </td>
-        </ng-container>
-
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef> Actions </th>
-            <td mat-cell *matCellDef="let member" data-label="Actions">
-                <!-- 📸 View Latest Scan Report Icon Button (Only shown when an image exists) -->
-                <button mat-icon-button *ngIf="member.latestScanImageUrl || member.pendingProgressScanUrl || member.hasPendingProgressScan"
-                    (click)="openScanPreview(member)"
-                    [matTooltip]="member.hasPendingProgressScan ? 'View Latest Body Scale Scan (Pending Transcription)' : 'View Latest Body Scale Scan'"
-                    class="scan-action-btn"
-                    [class.pulse-scan-action]="member.hasPendingProgressScan">
-                    <mat-icon [class.pulse-icon]="member.hasPendingProgressScan">document_scanner</mat-icon>
-                </button>
-
-                <a mat-icon-button [routerLink]="['/members', member.id, 'progress']" 
-                    [matTooltip]="member.hasPendingProgressScan ? 'Scan report uploaded — numeric stats pending entry! Click to transcribe.' : 'View Progress'"
-                    [color]="member.hasPendingProgressScan ? 'accent' : 'primary'"
-                    [class.has-pending-scan-btn]="member.hasPendingProgressScan">
-                    <mat-icon [class.pulse-scan-icon]="member.hasPendingProgressScan">insights</mat-icon>
-                    <span *ngIf="member.hasPendingProgressScan" class="pending-scan-dot"></span>
-                </a>
-                <a mat-icon-button [routerLink]="['/members/edit', member.id]" matTooltip="Edit Member">
-                    <mat-icon>edit</mat-icon>
-                </a>
-                <button mat-icon-button (click)="toggleStatus(member)"
-                    [matTooltip]="member.membershipStatus === 'Active' ? 'Deactivate' : 'Activate'" color="warn">
-                    <mat-icon>{{ member.membershipStatus === 'Active' ? 'block' : 'check_circle' }}</mat-icon>
-                </button>
-            </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-    </table>
-
-    <ng-template #emptyState>
-        <div class="empty-state-card">
-            <div class="empty-icon-wrapper">
-                <mat-icon class="empty-icon">group_off</mat-icon>
+    <!-- Page Header & Action Bar -->
+    <header class="page-header">
+        <div class="header-left">
+            <div class="header-icon-wrap">
+                <mat-icon class="header-icon">group</mat-icon>
             </div>
-            <h3 class="empty-title">No Members Found</h3>
-            <p class="empty-subtitle">
-                {{ progressFilter !== 'All' ? 'No members match the selected progress filter.' : (searchQuery ? 'No members match your search criteria.' : 'No members found in this category.') }}
-            </p>
-            <div class="empty-actions">
-                <button *ngIf="progressFilter !== 'All' || statusFilter !== 'All' || subscriptionFilter !== 'All' || searchQuery"
-                    mat-stroked-button color="primary" (click)="searchQuery=''; statusFilter='All'; subscriptionFilter='All'; progressFilter='All'; applyFilters()">
-                    <mat-icon>clear_all</mat-icon> Reset Filters
-                </button>
-                <a mat-raised-button color="primary" routerLink="/members/add">
-                    <mat-icon>add</mat-icon> Add Member
-                </a>
+            <div>
+                <h1 class="page-title">Member Directory</h1>
+                <p class="page-subtitle">Manage memberships, body scans, subscriptions, and portal access</p>
             </div>
         </div>
-    </ng-template>
 
-    <mat-paginator
-        [length]="totalMembers"
-        [pageSize]="pageSize"
-        [pageIndex]="pageIndex"
-        [pageSizeOptions]="[10, 20, 50]"
-        (page)="onPageChange($event)"
-        showFirstLastButtons
-        aria-label="Select page of members">
-    </mat-paginator>
-</div>
+        <div class="action-buttons">
+            <button type="button" class="btn-secondary-action" (click)="openDuplicateResolver()">
+                <mat-icon class="btn-icon">merge_type</mat-icon>
+                <span>Resolve Duplicates</span>
+            </button>
+            <a class="btn-primary-action" routerLink="/members/add">
+                <mat-icon class="btn-icon">person_add</mat-icon>
+                <span>+ Add Member</span>
+            </a>
+        </div>
+    </header>
 
-<!-- 📸 Fullscreen Scan Image Preview Lightbox Modal -->
-<div class="image-lightbox-overlay" *ngIf="previewingImageUrl" role="dialog" aria-modal="true" tabindex="0" (keydown.escape)="closeImagePreview()" (click)="closeImagePreview()">
-    <div class="image-lightbox-content" role="document">
-        <div class="lightbox-header">
-            <span class="lightbox-title">
-                <mat-icon>document_scanner</mat-icon> {{ previewingMemberName }}'s Body Composition Scan Report
-            </span>
-            <div class="lightbox-actions">
-                <a [href]="previewingImageUrl" target="_blank" download="scan_report.jpg" mat-icon-button title="Open original / Download">
-                    <mat-icon>open_in_new</mat-icon>
+    <!-- Filters Control Deck -->
+    <div class="filter-deck">
+        <div class="search-wrap">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input type="text" class="search-input" [(ngModel)]="searchQuery" (keyup)="applyFilters()" placeholder="Search by name or contact #...">
+            <button type="button" class="clear-btn" *ngIf="searchQuery" (click)="clearSearch()">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+
+        <div class="filter-selects">
+            <div class="select-box">
+                <label class="select-label">Status</label>
+                <select class="custom-select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+                    <option value="All">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div class="select-box">
+                <label class="select-label">Subscription</label>
+                <select class="custom-select" [(ngModel)]="subscriptionFilter" (change)="applyFilters()">
+                    <option value="All">All Members</option>
+                    <option value="HasSubscription">Has Subscription</option>
+                    <option value="NoSubscription">No Subscription</option>
+                </select>
+            </div>
+
+            <div class="select-box">
+                <label class="select-label">Body Scans</label>
+                <select class="custom-select" [(ngModel)]="progressFilter" (change)="applyFilters()">
+                    <option value="All">All Progress</option>
+                    <option value="PendingScan">⏳ Pending Scan Data</option>
+                    <option value="UpToDate">✓ Progress Up to Date</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table Container (Desktop & Tablet Landscape) -->
+    <div class="table-card">
+        <table mat-table [dataSource]="dataSource" [trackBy]="trackByMemberId" class="members-table" *ngIf="totalMembers > 0; else emptyState">
+
+            <!-- Member Info Column -->
+            <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef class="col-name"> Member </th>
+                <td mat-cell *matCellDef="let member" class="col-name">
+                    <div class="member-cell">
+                        <div class="member-avatar">{{ getAvatarInitials(member.name) }}</div>
+                        <div class="member-info">
+                            <span class="member-name">{{ member.name }}</span>
+                            <span class="member-contact font-mono">{{ member.contactNumber || 'No contact #' }}</span>
+                            <div *ngIf="member.hasPendingProgressScan" class="pending-scan-tag" [routerLink]="['/members', member.id, 'progress']" matTooltip="Scan report uploaded. Numeric metrics pending transcription. Click to transcribe.">
+                                <mat-icon class="scan-tag-icon">document_scanner</mat-icon>
+                                <span>Pending Scan Data</span>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </ng-container>
+
+            <!-- Remarks Column -->
+            <ng-container matColumnDef="remarks">
+                <th mat-header-cell *matHeaderCellDef class="col-remarks"> Remarks </th>
+                <td mat-cell *matCellDef="let member" class="col-remarks">
+                    <span *ngIf="member.remarks" class="remarks-pill" [matTooltip]="member.remarks">
+                        <mat-icon class="remark-icon">comment</mat-icon>
+                        <span class="remark-snippet">{{ member.remarks }}</span>
+                    </span>
+                    <span *ngIf="!member.remarks" class="no-remark">—</span>
+                </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="membershipStatus">
+                <th mat-header-cell *matHeaderCellDef class="col-status"> Status </th>
+                <td mat-cell *matCellDef="let member" class="col-status">
+                    <span class="status-chip" [class.active]="member.membershipStatus === 'Active'" [class.inactive]="member.membershipStatus !== 'Active'">
+                        <span class="status-dot"></span>
+                        <span>{{ member.membershipStatus | titlecase }}</span>
+                    </span>
+                </td>
+            </ng-container>
+
+            <!-- Expiration Column -->
+            <ng-container matColumnDef="membershipExpiration">
+                <th mat-header-cell *matHeaderCellDef class="col-expiration"> Expiration </th>
+                <td mat-cell *matCellDef="let member" class="col-expiration">
+                    <div class="expiration-wrap" [class.expired]="isExpired(member)">
+                        <mat-icon class="exp-icon">{{ isExpired(member) ? 'warning' : 'event' }}</mat-icon>
+                        <span class="exp-date">
+                            <ng-container *ngIf="member.membershipExpiration?.seconds; else dateObj">
+                                {{ member.membershipExpiration.seconds * 1000 | date:'MMM d, y' }}
+                            </ng-container>
+                            <ng-template #dateObj>
+                                {{ member.membershipExpiration ? (member.membershipExpiration | date:'MMM d, y') : 'No Expiry' }}
+                            </ng-template>
+                        </span>
+                    </div>
+                </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="col-actions"> Actions </th>
+                <td mat-cell *matCellDef="let member" class="col-actions">
+                    <div class="action-btn-group">
+                        <!-- Scan Preview Action -->
+                        <button type="button" class="icon-action-btn scan-btn" *ngIf="member.latestScanImageUrl || member.pendingProgressScanUrl || member.hasPendingProgressScan"
+                            (click)="openScanPreview(member)"
+                            [matTooltip]="member.hasPendingProgressScan ? 'View Latest Body Scan (Pending Transcription)' : 'View Latest Body Scan'">
+                            <mat-icon>document_scanner</mat-icon>
+                        </button>
+
+                        <!-- Progress Dashboard Action -->
+                        <a class="icon-action-btn progress-btn" [routerLink]="['/members', member.id, 'progress']" 
+                            [matTooltip]="member.hasPendingProgressScan ? 'Scan uploaded — numeric stats pending entry! Click to transcribe.' : 'View Member Progress'">
+                            <mat-icon>insights</mat-icon>
+                            <span *ngIf="member.hasPendingProgressScan" class="pending-scan-dot"></span>
+                        </a>
+
+                        <!-- Edit Member Action -->
+                        <a class="icon-action-btn edit-btn" [routerLink]="['/members/edit', member.id]" matTooltip="Edit Member Details">
+                            <mat-icon>edit</mat-icon>
+                        </a>
+
+                        <!-- Toggle Status Action -->
+                        <button type="button" class="icon-action-btn toggle-btn" (click)="toggleStatus(member)"
+                            [matTooltip]="member.membershipStatus === 'Active' ? 'Deactivate Member' : 'Activate Member'">
+                            <mat-icon>{{ member.membershipStatus === 'Active' ? 'block' : 'check_circle' }}</mat-icon>
+                        </button>
+                    </div>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="member-row"></tr>
+        </table>
+
+        <!-- Empty State -->
+        <ng-template #emptyState>
+            <div class="empty-state-card">
+                <div class="empty-icon-wrap">
+                    <mat-icon class="empty-icon">person_search</mat-icon>
+                </div>
+                <h3 class="empty-title">No Members Found</h3>
+                <p class="empty-subtitle">
+                    {{ searchQuery ? 'No member records matched your search query.' : 'There are no member accounts in the database yet.' }}
+                </p>
+                <a class="btn-primary-action" routerLink="/members/add" *ngIf="!searchQuery">
+                    <mat-icon class="btn-icon">person_add</mat-icon>
+                    <span>Add First Member</span>
                 </a>
-                <button mat-icon-button (click)="closeImagePreview()" title="Close">
+            </div>
+        </ng-template>
+
+        <!-- Paginator -->
+        <mat-paginator [length]="totalMembers" [pageSize]="pageSize" [pageIndex]="pageIndex"
+            [pageSizeOptions]="[10, 25, 50]" (page)="onPageChange($event)"
+            class="custom-paginator" *ngIf="totalMembers > 0">
+        </mat-paginator>
+    </div>
+
+    <!-- 🖼️ Modal Image Lightbox for Scan Preview -->
+    <div class="image-modal-backdrop" *ngIf="previewingImageUrl" (click)="closeImagePreview()">
+        <div class="image-modal-card" (click)="$event.stopPropagation()">
+            <div class="image-modal-header">
+                <div>
+                    <h3 class="modal-member-name">{{ previewingMemberName }}</h3>
+                    <p class="modal-member-sub">Body Scale Scan Report</p>
+                </div>
+                <button type="button" class="modal-close-btn" (click)="closeImagePreview()">
                     <mat-icon>close</mat-icon>
                 </button>
             </div>
-        </div>
-        <div class="lightbox-img-container">
-            <img [src]="previewingImageUrl" [alt]="previewingMemberName + ' Scan Report'" class="lightbox-img">
+            <div class="image-modal-body">
+                <img [src]="previewingImageUrl" alt="Scan Report Preview" class="preview-img" />
+            </div>
         </div>
     </div>
+
 </div>

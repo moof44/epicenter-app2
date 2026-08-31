@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, AfterViewInit, OnInit } from '@angular/core';
+import { Component, inject, ViewChild, AfterViewInit, OnInit, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
@@ -11,62 +11,134 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { TransactionService } from '../../../../core/services/transaction.service';
-import { Transaction } from '../../../../core/models/store.model';
+import { Transaction, CartItem } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
-
-import { Observable, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import { TransactionDetailDialog } from './transaction-detail-dialog/transaction-detail-dialog';
 
 @Component({
   selector: 'app-transaction-history',
+  standalone: true,
   imports: [
     CommonModule, MatTableModule, MatPaginatorModule, MatIconModule, MatExpansionModule,
     MatDatepickerModule, MatNativeDateModule, MatInputModule, MatSelectModule, MatButtonModule,
-    MatChipsModule, MatTooltipModule, FormsModule
+    MatChipsModule, MatTooltipModule, MatDialogModule, FormsModule
   ],
   templateUrl: './transaction-history.html',
   styleUrl: './transaction-history.css',
-  animations: [fadeIn]
+  animations: [fadeIn],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionHistory implements AfterViewInit, OnInit {
   private transactionService = inject(TransactionService);
+  private dialog = inject(MatDialog);
+  private cdr = inject(ChangeDetectorRef);
 
   dataSource = new MatTableDataSource<Transaction>([]);
-  displayedColumns = ['date', 'items', 'paymentMethod', 'totalAmount'];
+  displayedColumns = ['date', 'reference', 'customerStaff', 'paymentMethod', 'items', 'totalAmount', 'status', 'actions'];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
+  // Raw data signal
+  transactions = signal<Transaction[]>([]);
+  isLoading = signal<boolean>(false);
 
-  // Filters
+  // Filters State
   startDate: Date | null = null;
   endDate: Date | null = null;
   paymentMethod: 'CASH' | 'GCASH' | 'SPLIT' | '' = '';
   referenceNumber = '';
   staffName = '';
 
-  constructor() { }
+  // Summary Metrics Signals
+  totalRevenue = computed(() => {
+    return this.transactions()
+      .filter(tx => tx.status !== 'VOID')
+      .reduce((sum, tx) => sum + (tx.totalAmount || 0), 0);
+  });
+
+  totalOrders = computed(() => {
+    return this.transactions().filter(tx => tx.status !== 'VOID').length;
+  });
+
+  totalCashRevenue = computed(() => {
+    return this.transactions()
+      .filter(tx => tx.status !== 'VOID')
+      .reduce((sum, tx) => {
+        if (tx.paymentMethod === 'CASH') return sum + (tx.totalAmount || 0);
+        if (tx.paymentMethod === 'SPLIT') return sum + (tx.cashAmount || 0);
+        return sum;
+      }, 0);
+  });
+
+  totalGcashRevenue = computed(() => {
+    return this.transactions()
+      .filter(tx => tx.status !== 'VOID')
+      .reduce((sum, tx) => {
+        if (tx.paymentMethod === 'GCASH') return sum + (tx.totalAmount || 0);
+        if (tx.paymentMethod === 'SPLIT') return sum + (tx.gcashAmount || 0);
+        return sum;
+      }, 0);
+  });
+
+  activeFiltersCount = computed(() => {
+    let count = 0;
+    if (this.startDate || this.endDate) count++;
+    if (this.paymentMethod) count++;
+    if (this.referenceNumber.trim()) count++;
+    if (this.staffName.trim()) count++;
+    return count;
+  });
 
   ngOnInit() {
     this.loadTransactions();
   }
 
   async loadTransactions() {
+    this.isLoading.set(true);
     const filters: any = {};
     if (this.startDate) filters.startDate = this.startDate;
     if (this.endDate) filters.endDate = this.endDate;
     if (this.paymentMethod) filters.paymentMethod = this.paymentMethod;
-    if (this.referenceNumber) filters.referenceNumber = this.referenceNumber;
-    if (this.staffName) filters.staffName = this.staffName;
+    if (this.referenceNumber.trim()) filters.referenceNumber = this.referenceNumber.trim();
+    if (this.staffName.trim()) filters.staffName = this.staffName.trim();
     filters.limit = 50;
 
-    // Use snapshot to prevent real-time updates disrupting UI (e.g. closing expansion panels)
-    const transactions = await firstValueFrom(this.transactionService.getTransactions(filters));
-    this.dataSource.data = transactions;
+    try {
+      const txs = await firstValueFrom(this.transactionService.getTransactions(filters));
+      this.transactions.set(txs);
+      this.dataSource.data = txs;
+    } catch (err) {
+      console.error('Error loading transactions:', err);
+    } finally {
+      this.isLoading.set(false);
+      this.cdr.markForCheck();
+    }
   }
 
   applyFilters() {
     this.loadTransactions();
+  }
+
+  resetFilters() {
+    this.startDate = null;
+    this.endDate = null;
+    this.paymentMethod = '';
+    this.referenceNumber = '';
+    this.staffName = '';
+    this.loadTransactions();
+  }
+
+  openDetail(tx: Transaction): void {
+    this.dialog.open(TransactionDetailDialog, {
+      width: '560px',
+      maxWidth: '94vw',
+      maxHeight: '92vh',
+      data: { transaction: tx }
+    });
   }
 
   ngAfterViewInit() {
@@ -75,14 +147,14 @@ export class TransactionHistory implements AfterViewInit, OnInit {
 
   formatDate(timestamp: any): Date {
     if (!timestamp) return new Date();
-    return timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+    return timestamp.seconds ? new Date(timestamp.seconds * 1000) : (timestamp instanceof Date ? timestamp : new Date(timestamp));
   }
 
   trackTransaction(index: number, item: Transaction): string {
     return item.id || index.toString();
   }
 
-  trackCartItem(index: number, item: any): string {
+  trackCartItem(index: number, item: CartItem): string {
     return item.productId || index.toString();
   }
 }

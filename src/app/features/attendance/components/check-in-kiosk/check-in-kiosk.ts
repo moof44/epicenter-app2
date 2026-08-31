@@ -8,184 +8,44 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
-import { MatGridListModule } from '@angular/material/grid-list';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Observable, combineLatest, startWith, map } from 'rxjs';
-import { Member } from '../../../../core/models/member.model'; // Fixed path
-import { MemberService } from '../../../../core/services/member.service'; // Fixed path
-import { AttendanceService } from '../../../../core/services/attendance.service'; // Fixed path
+import { Member } from '../../../../core/models/member.model';
+import { MemberService } from '../../../../core/services/member.service';
+import { AttendanceService } from '../../../../core/services/attendance.service';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
-import { fadeIn } from '../../../../core/animations/animations';
+import { fadeIn, staggerList } from '../../../../core/animations/animations';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { LockerRestrictionDialog } from '../locker-restriction-dialog/locker-restriction-dialog';
+import { ShiftControlModal } from '../../../store/components/shift-control-modal/shift-control-modal';
 import { firstValueFrom } from 'rxjs';
 import { getRandomCommendation } from '../../../../core/constants/commendations';
 import { RemarksDialog, RemarksDialogResult } from '../../../../shared/components/remarks-dialog/remarks-dialog.component';
 
 @Component({
   selector: 'app-check-in-kiosk',
+  standalone: true,
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule, MatFormFieldModule,
     MatInputModule, MatAutocompleteModule, MatButtonModule, MatIconModule,
-    MatCardModule, MatGridListModule, MatSnackBarModule, MatDialogModule
+    MatCardModule, MatSnackBarModule, MatDialogModule
   ],
-  /* v8 ignore start */
-  template: `
-    <div class="kiosk-container">
-      
-      <!-- Register Closed Warning -->
-      <mat-card class="warning-card" *ngIf="(isShiftOpen$ | async) === false" [@fadeIn]>
-        <mat-icon color="warn">warning</mat-icon>
-        <span>Register is closed. Please open a shift in Store to proceed.</span>
-      </mat-card>
-
-      <mat-card class="search-card" [class.mobile-hidden]="!!selectedMember">
-        <div class="card-header">
-            <h2>Check In</h2>
-            <button mat-stroked-button color="primary" (click)="goToaddMember()">
-                <mat-icon>person_add</mat-icon> Add Member
-            </button>
-        </div>
-        <mat-form-field class="full-width" appearance="outline">
-          <mat-label>Search Member</mat-label>
-          <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" [disabled]="(isShiftOpen$ | async) === false" #searchInput>
-          <mat-icon matSuffix>search</mat-icon>
-          <mat-hint>Name not found? Click <strong>Add Member</strong> above.</mat-hint>
-          <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onMemberSelected($event)">
-            <mat-option *ngFor="let member of filteredMembers$ | async" [value]="member">
-              {{member.name}} ({{member.membershipStatus}})
-            </mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
-      </mat-card>
-
-      <div *ngIf="selectedMember" class="locker-selection" [@fadeIn]>
-        <div class="mobile-visible" style="text-align: left; margin-bottom: 16px;">
-            <button mat-button color="primary" (click)="reset()">
-                <mat-icon>arrow_back</mat-icon> Back to Search
-            </button>
-        </div>
-        <h3>Welcome, {{selectedMember.name}}!</h3>
-        
-        <div *ngIf="getMembershipStatusDetails() as status" class="subscription-info-card" [ngClass]="status.class">
-          <mat-icon>{{status.icon}}</mat-icon>
-          <span *ngIf="status.type === 'none'">{{status.label}}</span>
-          <span *ngIf="status.type === 'expired'">{{status.label}} ({{status.date | date:'mediumDate'}})</span>
-          <span *ngIf="status.type === 'active'">{{status.label}} {{status.date | date:'mediumDate'}}</span>
-        </div>
-
-        <p>Select a locker (optional) or just Check In.</p>
-        
-        <div class="locker-grid">
-           <button *ngFor="let num of lockerNumbers" 
-                   mat-fab 
-                   [class.occupied]="isLockerOccupied(num)"
-                   [class.selected]="selectedLocker === num"
-                   [disabled]="isLockerOccupied(num) || (isShiftOpen$ | async) === false"
-                   (click)="selectLocker(num)"
-                   color="primary">
-             {{num}}
-           </button>
-        </div>
-
-        <div class="actions">
-            <button mat-raised-button color="primary" (click)="confirmCheckIn()" class="check-in-btn" 
-                    [disabled]="isSubmitting || (isShiftOpen$ | async) === false">
-                <span *ngIf="!isSubmitting">CHECK IN <span *ngIf="selectedLocker">(Locker {{selectedLocker}})</span></span>
-                <span *ngIf="isSubmitting">Checking In...</span>
-            </button>
-            <button mat-button (click)="cancel()" [disabled]="isSubmitting">Cancel</button>
-        </div>
-      </div>
-    </div>
-  `,
-  /* v8 ignore end */
-  styles: [`
-    .kiosk-container { max-width: 600px; margin: 0 auto; text-align: center; padding: var(--spacing-md); }
-    .search-card { padding: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .warning-card { 
-      background-color: #fef2f2 !important; 
-      color: #b91c1c !important; 
-      margin-bottom: var(--spacing-lg); 
-      padding: var(--spacing-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .full-width { width: 100%; }
-    .locker-selection { 
-      /* Removed CSS animation */ 
-    }
-    .locker-grid { 
-        display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); 
-        gap: var(--spacing-md); 
-        margin: var(--spacing-xl) 0;
-        justify-items: center;
-    }
-    .actions { display: flex; flex-direction: column; gap: var(--spacing-md); }
-    .check-in-btn { padding: var(--spacing-lg); font-size: 1.2rem; }
-    .occupied { background-color: #e2e8f0 !important; color: #94a3b8 !important; }
-    .selected { background-color: #4ade80 !important; color: #000 !important; transform: scale(1.1); }
-    .subscription-info-card {
-      margin: 16px auto;
-      padding: 10px 16px;
-      border-radius: 8px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-weight: 500;
-      font-size: 0.95rem;
-      border: 1px solid transparent;
-    }
-    .subscription-info-card.active {
-      background-color: #f0fdf4;
-      color: #166534;
-      border-color: #bbf7d0;
-    }
-    .subscription-info-card.expired {
-      background-color: #fef2f2;
-      color: #991b1b;
-      border-color: #fecaca;
-    }
-    .subscription-info-card.no-subscription {
-      background-color: #f8fafc;
-      color: #475569;
-      border-color: #e2e8f0;
-    }
-
-    @media (max-width: 480px) {
-        .card-header { flex-direction: column; gap: 12px; align-items: stretch; }
-        .card-header h2 { margin: 0; text-align: center; }
-        .search-card { padding: 16px; margin-bottom: 20px; }
-        .kiosk-container { padding: 8px; }
-        .locker-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 16px 0; }
-        .check-in-btn { padding: 16px; font-size: 1.1rem; }
-        
-        /* Wizard Mode: Hide Search when Member Selected */
-        .mobile-hidden { display: none !important; }
-        .mobile-visible { display: block !important; }
-    }
-    .mobile-visible { display: none; } /* Default hidden on desktop */
-  `],
-  animations: [fadeIn]
+  templateUrl: './check-in-kiosk.html',
+  styleUrl: './check-in-kiosk.css',
+  animations: [fadeIn, staggerList]
 })
 export class CheckInKiosk implements OnInit {
   private memberService = inject(MemberService);
   private attendanceService = inject(AttendanceService);
-
-  private cashRegisterService = inject(CashRegisterService); // Inject CashRegisterService
+  private cashRegisterService = inject(CashRegisterService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private router = inject(Router);
 
   searchControl = new FormControl<string | Member>('');
-  members$: Observable<Member[]> = this.memberService.getMembers(); // Explicit type
+  members$: Observable<Member[]> = this.memberService.getMembers();
   filteredMembers$!: Observable<Member[]>;
-  isShiftOpen$ = this.cashRegisterService.currentShift$.pipe(map(s => s?.status === 'OPEN')); // Check Shift Status
+  isShiftOpen$ = this.cashRegisterService.currentShift$.pipe(map(s => s?.status === 'OPEN'));
 
   selectedMember: Member | null = null;
   selectedLocker: number | null = null;
@@ -211,10 +71,20 @@ export class CheckInKiosk implements OnInit {
     return member && member.name ? member.name : '';
   }
 
+  getMemberInitials(name?: string): string {
+    if (!name) return 'MB';
+    return name
+      .split(' ')
+      .filter(p => p.length > 0)
+      .slice(0, 2)
+      .map(p => p[0].toUpperCase())
+      .join('');
+  }
+
   async onMemberSelected(event: any) {
     this.selectedMember = event.option.value;
     this.selectedLocker = null;
-    if (this.selectedMember && this.selectedMember.gender) { // Check gender exists
+    if (this.selectedMember && this.selectedMember.gender) {
       this.occupiedLockers = await this.attendanceService.getOccupiedLockers(this.selectedMember.gender);
     }
   }
@@ -226,8 +96,8 @@ export class CheckInKiosk implements OnInit {
     if (!exp) {
       return {
         type: 'none',
-        label: 'No Monthly Subscription',
-        class: 'no-subscription',
+        label: 'No Active Subscription',
+        class: 'status-none',
         icon: 'info'
       };
     }
@@ -246,9 +116,9 @@ export class CheckInKiosk implements OnInit {
     if (isExpired) {
       return {
         type: 'expired',
-        label: 'Expired',
+        label: 'Expired Subscription',
         date: expDate,
-        class: 'expired',
+        class: 'status-expired',
         icon: 'error'
       };
     } else {
@@ -256,7 +126,7 @@ export class CheckInKiosk implements OnInit {
         type: 'active',
         label: 'Active until',
         date: expDate,
-        class: 'active',
+        class: 'status-active',
         icon: 'check_circle'
       };
     }
@@ -267,6 +137,7 @@ export class CheckInKiosk implements OnInit {
   }
 
   selectLocker(num: number) {
+    if (this.isLockerOccupied(num)) return;
     if (this.selectedLocker === num) {
       this.selectedLocker = null;
     } else {
@@ -274,21 +145,30 @@ export class CheckInKiosk implements OnInit {
     }
   }
 
+  openShiftModal(): void {
+    this.dialog.open(ShiftControlModal, {
+      width: '580px',
+      maxWidth: '94vw',
+      maxHeight: '92vh',
+      disableClose: true,
+      autoFocus: false,
+      panelClass: 'shift-control-dialog-panel'
+    });
+  }
+
   async confirmCheckIn() {
-    // BUG #3 FIX: Set isSubmitting BEFORE any async work to prevent duplicate check-ins
-    // from rapid double-taps. Without this, two concurrent executions could both pass
-    // the async validator and write two attendance records to Firestore.
     if (this.isSubmitting) return;
-    this.isSubmitting = true;
 
     if (!this.cashRegisterService.isShiftOpen()) {
-      this.snackBar.open('Register is closed. Please open a shift first.', 'Close', { duration: 3000 });
-      this.isSubmitting = false;
+      this.snackBar.open('Register shift is closed. Please open a shift first.', 'Open Shift', { duration: 5000 })
+        .onAction().subscribe(() => {
+          this.openShiftModal();
+        });
+      this.openShiftModal();
       return;
     }
 
-    const valid = await this.cashRegisterService.ensureValidShiftForTransaction();
-    if (!valid) { this.isSubmitting = false; return; }
+    this.isSubmitting = true;
 
     if (!this.selectedMember?.id) {
       this.snackBar.open('Invalid member data. Please re-select.', 'Close', { duration: 3000 });
@@ -312,12 +192,10 @@ export class CheckInKiosk implements OnInit {
         const result = await firstValueFrom(remarkDialog.afterClosed()) as RemarksDialogResult;
 
         if (result.action === 'clear') {
-          // Update member to remove remarks
           await this.memberService.updateMember(member.id!, { remarks: '' });
-          member.remarks = ''; // Update local instance
+          member.remarks = '';
           this.snackBar.open('Remark cleared.', undefined, { duration: 2000 });
         }
-        // If 'close', we simply proceed
       }
 
       // 1. Locker Restriction Check
@@ -334,7 +212,7 @@ export class CheckInKiosk implements OnInit {
         }
 
         if (result.action === 'check-in-no-locker') {
-          this.selectedLocker = null; // Clear locker selection
+          this.selectedLocker = null;
         }
       }
 
@@ -342,8 +220,6 @@ export class CheckInKiosk implements OnInit {
       await this.doCheckIn(member);
 
     } catch (error: any) {
-      // BUG #6 FIX: Also suppress 'SILENT' — thrown when shift is null in addCashTransaction.
-      // Without this, a narrow race condition could show a raw 'SILENT' text snackbar.
       if (error.message === 'STALE_SHIFT' || error.message === 'SILENT') return;
       this.snackBar.open(error.message, 'Close', { duration: 3000 });
     } finally {
@@ -355,7 +231,6 @@ export class CheckInKiosk implements OnInit {
     await this.attendanceService.checkIn(member, this.selectedLocker || undefined);
 
     let message = `Checked in ${member.name}!`;
-    // Resolve expiration for display
     let expDisplay = 'No Expiry';
     if (member.membershipExpiration) {
       const d = member.membershipExpiration;

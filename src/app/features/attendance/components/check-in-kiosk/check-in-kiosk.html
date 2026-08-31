@@ -1,0 +1,150 @@
+<div class="kiosk-wrapper" [@fadeIn]>
+
+  <!-- REGISTER CLOSED PROMINENT ALERT (Visible across both steps) -->
+  <div class="register-closed-alert" *ngIf="(isShiftOpen$ | async) === false" [@fadeIn]>
+    <div class="alert-left">
+      <div class="alert-icon-wrap">
+        <mat-icon>lock_clock</mat-icon>
+      </div>
+      <div class="alert-content">
+        <span class="alert-title">Register Shift is Currently Closed</span>
+        <span class="alert-sub">An active cash register shift is required to assign lockers and check in members.</span>
+      </div>
+    </div>
+    <button type="button" class="btn-open-shift-action" (click)="openShiftModal()">
+      <mat-icon class="btn-icon">key</mat-icon>
+      <span>Open Shift Now</span>
+    </button>
+  </div>
+
+  <!-- STEP 1: MEMBER SEARCH CARD -->
+  <div class="kiosk-card" *ngIf="!selectedMember" [@fadeIn]>
+    <div class="card-header">
+      <div class="header-left">
+        <mat-icon class="section-icon text-cyan">search</mat-icon>
+        <div>
+          <h2 class="section-title">Quick Member Search</h2>
+          <p class="section-subtitle">Type member name, scan barcode, or select from directory</p>
+        </div>
+      </div>
+      <button type="button" class="btn-primary-action" (click)="goToaddMember()">
+        <mat-icon class="btn-icon">person_add</mat-icon>
+        <span>+ Add Member</span>
+      </button>
+    </div>
+
+    <div class="search-input-box">
+      <mat-form-field appearance="outline" class="custom-mat-field full-width">
+        <mat-icon matPrefix class="search-field-icon">search</mat-icon>
+        <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" placeholder="Type member name to search..." autofocus #searchInput>
+        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onMemberSelected($event)" class="custom-member-autocomplete">
+          <mat-option *ngFor="let member of filteredMembers$ | async" [value]="member" class="custom-autocomplete-option">
+            <div class="option-member-row">
+              <div class="option-avatar">{{ getMemberInitials(member.name) }}</div>
+              <div class="option-meta">
+                <span class="option-name">{{ member.name }}</span>
+                <span class="option-status-badge" [ngClass]="member.membershipStatus === 'Active' ? 'badge-active' : 'badge-inactive'">
+                  {{ member.membershipStatus || 'Inactive' }}
+                </span>
+              </div>
+            </div>
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- STEP 2: MEMBER PROFILE & LOCKER CONFIRMATION WIZARD -->
+  <div class="kiosk-card" *ngIf="selectedMember" [@fadeIn]>
+    <div class="card-header">
+      <div class="header-left">
+        <button type="button" class="back-btn" (click)="reset()" title="Back to Search">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <h2 class="section-title">Check-in Confirmation</h2>
+          <p class="section-subtitle">Assign an optional locker and confirm workout session</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Member Identity Showcase -->
+    <div class="member-showcase">
+      <div class="showcase-avatar">{{ getMemberInitials(selectedMember.name) }}</div>
+      <div class="showcase-info">
+        <h3 class="showcase-name">{{ selectedMember.name }}</h3>
+        <div class="showcase-badges">
+          <span class="gender-pill" *ngIf="selectedMember.gender">{{ selectedMember.gender }}</span>
+          
+          <div *ngIf="getMembershipStatusDetails() as status" class="subscription-status-pill" [ngClass]="status.class">
+            <mat-icon class="sub-status-icon">{{ status.icon }}</mat-icon>
+            <span *ngIf="status.type === 'none'">{{ status.label }}</span>
+            <span *ngIf="status.type === 'expired'">{{ status.label }} ({{ status.date | date:'MMM d, y' }})</span>
+            <span *ngIf="status.type === 'active'">{{ status.label }} {{ status.date | date:'MMM d, y' }}</span>
+          </div>
+
+          <span class="remarks-pill" *ngIf="selectedMember.remarks">
+            <mat-icon class="remarks-icon">warning</mat-icon>
+            <span>{{ selectedMember.remarks }}</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Locker Bay Selection Grid -->
+    <div class="locker-bay-section">
+      <div class="locker-bay-header">
+        <div class="locker-bay-title-wrap">
+          <mat-icon class="locker-header-icon text-cyan">lock</mat-icon>
+          <div>
+            <h4 class="locker-title">Select Locker (Optional)</h4>
+            <p class="locker-sub">Tap a locker number to reserve, or tap again to deselect</p>
+          </div>
+        </div>
+
+        <!-- Inline Shift Warning inside Locker Bay if Closed -->
+        <div class="locker-shift-lock-tag" *ngIf="(isShiftOpen$ | async) === false" (click)="openShiftModal()">
+          <mat-icon class="lock-tag-icon">lock</mat-icon>
+          <span>Shift Closed • Click to Open</span>
+        </div>
+      </div>
+
+      <div class="locker-grid" [class.grid-disabled]="(isShiftOpen$ | async) === false">
+        <button *ngFor="let num of lockerNumbers"
+                type="button"
+                class="locker-tile"
+                [class.occupied]="isLockerOccupied(num)"
+                [class.selected]="selectedLocker === num"
+                [class.shift-locked]="(isShiftOpen$ | async) === false"
+                [disabled]="isLockerOccupied(num) || (isShiftOpen$ | async) === false"
+                (click)="selectLocker(num)">
+          <span class="locker-num">{{ num }}</span>
+          <mat-icon class="locker-tile-icon" *ngIf="isLockerOccupied(num)">lock</mat-icon>
+          <span class="locker-status-tag" *ngIf="isLockerOccupied(num)">TAKEN</span>
+          <span class="locker-status-tag" *ngIf="selectedLocker === num && (isShiftOpen$ | async) !== false">SELECTED</span>
+          <span class="locker-status-tag text-amber" *ngIf="(isShiftOpen$ | async) === false && !isLockerOccupied(num)">LOCKED</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Buttons Dock -->
+    <div class="kiosk-actions-dock">
+      <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSubmitting">Cancel</button>
+
+      <!-- Active Open Shift State Button -->
+      <button *ngIf="(isShiftOpen$ | async) !== false" type="button" class="btn-submit-gold" (click)="confirmCheckIn()" [disabled]="isSubmitting">
+        <mat-icon class="btn-icon" *ngIf="!isSubmitting">how_to_reg</mat-icon>
+        <span *ngIf="!isSubmitting">CONFIRM CHECK IN <span *ngIf="selectedLocker">(LOCKER #{{ selectedLocker }})</span></span>
+        <span *ngIf="isSubmitting">Processing Check-in...</span>
+      </button>
+
+      <!-- Closed Shift State Button -->
+      <button *ngIf="(isShiftOpen$ | async) === false" type="button" class="btn-shift-closed" (click)="openShiftModal()">
+        <mat-icon class="btn-icon">key</mat-icon>
+        <span>REGISTER CLOSED • OPEN SHIFT TO PROCEED</span>
+      </button>
+    </div>
+
+  </div>
+
+</div>

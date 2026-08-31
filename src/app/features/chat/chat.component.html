@@ -1,0 +1,98 @@
+<div class="chat-container">
+
+  <!-- ── Chat Header Deck ── -->
+  <div class="chat-header">
+    <div class="title-container">
+      <div class="chat-header-icon-seal">
+        <mat-icon>chat</mat-icon>
+      </div>
+      <div class="header-text-group">
+        <span class="chat-title">Vigilance Chat</span>
+        <span class="chat-subtitle">Real-time Operations Stream</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-action-icon" (click)="goToSearch()" matTooltip="Search Chat History">
+        <mat-icon>search</mat-icon>
+      </button>
+      <button type="button" class="btn-action-icon" (click)="closeChat()" matTooltip="Close Chat Panel">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Chat Messages (Scrollable) ── -->
+  <div class="chat-messages" #scrollContainer (scroll)="onScroll()">
+    <div class="loading-spinner" *ngIf="isLoadingMore()">
+      <mat-icon class="spinning-icon">sync</mat-icon>
+      <span>Loading message history...</span>
+    </div>
+
+    <div *ngFor="let msg of messages(); trackBy: trackByFn" 
+         [ngClass]="{'message-row': true, 'system-message': msg.type === 'system', 'user-message': msg.type === 'user', 'own-message': isOwnMessage(msg)}">
+      
+      <!-- System Message Style -->
+      <ng-container *ngIf="msg.type === 'system'">
+        <div class="system-message-card" [class.mention-highlight]="isMentioned(msg)">
+          <div class="system-seal">
+            <mat-icon class="system-icon">security</mat-icon>
+          </div>
+          <div class="system-content">
+            <span class="system-text text-white">{{ msg.content }}</span>
+            <span class="system-time text-muted">{{ formatTime(msg.timestamp) }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- User Message Style -->
+      <ng-container *ngIf="msg.type === 'user'">
+        <div class="avatar-wrap" *ngIf="!isOwnMessage(msg)">
+          <img class="avatar" [src]="msg.senderAvatar || 'assets/default-avatar.png'" alt="avatar" (error)="$any($event.target).src='assets/default-avatar.png'">
+        </div>
+        
+        <div class="bubble-container">
+          <span class="sender-name text-cyan" *ngIf="!isOwnMessage(msg)">{{ msg.senderName }}</span>
+          <div class="bubble" [class.mention-highlight]="isMentioned(msg)">
+            <p class="bubble-text">{{ msg.content }}</p>
+          </div>
+          <span class="message-time text-muted">{{ formatTime(msg.timestamp) }}</span>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- ── Autocomplete Mention Dropdown ── -->
+  <div class="mention-autocomplete" *ngIf="showAutocomplete()">
+    <div class="autocomplete-header">
+      <span>Mention Staff Member:</span>
+    </div>
+    <button type="button" class="autocomplete-item" *ngFor="let user of filteredUsers()" (click)="selectMention(user)">
+      <img class="autocomplete-avatar" [src]="user.photoURL || 'assets/default-avatar.png'" alt="avatar" (error)="$any($event.target).src='assets/default-avatar.png'">
+      <div class="autocomplete-info">
+        <span class="autocomplete-name text-white">{{ user.displayName || user.email }}</span>
+        <span class="autocomplete-role text-cyan" *ngIf="user.roles.length">{{ user.roles[0] }}</span>
+      </div>
+    </button>
+  </div>
+
+  <!-- ── Chat Input Footer ── -->
+  <div class="chat-footer">
+    <div class="message-input-wrap">
+      <input #messageInput type="text"
+             class="chat-input-field"
+             placeholder="Type a message or @mention staff..."
+             [(ngModel)]="messageText"
+             (input)="onInputChange()"
+             (keydown.enter)="sendMessage()">
+    </div>
+    <button type="button"
+            class="btn-send-gold"
+            [disabled]="!messageText.trim()"
+            (click)="sendMessage()"
+            matTooltip="Send message">
+      <mat-icon>send</mat-icon>
+    </button>
+  </div>
+
+</div>

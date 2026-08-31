@@ -1,49 +1,113 @@
-<div class="reports-container">
+<div class="reports-container" @fadeIn>
+
+  <!-- ── Page Header Deck ── -->
+  <div class="page-header">
+    <div class="header-left-group">
+      <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-titles">
+        <h1 class="page-title">Business Intelligence & Executive Analytics</h1>
+        <p class="page-subtitle">Track member volume check-ins, store sales vs targets, employee performance, and product margins</p>
+      </div>
+    </div>
+
     <div class="header-actions">
-        <h1>Reports & Analytics</h1>
+      <div class="filters-form-wrap">
+        <mat-form-field appearance="outline" class="dense-form-field" subscriptSizing="dynamic">
+          <mat-label>Date Range</mat-label>
+          <mat-date-range-input [formGroup]="range" [rangePicker]="picker">
+            <input matStartDate formControlName="start" placeholder="Start date">
+            <input matEndDate formControlName="end" placeholder="End date">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
 
-        <div class="filters">
-            <mat-form-field appearance="outline" class="dense-form-field">
-                <mat-label>Date Range</mat-label>
-                <mat-date-range-input [formGroup]="range" [rangePicker]="picker">
-                    <input matStartDate formControlName="start" placeholder="Start date">
-                    <input matEndDate formControlName="end" placeholder="End date">
-                </mat-date-range-input>
-                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                <mat-date-range-picker #picker></mat-date-range-picker>
-            </mat-form-field>
+        <button type="button" class="btn-generate-cyan" (click)="refreshCharts()" [disabled]="isLoading()">
+          <mat-icon class="btn-icon">{{ isLoading() ? 'hourglass_top' : 'refresh' }}</mat-icon>
+          <span>{{ isLoading() ? 'Generating...' : 'Generate Report' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
-            <button mat-flat-button color="primary" (click)="refreshCharts()">
-                <mat-icon>refresh</mat-icon>
-                Generate
-            </button>
-        </div>
+  <!-- ── 4-Card Executive Summary KPI Deck ── -->
+  <div class="summary-cards">
+    <!-- 1. Total Gym Check-Ins -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-cyan">
+        <mat-icon>how_to_reg</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Total Gym Check-Ins</span>
+        <strong class="value font-mono text-cyan">{{ totalVolume() }} visits</strong>
+      </div>
     </div>
 
-    <div class="dashboard-grid">
-        <!-- 1. Volume Analysis -->
-        <div class="grid-item volume-section">
-            <app-volume-chart [data]="volumeData" [peakHours]="peakHours"></app-volume-chart>
-        </div>
-
-        <!-- 2. Sales Performance -->
-        <div class="grid-item sales-section">
-            <app-sales-performance [data]="salesData" [monthlyQuota]="monthlyQuota"></app-sales-performance>
-        </div>
-
-        <!-- 3. Product Breakdown -->
-        <div class="grid-item breakdown-section">
-            <app-product-breakdown [data]="productData"></app-product-breakdown>
-        </div>
-
-        <!-- 4. Staff Performance -->
-        <div class="grid-item staff-section">
-            <app-staff-sales [data]="staffData"></app-staff-sales>
-        </div>
-
-        <!-- 5. Member Attendance -->
-        <div class="grid-item member-section">
-            <app-member-attendance [data]="memberData"></app-member-attendance>
-        </div>
+    <!-- 2. Total Store Revenue -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-gold">
+        <mat-icon>payments</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Period Gross Sales</span>
+        <strong class="value font-mono text-gold">₱{{ totalSales() | number:'1.2-2' }}</strong>
+      </div>
     </div>
+
+    <!-- 3. Top Selling Product -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-mint">
+        <mat-icon>local_fire_department</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Top Retail Product</span>
+        <strong class="value font-mono text-mint text-truncate">{{ topProductName() }}</strong>
+      </div>
+    </div>
+
+    <!-- 4. Top Performing Staff -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-purple">
+        <mat-icon>emoji_events</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Top Sales Staff</span>
+        <strong class="value font-mono text-white text-truncate">{{ topStaffName() }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Visual Analytics Dashboard Grid ── -->
+  <div class="dashboard-grid">
+    <!-- 1. Volume Analysis -->
+    <div class="report-section-card">
+      <app-volume-chart [data]="volumeData" [peakHours]="peakHours"></app-volume-chart>
+    </div>
+
+    <!-- 2. Sales Performance -->
+    <div class="report-section-card">
+      <app-sales-performance [data]="salesData" [monthlyQuota]="monthlyQuota"></app-sales-performance>
+    </div>
+
+    <!-- 3. Product Breakdown & Staff Leaderboard Side-by-Side -->
+    <div class="charts-dual-grid">
+      <div class="report-section-card">
+        <app-product-breakdown [data]="productData"></app-product-breakdown>
+      </div>
+      <div class="report-section-card">
+        <app-staff-sales [data]="staffData"></app-staff-sales>
+      </div>
+    </div>
+
+    <!-- 4. Top Gym Goers Member Attendance Leaderboard -->
+    <div class="report-section-card">
+      <app-member-attendance [data]="memberData"></app-member-attendance>
+    </div>
+  </div>
+
+  <!-- ── Safe Area Physical Scroll Spacer (Failure #24 & #26 Prevention) ── -->
+  <div class="bottom-scroll-spacer"></div>
+
 </div>

@@ -1,461 +1,543 @@
 <div class="settings-container" [@fadeIn]>
+
+  <!-- ── Page Header Deck ── -->
   <div class="page-header">
-    <h1>Settings & Rules</h1>
-    <p class="helper-text">Configure system quota, security overrides, member badges, and promotion discount rules.</p>
+    <div class="header-left-group">
+      <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-titles">
+        <h1 class="page-title">System Governance & Application Rules</h1>
+        <p class="page-subtitle">Configure financial revenue quotas, staff wage defaults, gamification badges, promo discounts, and emergency protocols</p>
+      </div>
+    </div>
   </div>
 
-  <mat-tab-group class="settings-tabs" animationDuration="200ms">
-    <!-- ════════════════ TAB 1: SYSTEM GOALS ════════════════ -->
+  <!-- ── 4-Card Executive Summary KPI Deck ── -->
+  <div class="summary-cards">
+    <!-- 1. Monthly Quota -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-cyan">
+        <mat-icon>payments</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Monthly Sales Quota</span>
+        <strong class="value font-mono text-cyan">₱{{ (settingsForm.get('monthlyQuota')?.value || 0) | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <!-- 2. Default Daily Pay Rate -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-gold">
+        <mat-icon>account_balance_wallet</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Default Daily Wage</span>
+        <strong class="value font-mono text-gold">₱{{ (settingsForm.get('defaultDailySalaryRate')?.value || 500) | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <!-- 3. Member Achievement Badges -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-mint">
+        <mat-icon>military_tech</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Defined Badges</span>
+        <strong class="value font-mono text-mint">{{ ((badges$ | async)?.length) || 0 }} Badges</strong>
+      </div>
+    </div>
+
+    <!-- 4. Active Promo Discounts -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-purple">
+        <mat-icon>local_offer</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Promotional Rules</span>
+        <strong class="value font-mono text-white">{{ ((discounts$ | async)?.length) || 0 }} Rules</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Master Tabs Navigation Workspace ── -->
+  <mat-tab-group class="settings-tabs-deck" animationDuration="200ms">
+
+    <!-- ════════════════ TAB 1: SYSTEM GOALS & EMERGENCY ════════════════ -->
     <mat-tab>
       <ng-template matTabLabel>
-        <mat-icon class="tab-icon">settings</mat-icon> System Goals
+        <mat-icon class="tab-icon-inline text-cyan">tune</mat-icon> System Goals & Security
       </ng-template>
-      <div class="tab-content">
-        <mat-card class="settings-card">
-          <mat-card-header>
-            <mat-icon mat-card-avatar>settings</mat-icon>
-            <mat-card-title>Application Goals</mat-card-title>
-            <mat-card-subtitle>Set targets for gym performance tracking</mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-            <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="settings-form">
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>Monthly Sales Quota (₱)</mat-label>
-                  <mat-icon matPrefix>payments</mat-icon>
+
+      <div class="tab-workspace-content">
+
+        <!-- Goals Card -->
+        <div class="deck-card">
+          <div class="deck-card-header">
+            <div class="card-title-wrap">
+              <mat-icon class="text-cyan">savings</mat-icon>
+              <h3 class="text-white">Application Targets & Financial Quotas</h3>
+            </div>
+            <p class="card-desc text-muted">Set monthly sales quotas and baseline staff wage rates</p>
+          </div>
+
+          <div class="deck-card-body">
+            <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="settings-form-grid">
+              <div class="fields-dual-row">
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                  <mat-label>Monthly Store Sales Quota (₱)</mat-label>
+                  <mat-icon matPrefix class="field-icon text-cyan">payments</mat-icon>
                   <input matInput type="number" formControlName="monthlyQuota" placeholder="e.g. 45000">
-                  <mat-hint>The target total revenue for each month</mat-hint>
-                  <mat-error *ngIf="settingsForm.get('monthlyQuota')?.hasError('min')">
-                    Quota cannot be negative
-                  </mat-error>
-                  <mat-error *ngIf="settingsForm.get('monthlyQuota')?.hasError('required')">
-                    Monthly quota is required
-                  </mat-error>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="half-width">
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
                   <mat-label>Default Staff Daily Salary Rate (₱)</mat-label>
-                  <mat-icon matPrefix>account_balance_wallet</mat-icon>
+                  <mat-icon matPrefix class="field-icon text-gold">account_balance_wallet</mat-icon>
                   <input matInput type="number" formControlName="defaultDailySalaryRate" placeholder="e.g. 500">
-                  <mat-hint>Default daily pay rate used for staff weekly attendance payroll calculations</mat-hint>
-                  <mat-error *ngIf="settingsForm.get('defaultDailySalaryRate')?.hasError('min')">
-                    Salary rate cannot be negative
-                  </mat-error>
-                  <mat-error *ngIf="settingsForm.get('defaultDailySalaryRate')?.hasError('required')">
-                    Default daily salary rate is required
-                  </mat-error>
                 </mat-form-field>
               </div>
-              <div class="actions">
-                <button mat-raised-button color="primary" type="submit" [disabled]="settingsForm.invalid || isSaving">
+
+              <div class="form-actions-right">
+                <button type="submit" class="btn-save-gold" [disabled]="settingsForm.invalid || isSaving">
                   <mat-icon>{{ isSaving ? 'sync' : 'save' }}</mat-icon>
-                  {{ isSaving ? 'Saving...' : 'Save Settings' }}
+                  <span>{{ isSaving ? 'Saving...' : 'Save System Settings' }}</span>
                 </button>
               </div>
             </form>
-          </mat-card-content>
-        </mat-card>
+          </div>
+        </div>
 
-        <mat-card class="settings-card security-card" *ngIf="authService.isAdmin()">
-          <mat-card-header>
-            <mat-icon mat-card-avatar color="warn">security</mat-icon>
-            <mat-card-title>Security Zone</mat-card-title>
-            <mat-card-subtitle>Emergency actions for system administration</mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="security-warning">
-              <mat-icon color="warn">warning</mat-icon>
-              <p><strong>Warning:</strong> The action below will immediately log out ALL users from ALL devices. Use only in emergencies.</p>
+        <!-- Security Emergency Zone (Admin Only) -->
+        <div class="deck-card danger-zone-card" *ngIf="authService.isAdmin()">
+          <div class="deck-card-header danger-header">
+            <div class="card-title-wrap">
+              <mat-icon class="text-rose">security</mat-icon>
+              <h3 class="text-white">Security & Access Control Zone</h3>
             </div>
-            <div class="actions">
-              <button mat-raised-button color="warn" (click)="forceLogoutAll()" [disabled]="isLoggingOut">
+            <p class="card-desc text-muted">Emergency actions for system administration and user session control</p>
+          </div>
+
+          <div class="deck-card-body">
+            <div class="danger-banner">
+              <mat-icon class="text-rose">warning</mat-icon>
+              <div class="danger-banner-text">
+                <strong class="text-rose">Critical Action: Force Session Termination</strong>
+                <p class="text-muted text-xs">The action below will immediately revoke all active tokens and log out ALL users from ALL devices. Use only during security investigations.</p>
+              </div>
+            </div>
+
+            <div class="form-actions-right">
+              <button type="button" class="btn-danger-rose" (click)="forceLogoutAll()" [disabled]="isLoggingOut">
                 <mat-icon>power_settings_new</mat-icon>
-                {{ isLoggingOut ? 'Logging out everyone...' : 'Force Logout All Users' }}
+                <span>{{ isLoggingOut ? 'Terminating Sessions...' : 'Force Logout All Users' }}</span>
               </button>
             </div>
-          </mat-card-content>
-        </mat-card>
+          </div>
+        </div>
 
-        <mat-card class="settings-card security-card" *ngIf="authService.isAdmin()" style="margin-top: 16px;">
-          <mat-card-header>
-            <mat-icon mat-card-avatar color="primary">build</mat-icon>
-            <mat-card-title>System Maintenance</mat-card-title>
-            <mat-card-subtitle>Maintenance tools for gamification data</mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="security-warning" style="border-left-color: #3b82f6;">
-              <mat-icon color="primary" style="color: #3b82f6;">info</mat-icon>
-              <p><strong>Attendance Badges Initialization:</strong> Running this will retroactively analyze all check-in history from January 2026 to today for all members and compute their streaks and earned badges.</p>
+        <!-- System Maintenance (Admin Only) -->
+        <div class="deck-card" *ngIf="authService.isAdmin()">
+          <div class="deck-card-header">
+            <div class="card-title-wrap">
+              <mat-icon class="text-cyan">build</mat-icon>
+              <h3 class="text-white">Gamification Historical Maintenance</h3>
             </div>
-            <div class="actions" style="margin-top: 16px;">
-              <button mat-raised-button color="primary" (click)="retroactiveBadges()" [disabled]="isProcessingBadges">
+            <p class="card-desc text-muted">Batch data processing and streak analytics recalculations</p>
+          </div>
+
+          <div class="deck-card-body">
+            <div class="info-banner">
+              <mat-icon class="text-cyan">info</mat-icon>
+              <div class="info-banner-text">
+                <strong class="text-cyan">Retroactive Badges & Streaks Calculation</strong>
+                <p class="text-muted text-xs">Analyzes check-in history from January 2026 to today for all members and unlocks retroactive achievement badges.</p>
+              </div>
+            </div>
+
+            <div class="form-actions-right">
+              <button type="button" class="btn-action-cyan" (click)="retroactiveBadges()" [disabled]="isProcessingBadges">
                 <mat-icon>military_tech</mat-icon>
-                {{ isProcessingBadges ? 'Processing Badges...' : 'Initialize Historical Badges' }}
+                <span>{{ isProcessingBadges ? 'Processing History...' : 'Initialize Historical Badges' }}</span>
               </button>
             </div>
-          </mat-card-content>
-        </mat-card>
+          </div>
+        </div>
+
       </div>
     </mat-tab>
 
-    <!-- ════════════════ TAB 2: MEMBER BADGES ════════════════ -->
+    <!-- ════════════════ TAB 2: GAMIFICATION BADGES ════════════════ -->
     <mat-tab>
       <ng-template matTabLabel>
-        <mat-icon class="tab-icon">verified</mat-icon> Member Badges
+        <mat-icon class="tab-icon-inline text-mint">military_tech</mat-icon> Member Badges ({{ (badges$ | async)?.length || 0 }})
       </ng-template>
-      <div class="tab-content">
-        <!-- List View -->
-        <div class="list-view-container" *ngIf="!showBadgeForm()">
-          <div class="section-actions">
-            <h2>Badge Definitions</h2>
-            <button mat-raised-button color="primary" (click)="openNewBadge()">
-              <mat-icon>add</mat-icon> Add Badge Definition
+
+      <div class="tab-workspace-content" *ngIf="badges$ | async as badges">
+
+        <!-- Top Action Row -->
+        <div class="sub-action-bar">
+          <div class="sub-bar-left">
+            <h3 class="text-white">Achievement & Gamification Badges</h3>
+            <p class="text-muted">Badges displayed on member cards, kiosks, and profiles</p>
+          </div>
+          <button type="button" class="btn-create-mint" (click)="openNewBadge()" *ngIf="!showBadgeForm()">
+            <mat-icon>add</mat-icon>
+            <span>Create New Badge</span>
+          </button>
+        </div>
+
+        <!-- Badge Form Card (Collapsible) -->
+        <div class="deck-card form-reveal-card" *ngIf="showBadgeForm()" [@fadeIn]>
+          <div class="deck-card-header">
+            <div class="card-title-wrap">
+              <mat-icon class="text-mint">military_tech</mat-icon>
+              <h3 class="text-white">{{ isEditingBadge() ? 'Edit Badge Definition' : 'Define New Achievement Badge' }}</h3>
+            </div>
+            <button type="button" class="btn-icon-cancel" (click)="showBadgeForm.set(false)">
+              <mat-icon>close</mat-icon>
             </button>
           </div>
 
-          <mat-card class="table-card">
-            <table mat-table [dataSource]="(badges$ | async) || []" class="settings-table">
-              <ng-container matColumnDef="id">
-                <th mat-header-cell *matHeaderCellDef>Slug/ID</th>
-                <td mat-cell *matCellDef="let badge"><code>{{ badge.id }}</code></td>
-              </ng-container>
-
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Display Name</th>
-                <td mat-cell *matCellDef="let badge"><strong>{{ badge.name }}</strong></td>
-              </ng-container>
-
-              <ng-container matColumnDef="type">
-                <th mat-header-cell *matHeaderCellDef>Type</th>
-                <td mat-cell *matCellDef="let badge">
-                  <span class="type-pill" [class.admin-type]="badge.type === 'ADMINISTRATIVE'">
-                    {{ badge.type }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="visibility">
-                <th mat-header-cell *matHeaderCellDef>Visibility</th>
-                <td mat-cell *matCellDef="let badge">{{ badge.visibility }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="color">
-                <th mat-header-cell *matHeaderCellDef>Visual Preview</th>
-                <td mat-cell *matCellDef="let badge">
-                  <span class="color-preview-badge" 
-                        [style.background-color]="badge.colorHex || '#eaeaea'"
-                        [style.color]="badge.colorHex ? '#fff' : '#333'">
-                    {{ badge.name }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
-                <td mat-cell *matCellDef="let badge">
-                  <button mat-icon-button color="primary" (click)="editBadge(badge)" matTooltip="Edit definition">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="badgeColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: badgeColumns;"></tr>
-            </table>
-
-            <div class="empty-table-state" *ngIf="!((badges$ | async)?.length)">
-              <mat-icon>verified</mat-icon>
-              <p>No badges defined. Create one to start tagging members.</p>
-            </div>
-          </mat-card>
-        </div>
-
-        <!-- Add/Edit Form -->
-        <mat-card class="form-editor-card" *ngIf="showBadgeForm()" [@fadeIn]>
-          <mat-card-header>
-            <mat-card-title>{{ isEditingBadge() ? 'Edit Badge Definition' : 'New Badge Definition' }}</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <form [formGroup]="badgeForm" (ngSubmit)="saveBadge()" class="settings-form">
-              <div class="form-grid">
-                <mat-form-field appearance="outline">
-                  <mat-label>Badge Code/Slug (Uppercase only, Ex: FOUNDER)</mat-label>
-                  <input matInput formControlName="id" placeholder="Ex. FOUNDER">
-                  <mat-error *ngIf="badgeForm.get('id')?.hasError('required')">Required</mat-error>
-                  <mat-error *ngIf="badgeForm.get('id')?.hasError('pattern')">Uppercase letters, numbers, and underscores only</mat-error>
+          <div class="deck-card-body">
+            <form [formGroup]="badgeForm" (ngSubmit)="saveBadge()" class="settings-form-grid">
+              <div class="fields-triple-row">
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                  <mat-label>Badge Unique ID (UPPERCASE)</mat-label>
+                  <input matInput formControlName="id" placeholder="e.g. VIP_FOUNDER">
                 </mat-form-field>
 
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
                   <mat-label>Display Name</mat-label>
-                  <input matInput formControlName="name" placeholder="Ex. Founding Member">
-                  <mat-error *ngIf="badgeForm.get('name')?.hasError('required')">Required</mat-error>
+                  <input matInput formControlName="name" placeholder="e.g. VIP Founding Member">
                 </mat-form-field>
 
-                <mat-form-field appearance="outline">
-                  <mat-label>Description / Description Tooltip</mat-label>
-                  <input matInput formControlName="description" placeholder="Ex. Awarded to opening team...">
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                  <mat-label>Badge Color (HEX)</mat-label>
+                  <input matInput formControlName="colorHex" placeholder="e.g. #06b6d4">
                 </mat-form-field>
-
-                <div class="form-row row-3col">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Badge Type</mat-label>
-                    <mat-select formControlName="type">
-                      <mat-option value="ADMINISTRATIVE">ADMINISTRATIVE (Manual)</mat-option>
-                      <mat-option value="ACHIEVEMENT">ACHIEVEMENT (Dynamic/Automatic)</mat-option>
-                      <mat-option value="SYSTEM_INTERNAL">SYSTEM_INTERNAL (Backend flags)</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Visibility</mat-label>
-                    <mat-select formControlName="visibility">
-                      <mat-option value="PUBLIC">PUBLIC (Everyone can see)</mat-option>
-                      <mat-option value="PRIVATE_MEMBER">PRIVATE_MEMBER (Owner & Staff see)</mat-option>
-                      <mat-option value="INTERNAL_STAFF">INTERNAL_STAFF (Hidden from Members Portal)</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Badge Color (HEX)</mat-label>
-                    <input matInput type="color" formControlName="colorHex" style="height: 38px; padding: 2px;">
-                  </mat-form-field>
-                </div>
               </div>
 
-              <div class="actions">
-                <button mat-button type="button" (click)="showBadgeForm.set(false)" [disabled]="isSaving">Cancel</button>
-                <button mat-raised-button color="primary" type="submit" [disabled]="badgeForm.invalid || isSaving">
-                  <mat-icon>save</mat-icon> {{ isSaving ? 'Saving...' : 'Save Badge' }}
+              <div class="fields-dual-row">
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                  <mat-label>Badge Category Type</mat-label>
+                  <mat-select formControlName="type">
+                    <mat-option value="ADMINISTRATIVE">Administrative</mat-option>
+                    <mat-option value="ATTENDANCE">Attendance Streak</mat-option>
+                    <mat-option value="PURCHASE">Store Supporter</mat-option>
+                    <mat-option value="COMMUNITY">Community Champion</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                  <mat-label>Visibility</mat-label>
+                  <mat-select formControlName="visibility">
+                    <mat-option value="PUBLIC">Public (Visible to All)</mat-option>
+                    <mat-option value="INTERNAL">Internal (Staff & Admin Only)</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                <mat-label>Badge Description & Requirements</mat-label>
+                <input matInput formControlName="description" placeholder="e.g. Awarded to gym members who maintain active membership since launch">
+              </mat-form-field>
+
+              <div class="form-actions-right">
+                <button type="button" class="btn-cancel-plain" (click)="showBadgeForm.set(false)">Cancel</button>
+                <button type="submit" class="btn-create-mint" [disabled]="badgeForm.invalid || isSaving">
+                  <mat-icon>{{ isSaving ? 'sync' : 'check' }}</mat-icon>
+                  <span>{{ isSaving ? 'Saving...' : (isEditingBadge() ? 'Update Badge' : 'Create Badge') }}</span>
                 </button>
               </div>
             </form>
-          </mat-card-content>
-        </mat-card>
+          </div>
+        </div>
+
+        <!-- Badges Master Table (Desktop ≥ 640px) -->
+        <div class="deck-card table-overflow-wrap">
+          <table class="dark-data-table desktop-only-table">
+            <thead>
+              <tr>
+                <th>Badge Seal</th>
+                <th>Unique ID</th>
+                <th>Name & Description</th>
+                <th>Category</th>
+                <th>Visibility</th>
+                <th class="center-align">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let badge of badges">
+                <td>
+                  <span class="badge-preview-pill font-mono font-bold" [style.color]="badge.colorHex" [style.border-color]="badge.colorHex">
+                    ★ {{ badge.name }}
+                  </span>
+                </td>
+                <td class="font-mono text-cyan font-bold">{{ badge.id }}</td>
+                <td>
+                  <div class="table-name-wrap">
+                    <strong class="text-white">{{ badge.name }}</strong>
+                    <span class="text-muted text-xs">{{ badge.description || 'No description' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="category-pill font-mono">{{ badge.type }}</span>
+                </td>
+                <td>
+                  <span class="vis-pill font-mono" [class.vis-pub]="badge.visibility === 'PUBLIC'">{{ badge.visibility }}</span>
+                </td>
+                <td class="center-align">
+                  <div class="table-actions-row">
+                    <button type="button" class="btn-table-action" (click)="editBadge(badge)" title="Edit Badge">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button type="button" class="btn-table-action btn-warn-act" (click)="deleteBadge(badge)" title="Delete Badge">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="badges.length === 0">
+                <td colspan="6" class="empty-table-cell text-muted center-align">No badges defined yet. Click "Create New Badge" above.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Mobile Cards Deck (< 640px - Failure #25 Prevention) -->
+          <div class="mobile-cards-deck">
+            <div *ngFor="let badge of badges" class="mobile-item-card">
+              <div class="mobile-card-top">
+                <span class="badge-preview-pill font-mono font-bold" [style.color]="badge.colorHex" [style.border-color]="badge.colorHex">
+                  ★ {{ badge.name }}
+                </span>
+                <span class="category-pill font-mono">{{ badge.type }}</span>
+              </div>
+
+              <div class="mobile-card-info">
+                <span class="font-mono text-cyan text-xs">ID: {{ badge.id }}</span>
+                <p class="text-muted text-xs">{{ badge.description || 'No description' }}</p>
+              </div>
+
+              <div class="mobile-card-actions">
+                <button type="button" class="btn-mobile-act" (click)="editBadge(badge)">
+                  <mat-icon>edit</mat-icon> Edit
+                </button>
+                <button type="button" class="btn-mobile-act btn-warn-act" (click)="deleteBadge(badge)">
+                  <mat-icon>delete_outline</mat-icon> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </mat-tab>
 
     <!-- ════════════════ TAB 3: PROMOTIONS & DISCOUNTS ════════════════ -->
     <mat-tab>
       <ng-template matTabLabel>
-        <mat-icon class="tab-icon">local_offer</mat-icon> Promotions & Discounts
+        <mat-icon class="tab-icon-inline text-purple">local_offer</mat-icon> Promo Discounts ({{ (discounts$ | async)?.length || 0 }})
       </ng-template>
-      <div class="tab-content">
-        <!-- List View -->
-        <div class="list-view-container" *ngIf="!showDiscountForm()">
-          <div class="section-actions">
-            <h2>Active Promotions</h2>
-            <button mat-raised-button color="primary" (click)="openNewDiscount()">
-              <mat-icon>add</mat-icon> Add Discount Rule
+
+      <div class="tab-workspace-content" *ngIf="discounts$ | async as discounts">
+
+        <!-- Top Action Row -->
+        <div class="sub-action-bar">
+          <div class="sub-bar-left">
+            <h3 class="text-white">Store Discount Schemes & Price Locks</h3>
+            <p class="text-muted">Automated retail POS promotions, member perks, and item markdowns</p>
+          </div>
+          <button type="button" class="btn-create-purple" (click)="openNewDiscount()" *ngIf="!showDiscountForm()">
+            <mat-icon>add</mat-icon>
+            <span>Create Promo Rule</span>
+          </button>
+        </div>
+
+        <!-- Discount Form Card (Collapsible) -->
+        <div class="deck-card form-reveal-card" *ngIf="showDiscountForm()" [@fadeIn]>
+          <div class="deck-card-header">
+            <div class="card-title-wrap">
+              <mat-icon class="text-purple">local_offer</mat-icon>
+              <h3 class="text-white">{{ isEditingDiscount() ? 'Edit Promotion Rule' : 'Create New Promotion Rule' }}</h3>
+            </div>
+            <button type="button" class="btn-icon-cancel" (click)="showDiscountForm.set(false)">
+              <mat-icon>close</mat-icon>
             </button>
           </div>
 
-          <mat-card class="table-card">
-            <table mat-table [dataSource]="(discounts$ | async) || []" class="settings-table">
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Promo Name</th>
-                <td mat-cell *matCellDef="let rule">
-                  <strong>{{ rule.name }}</strong>
-                  <div class="sub-description" *ngIf="rule.description">{{ rule.description }}</div>
-                </td>
-              </ng-container>
+          <div class="deck-card-body">
+            <form [formGroup]="discountForm" (ngSubmit)="saveDiscount()" class="settings-form-grid">
+              <div class="fields-dual-row">
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                  <mat-label>Rule Name</mat-label>
+                  <input matInput formControlName="name" placeholder="e.g. VIP 10% Protein Discount">
+                </mat-form-field>
 
-              <ng-container matColumnDef="trigger">
-                <th mat-header-cell *matHeaderCellDef>Trigger Eligibility</th>
-                <td mat-cell *matCellDef="let rule">
-                  <span class="eligibility-trigger">
-                    {{ rule.triggerType }}
-                    <span *ngIf="rule.triggerType === 'TAG_BASED' && rule.targetTags?.length">
-                      ({{ rule.targetTags.join(', ') }})
-                    </span>
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="priority">
-                <th mat-header-cell *matHeaderCellDef>Priority</th>
-                <td mat-cell *matCellDef="let rule">
-                  {{ rule.priority ?? 0 }}
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="scope">
-                <th mat-header-cell *matHeaderCellDef>Scope</th>
-                <td mat-cell *matCellDef="let rule">
-                  {{ rule.scope }}
-                  <div class="sub-scope" *ngIf="rule.scope === 'CATEGORY' && rule.applicableCategories?.length">
-                    Categories: {{ rule.applicableCategories.join(', ') }}
-                  </div>
-                  <div class="sub-scope" *ngIf="rule.scope === 'SPECIFIC_PRODUCTS' && rule.applicableProductIds?.length">
-                    Products: {{ rule.applicableProductIds.length }} items
-                  </div>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="calc">
-                <th mat-header-cell *matHeaderCellDef>Calculation</th>
-                <td mat-cell *matCellDef="let rule">
-                  <span *ngIf="rule.calculationType === 'PERCENTAGE'">{{ rule.discountValue }}% Off</span>
-                  <span *ngIf="rule.calculationType === 'FLAT_RATE'">₱{{ rule.discountValue }} Flat Off</span>
-                  <span *ngIf="rule.calculationType === 'PRICE_LOCK'">Price Freeze Override</span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
-                <td mat-cell *matCellDef="let rule">
-                  <mat-slide-toggle [checked]="rule.active" (change)="toggleDiscountActive(rule)" color="primary">
-                    {{ rule.active ? 'Active' : 'Inactive' }}
-                  </mat-slide-toggle>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
-                <td mat-cell *matCellDef="let rule">
-                  <button mat-icon-button color="primary" (click)="editDiscount(rule)" matTooltip="Edit promo">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-icon-button color="warn" (click)="deleteDiscount(rule)" matTooltip="Delete promo">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="discountColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: discountColumns;"></tr>
-            </table>
-
-            <div class="empty-table-state" *ngIf="!((discounts$ | async)?.length)">
-              <mat-icon>local_offer</mat-icon>
-              <p>No promotion rules found. Create one to begin automating discounts.</p>
-            </div>
-          </mat-card>
-        </div>
-
-        <!-- Add/Edit Form -->
-        <mat-card class="form-editor-card" *ngIf="showDiscountForm()" [@fadeIn]>
-          <mat-card-header>
-            <mat-card-title>{{ isEditingDiscount() ? 'Edit Promotion Rule' : 'New Promotion Rule' }}</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <form [formGroup]="discountForm" (ngSubmit)="saveDiscount()" class="settings-form">
-              <div class="form-grid">
-                <!-- Name & Description -->
-                <div class="form-row row-2col">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Promotion Name</mat-label>
-                    <input matInput formControlName="name" placeholder="Ex. Founding Member Freeze">
-                    <mat-error *ngIf="discountForm.get('name')?.hasError('required')">Required</mat-error>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Description</mat-label>
-                    <input matInput formControlName="description" placeholder="Ex. Keeps pricing frozen for first 100 signups">
-                  </mat-form-field>
-                </div>
-
-                <!-- Trigger and eligibility -->
-                <div class="form-row row-2col">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Trigger Type</mat-label>
-                    <mat-select formControlName="triggerType">
-                      <mat-option value="TAG_BASED">TAG_BASED (Only applies to matching member badges)</mat-option>
-                      <mat-option value="AUTOMATIC">AUTOMATIC (Applies to all eligible checkouts)</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" *ngIf="discountForm.get('triggerType')?.value === 'TAG_BASED'">
-                    <mat-label>Target Member Badges (Select multiple)</mat-label>
-                    <mat-select formControlName="targetTags" multiple>
-                      <mat-option *ngFor="let badge of (badges$ | async)" [value]="badge.id">
-                        {{ badge.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-
-                <!-- Scope -->
-                <div class="form-row row-2col">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Application Scope</mat-label>
-                    <mat-select formControlName="scope">
-                      <mat-option value="ALL_PRODUCTS">ALL_PRODUCTS (Applies to all products in cart)</mat-option>
-                      <mat-option value="CATEGORY">CATEGORY (Only matches specific category classifications)</mat-option>
-                      <mat-option value="SPECIFIC_PRODUCTS">SPECIFIC_PRODUCTS (Only matches specific product SKUs)</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <!-- Category scope select -->
-                  <mat-form-field appearance="outline" *ngIf="discountForm.get('scope')?.value === 'CATEGORY'">
-                    <mat-label>Target Product Categories</mat-label>
-                    <mat-select formControlName="applicableCategories" multiple>
-                      <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <!-- Product scope select -->
-                  <mat-form-field appearance="outline" *ngIf="discountForm.get('scope')?.value === 'SPECIFIC_PRODUCTS'">
-                    <mat-label>Target Products</mat-label>
-                    <mat-select formControlName="applicableProductIds" multiple>
-                      <mat-option *ngFor="let p of (products$ | async)" [value]="p.id">
-                        {{ p.name }} (₱{{ p.price }})
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-
-                <!-- Calculation rules -->
-                <div class="form-row row-2col">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Calculation Type</mat-label>
-                    <mat-select formControlName="calculationType">
-                      <mat-option value="PERCENTAGE">PERCENTAGE (e.g. 10% off)</mat-option>
-                      <mat-option value="FLAT_RATE">FLAT_RATE (e.g. ₱100 off per item)</mat-option>
-                      <mat-option value="PRICE_LOCK">PRICE_LOCK (Overriding lock-in price)</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" *ngIf="discountForm.get('calculationType')?.value !== 'PRICE_LOCK'">
-                    <mat-label>Discount Value</mat-label>
-                    <input matInput type="number" formControlName="discountValue">
-                  </mat-form-field>
-                </div>
-
-                <div class="form-row row-2col">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Minimum Quantity Threshold (Optional)</mat-label>
-                    <input matInput type="number" formControlName="minimumQuantity" placeholder="e.g. 2 for bulk pricing">
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>Priority Level (Higher numbers run first)</mat-label>
-                    <input matInput type="number" formControlName="priority" placeholder="Ex. 10">
-                    <mat-hint>Resolves conflicts when multiple discounts match (highest priority runs first).</mat-hint>
-                  </mat-form-field>
-                </div>
-
-                <!-- Price Lock JSON (Hidden unless Price Lock is selected) -->
-                <div class="form-row" *ngIf="discountForm.get('calculationType')?.value === 'PRICE_LOCK'">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Product Price Overrides (JSON Mapping: &#123;"productId": LockedPrice&#125;)</mat-label>
-                    <textarea matInput formControlName="priceLocksJson" rows="4" 
-                              placeholder='Ex: &#123; "prod_id_1": 1000, "prod_id_2": 9500 &#125;'></textarea>
-                    <mat-hint>Input a JSON object mapping product IDs to their custom frozen prices.</mat-hint>
-                  </mat-form-field>
-                </div>
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                  <mat-label>Trigger Type</mat-label>
+                  <mat-select formControlName="triggerType">
+                    <mat-option value="TAG_BASED">Member Badge / Tag</mat-option>
+                    <mat-option value="ALWAYS_ACTIVE">Always Active (All Customers)</mat-option>
+                  </mat-select>
+                </mat-form-field>
               </div>
 
-              <div class="actions">
-                <button mat-button type="button" (click)="showDiscountForm.set(false)" [disabled]="isSaving">Cancel</button>
-                <button mat-raised-button color="primary" type="submit" [disabled]="discountForm.invalid || isSaving">
-                  <mat-icon>save</mat-icon> {{ isSaving ? 'Saving...' : 'Save Promotion' }}
+              <div class="fields-triple-row">
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                  <mat-label>Calculation Type</mat-label>
+                  <mat-select formControlName="calculationType">
+                    <mat-option value="PERCENTAGE">Percentage (%)</mat-option>
+                    <mat-option value="FLAT_RATE">Fixed Amount (₱)</mat-option>
+                    <mat-option value="PRICE_LOCK">Explicit Price Lock (₱)</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic" *ngIf="discountForm.get('calculationType')?.value !== 'PRICE_LOCK'">
+                  <mat-label>Discount Value</mat-label>
+                  <input matInput type="number" formControlName="discountValue" placeholder="e.g. 10">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                  <mat-label>Rule Priority (0 = Lowest)</mat-label>
+                  <input matInput type="number" formControlName="priority" placeholder="e.g. 10">
+                </mat-form-field>
+              </div>
+
+              <div class="fields-dual-row">
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                  <mat-label>Product Scope</mat-label>
+                  <mat-select formControlName="scope">
+                    <mat-option value="ALL_PRODUCTS">All Store Products</mat-option>
+                    <mat-option value="SPECIFIC_CATEGORIES">Specific Categories</mat-option>
+                    <mat-option value="SPECIFIC_PRODUCTS">Specific Products</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic" *ngIf="discountForm.get('scope')?.value === 'SPECIFIC_CATEGORIES'">
+                  <mat-label>Select Categories</mat-label>
+                  <mat-select formControlName="applicableCategories" multiple>
+                    <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic" *ngIf="discountForm.get('scope')?.value === 'SPECIFIC_PRODUCTS' && (products$ | async) as prods">
+                  <mat-label>Select Products</mat-label>
+                  <mat-select formControlName="applicableProductIds" multiple>
+                    <mat-option *ngFor="let p of prods" [value]="p.id">{{ p.name }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+                <mat-label>Description</mat-label>
+                <input matInput formControlName="description" placeholder="e.g. 10% off for verified coaches">
+              </mat-form-field>
+
+              <div class="form-actions-right">
+                <button type="button" class="btn-cancel-plain" (click)="showDiscountForm.set(false)">Cancel</button>
+                <button type="submit" class="btn-create-purple" [disabled]="discountForm.invalid || isSaving">
+                  <mat-icon>{{ isSaving ? 'sync' : 'check' }}</mat-icon>
+                  <span>{{ isSaving ? 'Saving...' : (isEditingDiscount() ? 'Update Promo Rule' : 'Create Promo Rule') }}</span>
                 </button>
               </div>
             </form>
-          </mat-card-content>
-        </mat-card>
+          </div>
+        </div>
+
+        <!-- Discounts Master Table (Desktop ≥ 640px) -->
+        <div class="deck-card table-overflow-wrap">
+          <table class="dark-data-table desktop-only-table">
+            <thead>
+              <tr>
+                <th>Promotion Name</th>
+                <th>Trigger</th>
+                <th>Scope</th>
+                <th>Discount Value</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th class="center-align">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let disc of discounts">
+                <td>
+                  <div class="table-name-wrap">
+                    <strong class="text-white">{{ disc.name }}</strong>
+                    <span class="text-muted text-xs">{{ disc.description || 'No details' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="category-pill font-mono">{{ disc.triggerType }}</span>
+                </td>
+                <td>
+                  <span class="scope-pill font-mono">{{ disc.scope }}</span>
+                </td>
+                <td class="font-mono font-bold">
+                  <span class="text-gold" *ngIf="disc.calculationType === 'PERCENTAGE'">{{ disc.discountValue }}% Off</span>
+                  <span class="text-mint" *ngIf="disc.calculationType === 'FLAT_RATE'">-₱{{ disc.discountValue | number:'1.2-2' }}</span>
+                  <span class="text-cyan" *ngIf="disc.calculationType === 'PRICE_LOCK'">Price Lock</span>
+                </td>
+                <td class="font-mono text-muted">{{ disc.priority || 0 }}</td>
+                <td>
+                  <button type="button" class="status-toggle-chip" [class.active]="disc.active" (click)="toggleDiscountActive(disc)">
+                    {{ disc.active ? 'Active' : 'Disabled' }}
+                  </button>
+                </td>
+                <td class="center-align">
+                  <div class="table-actions-row">
+                    <button type="button" class="btn-table-action" (click)="editDiscount(disc)" title="Edit Rule">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button type="button" class="btn-table-action btn-warn-act" (click)="deleteDiscount(disc)" title="Delete Rule">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="discounts.length === 0">
+                <td colspan="7" class="empty-table-cell text-muted center-align">No promotion rules created yet. Click "Create Promo Rule" above.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Mobile Cards Deck (< 640px - Failure #25 Prevention) -->
+          <div class="mobile-cards-deck">
+            <div *ngFor="let disc of discounts" class="mobile-item-card">
+              <div class="mobile-card-top">
+                <strong class="text-white">{{ disc.name }}</strong>
+                <button type="button" class="status-toggle-chip" [class.active]="disc.active" (click)="toggleDiscountActive(disc)">
+                  {{ disc.active ? 'Active' : 'Disabled' }}
+                </button>
+              </div>
+
+              <div class="mobile-card-info">
+                <div class="mobile-discount-val font-mono">
+                  <span class="text-gold" *ngIf="disc.calculationType === 'PERCENTAGE'">{{ disc.discountValue }}% Off</span>
+                  <span class="text-mint" *ngIf="disc.calculationType === 'FLAT_RATE'">-₱{{ disc.discountValue | number:'1.2-2' }}</span>
+                  <span class="text-cyan" *ngIf="disc.calculationType === 'PRICE_LOCK'">Price Lock</span>
+                  <span class="text-muted text-xs">({{ disc.scope }})</span>
+                </div>
+                <p class="text-muted text-xs">{{ disc.description || 'No details' }}</p>
+              </div>
+
+              <div class="mobile-card-actions">
+                <button type="button" class="btn-mobile-act" (click)="editDiscount(disc)">
+                  <mat-icon>edit</mat-icon> Edit
+                </button>
+                <button type="button" class="btn-mobile-act btn-warn-act" (click)="deleteDiscount(disc)">
+                  <mat-icon>delete_outline</mat-icon> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </mat-tab>
+
   </mat-tab-group>
->>>>>>> master
+
+  <!-- ── Safe Area Physical Scroll Spacer (Failure #24 & #26 Prevention) ── -->
+  <div class="bottom-scroll-spacer"></div>
+
 </div>

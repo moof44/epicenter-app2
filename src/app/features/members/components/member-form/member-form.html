@@ -1,249 +1,270 @@
-<div class="form-container" [@fadeIn]>
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>{{ isEditMode ? 'Edit Member' : 'New Member' }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+<div class="member-form-page" [@fadeIn]>
 
+  <!-- Top Header Navigation -->
+  <header class="form-header">
+    <div class="header-left">
+      <button type="button" class="back-btn" (click)="cancel()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <h1 class="form-title">{{ isEditMode ? 'Edit Member Profile' : 'New Member Registration' }}</h1>
+        <p class="form-subtitle">{{ isEditMode ? ('Updating account for ' + (member?.name || 'Member')) : 'Enter member profile details and subscription dates' }}</p>
+      </div>
+    </div>
+
+    <div class="header-actions" *ngIf="isEditMode && member">
+      <button type="button" class="btn-qr-action" (click)="showQRCode()">
+        <mat-icon>qr_code_2</mat-icon>
+        <span>Member ID QR</span>
+      </button>
+    </div>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-body">
+
+    <!-- 1️⃣ CARD: PERSONAL INFORMATION -->
+    <div class="form-card">
+      <div class="card-section-header">
+        <mat-icon class="section-icon text-cyan">person</mat-icon>
+        <div>
+          <h2 class="section-title">Personal Information</h2>
+          <p class="section-subtitle">Basic identity and contact details</p>
+        </div>
+      </div>
+
+      <div class="field-grid">
         <!-- Name -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Full Name</mat-label>
-          <input matInput formControlName="name" placeholder="Ex. John Doe">
-          <mat-error *ngIf="form.get('name')?.hasError('required')">Name is required</mat-error>
-        </mat-form-field>
-
-        <!-- Address -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Address</mat-label>
-          <input matInput formControlName="address" placeholder="Ex. 123 Main St">
-          <mat-error *ngIf="form.get('address')?.hasError('required')">Address is required</mat-error>
-        </mat-form-field>
-
-        <div class="row row-2col">
-          <!-- Contact Number -->
-          <mat-form-field appearance="outline">
-            <mat-label>Contact Number</mat-label>
-            <input matInput formControlName="contactNumber" placeholder="09123456789">
-            <mat-error *ngIf="form.get('contactNumber')?.hasError('required')">Required</mat-error>
+        <div class="field-wrap full-span">
+          <label class="field-label">Full Name <span class="req">*</span></label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput formControlName="name" placeholder="e.g. John Doe">
+            <mat-icon matPrefix>badge</mat-icon>
+            <mat-error *ngIf="form.get('name')?.hasError('required')">Full Name is required</mat-error>
           </mat-form-field>
+        </div>
 
-          <!-- Gender -->
-          <mat-form-field appearance="outline">
-            <mat-label>Gender</mat-label>
+        <!-- Contact Number -->
+        <div class="field-wrap">
+          <label class="field-label">Contact Number <span class="req">*</span></label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput formControlName="contactNumber" placeholder="09123456789">
+            <mat-icon matPrefix>phone</mat-icon>
+            <mat-error *ngIf="form.get('contactNumber')?.hasError('required')">Contact number is required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Gender -->
+        <div class="field-wrap">
+          <label class="field-label">Gender <span class="req">*</span></label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
             <mat-select formControlName="gender">
               <mat-option value="Male">Male</mat-option>
               <mat-option value="Female">Female</mat-option>
               <mat-option value="Other">Other</mat-option>
             </mat-select>
+            <mat-icon matPrefix>wc</mat-icon>
           </mat-form-field>
         </div>
 
-        <div class="row row-4col">
-          <!-- Birthday -->
-          <mat-form-field appearance="outline">
-            <mat-label>Birthday</mat-label>
-            <input matInput [matDatepicker]="pickerBirthday" formControlName="birthday">
+        <!-- Birthday -->
+        <div class="field-wrap">
+          <label class="field-label">Birthday <span class="req">*</span></label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput [matDatepicker]="pickerBirthday" formControlName="birthday" placeholder="MM/DD/YYYY">
             <mat-datepicker-toggle matIconSuffix [for]="pickerBirthday"></mat-datepicker-toggle>
             <mat-datepicker #pickerBirthday></mat-datepicker>
-            <mat-error *ngIf="form.get('birthday')?.hasError('required')">Required</mat-error>
+            <mat-icon matPrefix>cake</mat-icon>
+            <mat-error *ngIf="form.get('birthday')?.hasError('required')">Birthday is required</mat-error>
           </mat-form-field>
+        </div>
 
-          <!-- Membership Expiration -->
-          <mat-form-field appearance="outline">
-            <mat-label>Membership Expiration</mat-label>
-            <input matInput [matDatepicker]="pickerExpiration" formControlName="membershipExpiration">
-            <mat-datepicker-toggle matIconSuffix [for]="pickerExpiration"></mat-datepicker-toggle>
-            <mat-datepicker #pickerExpiration></mat-datepicker>
+        <!-- Address -->
+        <div class="field-wrap full-span">
+          <label class="field-label">Address <span class="req">*</span></label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput formControlName="address" placeholder="e.g. 123 Main Street, City">
+            <mat-icon matPrefix>place</mat-icon>
+            <mat-error *ngIf="form.get('address')?.hasError('required')">Address is required</mat-error>
           </mat-form-field>
+        </div>
+      </div>
+    </div>
 
-          <!-- Training Expiration -->
-          <mat-form-field appearance="outline">
-            <mat-label>Training Expiration</mat-label>
-            <input matInput [matDatepicker]="pickerTrainingExpiration" formControlName="trainingExpiration">
-            <mat-datepicker-toggle matIconSuffix [for]="pickerTrainingExpiration"></mat-datepicker-toggle>
-            <mat-datepicker #pickerTrainingExpiration></mat-datepicker>
-          </mat-form-field>
+    <!-- 2️⃣ CARD: MEMBERSHIP & SCHEDULES -->
+    <div class="form-card">
+      <div class="card-section-header">
+        <mat-icon class="section-icon text-gold">card_membership</mat-icon>
+        <div>
+          <h2 class="section-title">Membership & Schedules</h2>
+          <p class="section-subtitle">Membership validity and training expiration</p>
+        </div>
+      </div>
 
-          <!-- Status -->
-          <mat-form-field appearance="outline">
-            <mat-label>Membership Status</mat-label>
+      <div class="field-grid">
+        <!-- Membership Status -->
+        <div class="field-wrap">
+          <label class="field-label">Membership Status <span class="req">*</span></label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
             <mat-select formControlName="membershipStatus">
               <mat-option value="Active">Active</mat-option>
               <mat-option value="Inactive">Inactive</mat-option>
               <mat-option value="Pending">Pending</mat-option>
             </mat-select>
+            <mat-icon matPrefix>verified</mat-icon>
           </mat-form-field>
         </div>
 
+        <!-- Membership Expiration -->
+        <div class="field-wrap">
+          <label class="field-label">Membership Expiration</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput [matDatepicker]="pickerExpiration" formControlName="membershipExpiration" placeholder="MM/DD/YYYY">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerExpiration"></mat-datepicker-toggle>
+            <mat-datepicker #pickerExpiration></mat-datepicker>
+            <mat-icon matPrefix>event</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Training Expiration -->
+        <div class="field-wrap">
+          <label class="field-label">Training Expiration</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput [matDatepicker]="pickerTrainingExpiration" formControlName="trainingExpiration" placeholder="MM/DD/YYYY">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerTrainingExpiration"></mat-datepicker-toggle>
+            <mat-datepicker #pickerTrainingExpiration></mat-datepicker>
+            <mat-icon matPrefix>fitness_center</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3️⃣ CARD: GOALS & REMARKS -->
+    <div class="form-card">
+      <div class="card-section-header">
+        <mat-icon class="section-icon text-mint">notes</mat-icon>
+        <div>
+          <h2 class="section-title">Goals & Staff Remarks</h2>
+          <p class="section-subtitle">Fitness objectives and administrative notes</p>
+        </div>
+      </div>
+
+      <div class="field-grid">
         <!-- Goal -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Goal</mat-label>
-          <textarea matInput formControlName="goal" rows="3" placeholder="Ex. Lose weight, build muscle"></textarea>
-        </mat-form-field>
+        <div class="field-wrap full-span">
+          <label class="field-label">Fitness Goal</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <textarea matInput formControlName="goal" rows="2" placeholder="e.g. Hypertrophy, weight loss, mobility training"></textarea>
+          </mat-form-field>
+        </div>
 
         <!-- Remarks -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Remarks</mat-label>
-          <textarea matInput formControlName="remarks" rows="2"
-            placeholder="Ex. Forgot locker key, Needs medical clearance"></textarea>
-        </mat-form-field>
+        <div class="field-wrap full-span">
+          <label class="field-label">Staff Remarks / Medical Notes</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <textarea matInput formControlName="remarks" rows="2" placeholder="e.g. Previous shoulder injury, locker #42 assigned"></textarea>
+          </mat-form-field>
+        </div>
 
         <!-- Badges & Tags -->
-        <mat-form-field appearance="outline" class="full-width" *ngIf="availableBadges.length > 0">
-          <mat-label>Member Badges / Tags</mat-label>
-          <mat-select formControlName="tags" multiple>
-            <mat-option *ngFor="let badge of availableBadges" [value]="badge.id">
-              {{ badge.name }} ({{ badge.id }})
-            </mat-option>
-          </mat-select>
-          <mat-hint>Select badges to apply exclusive pricing and dashboard indicators</mat-hint>
-        </mat-form-field>
-
-        <div class="actions">
-          <button mat-button type="button" (click)="cancel()">Cancel</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">
-            <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
-            <span *ngIf="!loading">{{ isEditMode ? 'Update' : 'Create' }}</span>
-          </button>
+        <div class="field-wrap full-span" *ngIf="availableBadges.length > 0">
+          <label class="field-label">Member Badges & VIP Tags</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <mat-select formControlName="tags" multiple placeholder="Select applicable badges">
+              <mat-option *ngFor="let badge of availableBadges" [value]="badge.id">
+                {{ badge.name }} ({{ badge.id }})
+              </mat-option>
+            </mat-select>
+            <mat-hint>Applied badges grant automated discounts and VIP status tags</mat-hint>
+          </mat-form-field>
         </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
+      </div>
+    </div>
 
-  <!-- Portal Access Management Card -->
-  <mat-card *ngIf="isEditMode" class="portal-card">
-    <mat-card-header>
-      <mat-card-title>Members Portal Access</mat-card-title>
-    </mat-card-header>
-    <mat-card-content class="portal-card-content">
-      <div class="portal-status-container">
-        
-        <!-- Status Details -->
-        <div class="status-info">
-          <div class="status-row">
-            <span class="label">Account Status:</span>
-            <ng-container *ngIf="member?.portalUid; else noAccount">
-              <span *ngIf="member?.portalStatus === 'Active' || !member?.portalStatus" class="status-badge active">Active</span>
-              <span *ngIf="member?.portalStatus === 'Inactive'" class="status-badge inactive">Deactivated</span>
+    <!-- 4️⃣ CARD: MEMBERS PORTAL ACCESS (Edit Mode Only) -->
+    <div class="form-card portal-card" *ngIf="isEditMode">
+      <div class="card-section-header">
+        <mat-icon class="section-icon text-cyan">phonelink_lock</mat-icon>
+        <div>
+          <h2 class="section-title">Members Portal Access</h2>
+          <p class="section-subtitle">Mobile & web self-service portal credentials</p>
+        </div>
+      </div>
+
+      <div class="portal-grid">
+        <!-- Left: Status details -->
+        <div class="portal-info-box">
+          <div class="portal-info-row">
+            <span class="p-label">Account Status:</span>
+            <ng-container *ngIf="member?.portalUid; else noPortalAccount">
+              <span *ngIf="member?.portalStatus === 'Active' || !member?.portalStatus" class="portal-badge active">
+                <span class="dot"></span> Active
+              </span>
+              <span *ngIf="member?.portalStatus === 'Inactive'" class="portal-badge inactive">
+                <span class="dot"></span> Deactivated
+              </span>
             </ng-container>
-            <ng-template #noAccount>
-              <span class="status-badge inactive">No Account</span>
+            <ng-template #noPortalAccount>
+              <span class="portal-badge no-account">No Account</span>
             </ng-template>
           </div>
-          
-          <div class="status-row" *ngIf="member?.portalUid">
-            <span class="label">Portal Username:</span>
-            <span class="value font-mono">{{ member?.contactNumber }}</span>
+
+          <div class="portal-info-row" *ngIf="member?.portalUid">
+            <span class="p-label">Portal Username:</span>
+            <span class="p-val font-mono">{{ member?.contactNumber }}</span>
           </div>
 
-          <div class="status-row" *ngIf="member?.portalUid">
-            <span class="label">Temporary PIN:</span>
-            <span class="value">Member's Birthday (MMDDYYYY)</span>
+          <div class="portal-info-row" *ngIf="member?.portalUid">
+            <span class="p-label">Default PIN:</span>
+            <span class="p-val">Birthday (MMDDYYYY)</span>
           </div>
         </div>
 
-        <!-- Action Trigger Buttons -->
-        <div class="portal-actions">
+        <!-- Right: Action Buttons -->
+        <div class="portal-actions-box">
           <div class="flex-center" *ngIf="portalLoading">
-            <mat-spinner diameter="30"></mat-spinner>
-            <span style="font-size: 0.85rem; color: #888;">Processing request...</span>
+            <mat-spinner diameter="26"></mat-spinner>
+            <span class="loading-sub">Processing portal request...</span>
           </div>
-          
+
           <ng-container *ngIf="!portalLoading">
-            <button 
-              *ngIf="!member?.portalUid" 
-              mat-raised-button 
-              color="primary" 
-              type="button" 
-              (click)="createPortalAccount()"
-            >
-              <mat-icon>person_add</mat-icon> Create Portal Account
+            <!-- Create Account Button -->
+            <button type="button" class="portal-btn create-btn" *ngIf="!member?.portalUid" (click)="createPortalAccount()">
+              <mat-icon>person_add</mat-icon>
+              <span>Create Portal Account</span>
             </button>
 
-            <button 
-              *ngIf="member?.portalUid && (member?.portalStatus === 'Active' || !member?.portalStatus)" 
-              mat-raised-button 
-              color="warn" 
-              type="button" 
-              (click)="deactivatePortalAccount()"
-            >
-              <mat-icon>block</mat-icon> Deactivate
-            </button>
+            <!-- Manage Account Buttons -->
+            <div class="portal-btn-stack" *ngIf="member?.portalUid">
+              <button type="button" class="portal-btn reset-btn" (click)="resetPortalPassword()">
+                <mat-icon>lock_reset</mat-icon>
+                <span>Reset PIN to Birthday</span>
+              </button>
 
-            <button 
-              *ngIf="member?.portalUid && member?.portalStatus === 'Inactive'" 
-              mat-raised-button 
-              color="primary" 
-              type="button" 
-              (click)="reactivatePortalAccount()"
-            >
-              <mat-icon>check_circle</mat-icon> Reactivate
-            </button>
+              <button type="button" class="portal-btn deactivate-btn" *ngIf="member?.portalStatus === 'Active' || !member?.portalStatus" (click)="togglePortalStatus()">
+                <mat-icon>block</mat-icon>
+                <span>Deactivate Access</span>
+              </button>
 
-            <button 
-              *ngIf="member?.portalUid"
-              mat-stroked-button 
-              color="accent"
-              type="button" 
-              (click)="resetPortalAccount()"
-            >
-              <mat-icon>lock_reset</mat-icon> Reset Password
-            </button>
-
-            <button 
-              *ngIf="member?.portalUid"
-              mat-raised-button 
-              color="accent" 
-              type="button" 
-              (click)="showQR()"
-            >
-              <mat-icon>qr_code_2</mat-icon> QR Login
-            </button>
+              <button type="button" class="portal-btn activate-btn" *ngIf="member?.portalStatus === 'Inactive'" (click)="togglePortalStatus()">
+                <mat-icon>check_circle</mat-icon>
+                <span>Reactivate Access</span>
+              </button>
+            </div>
           </ng-container>
         </div>
-
       </div>
-    </mat-card-content>
-  </mat-card>
+    </div>
 
-  <!-- Attendance Streaks & Badges Card -->
-  <mat-card *ngIf="isEditMode" class="portal-card" style="margin-top: 16px;">
-    <mat-card-header>
-      <mat-card-title>Attendance Streaks & Badges</mat-card-title>
-    </mat-card-header>
-    <mat-card-content class="portal-card-content">
-      <div class="portal-status-container">
-        <div class="status-info">
-          
-          <div class="status-row">
-            <span class="label">Current Streak:</span>
-            <span class="value font-bold" style="color: #ff9800; display: inline-flex; align-items: center; gap: 4px;">
-              🔥 {{ member?.attendanceStreak || 0 }} Day{{ (member?.attendanceStreak === 1) ? '' : 's' }}
-            </span>
-          </div>
+    <!-- Form Submit Actions Dock (At the very bottom with full visibility) -->
+    <div class="form-actions-dock">
+      <button type="button" class="btn-cancel" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn-submit-gold" [disabled]="form.invalid || loading">
+        <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+        <mat-icon class="btn-icon" *ngIf="!loading">save</mat-icon>
+        <span *ngIf="!loading">{{ isEditMode ? 'Save Changes' : 'Create Member' }}</span>
+      </button>
+    </div>
 
-          <div class="status-row">
-            <span class="label">Attendance Badge:</span>
-            <span *ngIf="member?.attendanceBadgeLevel === 3" class="status-badge" style="background: #ffd700; color: #000; font-weight: bold; border: 1px solid #cca100;">Gold Legend</span>
-            <span *ngIf="member?.attendanceBadgeLevel === 2" class="status-badge" style="background: #c0c0c0; color: #000; font-weight: bold; border: 1px solid #999;">Silver Consistent</span>
-            <span *ngIf="member?.attendanceBadgeLevel === 1" class="status-badge" style="background: #cd7f32; color: #fff; font-weight: bold; border: 1px solid #8c531d;">Bronze Active</span>
-            <span *ngIf="!member?.attendanceBadgeLevel" class="status-badge inactive">No Badge</span>
-          </div>
+  </form>
 
-          <div class="status-row" *ngIf="member?.earnedMonthlyBadges?.length">
-            <span class="label">Monthly Collectibles:</span>
-            <div class="value" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
-              <span *ngFor="let mBadge of member?.earnedMonthlyBadges" 
-                    class="status-badge active" 
-                    style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; border-color: #bae6fd;">
-                🏅 {{ formatMonthlyBadgeId(mBadge) }}
-              </span>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </mat-card-content>
-  </mat-card>
 </div>

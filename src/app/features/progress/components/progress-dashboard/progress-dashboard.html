@@ -1,358 +1,507 @@
-<div class="dashboard-container" *ngIf="member$ | async as member" [@fadeIn]>
-    <div class="header">
-        <div class="title-group">
-            <h1>{{ member.name }}</h1>
-            <div class="subtitle-group">
-                <span class="goal-badge" *ngIf="member.goal">Goal: {{ member.goal }}</span>
-            </div>
+<div class="progress-dashboard-page" *ngIf="member$ | async as member" [@fadeIn]>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       1. PAGE HEADER & MEMBER PROFILE BANNER
+       ══════════════════════════════════════════════════════════════ -->
+  <header class="page-header">
+    <div class="header-left">
+      <a routerLink="/members" class="back-btn" title="Back to Member Directory">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <div class="member-avatar">{{ getMemberInitials(member.name) }}</div>
+      <div class="member-meta">
+        <div class="name-badge-row">
+          <h1 class="page-title">{{ member.name }}</h1>
+          <span class="goal-pill" *ngIf="member.goal">
+            <mat-icon class="pill-icon">military_tech</mat-icon>
+            <span>Goal: {{ member.goal }}</span>
+          </span>
         </div>
-        <a mat-raised-button color="primary" [routerLink]="['/members', member.id, 'progress', 'new']">
-            <mat-icon>add</mat-icon> New Entry
-        </a>
+        <p class="page-subtitle">Body Composition Time-Series & Athletic Evolution</p>
+      </div>
     </div>
 
-    <div class="loading-shade position-relative" style="min-height: 100px; position: relative;"
-        *ngIf="!(latest$ | async)">
-        <mat-spinner diameter="50"></mat-spinner>
+    <div class="action-buttons">
+      <a [routerLink]="['/members', member.id, 'progress', 'new']" class="btn-primary-action">
+        <mat-icon class="btn-icon">add_chart</mat-icon>
+        <span>+ Log Checkup / InBody Scan</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       2. 🏆 HERO VICTORY SPOTLIGHT (Psychological Motivation Banner)
+       ══════════════════════════════════════════════════════════════ -->
+  <section class="victory-spotlight" *ngIf="transformation$ | async as trans" [ngClass]="trans.energyLevel" [@fadeIn]>
+    <div class="spotlight-left">
+      <div class="spotlight-badge">
+        <mat-icon class="spotlight-badge-icon">{{ trans.icon }}</mat-icon>
+        <span>{{ trans.badge }}</span>
+      </div>
+      <h2 class="spotlight-title">{{ trans.title }}</h2>
+      <p class="spotlight-sub">{{ trans.subtitle }}</p>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid" *ngIf="latest$ | async as latest" [@staggerList]>
-        <mat-card class="stat-card">
-            <mat-card-header>
-                <mat-card-title>Weight</mat-card-title>
-            </mat-card-header>
-            <mat-card-content class="stat-content">
-                <span class="value" *ngIf="latest.weight">{{ latest.weight }} kg</span>
-                <span class="value empty-val" *ngIf="!latest.weight && latest.reportImageUrl">Scan Attached</span>
-                <span class="value empty-val" *ngIf="!latest.weight && !latest.reportImageUrl">--</span>
-                <span class="diff" *ngIf="latest.weight && (previous$ | async)?.weight as prev"
-                    [class.positive]="(latest.weight - prev) < 0" [class.negative]="(latest.weight - prev) > 0">
-                    {{ (latest.weight - prev) | number:'1.1-1' }}
-                </span>
-            </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-            <mat-card-header>
-                <mat-card-title>Body Fat</mat-card-title>
-            </mat-card-header>
-            <mat-card-content class="stat-content">
-                <span class="value" *ngIf="latest.bodyFat">{{ latest.bodyFat }}%</span>
-                <span class="value empty-val" *ngIf="!latest.bodyFat">--</span>
-                <span class="diff" *ngIf="latest.bodyFat && (previous$ | async)?.bodyFat as prev"
-                    [class.positive]="(latest.bodyFat - prev) < 0" [class.negative]="(latest.bodyFat - prev) > 0">
-                    {{ (latest.bodyFat - prev) | number:'1.1-1' }}
-                </span>
-            </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-            <mat-card-header>
-                <mat-card-title>Muscle Mass</mat-card-title>
-            </mat-card-header>
-            <mat-card-content class="stat-content">
-                <span class="value" *ngIf="latest.muscleMass">{{ latest.muscleMass }}%</span>
-                <span class="value empty-val" *ngIf="!latest.muscleMass">--</span>
-                <span class="diff" *ngIf="latest.muscleMass && (previous$ | async)?.muscleMass as prev"
-                    [class.positive]="(latest.muscleMass - prev) > 0" [class.negative]="(latest.muscleMass - prev) < 0">
-                    {{ (latest.muscleMass - prev) | number:'1.1-1' }}
-                </span>
-            </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-            <mat-card-header>
-                <mat-card-title>Visceral Fat</mat-card-title>
-            </mat-card-header>
-            <mat-card-content class="stat-content">
-                <span class="value" *ngIf="latest.visceralFat">{{ latest.visceralFat }}</span>
-                <span class="value empty-val" *ngIf="!latest.visceralFat">--</span>
-                <span class="diff" *ngIf="latest.visceralFat && (previous$ | async)?.visceralFat as prev"
-                    [class.positive]="(latest.visceralFat - prev) < 0"
-                    [class.negative]="(latest.visceralFat - prev) > 0">
-                    {{ (latest.visceralFat - prev) | number:'1.1-1' }}
-                </span>
-            </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-            <mat-card-header>
-                <mat-card-title>BMI</mat-card-title>
-            </mat-card-header>
-            <mat-card-content class="stat-content">
-                <span class="value" *ngIf="latest.bmi">{{ latest.bmi }}</span>
-                <span class="value empty-val" *ngIf="!latest.bmi">--</span>
-                <span class="diff" *ngIf="latest.bmi && (previous$ | async)?.bmi as prev" [class.positive]="(latest.bmi - prev) < 0"
-                    [class.negative]="(latest.bmi - prev) > 0">
-                    {{ (latest.bmi - prev) | number:'1.1-1' }}
-                </span>
-            </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-            <mat-card-header>
-                <mat-card-title>Body Age</mat-card-title>
-            </mat-card-header>
-            <mat-card-content class="stat-content">
-                <span class="value" *ngIf="latest.bodyAge">{{ latest.bodyAge }}</span>
-                <span class="value empty-val" *ngIf="!latest.bodyAge">--</span>
-                <span class="diff" *ngIf="latest.bodyAge && (previous$ | async)?.bodyAge as prev"
-                    [class.positive]="(latest.bodyAge - prev) < 0" [class.negative]="(latest.bodyAge - prev) > 0">
-                    {{ (latest.bodyAge - prev) | number:'1.0-0' }}
-                </span>
-            </mat-card-content>
-        </mat-card>
-    </div>
-
-    <!-- History Table -->
-    <mat-card class="history-card" *ngIf="measurements$ | async" [@fadeIn]>
-        <mat-card-header>
-            <mat-card-title>History</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="table-container">
-            <table mat-table [dataSource]="(measurements$ | async) || []" class="history-table">
-                <ng-container matColumnDef="date">
-                    <th mat-header-cell *matHeaderCellDef> Date </th>
-                    <td mat-cell *matCellDef="let m">
-                        <div class="date-cell-wrapper">
-                            <span>{{ (m.date?.seconds ? (m.date.seconds * 1000) : m.date) | date:'shortDate' }}</span>
-                            <button *ngIf="m.reportImageUrl" type="button" mat-icon-button color="primary" 
-                                class="scan-thumb-btn" (click)="openImagePreview(m.reportImageUrl); $event.stopPropagation()"
-                                matTooltip="Click to view Body Scale Scan Report">
-                                <mat-icon>document_scanner</mat-icon>
-                            </button>
-                        </div>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="height">
-                    <th mat-header-cell *matHeaderCellDef> Height </th>
-                    <td mat-cell *matCellDef="let m; let i = index">
-                        {{ m.height }}
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'height') as diff"
-                            [class]="getDiffClass('height', diff)">
-                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.0-1' }})
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="weight">
-                    <th mat-header-cell *matHeaderCellDef> Weight </th>
-                    <td mat-cell *matCellDef="let m; let i = index">
-                        {{ m.weight }}
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'weight') as diff"
-                            [class]="getDiffClass('weight', diff)">
-                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1' }})
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="bodyFat">
-                    <th mat-header-cell *matHeaderCellDef> Body Fat </th>
-                    <td mat-cell *matCellDef="let m; let i = index">
-                        {{ m.bodyFat }}
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'bodyFat') as diff"
-                            [class]="getDiffClass('bodyFat', diff)">
-                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1' }})
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="subcutaneousFat">
-                    <th mat-header-cell *matHeaderCellDef> S-Fat </th>
-                    <td mat-cell *matCellDef="let m; let i = index">
-                        {{ m.subcutaneousFat }}
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'subcutaneousFat') as diff"
-                            [class]="getDiffClass('subcutaneousFat', diff)">
-                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1' }})
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="visceralFat">
-                    <th mat-header-cell *matHeaderCellDef> V-Fat </th>
-                    <td mat-cell *matCellDef="let m; let i = index">
-                        {{ m.visceralFat }}
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'visceralFat') as diff"
-                            [class]="getDiffClass('visceralFat', diff)">
-                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.0-1' }})
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="muscleMass">
-                    <th mat-header-cell *matHeaderCellDef> Muscle </th>
-                    <td mat-cell *matCellDef="let m; let i = index">
-                        {{ m.muscleMass }}
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'muscleMass') as diff"
-                            [class]="getDiffClass('muscleMass', diff)">
-                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1' }})
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="bmi">
-                    <th mat-header-cell *matHeaderCellDef> BMI </th>
-                    <td mat-cell *matCellDef="let m; let i = index">
-                        {{ m.bmi }}
-                        <span class="diff-small" *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'bmi') as diff"
-                            [class]="getDiffClass('bmi', diff)">
-                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1' }})
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="metabolism">
-                    <th mat-header-cell *matHeaderCellDef> RM </th>
-                    <td mat-cell *matCellDef="let m; let i = index">
-                        {{ m.metabolism }}
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'metabolism') as diff"
-                            [class]="getDiffClass('metabolism', diff)">
-                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.0-0' }})
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="bodyAge">
-                    <th mat-header-cell *matHeaderCellDef> Age </th>
-                    <td mat-cell *matCellDef="let m; let i = index">
-                        {{ m.bodyAge }}
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'bodyAge') as diff"
-                            [class]="getDiffClass('bodyAge', diff)">
-                            ({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.0-0' }})
-                        </span>
-                    </td>
-                </ng-container>
-
-                <!-- Detailed Fat Metrics -->
-                <ng-container matColumnDef="sinistralFatFull">
-                    <th mat-header-cell *matHeaderCellDef> S-Fat(F) </th>
-                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.sinistralFatFull }}%
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'sinistralFatFull') as diff"
-                            [class]="getDiffClass('sinistralFatFull', diff)">({{ diff > 0 ? '+' : ''}}{{ diff |
-                            number:'1.1-1' }})</span>
-                    </td>
-                </ng-container>
-                <ng-container matColumnDef="muscleFull">
-                    <th mat-header-cell *matHeaderCellDef> Mus(F) </th>
-                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.muscleFull }}%
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'muscleFull') as diff"
-                            [class]="getDiffClass('muscleFull', diff)">({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1'
-                            }})</span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="subcutaneousFatArms">
-                    <th mat-header-cell *matHeaderCellDef> S-Fat(Arm) </th>
-                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.subcutaneousFatArms }}%
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'subcutaneousFatArms') as diff"
-                            [class]="getDiffClass('subcutaneousFatArms', diff)">({{ diff > 0 ? '+' : ''}}{{ diff |
-                            number:'1.1-1' }})</span>
-                    </td>
-                </ng-container>
-                <ng-container matColumnDef="muscleArms">
-                    <th mat-header-cell *matHeaderCellDef> Mus(Arm) </th>
-                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.muscleArms }}%
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'muscleArms') as diff"
-                            [class]="getDiffClass('muscleArms', diff)">({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1'
-                            }})</span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="subcutaneousFatTrunk">
-                    <th mat-header-cell *matHeaderCellDef> S-Fat(Trk) </th>
-                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.subcutaneousFatTrunk }}%
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'subcutaneousFatTrunk') as diff"
-                            [class]="getDiffClass('subcutaneousFatTrunk', diff)">({{ diff > 0 ? '+' : ''}}{{ diff |
-                            number:'1.1-1' }})</span>
-                    </td>
-                </ng-container>
-                <ng-container matColumnDef="muscleTrunk">
-                    <th mat-header-cell *matHeaderCellDef> Mus(Trk) </th>
-                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.muscleTrunk }}%
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'muscleTrunk') as diff"
-                            [class]="getDiffClass('muscleTrunk', diff)">({{ diff > 0 ? '+' : ''}}{{ diff |
-                            number:'1.1-1' }})</span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="subcutaneousFatLegs">
-                    <th mat-header-cell *matHeaderCellDef> S-Fat(Leg) </th>
-                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.subcutaneousFatLegs }}%
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'subcutaneousFatLegs') as diff"
-                            [class]="getDiffClass('subcutaneousFatLegs', diff)">({{ diff > 0 ? '+' : ''}}{{ diff |
-                            number:'1.1-1' }})</span>
-                    </td>
-                </ng-container>
-                <ng-container matColumnDef="muscleLegs">
-                    <th mat-header-cell *matHeaderCellDef> Mus(Leg) </th>
-                    <td mat-cell *matCellDef="let m; let i = index"> {{ m.muscleLegs }}%
-                        <span class="diff-small"
-                            *ngIf="getDiff(m, ((measurements$ | async) || [])[i+1], 'muscleLegs') as diff"
-                            [class]="getDiffClass('muscleLegs', diff)">({{ diff > 0 ? '+' : ''}}{{ diff | number:'1.1-1'
-                            }})</span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef> </th>
-                    <td mat-cell *matCellDef="let m">
-                        <button mat-icon-button matTooltip="Edit" (click)="editEntry(m); $event.stopPropagation()">
-                            <mat-icon>edit</mat-icon>
-                        </button>
-                        <button mat-icon-button matTooltip="Delete" color="warn"
-                            (click)="deleteEntry(m); $event.stopPropagation()">
-                            <mat-icon>delete</mat-icon>
-                        </button>
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: historyColumns;"></tr>
-            </table>
-        </mat-card-content>
-    </mat-card>
-
-    <!-- Attendance Chart -->
-    <div class="attendance-section" *ngIf="member.id">
-        <app-attendance-calendar [memberId]="member.id"></app-attendance-calendar>
-    </div>
-
-    <!-- 📸 Fullscreen Scan Image Preview Lightbox -->
-    <div class="image-lightbox-overlay" *ngIf="previewingImageUrl" role="dialog" aria-modal="true" tabindex="0" (keydown.escape)="closeImagePreview()" (click)="closeImagePreview()">
-        <div class="image-lightbox-content" role="document">
-            <div class="lightbox-header">
-                <span class="lightbox-title">
-                    <mat-icon>document_scanner</mat-icon> Body Composition Scan Report
-                </span>
-                <div class="lightbox-actions">
-                    <a [href]="previewingImageUrl" target="_blank" download="scan_report.jpg" mat-icon-button title="Open original / Download">
-                        <mat-icon>open_in_new</mat-icon>
-                    </a>
-                    <button mat-icon-button (click)="closeImagePreview()" title="Close">
-                        <mat-icon>close</mat-icon>
-                    </button>
-                </div>
-            </div>
-            <div class="lightbox-img-container">
-                <img [src]="previewingImageUrl" alt="Body Composition Scan Report" class="lightbox-img">
-            </div>
+    <div class="spotlight-right">
+      <!-- Muscle Net Win -->
+      <div class="win-chip win-muscle" *ngIf="trans.netMuscle !== null">
+        <div class="win-icon-wrap">
+          <mat-icon>fitness_center</mat-icon>
         </div>
+        <div class="win-details">
+          <span class="win-num">{{ trans.netMuscle >= 0 ? '+' : '' }}{{ trans.netMuscle | number:'1.1-1' }}%</span>
+          <span class="win-label">Muscle Delta</span>
+        </div>
+      </div>
+
+      <!-- Fat Net Win -->
+      <div class="win-chip win-fat" *ngIf="trans.netFat !== null">
+        <div class="win-icon-wrap">
+          <mat-icon>local_fire_department</mat-icon>
+        </div>
+        <div class="win-details">
+          <span class="win-num">{{ trans.netFat > 0 ? '+' : '' }}{{ trans.netFat | number:'1.1-1' }}%</span>
+          <span class="win-label">Body Fat Delta</span>
+        </div>
+      </div>
+
+      <!-- Bio-Age Rejuvenation Win -->
+      <div class="win-chip win-bio" *ngIf="trans.bioAgeYounger !== null && trans.bioAgeYounger > 0">
+        <div class="win-icon-wrap">
+          <mat-icon>cake</mat-icon>
+        </div>
+        <div class="win-details">
+          <span class="win-num">-{{ trans.bioAgeYounger }} Yrs</span>
+          <span class="win-label">Bio-Age Rejuvenation</span>
+        </div>
+      </div>
     </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       3. VIBRANT PERSONALITY-DRIVEN METRIC CARDS (Zero Monotony)
+       ══════════════════════════════════════════════════════════════ -->
+  <section class="kpi-section" *ngIf="latest$ | async as latest" [@staggerList]>
+    
+    <!-- 1️⃣ WEIGHT & BODY COMPOSITION CARD -->
+    <div class="kpi-card card-weight">
+      <div class="kpi-top">
+        <span class="kpi-label">Body Weight</span>
+        <div class="kpi-icon-pill icon-cyan">
+          <mat-icon>scale</mat-icon>
+        </div>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val" *ngIf="latest.weight">{{ latest.weight }} <small class="kpi-unit">kg</small></span>
+        <span class="kpi-val empty-val" *ngIf="!latest.weight && latest.reportImageUrl">Scan Attached</span>
+        <span class="kpi-val empty-val" *ngIf="!latest.weight && !latest.reportImageUrl">--</span>
+      </div>
+      <div class="kpi-footer">
+        <ng-container *ngIf="latest.weight && (previous$ | async)?.weight as prev">
+          <span class="diff-badge" [ngClass]="(latest.weight - prev) <= 0 ? 'good' : 'bad'">
+            {{ (latest.weight - prev) > 0 ? '+' : '' }}{{ (latest.weight - prev) | number:'1.1-1' }} kg
+          </span>
+          <span class="diff-sub">vs previous checkup</span>
+        </ng-container>
+        <span class="diff-sub" *ngIf="!((previous$ | async)?.weight)">Initial checkup baseline</span>
+      </div>
+    </div>
+
+    <!-- 2️⃣ BODY FAT % (FLAME BURNER) -->
+    <div class="kpi-card card-fat">
+      <div class="kpi-top">
+        <span class="kpi-label">Body Fat</span>
+        <div class="kpi-icon-pill icon-gold">
+          <mat-icon>local_fire_department</mat-icon>
+        </div>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val text-gold" *ngIf="latest.bodyFat">{{ latest.bodyFat }} <small class="kpi-unit">%</small></span>
+        <span class="kpi-val empty-val" *ngIf="!latest.bodyFat">--</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="category-chip gold-chip" *ngIf="latest.bodyFat">{{ getBodyFatTier(latest.bodyFat, member.gender) }}</span>
+        <ng-container *ngIf="latest.bodyFat && (previous$ | async)?.bodyFat as prev">
+          <span class="diff-badge" [ngClass]="(latest.bodyFat - prev) <= 0 ? 'good' : 'bad'">
+            {{ (latest.bodyFat - prev) > 0 ? '+' : '' }}{{ (latest.bodyFat - prev) | number:'1.1-1' }}%
+          </span>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- 3️⃣ MUSCLE MASS (BEAST GAINS) -->
+    <div class="kpi-card card-muscle">
+      <div class="kpi-top">
+        <span class="kpi-label">Muscle Mass</span>
+        <div class="kpi-icon-pill icon-mint">
+          <mat-icon>fitness_center</mat-icon>
+        </div>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val text-mint" *ngIf="latest.muscleMass">{{ latest.muscleMass }} <small class="kpi-unit">%</small></span>
+        <span class="kpi-val empty-val" *ngIf="!latest.muscleMass">--</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="category-chip mint-chip" *ngIf="latest.muscleMass">Lean Power</span>
+        <ng-container *ngIf="latest.muscleMass && (previous$ | async)?.muscleMass as prev">
+          <span class="diff-badge" [ngClass]="(latest.muscleMass - prev) >= 0 ? 'good' : 'bad'">
+            {{ (latest.muscleMass - prev) > 0 ? '+' : '' }}{{ (latest.muscleMass - prev) | number:'1.1-1' }}%
+          </span>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- 4️⃣ VISCERAL FAT (HEALTH GUARDIAN) -->
+    <div class="kpi-card card-visceral">
+      <div class="kpi-top">
+        <span class="kpi-label">Visceral Fat</span>
+        <div class="kpi-icon-pill icon-rose">
+          <mat-icon>shield</mat-icon>
+        </div>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val" *ngIf="latest.visceralFat">Lvl {{ latest.visceralFat }}</span>
+        <span class="kpi-val empty-val" *ngIf="!latest.visceralFat">--</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="category-chip rose-chip" *ngIf="latest.visceralFat">{{ getVisceralFatTier(latest.visceralFat) }}</span>
+        <ng-container *ngIf="latest.visceralFat && (previous$ | async)?.visceralFat as prev">
+          <span class="diff-badge" [ngClass]="(latest.visceralFat - prev) <= 0 ? 'good' : 'bad'">
+            {{ (latest.visceralFat - prev) > 0 ? '+' : '' }}{{ (latest.visceralFat - prev) | number:'1.0-1' }}
+          </span>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- 5️⃣ RESTING METABOLISM (CALORIC FURNACE) -->
+    <div class="kpi-card card-metabolism">
+      <div class="kpi-top">
+        <span class="kpi-label">Basal Burn</span>
+        <div class="kpi-icon-pill icon-cyan">
+          <mat-icon>speed</mat-icon>
+        </div>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val text-cyan" *ngIf="latest.metabolism">{{ latest.metabolism }} <small class="kpi-unit">kcal</small></span>
+        <span class="kpi-val text-cyan" *ngIf="!latest.metabolism && latest.bmi">BMI {{ latest.bmi }}</span>
+        <span class="kpi-val empty-val" *ngIf="!latest.metabolism && !latest.bmi">--</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="category-chip cyan-chip">Daily Furnace</span>
+        <ng-container *ngIf="latest.metabolism && (previous$ | async)?.metabolism as prev">
+          <span class="diff-badge good">
+            {{ (latest.metabolism - prev) > 0 ? '+' : '' }}{{ (latest.metabolism - prev) | number:'1.0-0' }} kcal
+          </span>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- 6️⃣ BODY AGE (REJUVENATION INDEX) -->
+    <div class="kpi-card card-bioage">
+      <div class="kpi-top">
+        <span class="kpi-label">Biological Age</span>
+        <div class="kpi-icon-pill icon-gold">
+          <mat-icon>cake</mat-icon>
+        </div>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val text-gold" *ngIf="latest.bodyAge">{{ latest.bodyAge }} <small class="kpi-unit">yrs</small></span>
+        <span class="kpi-val empty-val" *ngIf="!latest.bodyAge">--</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="category-chip gold-chip" *ngIf="latest.bodyAge">Metabolic Age</span>
+        <ng-container *ngIf="latest.bodyAge && (previous$ | async)?.bodyAge as prev">
+          <span class="diff-badge" [ngClass]="(latest.bodyAge - prev) <= 0 ? 'good' : 'bad'">
+            {{ (latest.bodyAge - prev) > 0 ? '+' : '' }}{{ (latest.bodyAge - prev) | number:'1.0-0' }} yrs
+          </span>
+        </ng-container>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Empty state if no measurement recorded -->
+  <div class="empty-kpi-card" *ngIf="!(latest$ | async)">
+    <div class="empty-icon-wrap">
+      <mat-icon class="empty-icon">monitor_heart</mat-icon>
+    </div>
+    <h3 class="empty-title">Ready to Kick Off the Transformation Journey!</h3>
+    <p class="empty-subtitle">Attach the member's first InBody / Starfit scale scan sheet or log manual physical checkups to activate their progress dashboard.</p>
+    <a [routerLink]="['/members', member.id, 'progress', 'new']" class="btn-primary-action mt-2">
+      <mat-icon class="btn-icon">add_chart</mat-icon>
+      <span>Log First Checkup</span>
+    </a>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       4. PROGRESS HISTORY MATRIX (DARK PRO DATA TABLE)
+       ══════════════════════════════════════════════════════════════ -->
+  <section class="table-card" *ngIf="measurements$ | async as measurements" [@fadeIn]>
+    <div class="card-section-header">
+      <div class="header-left">
+        <mat-icon class="section-icon text-cyan">history</mat-icon>
+        <div>
+          <h2 class="section-title">Measurement History & Segmental Matrix</h2>
+          <p class="section-subtitle">Chronological record of full body & segmental body composition scans</p>
+        </div>
+      </div>
+      <span class="entry-count-badge">{{ measurements.length }} {{ measurements.length === 1 ? 'Record' : 'Records' }}</span>
+    </div>
+
+    <div class="table-scroll-wrap" *ngIf="measurements.length > 0">
+      <table mat-table [dataSource]="measurements" class="progress-table">
+
+        <!-- Date Column -->
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef class="col-date">Date</th>
+          <td mat-cell *matCellDef="let m">
+            <div class="date-cell-wrapper">
+              <span class="date-text">{{ (m.date?.seconds ? (m.date.seconds * 1000) : m.date) | date:'MMM d, y' }}</span>
+              <button *ngIf="m.reportImageUrl" type="button" class="scan-pill-btn" (click)="openImagePreview(m.reportImageUrl); $event.stopPropagation()" title="View Scan Report Image">
+                <mat-icon class="scan-pill-icon">document_scanner</mat-icon>
+                <span>Scan</span>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Height Column -->
+        <ng-container matColumnDef="height">
+          <th mat-header-cell *matHeaderCellDef>Height</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.height || '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'height') as diff" [ngClass]="getDiffClass('height', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.0-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Weight Column -->
+        <ng-container matColumnDef="weight">
+          <th mat-header-cell *matHeaderCellDef>Weight</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val font-bold">{{ m.weight ? (m.weight + ' kg') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'weight') as diff" [ngClass]="getDiffClass('weight', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Body Fat Column -->
+        <ng-container matColumnDef="bodyFat">
+          <th mat-header-cell *matHeaderCellDef>Body Fat</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val text-gold font-bold">{{ m.bodyFat ? (m.bodyFat + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'bodyFat') as diff" [ngClass]="getDiffClass('bodyFat', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Subcutaneous Fat Column -->
+        <ng-container matColumnDef="subcutaneousFat">
+          <th mat-header-cell *matHeaderCellDef>S-Fat</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.subcutaneousFat ? (m.subcutaneousFat + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'subcutaneousFat') as diff" [ngClass]="getDiffClass('subcutaneousFat', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Visceral Fat Column -->
+        <ng-container matColumnDef="visceralFat">
+          <th mat-header-cell *matHeaderCellDef>V-Fat</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.visceralFat ? ('Lvl ' + m.visceralFat) : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'visceralFat') as diff" [ngClass]="getDiffClass('visceralFat', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.0-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Muscle Mass Column -->
+        <ng-container matColumnDef="muscleMass">
+          <th mat-header-cell *matHeaderCellDef>Muscle</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val font-bold text-mint">{{ m.muscleMass ? (m.muscleMass + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'muscleMass') as diff" [ngClass]="getDiffClass('muscleMass', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- BMI Column -->
+        <ng-container matColumnDef="bmi">
+          <th mat-header-cell *matHeaderCellDef>BMI</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.bmi || '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'bmi') as diff" [ngClass]="getDiffClass('bmi', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Resting Metabolism Column -->
+        <ng-container matColumnDef="metabolism">
+          <th mat-header-cell *matHeaderCellDef>RM (kcal)</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.metabolism || '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'metabolism') as diff" [ngClass]="getDiffClass('metabolism', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.0-0' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Body Age Column -->
+        <ng-container matColumnDef="bodyAge">
+          <th mat-header-cell *matHeaderCellDef>Body Age</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.bodyAge ? (m.bodyAge + ' yrs') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'bodyAge') as diff" [ngClass]="getDiffClass('bodyAge', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.0-0' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Detailed Full Metrics -->
+        <ng-container matColumnDef="sinistralFatFull">
+          <th mat-header-cell *matHeaderCellDef>S-Fat (Full)</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.sinistralFatFull ? (m.sinistralFatFull + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'sinistralFatFull') as diff" [ngClass]="getDiffClass('sinistralFatFull', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="muscleFull">
+          <th mat-header-cell *matHeaderCellDef>Mus (Full)</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.muscleFull ? (m.muscleFull + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'muscleFull') as diff" [ngClass]="getDiffClass('muscleFull', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Arms Segmental -->
+        <ng-container matColumnDef="subcutaneousFatArms">
+          <th mat-header-cell *matHeaderCellDef>S-Fat (Arm)</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.subcutaneousFatArms ? (m.subcutaneousFatArms + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'subcutaneousFatArms') as diff" [ngClass]="getDiffClass('subcutaneousFatArms', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="muscleArms">
+          <th mat-header-cell *matHeaderCellDef>Mus (Arm)</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.muscleArms ? (m.muscleArms + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'muscleArms') as diff" [ngClass]="getDiffClass('muscleArms', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Trunk Segmental -->
+        <ng-container matColumnDef="subcutaneousFatTrunk">
+          <th mat-header-cell *matHeaderCellDef>S-Fat (Trk)</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.subcutaneousFatTrunk ? (m.subcutaneousFatTrunk + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'subcutaneousFatTrunk') as diff" [ngClass]="getDiffClass('subcutaneousFatTrunk', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="muscleTrunk">
+          <th mat-header-cell *matHeaderCellDef>Mus (Trk)</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.muscleTrunk ? (m.muscleTrunk + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'muscleTrunk') as diff" [ngClass]="getDiffClass('muscleTrunk', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Legs Segmental -->
+        <ng-container matColumnDef="subcutaneousFatLegs">
+          <th mat-header-cell *matHeaderCellDef>S-Fat (Leg)</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.subcutaneousFatLegs ? (m.subcutaneousFatLegs + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'subcutaneousFatLegs') as diff" [ngClass]="getDiffClass('subcutaneousFatLegs', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="muscleLegs">
+          <th mat-header-cell *matHeaderCellDef>Mus (Leg)</th>
+          <td mat-cell *matCellDef="let m; let i = index">
+            <span class="cell-val">{{ m.muscleLegs ? (m.muscleLegs + '%') : '--' }}</span>
+            <span class="diff-tag" *ngIf="getDiff(m, measurements[i+1], 'muscleLegs') as diff" [ngClass]="getDiffClass('muscleLegs', diff)">
+              {{ diff > 0 ? '+' : '' }}{{ diff | number:'1.1-1' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="col-actions">Actions</th>
+          <td mat-cell *matCellDef="let m" class="col-actions">
+            <div class="action-btn-group">
+              <button type="button" class="icon-action-btn edit-btn" (click)="editEntry(m); $event.stopPropagation()" title="Edit Checkup">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button type="button" class="icon-action-btn delete-btn" (click)="deleteEntry(m); $event.stopPropagation()" title="Delete Checkup">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: historyColumns;" class="history-row"></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       5. ATTENDANCE & WORKOUT CONSISTENCY MATRIX
+       ══════════════════════════════════════════════════════════════ -->
+  <section class="attendance-section" *ngIf="member.id">
+    <app-attendance-calendar [memberId]="member.id"></app-attendance-calendar>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       6. 📸 LIGHTBOX MODAL PREVIEW
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="image-lightbox-overlay" *ngIf="previewingImageUrl" role="dialog" aria-modal="true" tabindex="0" (keydown.escape)="closeImagePreview()" (click)="closeImagePreview()">
+    <div class="image-lightbox-content" role="document" (click)="$event.stopPropagation()">
+      <div class="lightbox-header">
+        <div class="header-left">
+          <mat-icon class="lightbox-icon text-cyan">document_scanner</mat-icon>
+          <div>
+            <h3 class="lightbox-title">Body Composition Scan Report</h3>
+            <p class="lightbox-subtitle">{{ member.name }} · Body Scan Attachment</p>
+          </div>
+        </div>
+        <div class="lightbox-actions">
+          <a [href]="previewingImageUrl" target="_blank" download="scan_report.jpg" class="icon-action-btn" title="Open original / Download">
+            <mat-icon>open_in_new</mat-icon>
+          </a>
+          <button type="button" class="icon-action-btn" (click)="closeImagePreview()" title="Close">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+      <div class="lightbox-img-container">
+        <img [src]="previewingImageUrl" alt="Body Composition Scan Report" class="lightbox-img">
+      </div>
+    </div>
+  </div>
+
 </div>

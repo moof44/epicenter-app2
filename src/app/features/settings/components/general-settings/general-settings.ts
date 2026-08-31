@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -30,6 +31,7 @@ import { fadeIn } from '../../../../core/animations/animations';
     standalone: true,
     imports: [
         CommonModule,
+        RouterModule,
         FormsModule,
         ReactiveFormsModule,
         MatCardModule,
@@ -57,7 +59,8 @@ export class GeneralSettingsComponent implements OnInit {
     private productService = inject(ProductService);
     private snackBar = inject(MatSnackBar);
     private functions = inject(Functions);
-    authService = inject(AuthService); // Public for template
+    private router = inject(Router);
+    authService = inject(AuthService);
 
     // General Settings Form
     settingsForm: FormGroup = this.fb.group({
@@ -70,7 +73,7 @@ export class GeneralSettingsComponent implements OnInit {
         id: ['', [Validators.required, Validators.pattern(/^[A-Z0-9_]+$/)]],
         name: ['', [Validators.required]],
         description: [''],
-        colorHex: ['#e0e0e0', [Validators.required]],
+        colorHex: ['#06b6d4', [Validators.required]],
         type: ['ADMINISTRATIVE', [Validators.required]],
         visibility: ['PUBLIC', [Validators.required]]
     });
@@ -185,7 +188,7 @@ export class GeneralSettingsComponent implements OnInit {
             id: '',
             name: '',
             description: '',
-            colorHex: '#3f51b5',
+            colorHex: '#06b6d4',
             type: 'ADMINISTRATIVE',
             visibility: 'PUBLIC'
         });
@@ -196,8 +199,20 @@ export class GeneralSettingsComponent implements OnInit {
     editBadge(badge: BadgeDefinition) {
         this.isEditingBadge.set(true);
         this.badgeForm.patchValue(badge);
-        this.badgeForm.get('id')?.disable(); // ID cannot be updated after creation
+        this.badgeForm.get('id')?.disable();
         this.showBadgeForm.set(true);
+    }
+
+    async deleteBadge(badge: BadgeDefinition) {
+        if (!badge.id) return;
+        if (!confirm(`Are you sure you want to delete badge "${badge.name}"?`)) return;
+        try {
+            await this.badgeService.deleteBadgeDefinition(badge.id);
+            this.snackBar.open('Badge deleted successfully', 'Close', { duration: 2000 });
+        } catch (err) {
+            console.error('Failed to delete badge', err);
+            this.snackBar.open('Failed to delete badge', 'Close', { duration: 3000 });
+        }
     }
 
     async saveBadge() {
@@ -282,7 +297,6 @@ export class GeneralSettingsComponent implements OnInit {
     async saveDiscount() {
         if (this.discountForm.invalid) return;
 
-        // Validate JSON for price locks if calculationType is PRICE_LOCK
         let priceLocksObj = {};
         const formVal = this.discountForm.value;
         if (formVal.calculationType === 'PRICE_LOCK') {
@@ -326,5 +340,9 @@ export class GeneralSettingsComponent implements OnInit {
         } finally {
             this.isSaving = false;
         }
+    }
+
+    goBack() {
+        this.router.navigate(['/dashboard']);
     }
 }

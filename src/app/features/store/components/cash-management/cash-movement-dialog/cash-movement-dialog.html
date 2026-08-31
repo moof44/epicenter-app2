@@ -1,0 +1,66 @@
+<div class="movement-dialog-container" [ngClass]="data.type">
+
+  <!-- ── Header ── -->
+  <div class="dialog-header">
+    <div class="dialog-title-row">
+      <div class="dialog-icon-seal" [ngClass]="'seal-' + data.type">
+        <mat-icon>{{ getIcon() }}</mat-icon>
+      </div>
+      <div>
+        <h2 class="dialog-title">{{ getTitle() }}</h2>
+        <span class="dialog-sub">{{ getSubtitle() }}</span>
+      </div>
+    </div>
+    <button type="button" class="btn-close-dialog" (click)="onClose()" matTooltip="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ── Form Body ── -->
+  <form (ngSubmit)="onSubmit()" class="movement-form">
+    <div class="dialog-body">
+
+      <!-- Amount Input Field -->
+      <mat-form-field appearance="outline" class="custom-mat-field amount-field">
+        <mat-label>Amount</mat-label>
+        <span matTextPrefix>₱&nbsp;</span>
+        <input matInput type="number" [(ngModel)]="amount" name="amount" required min="0.01" step="0.01" placeholder="0.00" autofocus>
+      </mat-form-field>
+
+      <!-- Category Selector (Expense & Float Out) -->
+      <mat-form-field appearance="outline" class="custom-mat-field" *ngIf="data.type !== 'floatIn'">
+        <mat-label>Category</mat-label>
+        <mat-select [(ngModel)]="category" name="category" required>
+          <mat-option *ngFor="let cat of categories" [value]="cat.category">
+            <mat-icon [style.color]="cat.color" class="option-icon">{{ cat.icon }}</mat-icon>
+            <span>{{ cat.label }}</span>
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Payee / Supplier Field (Expense & Float Out) -->
+      <mat-form-field appearance="outline" class="custom-mat-field" *ngIf="data.type !== 'floatIn'">
+        <mat-label>Payee / Supplier (Optional)</mat-label>
+        <input matInput [(ngModel)]="billerOrSupplier" name="payee" placeholder="e.g., Meralco, Maynilad, WheyKing">
+      </mat-form-field>
+
+      <!-- Reason / Description -->
+      <mat-form-field appearance="outline" class="custom-mat-field full-width">
+        <mat-label>Reason / Description</mat-label>
+        <textarea matInput [(ngModel)]="reason" name="reason" required rows="2" placeholder="e.g., Electricity bill payment for August"></textarea>
+      </mat-form-field>
+
+    </div>
+
+    <!-- ── Actions Bar ── -->
+    <div class="dialog-actions-bar">
+      <button type="button" class="btn-cancel" (click)="onClose()" [disabled]="isSubmitting()">Cancel</button>
+      <button type="submit" class="btn-submit" [ngClass]="'btn-' + data.type" [disabled]="isSubmitting()">
+        <mat-icon class="btn-icon" *ngIf="!isSubmitting()">save</mat-icon>
+        <mat-spinner diameter="16" *ngIf="isSubmitting()"></mat-spinner>
+        <span>{{ isSubmitting() ? 'Recording...' : 'Record Cash Movement' }}</span>
+      </button>
+    </div>
+  </form>
+
+</div>

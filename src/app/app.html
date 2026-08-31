@@ -1,257 +1,349 @@
-<div class="app-container">
-  <mat-toolbar color="primary" class="main-toolbar">
-    <button mat-icon-button (click)="snav.toggle()" class="menu-button" *ngIf="authService.isLoggedIn()">
-      <mat-icon>menu</mat-icon>
-    </button>
-    <span>Epicenter Gym Management System</span>
-    <span class="toolbar-spacer"></span>
-    <app-quota-status-widget *ngIf="authService.isLoggedIn()"></app-quota-status-widget>
-    <app-shift-status-widget *ngIf="authService.isLoggedIn()"></app-shift-status-widget>
-    <app-notification-bell *ngIf="authService.isLoggedIn()"></app-notification-bell>
-    <button mat-icon-button *ngIf="authService.isLoggedIn()" (click)="toggleChat()" title="Toggle Vigilance Chat"
-            [matBadge]="chatService.unreadCount() > 0 ? chatService.unreadCount() : null" matBadgeColor="warn">
-      <mat-icon [class.chat-active-icon]="chatService.isChatOpen()">chat</mat-icon>
-    </button>
-  </mat-toolbar>
+<div class="app-container bg-slate-canvas text-text-primary min-h-screen flex flex-col font-inter">
+  <!-- ══════════════════════════════════════════════════════════════
+       MAIN TOP TOOLBAR
+       ══════════════════════════════════════════════════════════════ -->
+  <header class="main-toolbar bg-slate-app border-b border-slate-border text-text-pure px-3 sm:px-6 h-header sticky top-0 z-header flex items-center justify-between">
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Sidebar Toggle Button (Logged In Only) -->
+      <button mat-icon-button (click)="snav.toggle()" class="menu-button text-text-secondary hover:text-text-pure" *ngIf="authService.isLoggedIn()">
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <!-- Brand Seal & Title -->
+      <a routerLink="/" class="flex items-center gap-2 sm:gap-2.5 select-none text-text-primary hover:text-text-pure no-underline transition-opacity">
+        <img src="assets/images/epicenter-logo.png" alt="Epicenter Fitness Gym" width="36" height="36" class="app-logo-img">
+        <div class="flex flex-col">
+          <span class="font-extrabold text-sm sm:text-base tracking-tight font-inter text-text-pure leading-none">EPICENTER</span>
+          <span class="hidden sm:inline-block text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-eagle-gold-light font-inter leading-tight">FITNESS GYM</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Right Header Actions (Logged In Only) -->
+    <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0" *ngIf="authService.isLoggedIn()">
+      <!-- Desktop Informative Status Widgets (Hidden on Mobile to preserve Bell & Chat visibility) -->
+      <div class="hidden lg:flex items-center gap-2">
+        <app-quota-status-widget></app-quota-status-widget>
+        <app-shift-status-widget></app-shift-status-widget>
+      </div>
+      <div class="hidden sm:flex lg:hidden items-center gap-1">
+        <app-shift-status-widget></app-shift-status-widget>
+      </div>
+
+      <!-- Essential Mobile & Desktop Interaction Triggers (Always Visible) -->
+      <app-notification-bell></app-notification-bell>
+      
+      <!-- Vigilance Chat Toggle Button -->
+      <button mat-icon-button (click)="toggleChat()" title="Toggle Vigilance Chat"
+              [matBadge]="chatService.unreadCount() > 0 ? chatService.unreadCount() : null" matBadgeColor="warn"
+              class="text-text-secondary hover:text-text-pure flex-shrink-0">
+        <mat-icon [class.chat-active-icon]="chatService.isChatOpen()">chat</mat-icon>
+      </button>
+    </div>
+  </header>
 
   <app-staff-reminders *ngIf="authService.isLoggedIn()"></app-staff-reminders>
 
-  <mat-sidenav-container class="sidenav-container">
+  <mat-sidenav-container class="sidenav-container flex-1">
+    <!-- ══════════════════════════════════════════════════════════════
+         REDESIGNED HYBRID PRACTICAL COLLAPSIBLE SIDENAV
+         ══════════════════════════════════════════════════════════════ -->
     <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'"
       [opened]="!mobileQuery.matches && authService.isLoggedIn()" [fixedInViewport]="mobileQuery.matches"
-      fixedTopGap="56">
-      <mat-nav-list>
-        <a mat-list-item routerLink="/dashboard" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null">
-          <mat-icon matListItemIcon>home</mat-icon>
-          <span matListItemTitle>Home</span>
-        </a>
+      fixedTopGap="60" class="w-sidebar bg-slate-app border-r border-slate-border text-text-primary">
+      
+      <div class="sidenav-content-wrapper flex flex-col h-full overflow-y-auto">
+        
+        <!-- User Profile Summary Header -->
+        <div class="p-4 border-b border-slate-border bg-slate-app/80 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-cyan-primary/15 border border-cyan-focus/40 flex items-center justify-center text-cyan-light font-bold text-sm shadow-sm flex-shrink-0">
+            {{ getUserInitials() }}
+          </div>
+          <div class="flex flex-col min-w-0 flex-1">
+            <span class="text-sm font-bold text-text-pure leading-tight truncate font-inter">
+              {{ getUserDisplayName() }}
+            </span>
+            <div class="mt-1 flex items-center">
+              <span class="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded bg-eagle-gold-dim text-eagle-gold-light border border-eagle-gold/30 font-inter">
+                {{ getUserPrimaryRole() }}
+              </span>
+            </div>
+          </div>
+        </div>
 
-        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])">
-          <a mat-list-item routerLink="/members" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>group</mat-icon>
-            <span matListItemTitle>Members</span>
+        <!-- Navigation Links Container -->
+        <nav class="flex-1 py-3 px-2.5 space-y-1">
+          
+          <!-- Home Link (Always 1-Click) -->
+          <a routerLink="/dashboard" routerLinkActive="active-nav-link" [routerLinkActiveOptions]="{exact: true}"
+            (click)="mobileQuery.matches ? snav.close() : null" class="nav-item mb-2">
+            <mat-icon class="nav-icon">home</mat-icon>
+            <span class="nav-title">Home</span>
           </a>
-          <a mat-list-item routerLink="/attendance" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>event_available</mat-icon>
-            <span matListItemTitle>Attendance</span>
-          </a>
-          <a mat-list-item routerLink="/staff-attendance/my-history" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>schedule</mat-icon>
-            <span matListItemTitle>My Attendance</span>
-          </a>
-          <a mat-list-item routerLink="/shift-schedules" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>calendar_month</mat-icon>
-            <span matListItemTitle>Shift Schedules</span>
-          </a>
-          <a mat-list-item routerLink="/profile" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>account_circle</mat-icon>
-            <span matListItemTitle>My Profile</span>
-          </a>
-        </ng-container>
 
-        <mat-divider *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])"></mat-divider>
-        <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">Admin</div>
+          <!-- ⚡ QUICK ACCESS LAUNCHPAD (Always 1-Click) -->
+          <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])">
+            <div class="pt-1 pb-2">
+              <div class="flex items-center gap-1.5 px-3 py-1 text-2xs font-extrabold uppercase tracking-wider text-eagle-gold-light font-inter">
+                <mat-icon class="text-[14px] w-[14px] h-[14px] text-eagle-gold-light">bolt</mat-icon>
+                <span>Quick Actions</span>
+              </div>
 
-        <a mat-list-item routerLink="/staff-attendance" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
-          <mat-icon matListItemIcon>badge</mat-icon>
-          <span matListItemTitle>Staff Attendance & Payroll</span>
-        </a>
+              <div class="space-y-1.5 mt-1 px-1">
+                <!-- 1. Register Member -->
+                <a routerLink="/members/add" (click)="mobileQuery.matches ? snav.close() : null"
+                  class="quick-action-card quick-action-cyan">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <mat-icon class="quick-action-icon text-cyan-light">person_add</mat-icon>
+                    <span class="text-xs font-bold text-text-pure truncate font-inter">Register Member</span>
+                  </div>
+                  <mat-icon class="quick-chevron text-cyan-light/70 text-[18px] w-[18px] h-[18px]">chevron_right</mat-icon>
+                </a>
 
-        <a mat-list-item routerLink="/reports" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
-          <mat-icon matListItemIcon>insights</mat-icon>
-          <span matListItemTitle>Reports Dashboard</span>
-        </a>
+                <!-- 2. Member Check-In -->
+                <a routerLink="/attendance" (click)="mobileQuery.matches ? snav.close() : null"
+                  class="quick-action-card quick-action-mint">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <mat-icon class="quick-action-icon text-mint-success">how_to_reg</mat-icon>
+                    <span class="text-xs font-bold text-text-pure truncate font-inter">Member Check-In</span>
+                  </div>
+                  <mat-icon class="quick-chevron text-mint-success/70 text-[18px] w-[18px] h-[18px]">chevron_right</mat-icon>
+                </a>
 
-        <a mat-list-item routerLink="/economy" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
-          <mat-icon matListItemIcon>account_balance</mat-icon>
-          <span matListItemTitle>Gamification Economy</span>
-        </a>
+                <!-- 3. Sell Items (POS) -->
+                <a routerLink="/store/pos" (click)="mobileQuery.matches ? snav.close() : null"
+                  class="quick-action-card quick-action-gold">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <mat-icon class="quick-action-icon text-eagle-gold-light">point_of_sale</mat-icon>
+                    <span class="text-xs font-bold text-text-pure truncate font-inter">Sell Items (POS)</span>
+                  </div>
+                  <mat-icon class="quick-chevron text-eagle-gold-light/70 text-[18px] w-[18px] h-[18px]">chevron_right</mat-icon>
+                </a>
+              </div>
+            </div>
+          </ng-container>
 
-        <a mat-list-item routerLink="/audit-log" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
-          <mat-icon matListItemIcon>manage_search</mat-icon>
-          <span matListItemTitle>Audit Log</span>
-        </a>
+          <!-- ── Section: Front Desk (Always 1-Click) ── -->
+          <div class="nav-section-label mt-2">Front Desk</div>
 
-        <a mat-list-item routerLink="/error-logs" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN'])">
-          <mat-icon matListItemIcon color="warn">bug_report</mat-icon>
-          <span matListItemTitle>Error Logs</span>
-        </a>
+          <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])">
+            <a routerLink="/members" routerLinkActive="active-nav-link" [routerLinkActiveOptions]="{exact: true}"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">group</mat-icon>
+              <span class="nav-title">Members Directory</span>
+            </a>
+            
+            <a routerLink="/attendance" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">event_available</mat-icon>
+              <span class="nav-title">Attendance</span>
+            </a>
+            
+            <a routerLink="/staff-attendance/my-history" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">schedule</mat-icon>
+              <span class="nav-title">My Attendance</span>
+            </a>
+            
+            <a routerLink="/shift-schedules" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">calendar_month</mat-icon>
+              <span class="nav-title">Shift Schedules</span>
+            </a>
+            
+            <a routerLink="/profile" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">account_circle</mat-icon>
+              <span class="nav-title">My Profile</span>
+            </a>
+          </ng-container>
 
-        <a mat-list-item routerLink="/users" routerLinkActive="active"
-          (click)="mobileQuery.matches ? snav.close() : null" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
-          <mat-icon matListItemIcon>people</mat-icon>
-          <span matListItemTitle>Staff Accounts</span>
-        </a>
+          <!-- ── Section: Store & Point of Sale (Daily Operations 1-Click) ── -->
+          <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">
+            <div class="nav-section-label mt-4">Store Operations</div>
 
-        <mat-divider *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])"></mat-divider>
-        <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])">Store</div>
+            <a routerLink="/store/pos" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">point_of_sale</mat-icon>
+              <span class="nav-title">Sell Items (POS)</span>
+            </a>
+            
+            <a routerLink="/store/cash" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">account_balance_wallet</mat-icon>
+              <span class="nav-title">Cash Register</span>
+            </a>
+            
+            <a routerLink="/store/manage" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item"
+              *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
+              <mat-icon class="nav-icon">category</mat-icon>
+              <span class="nav-title">Products Catalog</span>
+            </a>
+            
+            <a routerLink="/store/history" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">receipt_long</mat-icon>
+              <span class="nav-title">Sales History</span>
+            </a>
+          </ng-container>
 
-        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">
-          <a mat-list-item routerLink="/store/pos" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>point_of_sale</mat-icon>
-            <span matListItemTitle>Sell Items</span>
-          </a>
-        </ng-container>
+          <!-- ── Collapsible: Inventory Management (Admin / Manager) ── -->
+          <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
+            <div class="pt-2">
+              <button type="button" (click)="toggleInventory()" class="nav-collapsible-btn">
+                <div class="flex items-center gap-2">
+                  <mat-icon class="text-[16px] w-[16px] h-[16px] text-text-muted transition-transform duration-200"
+                    [class.rotate-90]="inventoryExpanded()">keyboard_arrow_right</mat-icon>
+                  <span class="nav-collapsible-title">Inventory Management</span>
+                </div>
+                <span class="nav-pill-badge">3 tools</span>
+              </button>
 
-        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'])">
-          <a mat-list-item routerLink="/store/purchase-requests" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>shopping_cart_checkout</mat-icon>
-            <span matListItemTitle>Purchase Requests</span>
-          </a>
-        </ng-container>
+              <div class="nav-sub-items" *ngIf="inventoryExpanded()">
+                <a routerLink="/store/stock-take" routerLinkActive="active-nav-link"
+                  (click)="mobileQuery.matches ? snav.close() : null" class="nav-item nav-sub-item">
+                  <mat-icon class="nav-icon">checklist</mat-icon>
+                  <span class="nav-title">Stock Count (Audit)</span>
+                </a>
+                
+                <a routerLink="/store/restock" routerLinkActive="active-nav-link"
+                  (click)="mobileQuery.matches ? snav.close() : null" class="nav-item nav-sub-item">
+                  <mat-icon class="nav-icon">input</mat-icon>
+                  <span class="nav-title">Restock Inventory</span>
+                </a>
 
-        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
-          <a mat-list-item routerLink="/store/manage" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>inventory_2</mat-icon>
-            <span matListItemTitle>Item List</span>
-          </a>
-          <a mat-list-item routerLink="/store/stock-take" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>checklist</mat-icon>
-            <span matListItemTitle>Stock Check</span>
-          </a>
-          <a mat-list-item routerLink="/store/restock" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>input</mat-icon>
-            <span matListItemTitle>Receive Stock</span>
-          </a>
-          <a mat-list-item routerLink="/store/inventory-history" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>manage_search</mat-icon>
-            <span matListItemTitle>Stock Movement</span>
-          </a>
-          <a mat-list-item routerLink="/store/purchases" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>history</mat-icon>
-            <span matListItemTitle>Purchase History</span>
-          </a>
-          <a mat-list-item routerLink="/store/redemption-history" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>card_giftcard</mat-icon>
-            <span matListItemTitle>Reward Claims</span>
-          </a>
-        </ng-container>
+                <a routerLink="/store/inventory-history" routerLinkActive="active-nav-link"
+                  (click)="mobileQuery.matches ? snav.close() : null" class="nav-item nav-sub-item">
+                  <mat-icon class="nav-icon">manage_search</mat-icon>
+                  <span class="nav-title">Movement History</span>
+                </a>
+              </div>
+            </div>
+          </ng-container>
 
+          <!-- ── Collapsible: Finance & Purchasing (Admin / Manager) ── -->
+          <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
+            <div class="pt-1">
+              <button type="button" (click)="toggleFinance()" class="nav-collapsible-btn">
+                <div class="flex items-center gap-2">
+                  <mat-icon class="text-[16px] w-[16px] h-[16px] text-text-muted transition-transform duration-200"
+                    [class.rotate-90]="financeExpanded()">keyboard_arrow_right</mat-icon>
+                  <span class="nav-collapsible-title">Finance & Purchasing</span>
+                </div>
+                <span class="nav-pill-badge">4 tools</span>
+              </button>
 
-        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">
-          <a mat-list-item routerLink="/store/history" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>receipt_long</mat-icon>
-            <span matListItemTitle>Transactions</span>
-          </a>
-        </ng-container>
+              <div class="nav-sub-items" *ngIf="financeExpanded()">
+                <a routerLink="/store/financial-health" routerLinkActive="active-nav-link"
+                  (click)="mobileQuery.matches ? snav.close() : null" class="nav-item nav-sub-item">
+                  <mat-icon class="nav-icon">insights</mat-icon>
+                  <span class="nav-title">Financial Health & AI</span>
+                </a>
+                
+                <a routerLink="/store/payables" routerLinkActive="active-nav-link"
+                  (click)="mobileQuery.matches ? snav.close() : null" class="nav-item nav-sub-item">
+                  <mat-icon class="nav-icon">request_quote</mat-icon>
+                  <span class="nav-title">Bills & Payables</span>
+                </a>
+                
+                <a routerLink="/store/purchases" routerLinkActive="active-nav-link"
+                  (click)="mobileQuery.matches ? snav.close() : null" class="nav-item nav-sub-item">
+                  <mat-icon class="nav-icon">history</mat-icon>
+                  <span class="nav-title">Purchase Orders</span>
+                </a>
+                
+                <a routerLink="/store/purchase-requests" routerLinkActive="active-nav-link"
+                  (click)="mobileQuery.matches ? snav.close() : null" class="nav-item nav-sub-item">
+                  <mat-icon class="nav-icon">shopping_cart_checkout</mat-icon>
+                  <span class="nav-title">Purchase Requests</span>
+                </a>
+              </div>
+            </div>
+          </ng-container>
 
-        <ng-container *ngIf="authService.hasAnyRole(['ADMIN'])">
-          <a mat-list-item routerLink="/store/stats" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>analytics</mat-icon>
-            <span matListItemTitle>Analytics</span>
-          </a>
-        </ng-container>
+          <!-- ── Section: Workforce & Administration (Always 1-Click) ── -->
+          <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
+            <div class="nav-section-label mt-4">Workforce & HR</div>
 
-        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'STAFF'])">
-          <a mat-list-item routerLink="/store/cash" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
-            <span matListItemTitle>Shift Management</span>
-          </a>
-        </ng-container>
+            <a routerLink="/staff-attendance" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">co_present</mat-icon>
+              <span class="nav-title">Staff Payroll</span>
+            </a>
+            
+            <a routerLink="/users" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">people</mat-icon>
+              <span class="nav-title">Staff Directory</span>
+            </a>
+            
+            <a routerLink="/reports" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">analytics</mat-icon>
+              <span class="nav-title">Business Reports</span>
+            </a>
+          </ng-container>
 
-        <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER'])">
-          <a mat-list-item routerLink="/store/payables" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>request_quote</mat-icon>
-            <span matListItemTitle>Bills & Payables</span>
-          </a>
-          <a mat-list-item routerLink="/store/financial-health" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>insights</mat-icon>
-            <span matListItemTitle>Financial Health & AI</span>
-          </a>
-        </ng-container>
+          <!-- ── Collapsible: System & Governance (Admin Only) ── -->
+          <ng-container *ngIf="authService.hasAnyRole(['ADMIN'])">
+            <div class="pt-1">
+              <button type="button" (click)="toggleSystem()" class="nav-collapsible-btn">
+                <div class="flex items-center gap-2">
+                  <mat-icon class="text-[16px] w-[16px] h-[16px] text-text-muted transition-transform duration-200"
+                    [class.rotate-90]="systemExpanded()">keyboard_arrow_right</mat-icon>
+                  <span class="nav-collapsible-title">System & Governance</span>
+                </div>
+                <span class="nav-pill-badge">3 tools</span>
+              </button>
 
-        <ng-container *ngIf="authService.hasAnyRole(['ADMIN'])">
-          <a mat-list-item routerLink="/store/reports" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>summarize</mat-icon>
-            <span matListItemTitle>Cash Reports</span>
-          </a>
-          <a mat-list-item routerLink="/store/monthly-sales" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>calendar_month</mat-icon>
-            <span matListItemTitle>Monthly Sales</span>
-          </a>
-        </ng-container>
+              <div class="nav-sub-items" *ngIf="systemExpanded()">
+                <a routerLink="/settings" routerLinkActive="active-nav-link"
+                  (click)="mobileQuery.matches ? snav.close() : null" class="nav-item nav-sub-item">
+                  <mat-icon class="nav-icon">settings</mat-icon>
+                  <span class="nav-title">General Settings</span>
+                </a>
+                
+                <a routerLink="/audit-log" routerLinkActive="active-nav-link"
+                  (click)="mobileQuery.matches ? snav.close() : null" class="nav-item nav-sub-item">
+                  <mat-icon class="nav-icon">manage_search</mat-icon>
+                  <span class="nav-title">Audit Logs</span>
+                </a>
+                
+                <a routerLink="/error-logs" routerLinkActive="active-nav-link"
+                  (click)="mobileQuery.matches ? snav.close() : null" class="nav-item nav-sub-item">
+                  <mat-icon class="nav-icon">bug_report</mat-icon>
+                  <span class="nav-title">Error Logs</span>
+                </a>
+              </div>
+            </div>
+          </ng-container>
+        </nav>
 
-        <mat-divider *ngIf="authService.hasAnyRole(['ADMIN'])"></mat-divider>
-        <div class="nav-section-title" *ngIf="authService.hasAnyRole(['ADMIN'])">Settings</div>
+        <!-- Bottom Pinned Logout Action -->
+        <div class="p-3 border-t border-slate-border bg-slate-app">
+          <button (click)="logout()" type="button"
+            class="w-full h-control-md rounded-lg px-3 flex items-center gap-3 text-rose-danger hover:bg-rose-danger/15 font-semibold text-sm transition-colors font-inter">
+            <mat-icon class="text-[20px] w-[20px] h-[20px] text-rose-danger">logout</mat-icon>
+            <span>Sign Out</span>
+          </button>
+        </div>
 
-        <ng-container *ngIf="authService.hasAnyRole(['ADMIN'])">
-          <a mat-list-item routerLink="/settings" routerLinkActive="active"
-            (click)="mobileQuery.matches ? snav.close() : null">
-            <mat-icon matListItemIcon>settings</mat-icon>
-            <span matListItemTitle>General Settings</span>
-          </a>
-        </ng-container>
-
-        <mat-divider></mat-divider>
-        <button mat-list-item (click)="logout(); mobileQuery.matches ? snav.close() : null" type="button">
-          <mat-icon matListItemIcon color="warn">logout</mat-icon>
-          <span matListItemTitle>Logout</span>
-        </button>
-      </mat-nav-list>
+      </div>
     </mat-sidenav>
 
-    <!-- Chat Drawer (Phase 1) -->
+    <!-- Right Drawer: Chat -->
     <mat-sidenav #chatSnav position="end" [mode]="mobileQuery.matches ? 'over' : 'side'"
       [opened]="chatService.isChatOpen() && authService.isLoggedIn()" [fixedInViewport]="mobileQuery.matches"
-      fixedTopGap="56" (closed)="chatService.isChatOpen.set(false)">
+      fixedTopGap="60" (closed)="chatService.isChatOpen.set(false)" class="w-full sm:w-80 md:w-96 max-w-[100vw] bg-slate-app border-l border-slate-border">
       <app-chat *ngIf="chatService.isChatOpen()"></app-chat>
     </mat-sidenav>
 
-    <mat-sidenav-content>
+    <!-- Main Router Outlet Area -->
+    <mat-sidenav-content class="bg-slate-canvas min-h-screen">
       <main class="content" [@slideInOut]="getRouteAnimation(outlet)">
         <router-outlet #outlet="outlet"></router-outlet>
       </main>
     </mat-sidenav-content>
   </mat-sidenav-container>
-
-  <!-- Floating Chat FAB Launcher + Preview Banner -->
-  <div class="chat-launcher-wrapper" *ngIf="authService.isLoggedIn() && !chatService.isChatOpen()">
-    <div class="chat-preview-banner" [class.preview-active]="chatService.previewActive()">
-      <div class="preview-header">
-        <span class="preview-sender">{{ chatService.lastMessageSender() }}</span>
-        <mat-icon class="preview-close" (click)="chatService.previewActive.set(false)">close</mat-icon>
-      </div>
-      <div class="preview-body">{{ chatService.lastMessageText() }}</div>
-    </div>
-    
-    <div [class.launcher-shake-wrapper]="chatService.hasDirectMention()">
-      <button mat-fab color="primary" class="chat-fab-launcher" 
-              [class.has-unread]="chatService.unreadCount() > 0 && !chatService.hasDirectMention()"
-              [class.has-mention]="chatService.hasDirectMention()"
-              [class.launcher-wobble]="chatService.triggerWobble()"
-              (click)="toggleChat()" 
-              [matBadge]="chatService.unreadCount() > 0 ? chatService.unreadCount() : null" 
-              [matBadgeColor]="chatService.hasDirectMention() ? 'accent' : 'warn'"
-              title="Open Vigilance Chat">
-        <mat-icon>chat</mat-icon>
-      </button>
-    </div>
-  </div>
-
 </div>

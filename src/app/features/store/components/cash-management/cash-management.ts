@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -18,6 +19,9 @@ import { TransactionService } from '../../../../core/services/transaction.servic
 import { CashTransactionType } from '../../../../core/models/cash-register.model';
 import { OutflowCategory, OUTFLOW_CATEGORIES, getOutflowCategoryMeta } from '../../../../core/models/outflow.model';
 import { ShiftControlModal } from '../shift-control-modal/shift-control-modal';
+import { RecalculateShiftDialog } from './recalculate-shift-dialog/recalculate-shift-dialog';
+import { CashMovementDialog, MovementType } from './cash-movement-dialog/cash-movement-dialog';
+import { safeToDate } from '../../../../core/utils/date.utils';
 import { fadeIn } from '../../../../core/animations/animations';
 
 @Component({
@@ -54,19 +58,18 @@ export class CashManagement {
   formBillerOrSupplier = '';
   isSubmitting = false;
 
-  openForm(type: 'expense' | 'floatIn' | 'floatOut'): void {
-    this.formType = type;
-    this.formAmount = 0;
-    this.formReason = '';
-    this.formBillerOrSupplier = '';
-    if (type === 'expense') {
-      this.formCategory = 'EXPENSE_SUPPLIES';
-    } else if (type === 'floatOut') {
-      this.formCategory = 'LIABILITY_OWNER';
-    } else {
-      this.formCategory = 'EXPENSE_MISC';
-    }
-    this.showForm = true;
+  openForm(type: MovementType): void {
+    const dialogRef = this.dialog.open(CashMovementDialog, {
+      width: '520px',
+      maxWidth: '94vw',
+      data: { type }
+    });
+
+    dialogRef.afterClosed().subscribe(saved => {
+      if (saved) {
+        this.snackBar.open('Transaction successfully recorded!', 'Close', { duration: 3000 });
+      }
+    });
   }
 
   closeForm(): void {
@@ -165,8 +168,7 @@ export class CashManagement {
   }
 
   formatDate(timestamp: any): Date {
-    if (!timestamp) return new Date();
-    return timestamp instanceof Date ? timestamp : (timestamp.toDate ? timestamp.toDate() : new Date(timestamp));
+    return safeToDate(timestamp);
   }
 
   isPositive(type: CashTransactionType): boolean {
@@ -174,29 +176,27 @@ export class CashManagement {
   }
 
   formatTimestamp(timestamp: any): Date {
-    if (!timestamp) return new Date();
-    return timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+    return safeToDate(timestamp);
   }
 
   async recalculateShift(): Promise<void> {
-    const shiftId = this.cashRegisterService.getCurrentShiftId();
-
-    if (!shiftId) {
+    const shift = await firstValueFrom(this.currentShift$);
+    if (!shift || !shift.id) {
       this.snackBar.open('No active shift to recalculate', 'Close', { duration: 3000 });
       return;
     }
 
-    if (confirm('Are you sure you want to recalculate shift totals? This will update the summary based on all transactions.')) {
-      this.isSubmitting = true;
-      try {
-        const result = await this.cashRegisterService.recalculateShiftTotals(shiftId);
-        this.snackBar.open(`Shift totals recalculated. Adjustment: ₱${result.salesDiff.toFixed(2)}`, 'Close', { duration: 4000 });
-      } catch (error: any) {
-        this.snackBar.open('Recalculation failed: ' + error.message, 'Close', { duration: 3000 });
-      } finally {
-        this.isSubmitting = false;
+    const dialogRef = this.dialog.open(RecalculateShiftDialog, {
+      width: '480px',
+      maxWidth: '94vw',
+      data: { shift }
+    });
+
+    dialogRef.afterClosed().subscribe(updated => {
+      if (updated) {
+        this.snackBar.open('Shift totals successfully synchronized!', 'Close', { duration: 3000 });
       }
-    }
+    });
   }
 
   async voidTransaction(tx: any): Promise<void> {

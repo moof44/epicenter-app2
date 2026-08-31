@@ -1,0 +1,124 @@
+<div class="receipt-dialog-container">
+
+  <!-- ── Header ── -->
+  <div class="dialog-header">
+    <div class="dialog-title-row">
+      <div class="dialog-icon-seal">
+        <mat-icon>receipt</mat-icon>
+      </div>
+      <div>
+        <h2 class="dialog-title">Transaction Receipt</h2>
+        <span class="dialog-sub">Ref: #{{ tx.id?.slice(-8)?.toUpperCase() || 'POS-RECEIPT' }}</span>
+      </div>
+    </div>
+    <button type="button" class="btn-close-dialog" (click)="onClose()" matTooltip="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ── Receipt Body ── -->
+  <div class="dialog-body receipt-body">
+
+    <!-- Store Brand Header -->
+    <div class="receipt-brand-header">
+      <h3 class="brand-title">EPICENTER FITNESS GYM</h3>
+      <span class="brand-sub">Official POS Sales Receipt</span>
+      <span class="receipt-date text-muted">{{ formatDate(tx.date) | date:'medium' }}</span>
+    </div>
+
+    <!-- Status Banner (If VOID) -->
+    <div class="void-alert-box" *ngIf="tx.status === 'VOID'">
+      <mat-icon>block</mat-icon>
+      <div class="void-meta">
+        <strong>THIS TRANSACTION HAS BEEN VOIDED</strong>
+        <span *ngIf="tx.voidReason">Reason: {{ tx.voidReason }}</span>
+        <span *ngIf="tx.voidedBy">Voided By: {{ tx.voidedBy }}</span>
+      </div>
+    </div>
+
+    <!-- Customer & Cashier Metadata Card -->
+    <div class="receipt-meta-card">
+      <div class="meta-row">
+        <span class="meta-lbl">Cashier / Staff:</span>
+        <strong class="meta-val text-white">{{ tx.staffName || 'Staff Cashier' }}</strong>
+      </div>
+      <div class="meta-row" *ngIf="tx.memberName">
+        <span class="meta-lbl">Member / Customer:</span>
+        <strong class="meta-val text-cyan">{{ tx.memberName }}</strong>
+      </div>
+      <div class="meta-row">
+        <span class="meta-lbl">Payment Mode:</span>
+        <strong class="meta-val text-gold">{{ tx.paymentMethod }}</strong>
+      </div>
+      <div class="meta-row" *ngIf="tx.referenceNumber">
+        <span class="meta-lbl">GCash Reference:</span>
+        <span class="meta-val text-cyan font-mono">{{ tx.referenceNumber }}</span>
+      </div>
+    </div>
+
+    <!-- Itemized Product Table -->
+    <div class="receipt-items-card">
+      <div class="items-table-header">
+        <span class="col-item">Item & Details</span>
+        <span class="col-qty">Qty</span>
+        <span class="col-subtotal">Subtotal</span>
+      </div>
+
+      <div class="item-line" *ngFor="let item of tx.items; trackBy: trackCartItem">
+        <div class="item-info">
+          <strong class="item-name text-white">{{ item.productName }}</strong>
+          <small class="item-pricing text-muted">
+            ₱{{ item.price | number:'1.2-2' }} each
+            <span *ngIf="item.isPriceOverridden" class="override-tag">(Overridden)</span>
+            <span *ngIf="item.discountAmount" class="discount-tag">-₱{{ item.discountAmount | number:'1.2-2' }}</span>
+          </small>
+        </div>
+        <span class="item-qty text-cyan">x{{ item.quantity }}</span>
+        <strong class="item-total text-white">₱{{ item.subtotal | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <!-- Payment & Totals Breakdown -->
+    <div class="receipt-totals-card">
+      <div class="total-row grand-total">
+        <span class="total-lbl">Total Amount Due</span>
+        <strong class="total-val text-gold">₱{{ tx.totalAmount | number:'1.2-2' }}</strong>
+      </div>
+
+      <!-- Cash / GCash / Split Breakdown -->
+      <div class="payment-splits-block" *ngIf="tx.paymentMethod === 'SPLIT'">
+        <div class="sub-row">
+          <span>💵 Cash Portion:</span>
+          <span>₱{{ (tx.cashAmount || 0) | number:'1.2-2' }}</span>
+        </div>
+        <div class="sub-row">
+          <span>📱 GCash Portion:</span>
+          <span>₱{{ (tx.gcashAmount || 0) | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <!-- Tendered & Change (for Cash) -->
+      <div class="tendered-block" *ngIf="tx.amountTendered">
+        <div class="sub-row">
+          <span>Amount Tendered:</span>
+          <span>₱{{ tx.amountTendered | number:'1.2-2' }}</span>
+        </div>
+        <div class="sub-row" *ngIf="tx.changeDue !== undefined && tx.changeDue !== null">
+          <span>Change Returned:</span>
+          <span class="text-mint">₱{{ tx.changeDue | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Actions Bar ── -->
+  <div class="dialog-actions-bar">
+    <button type="button" class="btn-cancel" (click)="onClose()">Close</button>
+    <button type="button" class="btn-confirm-gold" (click)="printReceipt()">
+      <mat-icon class="btn-icon">print</mat-icon>
+      <span>Print Receipt</span>
+    </button>
+  </div>
+
+</div>

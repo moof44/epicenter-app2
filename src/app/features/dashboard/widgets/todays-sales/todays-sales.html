@@ -5,28 +5,64 @@
         <div class="skeleton-line medium"></div>
     </div>
 } @else if (isEmpty()) {
-    <div class="sales-card empty-state" (click)="navigateToHistory()" (keydown.enter)="navigateToHistory()" tabindex="0" role="button">
-        <mat-icon class="empty-icon">point_of_sale</mat-icon>
-        <span class="empty-text">Ready to make your first sale today?</span>
-        <span class="empty-subtext">Head to the POS to get started</span>
+    <!-- 🥺 SAD / COLD REGISTER EMPTY STATE FOR STAFF -->
+    <div class="sales-card sad-empty-state" (click)="navigateToPos()" (keydown.enter)="navigateToPos()" tabindex="0" role="button">
+        <div class="card-header">
+            <div class="card-title-wrap">
+                <span class="sad-face-emoji">🥺</span>
+                <span class="card-title sad-title">No Personal Sales Yet</span>
+            </div>
+            <span class="wake-register-badge">💤 START SELLING</span>
+        </div>
+
+        <div class="sad-body">
+            <div class="zero-amount">₱0.00</div>
+            <p class="sad-prompt">
+                Ready to make your first sale today? Offer arriving members cold bottled water, energy drinks, protein shakes, or day passes!
+            </p>
+        </div>
+
+        <div class="sad-action-row">
+            <button type="button" class="pos-wake-btn" (click)="$event.stopPropagation(); navigateToPos()">
+                <mat-icon class="btn-icon">point_of_sale</mat-icon>
+                <span>Make First Sale at POS ↗</span>
+            </button>
+        </div>
     </div>
 } @else {
-    <div class="sales-card" (click)="navigateToHistory()" (keydown.enter)="navigateToHistory()" tabindex="0" role="button">
+    <!-- 🔥 MOTIVATING / HIGH-ENERGY ACTIVE STATE FOR STAFF -->
+    <div class="sales-card active-momentum-state" (click)="navigateToHistory()" (keydown.enter)="navigateToHistory()" tabindex="0" role="button">
+        <div class="watermark-symbol">₱</div>
         <div class="card-header">
-            <mat-icon class="card-icon">point_of_sale</mat-icon>
-            <span class="card-title">Your Sales Today</span>
+            <div class="card-title-wrap">
+                <mat-icon class="card-icon">local_fire_department</mat-icon>
+                <span class="card-title">Your Sales Today</span>
+            </div>
+            <span class="live-badge">🔥 ON FIRE · YOUR SHIFT</span>
         </div>
 
         <div class="primary-amount">₱{{ todayTotal() | number:'1.2-2' }}</div>
 
-        @if (showAverage()) {
-            <div class="average-line">₱{{ averageTicket() | number:'1.2-2' }} avg per sale</div>
-        }
+        <!-- Dynamic Motivational Callout -->
+        <div class="motivation-banner">
+            <span class="spark-icon">⚡</span>
+            <span class="motivation-text">{{ motivationMessage() }}</span>
+        </div>
 
-        @if (comparisonText()) {
-            <div class="comparison-line" [class.up]="comparisonDirection() === 'up'" [class.down]="comparisonDirection() === 'down'">
-                {{ comparisonText() }}
+        <div class="card-footer">
+            <div class="history-context">
+                @if (comparisonText()) {
+                    <span class="comparison-line" [class.up]="comparisonDirection() === 'up'" [class.down]="comparisonDirection() === 'down'">
+                        {{ comparisonText() }}
+                    </span>
+                } @else {
+                    <span>Yesterday: ₱{{ yesterdayTotal() | number:'1.2-2' }}</span>
+                }
             </div>
-        }
+            <button type="button" class="pos-keep-selling-btn" (click)="$event.stopPropagation(); navigateToPos()">
+                <mat-icon class="btn-icon">add_shopping_cart</mat-icon>
+                <span>Sell at POS ↗</span>
+            </button>
+        </div>
     </div>
 }

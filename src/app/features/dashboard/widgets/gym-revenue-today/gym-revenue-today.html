@@ -5,18 +5,56 @@
         <div class="skeleton-line medium"></div>
     </div>
 } @else if (isEmpty()) {
-    <div class="revenue-card empty-state" (click)="navigateToMonthlySales()" (keydown.enter)="navigateToMonthlySales()" tabindex="0" role="button">
-        <mat-icon class="empty-icon">storefront</mat-icon>
-        <span class="empty-text">No gym sales yet today</span>
-        <span class="empty-subtext">Revenue will appear as sales come in</span>
+    <!-- 🥺 SAD / COLD REGISTER EMPTY STATE -->
+    <div class="revenue-card sad-empty-state" (click)="navigateToPos()" (keydown.enter)="navigateToPos()" tabindex="0" role="button">
+        <div class="card-header">
+            <div class="card-title-wrap">
+                <span class="sad-face-emoji">🥺</span>
+                <span class="card-title sad-title">No Gym Sales Yet Today</span>
+            </div>
+            <span class="wake-register-badge">💤 COLD REGISTER</span>
+        </div>
+
+        <div class="sad-body">
+            <div class="zero-amount">₱0.00</div>
+            <p class="sad-prompt">
+                The register is waiting for its first sale! Offer arriving members cold water, energy drinks, protein shakes, or day passes.
+            </p>
+        </div>
+
+        <div class="sad-action-row">
+            <button type="button" class="pos-wake-btn" (click)="$event.stopPropagation(); navigateToPos()">
+                <mat-icon class="btn-icon">point_of_sale</mat-icon>
+                <span>Make First Sale at POS ↗</span>
+            </button>
+        </div>
     </div>
 } @else {
-    <div class="revenue-card" (click)="navigateToMonthlySales()" (keydown.enter)="navigateToMonthlySales()" tabindex="0" role="button">
+    <!-- 🔥 MOTIVATING / HIGH-ENERGY ACTIVE STATE -->
+    <div class="revenue-card active-momentum-state" (click)="navigateToMonthlySales()" (keydown.enter)="navigateToMonthlySales()" tabindex="0" role="button">
+        <div class="watermark-symbol">₱</div>
         <div class="card-header">
-            <mat-icon class="card-icon">storefront</mat-icon>
-            <span class="card-title">Gym Revenue Today</span>
+            <div class="card-title-wrap">
+                <mat-icon class="card-icon">local_fire_department</mat-icon>
+                <span class="card-title">Gym Revenue Today</span>
+            </div>
+            <span class="live-badge">🔥 ON FIRE · LIVE POS</span>
         </div>
+
         <div class="primary-amount">₱{{ todayRevenue() | number:'1.2-2' }}</div>
-        <div class="monthly-context">This month: ₱{{ monthlyTotal() | number:'1.2-2' }}</div>
+
+        <!-- Dynamic Motivational Callout -->
+        <div class="motivation-banner">
+            <span class="spark-icon">⚡</span>
+            <span class="motivation-text">{{ motivationMessage() }}</span>
+        </div>
+
+        <div class="card-footer">
+            <div class="monthly-context">This month: <strong>₱{{ monthlyTotal() | number:'1.2-2' }}</strong></div>
+            <button type="button" class="pos-keep-selling-btn" (click)="$event.stopPropagation(); navigateToPos()">
+                <mat-icon class="btn-icon">add_shopping_cart</mat-icon>
+                <span>Sell at POS ↗</span>
+            </button>
+        </div>
     </div>
 }

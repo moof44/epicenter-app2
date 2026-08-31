@@ -1,21 +1,25 @@
-<mat-card class="widget-card">
-    <mat-card-header>
-        <mat-icon mat-card-avatar color="primary">event_available</mat-icon>
-        <mat-card-title>My Staff Attendance</mat-card-title>
-        <mat-card-subtitle>Today's status & weekly hours</mat-card-subtitle>
-    </mat-card-header>
+<div class="attendance-card">
+    <div class="card-header">
+        <div class="header-left">
+            <mat-icon class="card-icon">event_available</mat-icon>
+            <div>
+                <h3 class="card-title">My Staff Attendance</h3>
+                <p class="card-subtitle">Today's status & weekly hours</p>
+            </div>
+        </div>
+    </div>
 
-    <mat-card-content class="widget-content">
+    <div class="card-body">
         <div class="status-row">
             <span class="status-label">Today's Status:</span>
             <span class="status-badge checked-in" *ngIf="todayRecord() && todayRecord()?.status === 'CHECKED_IN'">
-                <mat-icon>login</mat-icon> Checked In ({{ todayRecord()?.checkInTime | date:'h:mm a':'Asia/Manila' }})
+                <span class="status-dot"></span> Checked In ({{ todayRecord()?.checkInTime | date:'h:mm a':'Asia/Manila' }})
             </span>
             <span class="status-badge checked-out" *ngIf="todayRecord() && todayRecord()?.status === 'CHECKED_OUT'">
-                <mat-icon>check_circle</mat-icon> Checked Out
+                <mat-icon class="badge-icon">check_circle</mat-icon> Checked Out
             </span>
             <span class="status-badge not-checked-in" *ngIf="!todayRecord()">
-                <mat-icon>schedule</mat-icon> Not Checked In
+                <mat-icon class="badge-icon">schedule</mat-icon> Not Checked In
             </span>
         </div>
 
@@ -29,11 +33,12 @@
                 <span class="stat-label">Hours Worked (This Week)</span>
             </div>
         </div>
-    </mat-card-content>
+    </div>
 
-    <mat-card-actions align="end">
-        <a mat-button color="primary" routerLink="/staff-attendance/my-history">
-            View Full History <mat-icon>arrow_forward</mat-icon>
+    <div class="card-footer">
+        <a class="history-link" routerLink="/staff-attendance/my-history">
+            <span>View Full History</span>
+            <mat-icon class="link-icon">arrow_forward</mat-icon>
         </a>
-    </mat-card-actions>
-</mat-card>
+    </div>
+</div>

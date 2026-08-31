@@ -1,234 +1,277 @@
-<div class="health-container" [@fadeIn]>
-  <!-- Page Header -->
+<div class="health-page-container" @fadeIn>
+
+  <!-- ── Page Header Deck ── -->
   <div class="page-header">
-    <div class="header-titles">
-      <h1>Financial Health & AI Advisor</h1>
-      <p class="subtitle">Real-time P&L analysis, gym benchmark ratios, and strategic decision support.</p>
-    </div>
-    <div class="header-actions">
-      <div class="period-pills">
-        <button mat-flat-button [color]="dateFilter() === 'THIS_MONTH' ? 'primary' : ''" (click)="setPeriod('THIS_MONTH')">This Month</button>
-        <button mat-flat-button [color]="dateFilter() === 'LAST_MONTH' ? 'primary' : ''" (click)="setPeriod('LAST_MONTH')">Last Month</button>
-        <button mat-flat-button [color]="dateFilter() === 'LAST_90_DAYS' ? 'primary' : ''" (click)="setPeriod('LAST_90_DAYS')">Last 90 Days</button>
+    <div class="header-left-group">
+      <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Store Management">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-titles">
+        <h1 class="page-title">Financial Health & AI Strategic Advisor</h1>
+        <p class="page-subtitle">Real-time P&L analysis, gym benchmark ratios, and proactive decision support</p>
       </div>
-      <button mat-stroked-button class="print-btn" (click)="printReport()">
-        <mat-icon>print</mat-icon> Print P&L Report
+    </div>
+
+    <div class="header-actions">
+      <!-- Period Selector Pills -->
+      <div class="period-pills-row">
+        <button type="button" class="period-pill" [class.active]="dateFilter() === 'THIS_MONTH'" (click)="setPeriod('THIS_MONTH')">
+          This Month
+        </button>
+        <button type="button" class="period-pill" [class.active]="dateFilter() === 'LAST_MONTH'" (click)="setPeriod('LAST_MONTH')">
+          Last Month
+        </button>
+        <button type="button" class="period-pill" [class.active]="dateFilter() === 'LAST_90_DAYS'" (click)="setPeriod('LAST_90_DAYS')">
+          Last 90 Days
+        </button>
+      </div>
+
+      <button type="button" class="btn-print-cyan" (click)="printReport()" matTooltip="Print Financial Statement">
+        <mat-icon class="btn-icon">print</mat-icon>
+        <span>Print P&L</span>
       </button>
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="isLoading()" class="loading-wrap">
+  <!-- ── Loading State ── -->
+  <div *ngIf="isLoading()" class="loading-state-card">
     <mat-spinner diameter="44"></mat-spinner>
-    <p>Analyzing financial inflows, outflows, and benchmark ratios...</p>
+    <h4>Analyzing Financial Position...</h4>
+    <p>Calculating cash inflows, operational outflows, margin spreads, and industry benchmarks</p>
   </div>
 
   <ng-container *ngIf="!isLoading() && summary() as s">
-    <!-- Executive KPI Cards Grid -->
-    <div class="kpi-grid">
-      <!-- Net Profit Card -->
-      <div class="kpi-card net-profit" [class.profit]="s.netProfit >= 0" [class.loss]="s.netProfit < 0">
-        <div class="kpi-icon-wrap">
+    <!-- ── 5-Card Executive KPI Grid ── -->
+    <div class="kpi-deck-grid">
+      <!-- 1. Net Operating Profit -->
+      <div class="kpi-card profit-card" [class.is-profit]="s.netProfit >= 0" [class.is-loss]="s.netProfit < 0">
+        <div class="kpi-icon-seal" [ngClass]="s.netProfit >= 0 ? 'seal-mint' : 'seal-rose'">
           <mat-icon>{{ s.netProfit >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
         </div>
-        <div class="kpi-data">
+        <div class="kpi-content">
           <span class="kpi-label">Net Operating Profit</span>
-          <strong class="kpi-val">₱{{ s.netProfit | number:'1.2-2' }}</strong>
-          <span class="margin-pill" [class.positive]="s.netProfitMargin >= 15" [class.negative]="s.netProfitMargin < 0">
-            {{ s.netProfitMargin >= 0 ? '+' : '' }}{{ s.netProfitMargin }}% Net Margin
-          </span>
+          <strong class="kpi-value font-mono" [ngClass]="s.netProfit >= 0 ? 'text-mint' : 'text-rose'">
+            ₱{{ s.netProfit | number:'1.2-2' }}
+          </strong>
+          <div class="kpi-sub-line">
+            <span class="margin-pill" [class.positive]="s.netProfitMargin >= 15" [class.negative]="s.netProfitMargin < 0">
+              {{ s.netProfitMargin >= 0 ? '+' : '' }}{{ s.netProfitMargin }}% Net Margin
+            </span>
+          </div>
         </div>
       </div>
 
-      <!-- Total Inflows -->
-      <div class="kpi-card revenue">
-        <div class="kpi-icon-wrap">
+      <!-- 2. Total Inflows (Revenue) -->
+      <div class="kpi-card">
+        <div class="kpi-icon-seal seal-cyan">
           <mat-icon>add_circle_outline</mat-icon>
         </div>
-        <div class="kpi-data">
+        <div class="kpi-content">
           <span class="kpi-label">Total Ingoing Revenue</span>
-          <strong class="kpi-val">₱{{ s.totalRevenue | number:'1.2-2' }}</strong>
-          <small class="sub-label">POS + Memberships + Passes</small>
+          <strong class="kpi-value font-mono text-cyan">
+            ₱{{ s.totalRevenue | number:'1.2-2' }}
+          </strong>
+          <span class="kpi-note text-muted">POS + Passes + Memberships</span>
         </div>
       </div>
 
-      <!-- Total Outflows -->
-      <div class="kpi-card outflows">
-        <div class="kpi-icon-wrap">
+      <!-- 3. Total Outflows (Expenses) -->
+      <div class="kpi-card">
+        <div class="kpi-icon-seal seal-gold">
           <mat-icon>remove_circle_outline</mat-icon>
         </div>
-        <div class="kpi-data">
+        <div class="kpi-content">
           <span class="kpi-label">Total Outgoing Expenses</span>
-          <strong class="kpi-val">₱{{ s.totalOutflows | number:'1.2-2' }}</strong>
-          <small class="sub-label">Utilities + Wages + Stock + OPEX</small>
+          <strong class="kpi-value font-mono text-gold">
+            ₱{{ s.totalOutflows | number:'1.2-2' }}
+          </strong>
+          <span class="kpi-note text-muted">Bills + Wages + Stock + OPEX</span>
         </div>
       </div>
 
-      <!-- Cash Runway -->
-      <div class="kpi-card runway" [class.alert]="s.runwayDays < 15">
-        <div class="kpi-icon-wrap">
+      <!-- 4. Cash Buffer Runway -->
+      <div class="kpi-card" [class.card-alert]="s.runwayDays < 15">
+        <div class="kpi-icon-seal seal-purple">
           <mat-icon>hourglass_bottom</mat-icon>
         </div>
-        <div class="kpi-data">
+        <div class="kpi-content">
           <span class="kpi-label">Operating Cash Buffer</span>
-          <strong class="kpi-val">{{ s.runwayDays > 365 ? '30+ Days' : s.runwayDays + ' Days' }}</strong>
-          <small class="sub-label">Runway in active till cash</small>
+          <strong class="kpi-value font-mono text-white">
+            {{ s.runwayDays > 365 ? '30+ Days' : s.runwayDays + ' Days' }}
+          </strong>
+          <span class="kpi-note text-muted">Runway in active till cash</span>
         </div>
       </div>
 
-      <!-- Health Score / Grade -->
-      <div class="kpi-card grade-card">
-        <div class="grade-badge" [style.background]="getGradeColor(s.healthGrade)">
+      <!-- 5. Gym Health Grade Score -->
+      <div class="kpi-card grade-kpi-card">
+        <div class="grade-badge-circle" [style.border-color]="getGradeColor(s.healthGrade)" [style.color]="getGradeColor(s.healthGrade)">
           {{ s.healthGrade }}
         </div>
-        <div class="kpi-data">
+        <div class="kpi-content">
           <span class="kpi-label">Gym Health Score</span>
-          <strong class="kpi-val">{{ s.healthScore }} / 100</strong>
-          <small class="sub-label">Overall Financial Stability</small>
+          <strong class="kpi-value font-mono text-white">
+            {{ s.healthScore }} <span class="score-max">/ 100</span>
+          </strong>
+          <span class="kpi-note text-muted">Overall Fiscal Stability</span>
         </div>
       </div>
     </div>
 
-    <!-- Charts & Benchmarks Grid -->
-    <div class="analytics-grid">
-      <!-- Outflow Category Donut Chart -->
-      <div class="chart-card mat-elevation-z2">
-        <div class="card-header">
-          <h3>Outflows Distribution ("Money Eaters")</h3>
-          <small>Breakdown of where money was spent this period</small>
-        </div>
+    <!-- ── Analytics & Strategic Intelligence Grid ── -->
+    <div class="analytics-layout-grid">
 
-        <div class="chart-body" *ngIf="s.outflowBreakdown.length > 0">
-          <apx-chart
-            [series]="donutChartSeries"
-            [labels]="donutChartLabels"
-            [colors]="donutChartColors"
-            [chart]="donutChartOptions.chart"
-            [legend]="donutChartOptions.legend"
-            [plotOptions]="donutChartOptions.plotOptions"
-            [dataLabels]="donutChartOptions.dataLabels"
-          ></apx-chart>
-        </div>
-
-        <div class="empty-chart" *ngIf="s.outflowBreakdown.length === 0">
-          <mat-icon>bar_chart</mat-icon>
-          <p>No outflows recorded in this date range.</p>
-        </div>
-      </div>
-
-      <!-- Benchmark Metrics Cards -->
-      <div class="benchmarks-card mat-elevation-z2">
-        <div class="card-header">
-          <h3>Gym Industry Health Benchmarks</h3>
-          <small>Performance measured against optimal target ratios</small>
-        </div>
-
-        <div class="benchmark-list">
-          <!-- Payroll Ratio -->
-          <div class="bench-item">
-            <div class="bench-top">
-              <span class="bench-title">
-                <mat-icon style="color: #10b981;">badge</mat-icon> Payroll / Labor Ratio
-              </span>
-              <strong class="bench-val" [class.bad]="s.payrollRatio > 40" [class.good]="s.payrollRatio <= 35">
-                {{ s.payrollRatio }}%
-              </strong>
-            </div>
-            <div class="meter-track">
-              <div class="meter-fill" [style.width.%]="Math.min(100, s.payrollRatio * 2)" [class.bad]="s.payrollRatio > 40"></div>
-            </div>
-            <div class="bench-foot">
-              <span>Target Benchmark: <strong>30% – 35%</strong></span>
-              <span>Total Wages: ₱{{ s.payrollAmount | number:'1.2-2' }}</span>
-            </div>
+      <!-- Left Column: Donut Outflow Chart -->
+      <div class="analytics-card chart-analytics-card">
+        <div class="card-header-bar">
+          <div class="header-title-wrap">
+            <mat-icon class="text-gold">pie_chart</mat-icon>
+            <h3>Outflow Distribution ("Money Eaters")</h3>
           </div>
+          <span class="count-pill">Where money was spent</span>
+        </div>
 
-          <!-- Utilities Ratio -->
-          <div class="bench-item">
-            <div class="bench-top">
-              <span class="bench-title">
-                <mat-icon style="color: #eab308;">bolt</mat-icon> Utilities Ratio (Electricity + Water)
-              </span>
-              <strong class="bench-val" [class.bad]="s.utilitiesRatio > 15" [class.good]="s.utilitiesRatio <= 12">
-                {{ s.utilitiesRatio }}%
-              </strong>
-            </div>
-            <div class="meter-track">
-              <div class="meter-fill" [style.width.%]="Math.min(100, s.utilitiesRatio * 4)" [class.bad]="s.utilitiesRatio > 15"></div>
-            </div>
-            <div class="bench-foot">
-              <span>Target Benchmark: <strong>8% – 12%</strong></span>
-              <span>Total Utilities: ₱{{ s.utilitiesAmount | number:'1.2-2' }}</span>
-            </div>
+        <div class="chart-container-wrap">
+          <div *ngIf="donutChartSeries.length === 0" class="empty-chart-note text-muted">
+            No expenses recorded for this time window.
           </div>
-
-          <!-- COGS / Stock Ratio -->
-          <div class="bench-item">
-            <div class="bench-top">
-              <span class="bench-title">
-                <mat-icon style="color: #8b5cf6;">inventory_2</mat-icon> Retail COGS Ratio
-              </span>
-              <strong class="bench-val">
-                {{ s.cogsRatio }}%
-              </strong>
-            </div>
-            <div class="meter-track">
-              <div class="meter-fill" [style.width.%]="Math.min(100, s.cogsRatio * 3)"></div>
-            </div>
-            <div class="bench-foot">
-              <span>Retail Stock Expense: ₱{{ s.cogsAmount | number:'1.2-2' }}</span>
-            </div>
+          <div *ngIf="donutChartSeries.length > 0" class="donut-chart-box">
+            <apx-chart
+              [series]="donutChartSeries"
+              [chart]="donutChartOptions.chart"
+              [labels]="donutChartLabels"
+              [colors]="donutChartColors"
+              [legend]="donutChartOptions.legend"
+              [plotOptions]="donutChartOptions.plotOptions"
+              [dataLabels]="donutChartOptions.dataLabels"
+              [tooltip]="donutChartOptions.tooltip"
+              [stroke]="donutChartOptions.stroke"
+              [theme]="donutChartOptions.theme">
+            </apx-chart>
           </div>
+        </div>
 
-          <!-- Overdue Liabilities Summary -->
-          <div class="bench-item overdue-summary" *ngIf="s.overdueBillsCount > 0">
-            <div class="bench-top">
-              <span class="bench-title alert-text">
-                <mat-icon color="warn">warning</mat-icon> Overdue Liabilities Alert
-              </span>
-              <strong class="bench-val alert-text">{{ s.overdueBillsCount }} Bills</strong>
+        <!-- Breakdown List -->
+        <div class="breakdown-list">
+          <div *ngFor="let item of s.outflowBreakdown" class="breakdown-row">
+            <div class="breakdown-label-group">
+              <span class="color-dot" [style.background]="item.color"></span>
+              <span class="item-name text-white">{{ item.label }}</span>
             </div>
-            <p class="overdue-desc">₱{{ s.overdueBillsAmount | number:'1.2-2' }} total past due obligations.</p>
+            <div class="breakdown-val-group font-mono">
+              <span class="item-pct text-muted">{{ item.percentage }}%</span>
+              <strong class="item-amount text-gold">₱{{ item.amount | number:'1.2-2' }}</strong>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- Right Column: Gym Benchmark Health Ratios -->
+      <div class="analytics-card benchmarks-card">
+        <div class="card-header-bar">
+          <div class="header-title-wrap">
+            <mat-icon class="text-cyan">insights</mat-icon>
+            <h3>Gym Industry Benchmarks</h3>
+          </div>
+          <span class="count-pill">KPI Health Checks</span>
+        </div>
+
+        <div class="benchmarks-list">
+          <!-- 1. Payroll / Staffing Load -->
+          <div class="benchmark-row">
+            <div class="bench-top-line">
+              <span class="bench-name text-white">Payroll & Wages Load</span>
+              <span class="bench-status-tag" [ngClass]="s.payrollRatio <= 35 ? 'tag-healthy' : 'tag-warning'">
+                Target ≤ 35%
+              </span>
+            </div>
+            <div class="bench-val-line font-mono">
+              <span class="bench-current font-bold" [ngClass]="s.payrollRatio <= 35 ? 'text-mint' : 'text-gold'">
+                {{ s.payrollRatio }}% (₱{{ s.payrollAmount | number:'1.2-2' }})
+              </span>
+              <span class="bench-desc text-muted">Staff compensation proportion of total revenue</span>
+            </div>
+          </div>
+
+          <!-- 2. Utilities Load -->
+          <div class="benchmark-row">
+            <div class="bench-top-line">
+              <span class="bench-name text-white">Electricity & Utilities Load</span>
+              <span class="bench-status-tag" [ngClass]="s.utilitiesRatio <= 15 ? 'tag-healthy' : 'tag-warning'">
+                Target ≤ 15%
+              </span>
+            </div>
+            <div class="bench-val-line font-mono">
+              <span class="bench-current font-bold" [ngClass]="s.utilitiesRatio <= 15 ? 'text-mint' : 'text-gold'">
+                {{ s.utilitiesRatio }}% (₱{{ s.utilitiesAmount | number:'1.2-2' }})
+              </span>
+              <span class="bench-desc text-muted">Power, water, and internet against income</span>
+            </div>
+          </div>
+
+          <!-- 3. COGS / Wholesale Inventory Restock Ratio -->
+          <div class="benchmark-row">
+            <div class="bench-top-line">
+              <span class="bench-name text-white">Inventory Cost of Goods (COGS)</span>
+              <span class="bench-status-tag tag-healthy">Target ≤ 30%</span>
+            </div>
+            <div class="bench-val-line font-mono">
+              <span class="bench-current text-cyan font-bold">{{ s.cogsRatio }}% (₱{{ s.cogsAmount | number:'1.2-2' }})</span>
+              <span class="bench-desc text-muted">Retail inventory expenditure proportion of revenue</span>
+            </div>
+          </div>
+
+          <!-- 4. Operating Runway Buffer -->
+          <div class="benchmark-row">
+            <div class="bench-top-line">
+              <span class="bench-name text-white">Operating Cash Buffer Runway</span>
+              <span class="bench-status-tag" [ngClass]="s.runwayDays >= 15 ? 'tag-healthy' : 'tag-warning'">Target ≥ 15 Days</span>
+            </div>
+            <div class="bench-val-line font-mono">
+              <span class="bench-current text-gold font-bold">{{ s.runwayDays > 365 ? '30+ Days' : s.runwayDays + ' Days' }}</span>
+              <span class="bench-desc text-muted">Active front-desk cash reserve buffer</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- AI Strategic Recommendations Board -->
-    <div class="recommendations-section">
-      <div class="section-header">
-        <div class="sec-titles">
-          <h2>AI Strategic Recommendations</h2>
-          <p>Automated decision support based on financial thresholds and cash pace</p>
+    <!-- ── AI Strategic Recommendations Deck ── -->
+    <div class="ai-advisor-card">
+      <div class="card-header-bar">
+        <div class="header-title-wrap">
+          <mat-icon class="text-cyan">auto_awesome</mat-icon>
+          <h3>AI Strategic Recommendations & Proactive Action Plan</h3>
         </div>
-        <span class="rec-count-badge">{{ s.recommendations.length }} Action Items</span>
+        <span class="count-pill">{{ s.recommendations.length }} Action Item{{ s.recommendations.length === 1 ? '' : 's' }}</span>
       </div>
 
-      <div class="rec-grid">
-        <div class="rec-card" *ngFor="let rec of s.recommendations" [ngClass]="getSeverityClass(rec.severity)">
-          <div class="rec-card-top">
-            <div class="rec-tag">
-              <mat-icon>{{ rec.icon }}</mat-icon>
-              <span>{{ rec.category }}</span>
-            </div>
-            <span class="sev-badge">{{ rec.severity }}</span>
+      <div class="recommendations-grid">
+        <div *ngFor="let rec of s.recommendations" class="rec-card" [ngClass]="getSeverityClass(rec.severity)">
+          <div class="rec-header-row">
+            <span class="rec-sev-badge" [ngClass]="getSeverityClass(rec.severity)">
+              {{ rec.severity }}
+            </span>
+            <span class="rec-title text-white">{{ rec.title }}</span>
           </div>
 
-          <h3 class="rec-title">{{ rec.title }}</h3>
-          <p class="rec-summary">{{ rec.summary }}</p>
+          <p class="rec-description text-body">
+            {{ rec.summary }}
+          </p>
 
-          <div class="rec-impact">
-            <strong>Impact:</strong> {{ rec.impact }}
-          </div>
-
-          <div class="rec-action-box">
-            <p class="action-text"><strong>Recommended Action:</strong> {{ rec.actionText }}</p>
-            <button mat-raised-button color="primary" class="take-action-btn" (click)="navigateToAction(rec.actionRoute)">
-              Take Action <mat-icon>arrow_forward</mat-icon>
+          <div *ngIf="rec.actionText && rec.actionRoute" class="rec-action-footer">
+            <button type="button" class="btn-rec-action" (click)="navigateToAction(rec.actionRoute)">
+              <span>{{ rec.actionText }}</span>
+              <mat-icon>arrow_forward</mat-icon>
             </button>
           </div>
         </div>
       </div>
     </div>
   </ng-container>
+
+  <!-- ── Safe Area Physical Scroll Spacer (Failure #24 & #26 Prevention) ── -->
+  <div class="bottom-scroll-spacer"></div>
+
 </div>

@@ -1,102 +1,294 @@
-<div class="page-header">
-  <div>
-    <h1>Product Management</h1>
-    <p class="subtitle">Manage simplified inventory and consumables</p>
+<div class="product-management-container">
+
+  <!-- ── Page Header Deck ── -->
+  <div class="page-header">
+    <div class="header-titles">
+      <h1 class="page-title">Product & Inventory Management</h1>
+      <p class="page-subtitle">Track stock levels, retail pricing, and internal consumable assets</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-add-product-gold" (click)="openAddForm()">
+        <mat-icon class="btn-icon">add</mat-icon>
+        <span>Add {{ currentFilter() === 'RETAIL' ? 'Product' : 'Consumable' }}</span>
+      </button>
+    </div>
   </div>
-  <button mat-raised-button color="primary" (click)="openAddForm()">
-    <mat-icon>add</mat-icon> Add Product
-  </button>
-</div>
 
-<!-- Tabs -->
-<mat-tab-group (selectedIndexChange)="onTabChange($event)" animationDuration="0ms" class="mat-elevation-z2"
-  style="background: white; border-radius: 4px; margin-bottom: 16px">
-  <mat-tab label="Retail Items"></mat-tab>
-  <mat-tab label="Internal Consumables"></mat-tab>
-</mat-tab-group>
+  <!-- ── Summary Metrics Deck (4 Cards) ── -->
+  <div class="summary-cards" [@fadeIn]>
+    <!-- 1. Total Active SKUs -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-cyan">
+        <mat-icon>inventory_2</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Active {{ currentFilter() === 'RETAIL' ? 'Retail SKUs' : 'Consumables' }}</span>
+        <span class="value text-cyan">{{ totalSkus() }} item{{ totalSkus() === 1 ? '' : 's' }}</span>
+      </div>
+    </div>
 
-<!-- Products Table -->
-<div class="mat-elevation-z2 table-container" [@fadeIn]>
-  <table mat-table [dataSource]="dataSource" class="full-width-table mobile-card-table"
-    *ngIf="dataSource.data.length > 0; else emptyState">
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Product</th>
-      <td mat-cell *matCellDef="let product" data-label="Product">
-        <div class="product-info">
-          <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="product-thumb" />
-          <div style="display: flex; flex-direction: column">
-            <span style="font-weight: 500">{{ product.name }}</span>
-            <span *ngIf="product.type === 'CONSUMABLE'" style="font-size: 0.8em; color: #666">{{
-              product.unit
-              }}</span>
+    <!-- 2. Total Retail Value (Retail only) -->
+    <div class="summary-card" *ngIf="currentFilter() === 'RETAIL'">
+      <div class="card-icon-seal icon-gold">
+        <mat-icon>monetization_on</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Total Retail Value</span>
+        <span class="value text-gold">₱{{ totalInventoryValue() | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <!-- 3. Low Stock Alert -->
+    <div class="summary-card" [class.alert-card]="lowStockCount() > 0">
+      <div class="card-icon-seal icon-amber">
+        <mat-icon>warning</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Low Stock Items</span>
+        <span class="value" [class.text-amber]="lowStockCount() > 0" [class.text-white]="lowStockCount() === 0">
+          {{ lowStockCount() }} item{{ lowStockCount() === 1 ? '' : 's' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- 4. Out of Stock Alert -->
+    <div class="summary-card" [class.danger-card]="outOfStockCount() > 0">
+      <div class="card-icon-seal icon-rose">
+        <mat-icon>error_outline</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Out of Stock</span>
+        <span class="value" [class.text-rose]="outOfStockCount() > 0" [class.text-white]="outOfStockCount() === 0">
+          {{ outOfStockCount() }} item{{ outOfStockCount() === 1 ? '' : 's' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Inventory Control Deck (Tabs & Search Bar) ── -->
+  <div class="inventory-controls-card">
+    <div class="tabs-and-search-row">
+      <!-- High Contrast Tabs -->
+      <mat-tab-group (selectedIndexChange)="onTabChange($event)" animationDuration="0ms" class="custom-mat-tabs">
+        <mat-tab label="Retail Items"></mat-tab>
+        <mat-tab label="Internal Consumables"></mat-tab>
+      </mat-tab-group>
+
+      <!-- Real-time Search -->
+      <div class="search-input-wrap">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input type="text" [value]="searchQuery()" (input)="onSearchChange($event)" placeholder="Search product name or category..." class="search-field">
+        <button type="button" class="btn-clear-search" *ngIf="searchQuery()" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Category Filter Pills (Retail Items) -->
+    <div class="category-pills-row" *ngIf="currentFilter() === 'RETAIL'">
+      <button type="button" class="cat-pill" [class.active]="selectedCategory() === 'ALL'" (click)="setCategoryFilter('ALL')">
+        All Categories
+      </button>
+      <button type="button" class="cat-pill" *ngFor="let cat of categories" [class.active]="selectedCategory() === cat" (click)="setCategoryFilter(cat)">
+        {{ cat }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Master Products Container ── -->
+  <div class="table-card" [@fadeIn]>
+    <div class="table-header">
+      <div class="table-title-wrap">
+        <mat-icon class="text-cyan">warehouse</mat-icon>
+        <h3>{{ currentFilter() === 'RETAIL' ? 'Retail Catalog Inventory' : 'Internal Supplies & Consumables' }}</h3>
+      </div>
+      <span class="count-pill">{{ filteredProducts().length }} product{{ filteredProducts().length === 1 ? '' : 's' }} listed</span>
+    </div>
+
+    <!-- 📱 1. ADAPTIVE MOBILE CARD DECK (< 640px) -->
+    <div class="mobile-cards-deck" *ngIf="filteredProducts().length > 0">
+      <div class="product-mobile-card" *ngFor="let product of filteredProducts()">
+        
+        <!-- Top Row: Thumbnail + Title + Category -->
+        <div class="mobile-card-top">
+          <div class="mobile-thumb-wrap">
+            <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="mobile-thumb" />
+            <mat-icon *ngIf="!product.imageUrl" class="mobile-placeholder-icon">inventory_2</mat-icon>
+          </div>
+          <div class="mobile-card-titles">
+            <strong class="mobile-product-title text-white">{{ product.name }}</strong>
+            <div class="mobile-badges-row">
+              <span *ngIf="(product.type || 'RETAIL') === 'RETAIL' && product.category" class="category-pill"
+                    [style.border-color]="getCategoryColor(product.category) + '60'"
+                    [style.background]="getCategoryColor(product.category) + '18'"
+                    [style.color]="getCategoryColor(product.category)">
+                {{ product.category }}
+              </span>
+              <span *ngIf="product.type === 'CONSUMABLE'" class="consumable-unit-badge">
+                {{ product.unit || 'Consumable' }}
+              </span>
+            </div>
           </div>
         </div>
-      </td>
-    </ng-container>
 
-    <ng-container matColumnDef="category">
-      <th mat-header-cell *matHeaderCellDef>Category</th>
-      <td mat-cell *matCellDef="let product" data-label="Category">
-        <mat-chip-set *ngIf="(product.type || 'RETAIL') === 'RETAIL'">
-          <mat-chip [color]="getCategoryColor(product.category)" selected>
-            {{ product.category }}
-          </mat-chip>
-        </mat-chip-set>
-        <span *ngIf="(product.type || 'RETAIL') !== 'RETAIL'">-</span>
-      </td>
-    </ng-container>
+        <!-- Description (if present) -->
+        <p *ngIf="product.description" class="mobile-card-desc text-muted">
+          {{ product.description }}
+        </p>
 
-    <ng-container matColumnDef="unit">
-      <th mat-header-cell *matHeaderCellDef>Unit</th>
-      <td mat-cell *matCellDef="let product" data-label="Unit">{{ product.unit }}</td>
-    </ng-container>
+        <!-- Bottom Row: Price + Stock Badge + Actions -->
+        <div class="mobile-card-bottom">
+          <div class="mobile-pricing-stock">
+            <span class="mobile-price text-gold" *ngIf="(product.type || 'RETAIL') === 'RETAIL'">
+              ₱{{ product.price | number:'1.2-2' }}
+            </span>
+            <span class="stock-badge"
+                  [class.in-stock]="product.stock > (product.minStockLevel || 5)"
+                  [class.low-stock]="product.stock > 0 && product.stock <= (product.minStockLevel || 5)"
+                  [class.out-of-stock]="(product.stock || 0) <= 0">
+              <mat-icon class="stock-icon" *ngIf="product.stock > (product.minStockLevel || 5)">check_circle</mat-icon>
+              <mat-icon class="stock-icon" *ngIf="product.stock > 0 && product.stock <= (product.minStockLevel || 5)">warning</mat-icon>
+              <mat-icon class="stock-icon" *ngIf="(product.stock || 0) <= 0">error_outline</mat-icon>
+              <span>{{ product.stock || 0 }} {{ product.unit || 'pcs' }}</span>
+            </span>
+          </div>
 
-    <ng-container matColumnDef="price">
-      <th mat-header-cell *matHeaderCellDef>Price</th>
-      <td mat-cell *matCellDef="let product" data-label="Price">₱{{ product.price | number : '1.2-2' }}</td>
-    </ng-container>
+          <div class="mobile-actions-row">
+            <button type="button" *ngIf="product.type === 'CONSUMABLE'" class="btn-quick-consume" (click)="quickConsume(product)" matTooltip="Quick consume 1 unit">
+              <mat-icon>remove_circle_outline</mat-icon>
+              <span>-1</span>
+            </button>
+            <button type="button" class="btn-action-edit" (click)="openEditForm(product)" matTooltip="Edit product">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button type="button" class="btn-action-delete" (click)="deleteProduct(product)" matTooltip="Delete product">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
 
-    <ng-container matColumnDef="stock">
-      <th mat-header-cell *matHeaderCellDef>Stock</th>
-      <td mat-cell *matCellDef="let product" [class.low-stock]="product.stock <= (product.minStockLevel || 5)"
-        [class.out-of-stock]="product.stock === 0" data-label="Stock">
-        {{ product.stock }}
-        <mat-icon *ngIf="product.stock <= (product.minStockLevel || 5)" class="warning-icon"
-          [matTooltip]="'Low stock! Min: ' + (product.minStockLevel || 5)">
-          warning
-        </mat-icon>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef style="text-align: right">Actions</th>
-      <td mat-cell *matCellDef="let product" style="text-align: right" data-label="Actions">
-        <!-- Quick Consume -->
-        <button *ngIf="product.type === 'CONSUMABLE'" mat-icon-button color="primary" (click)="quickConsume(product)"
-          matTooltip="Quick Consume 1 Unit" style="margin-right: 8px; background-color: #e3f2fd">
-          <mat-icon>remove_circle_outline</mat-icon>
-        </button>
-
-        <button mat-icon-button (click)="openEditForm(product)" matTooltip="Edit">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="deleteProduct(product)" matTooltip="Delete">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-  </table>
-
-  <ng-template #emptyState>
-    <div class="empty-state">
-      <mat-icon class="empty-icon">inventory_2</mat-icon>
-      <p>No products found.</p>
-      <button mat-stroked-button color="primary" (click)="openAddForm()">Add First Product</button>
+      </div>
     </div>
-  </ng-template>
 
-  <mat-paginator [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons></mat-paginator>
+    <!-- 🖥️ 2. DESKTOP & TABLET DATA MATRIX (>= 640px) -->
+    <div class="table-responsive-wrapper">
+      <table mat-table [dataSource]="dataSource" class="full-width-table" *ngIf="dataSource.data.length > 0; else emptyState">
+
+        <!-- 1. Product Name & Thumb -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef class="sticky-col">Product</th>
+          <td mat-cell *matCellDef="let product" class="sticky-col">
+            <div class="product-info-cell">
+              <div class="product-thumb-wrap">
+                <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="product-thumb" />
+                <mat-icon *ngIf="!product.imageUrl" class="product-placeholder-icon">inventory_2</mat-icon>
+              </div>
+              <div class="product-names">
+                <strong class="product-name text-white">{{ product.name }}</strong>
+                <span *ngIf="product.description" class="product-desc text-muted" [title]="product.description">{{ product.description }}</span>
+                <span *ngIf="product.type === 'CONSUMABLE'" class="consumable-unit-badge">Unit: {{ product.unit || 'Item' }}</span>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- 2. Category (Retail) -->
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef>Category</th>
+          <td mat-cell *matCellDef="let product">
+            <span *ngIf="(product.type || 'RETAIL') === 'RETAIL' && product.category" class="category-pill"
+                  [style.border-color]="getCategoryColor(product.category) + '60'"
+                  [style.background]="getCategoryColor(product.category) + '18'"
+                  [style.color]="getCategoryColor(product.category)">
+              {{ product.category }}
+            </span>
+            <span *ngIf="(product.type || 'RETAIL') !== 'RETAIL' || !product.category" class="text-muted">-</span>
+          </td>
+        </ng-container>
+
+        <!-- 3. Unit (Consumables) -->
+        <ng-container matColumnDef="unit">
+          <th mat-header-cell *matHeaderCellDef>Unit of Measure</th>
+          <td mat-cell *matCellDef="let product">
+            <span class="unit-tag">{{ product.unit || 'Item' }}</span>
+          </td>
+        </ng-container>
+
+        <!-- 4. Price (Retail) -->
+        <ng-container matColumnDef="price">
+          <th mat-header-cell *matHeaderCellDef>Retail Price</th>
+          <td mat-cell *matCellDef="let product" class="price-cell text-gold">
+            <strong>₱{{ product.price | number:'1.2-2' }}</strong>
+          </td>
+        </ng-container>
+
+        <!-- 5. Stock Level -->
+        <ng-container matColumnDef="stock">
+          <th mat-header-cell *matHeaderCellDef>Stock Level</th>
+          <td mat-cell *matCellDef="let product">
+            <div class="stock-cell-wrap">
+              <span class="stock-badge"
+                    [class.in-stock]="product.stock > (product.minStockLevel || 5)"
+                    [class.low-stock]="product.stock > 0 && product.stock <= (product.minStockLevel || 5)"
+                    [class.out-of-stock]="(product.stock || 0) <= 0">
+                <mat-icon class="stock-icon" *ngIf="product.stock > (product.minStockLevel || 5)">check_circle</mat-icon>
+                <mat-icon class="stock-icon" *ngIf="product.stock > 0 && product.stock <= (product.minStockLevel || 5)">warning</mat-icon>
+                <mat-icon class="stock-icon" *ngIf="(product.stock || 0) <= 0">error_outline</mat-icon>
+                <span>{{ product.stock || 0 }} {{ product.unit || 'pcs' }}</span>
+              </span>
+              <small *ngIf="product.stock <= (product.minStockLevel || 5)" class="min-alert-text text-muted">
+                Min: {{ product.minStockLevel || 5 }}
+              </small>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- 6. Actions -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Actions</th>
+          <td mat-cell *matCellDef="let product" class="text-right">
+            <div class="actions-cell">
+              <!-- Quick Consume (Consumables Only) -->
+              <button type="button" *ngIf="product.type === 'CONSUMABLE'" class="btn-quick-consume" (click)="quickConsume(product)" matTooltip="Quick consume 1 unit">
+                <mat-icon>remove_circle_outline</mat-icon>
+                <span>-1 Unit</span>
+              </button>
+
+              <!-- Edit Action -->
+              <button type="button" class="btn-action-edit" (click)="openEditForm(product)" matTooltip="Edit product">
+                <mat-icon>edit</mat-icon>
+              </button>
+
+              <!-- Delete Action -->
+              <button type="button" class="btn-action-delete" (click)="deleteProduct(product)" matTooltip="Delete product">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <ng-template #emptyState>
+      <div class="empty-state-card">
+        <div class="empty-icon-seal">
+          <mat-icon>inventory_2</mat-icon>
+        </div>
+        <h4>No products found</h4>
+        <p>No inventory items match your active search filters.</p>
+        <button type="button" class="btn-add-product-gold" (click)="openAddForm()">
+          <mat-icon class="btn-icon">add</mat-icon>
+          <span>Add New Product</span>
+        </button>
+      </div>
+    </ng-template>
+
+    <!-- Dark Pro Paginator -->
+    <mat-paginator [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons class="custom-paginator"></mat-paginator>
+  </div>
+
 </div>

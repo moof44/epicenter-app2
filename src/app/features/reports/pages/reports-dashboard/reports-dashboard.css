@@ -1,67 +1,235 @@
+/* ============================================================
+   Business Intelligence & Executive Analytics Workspace
+   Master Dark Pro Token Architecture & 4-Screen Responsive UI
+   ============================================================ */
+
 .reports-container {
-    padding: 24px;
-    background-color: var(--bg-color, #fafafa);
-    min-height: 100vh;
-    color: var(--text-main, #333);
+  padding: 20px 20px 140px 20px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--color-app, #0f172a);
+  min-height: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* ── Page Header Deck ── */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: var(--color-surface, #1e293b);
+  border: 1.5px solid var(--color-border, #334155);
+  border-radius: var(--radius-2xl, 16px);
+  padding: 18px 24px;
+}
+
+.header-left-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.btn-back-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--color-canvas, #090d16);
+  border: 1px solid var(--color-border, #334155);
+  color: var(--color-text-secondary, #cbd5e1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.btn-back-circle:hover {
+  border-color: var(--color-cyan-light, #22d3ee);
+  color: #ffffff;
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: var(--font-size-xl, 20px);
+  font-weight: var(--font-weight-black, 900);
+  color: #ffffff !important;
+}
+
+.page-subtitle {
+  margin: 0;
+  font-size: var(--font-size-xs, 12px);
+  color: var(--color-text-secondary, #cbd5e1);
 }
 
 .header-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-h1 {
-    margin: 0;
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: var(--text-main, #1e293b);
-    /* Dark Text */
+.filters-form-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.filters {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.dense-form-field { width: 230px; font-size: 12px; }
+
+.btn-generate-cyan {
+  background: rgba(6, 182, 212, 0.18);
+  border: 1.5px solid var(--color-cyan-light, #22d3ee);
+  color: var(--color-cyan-light, #22d3ee) !important;
+  font-size: var(--font-size-xs, 12px);
+  font-weight: var(--font-weight-black, 900);
+  border-radius: var(--radius-full, 9999px);
+  padding: 10px 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 180ms ease;
+  white-space: nowrap;
 }
 
-/* Dashboard Layout */
+.btn-generate-cyan:hover:not([disabled]) {
+  background: rgba(6, 182, 212, 0.3);
+  transform: translateY(-2px);
+}
+.btn-generate-cyan[disabled] { opacity: 0.4; cursor: not-allowed; }
+.btn-icon { font-size: 16px !important; width: 16px !important; height: 16px !important; color: inherit !important; }
+
+/* ── 4-Card Executive Summary Deck ── */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.summary-card {
+  background: var(--color-surface, #1e293b);
+  border: 1.5px solid var(--color-border, #334155);
+  border-radius: var(--radius-xl, 12px);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 180ms ease;
+}
+
+.summary-card:hover {
+  border-color: rgba(6, 182, 212, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.card-icon-seal {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-xl, 12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.card-icon-seal mat-icon { font-size: 24px !important; width: 24px !important; height: 24px !important; }
+
+.icon-gold { background: rgba(245, 158, 11, 0.18); border: 1px solid rgba(245, 158, 11, 0.5); color: var(--color-gold-light, #fbbf24); }
+.icon-cyan { background: rgba(6, 182, 212, 0.18); border: 1px solid rgba(6, 182, 212, 0.5); color: var(--color-cyan-light, #22d3ee); }
+.icon-mint { background: rgba(52, 211, 153, 0.18); border: 1px solid rgba(52, 211, 153, 0.5); color: var(--color-mint-success, #34d399); }
+.icon-purple { background: rgba(167, 139, 250, 0.18); border: 1px solid rgba(167, 139, 250, 0.5); color: #c084fc; }
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.card-info .label {
+  font-size: 11px;
+  font-weight: var(--font-weight-extrabold, 800);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary, #cbd5e1);
+}
+
+.card-info .value {
+  font-size: var(--font-size-xl, 20px);
+  font-weight: var(--font-weight-black, 900);
+}
+
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+
+/* ── Dashboard Grid ── */
 .dashboard-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-    max-width: 1200px;
-    margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.grid-item {
-    background: white;
-    border-radius: 12px;
-    /* Clean shadow instead of dark border */
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-    padding: 24px;
-    border: 1px solid #e2e8f0;
-    /* Subtle border */
-    width: 100%;
-    box-sizing: border-box;
+.report-section-card {
+  background: var(--color-surface, #1e293b);
+  border: 1.5px solid var(--color-border, #334155);
+  border-radius: var(--radius-2xl, 16px);
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
-/* Ensure components inside take full width */
-app-volume-chart,
-app-sales-performance,
-app-product-breakdown,
-app-staff-sales,
-app-member-attendance {
-    display: block;
-    width: 100%;
+.charts-dual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
-/* Responsive */
-@media (min-width: 1024px) {
-    .dashboard-grid {
-        padding: 0;
-    }
+.bottom-scroll-spacer { height: 24px; width: 100%; flex-shrink: 0; }
+
+/* ── 4-Screen Responsive UI Protocol ── */
+@media (max-width: 639px) {
+  .reports-container { padding: 14px 12px 140px 12px !important; gap: 14px; }
+  .page-header { padding: 14px; flex-direction: column; align-items: flex-start; width: 100%; box-sizing: border-box; }
+  .page-title { font-size: var(--font-size-base, 16px) !important; line-height: 1.25 !important; }
+  .header-actions { width: 100%; }
+  .filters-form-wrap { width: 100%; flex-direction: column; align-items: stretch; }
+  .dense-form-field { width: 100%; }
+  .btn-generate-cyan { width: 100%; justify-content: center; }
+  .summary-cards { grid-template-columns: 1fr; gap: 12px; }
+  .charts-dual-grid { grid-template-columns: 1fr; }
+  .report-section-card { padding: 14px; }
 }
+
+@media (min-width: 640px) and (max-width: 768px) {
+  .reports-container { padding: 16px 16px 100px 16px !important; }
+  .summary-cards { grid-template-columns: repeat(2, 1fr); }
+  .charts-dual-grid { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .summary-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1025px) {
+  .summary-cards { grid-template-columns: repeat(4, 1fr); }
+}
+
+.font-mono { font-family: var(--font-family-mono); }
+.text-white { color: #ffffff !important; }
+.text-cyan { color: var(--color-cyan-light, #22d3ee) !important; }
+.text-mint { color: var(--color-mint-success, #34d399) !important; }
+.text-gold { color: var(--color-gold-light, #fbbf24) !important; }
+.text-muted { color: var(--color-text-secondary, #cbd5e1) !important; }

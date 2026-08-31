@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { ReportStateService } from '../../../../core/services/report.state.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { toLocalDateStr } from '../../../../core/utils/date.utils';
@@ -42,7 +41,19 @@ export class GymRevenueTodayWidget {
     isLoaded = computed(() => this.report().days.length > 0);
     isEmpty = computed(() => this.isLoaded() && this.todayRevenue() === 0);
 
+    motivationMessage = computed(() => {
+        const rev = this.todayRevenue();
+        if (rev === 0) return 'The register is feeling lonely! Offer a refreshing drink, supplement, or day pass to arriving members.';
+        if (rev < 2000) return '🔥 First sales unlocked! Keep offering cold drinks, energy boosters & protein shakes!';
+        if (rev < 5000) return '⚡ Great momentum! Offer supplements & merchandise to incoming members!';
+        return '🚀 Outstanding hustle today! Keep pushing to break the gym daily sales record!';
+    });
+
     navigateToMonthlySales(): void {
         this.router.navigate([this.authService.hasAnyRole(['ADMIN']) ? '/store/monthly-sales' : '/store/history']);
+    }
+
+    navigateToPos(): void {
+        this.router.navigate(['/store/pos']);
     }
 }

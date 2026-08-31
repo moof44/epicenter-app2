@@ -12,317 +12,327 @@ import { PurchaseRequest, PurchaseRequestItem, OutgoingPaymentSource } from '../
 import { PurchaseRequestService } from '../../../../../core/services/purchase-request.service';
 
 interface FulfillLineItem extends PurchaseRequestItem {
-    receivedQtyInput: number;
-    actualUnitCostInput: number;
+  receivedQtyInput: number;
+  actualUnitCostInput: number;
 }
 
 @Component({
-    selector: 'app-fulfill-request-modal',
-    standalone: true,
-    imports: [
-        CommonModule,
-        FormsModule,
-        MatDialogModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule,
-        MatIconModule,
-        MatSnackBarModule,
-    ],
-    template: `
-        <div class="fulfill-modal-container">
-            <h2 mat-dialog-title class="dialog-title">
-                <mat-icon color="accent">inventory</mat-icon>
-                Receive Goods & Restock Inventory — {{ request.requestNumber }}
-            </h2>
-
-            <mat-dialog-content class="dialog-content">
-                <p class="section-desc">
-                    Confirm the actual delivered quantities and unit costs paid. Catalog items will be <strong>automatically added to inventory stock</strong>.
-                </p>
-
-                <!-- Supplier & Payment Method Bar -->
-                <div class="meta-grid">
-                    <mat-form-field appearance="outline" class="flex-1">
-                        <mat-label>Supplier Name / Store</mat-label>
-                        <input matInput [(ngModel)]="supplierName" placeholder="e.g. Wheyl Philippines, SM Supermarket" />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="flex-1">
-                        <mat-label>Payment Source (Outgoing Money)</mat-label>
-                        <mat-select [(ngModel)]="paidVia">
-                            <mat-option value="CASH_DRAWER">💵 Cash Drawer (Shift Cash Out)</mat-option>
-                            <mat-option value="GCASH">📱 GCash / Maya Wallet</mat-option>
-                            <mat-option value="BANK_TRANSFER">🏦 Bank Transfer (BDO/BPI)</mat-option>
-                            <mat-option value="OWNER_PERSONAL">💳 Owner Out-of-Pocket</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="flex-1">
-                        <mat-label>Receipt / Reference #</mat-label>
-                        <input matInput [(ngModel)]="paymentReference" placeholder="e.g. OR #12345 or GCash Ref" />
-                    </mat-form-field>
-                </div>
-
-                <!-- Items Table -->
-                <div class="table-wrapper">
-                    <table class="fulfill-table">
-                        <thead>
-                            <tr>
-                                <th>Item / Product</th>
-                                <th class="text-center">Approved Qty</th>
-                                <th class="text-center">Actual Received Qty</th>
-                                <th class="text-right">Actual Cost (₱/unit)</th>
-                                <th class="text-right">Total (₱)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let item of items">
-                                <td>
-                                    <div class="item-name">{{ item.name }}</div>
-                                    <span class="item-type-tag" [class.catalog]="item.itemType === 'CATALOG_PRODUCT'">
-                                        {{ item.itemType === 'CATALOG_PRODUCT' ? '📦 Stock Catalog' : '🧹 Facility Supply' }}
-                                    </span>
-                                </td>
-                                <td class="text-center text-muted">
-                                    {{ item.approvedQuantity ?? item.requestedQuantity }} {{ item.unit }}
-                                </td>
-                                <td class="text-center">
-                                    <input type="number" min="0" [(ngModel)]="item.receivedQtyInput" class="compact-input" />
-                                </td>
-                                <td class="text-right">
-                                    <input type="number" min="0" [(ngModel)]="item.actualUnitCostInput" class="compact-input text-right" />
-                                </td>
-                                <td class="text-right font-bold">
-                                    ₱{{ (item.receivedQtyInput * item.actualUnitCostInput) | number:'1.2-2' }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Total Amount Summary -->
-                <div class="total-summary-card">
-                    <div class="total-row">
-                        <span class="total-label">Total Outgoing Payment:</span>
-                        <span class="total-val">₱{{ calculateTotal() | number:'1.2-2' }}</span>
-                    </div>
-                </div>
-
-                <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Receiving Notes (Optional)</mat-label>
-                    <input matInput [(ngModel)]="receivingNotes" placeholder="e.g. Received in good condition by front desk" />
-                </mat-form-field>
-            </mat-dialog-content>
-
-            <mat-dialog-actions align="end" class="dialog-actions">
-                <button mat-button mat-dialog-close [disabled]="submitting()">Cancel</button>
-                <button mat-flat-button color="primary" (click)="confirmFulfillment()" [disabled]="submitting() || !isValid()">
-                    <mat-icon *ngIf="!submitting()">check_circle</mat-icon>
-                    <span>{{ submitting() ? 'Restocking Inventory...' : 'Confirm & Restock Inventory' }}</span>
-                </button>
-            </mat-dialog-actions>
+  selector: 'app-fulfill-request-modal',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatIconModule,
+    MatSnackBarModule,
+  ],
+  template: `
+    <div class="fulfill-modal-container">
+      <div class="modal-header">
+        <div class="modal-title">
+          <mat-icon class="text-mint">inventory</mat-icon>
+          <h2>Receive Goods & Restock — {{ request.requestNumber }}</h2>
         </div>
-    `,
-    styles: [`
-        .fulfill-modal-container {
-            padding: 4px;
-            width: 100%;
-            max-width: 900px;
-            box-sizing: border-box;
-        }
-        .dialog-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 20px;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 8px;
-        }
-        .section-desc {
-            margin: 0 0 16px 0;
-            color: #64748b;
-            font-size: 13px;
-        }
-        .dialog-content {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            max-height: 75vh;
-            overflow-y: auto;
-            padding: 0 4px;
-        }
-        .meta-grid {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .flex-1 { flex: 1; min-width: 200px; }
-        .w-full { width: 100%; }
-        .table-wrapper {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .fulfill-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            min-width: 520px;
+        <button type="button" class="btn-modal-close" (click)="dialogRef.close()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
 
-            th {
-                background: #f8fafc;
-                padding: 10px 12px;
-                color: #475569;
-                font-weight: 600;
-                border-bottom: 1px solid #e2e8f0;
-                white-space: nowrap;
-            }
-            td {
-                padding: 10px 12px;
-                border-bottom: 1px solid #f1f5f9;
-                color: #1e293b;
-            }
-        }
-        .item-name { font-weight: 600; color: #0f172a; }
-        .item-type-tag {
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: #f1f5f9;
-            color: #64748b;
-            &.catalog { background: #eff6ff; color: #2563eb; }
-        }
-        .compact-input {
-            width: 90px;
-            padding: 6px 8px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 13px;
-            &:focus { outline: none; border-color: #3b82f6; }
-        }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .text-muted { color: #64748b; }
-        .font-bold { font-weight: 700; color: #0f172a; }
+      <div class="dialog-content">
+        <p class="section-desc text-muted">
+          Confirm the delivered quantities and unit costs. Catalog products will be <strong class="text-cyan">automatically restocked into live inventory</strong>.
+        </p>
 
-        .total-summary-card {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 8px;
-            padding: 12px 16px;
-            .total-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .total-label { font-weight: 700; color: #166534; font-size: 15px; }
-            .total-val { font-size: 20px; font-weight: 800; color: #15803d; }
-        }
-        .dialog-actions {
-            padding: 16px 0 8px;
-        }
+        <!-- Supplier & Payment Method Bar -->
+        <div class="meta-grid">
+          <mat-form-field appearance="outline" class="flex-1" subscriptSizing="dynamic">
+            <mat-label>Supplier Name / Vendor</mat-label>
+            <input matInput [(ngModel)]="supplierName" placeholder="e.g. Wheyl Philippines, SM Mart" />
+          </mat-form-field>
 
-        @media (max-width: 600px) {
-            .dialog-title {
-                font-size: 17px;
-            }
-            .meta-grid {
-                flex-direction: column;
-                gap: 0;
-            }
-            .flex-1 {
-                width: 100% !important;
-                min-width: 0;
-            }
-            .total-summary-card .total-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 4px;
-            }
-            .dialog-actions {
-                flex-direction: column-reverse;
-                gap: 8px;
-                button {
-                    width: 100%;
-                    height: 44px;
-                }
-            }
-        }
-    `],
+          <mat-form-field appearance="outline" class="flex-1" subscriptSizing="dynamic">
+            <mat-label>Payment Source (Outgoing)</mat-label>
+            <mat-select [(ngModel)]="paidVia">
+              <mat-option value="CASH_DRAWER">💵 Cash Drawer (Till Cash Out)</mat-option>
+              <mat-option value="GCASH">📱 GCash / Maya Wallet</mat-option>
+              <mat-option value="BANK_TRANSFER">🏦 Bank Transfer</mat-option>
+              <mat-option value="OWNER_PERSONAL">💳 Owner Out-of-Pocket</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="flex-1" subscriptSizing="dynamic">
+            <mat-label>Receipt / Reference #</mat-label>
+            <input matInput [(ngModel)]="paymentReference" placeholder="e.g. OR #12345 or GCash Ref" />
+          </mat-form-field>
+        </div>
+
+        <!-- Items Table -->
+        <div class="table-wrapper">
+          <table class="fulfill-table">
+            <thead>
+              <tr>
+                <th>Item / Product</th>
+                <th class="text-center">Approved Qty</th>
+                <th class="text-center">Actual Received Qty</th>
+                <th class="text-right">Actual Cost (₱/unit)</th>
+                <th class="text-right">Total (₱)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of items">
+                <td>
+                  <div class="item-name text-white font-bold">{{ item.name }}</div>
+                  <small class="item-type-badge font-mono text-cyan" *ngIf="item.itemType === 'CATALOG_PRODUCT'">Catalog Product (Auto-Restock)</small>
+                  <small class="item-type-badge font-mono text-muted" *ngIf="item.itemType === 'CUSTOM_SUPPLY'">Custom Expense</small>
+                </td>
+                <td class="text-center font-mono text-muted">{{ item.requestedQuantity }} {{ item.unit }}</td>
+                <td class="text-center">
+                  <input type="number" class="qty-field font-mono" min="0" [(ngModel)]="item.receivedQtyInput" />
+                </td>
+                <td class="text-right">
+                  <div class="cost-input-box">
+                    <span class="currency-prefix">₱</span>
+                    <input type="number" class="cost-field font-mono" min="0" step="0.01" [(ngModel)]="item.actualUnitCostInput" />
+                  </div>
+                </td>
+                <td class="text-right font-mono font-bold text-gold">
+                  ₱{{ (item.receivedQtyInput * item.actualUnitCostInput) | number:'1.2-2' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Grand Total Bar -->
+        <div class="grand-total-bar">
+          <div class="total-col">
+            <span class="tot-label text-muted">Estimated Cost:</span>
+            <span class="font-mono text-muted">₱{{ request.estimatedTotalAmount | number:'1.2-2' }}</span>
+          </div>
+          <div class="total-col total-actual">
+            <span class="tot-label text-white">Actual Total Outflow:</span>
+            <strong class="font-mono text-gold text-lg">₱{{ totalActualCost() | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" (click)="dialogRef.close()">Cancel</button>
+        <button type="button" class="btn-fulfill-mint" (click)="submit()" [disabled]="isSubmitting">
+          <mat-icon>inventory_2</mat-icon>
+          <span>{{ isSubmitting ? 'Restocking...' : 'Confirm Delivery & Restock' }}</span>
+        </button>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .fulfill-modal-container {
+      background: var(--color-surface, #1e293b);
+      border: 1.5px solid var(--color-border, #334155);
+      border-radius: var(--radius-2xl, 16px);
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1.5px solid var(--color-border, #334155);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title { display: flex; align-items: center; gap: 10px; }
+    .modal-title h2 { margin: 0; font-size: var(--font-size-base, 16px); font-weight: var(--font-weight-black, 900); color: #ffffff !important; }
+    .btn-modal-close { background: transparent; border: none; color: var(--color-text-secondary, #cbd5e1); cursor: pointer; }
+    .btn-modal-close:hover { color: #ffffff; }
+
+    .dialog-content { padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto; }
+    .section-desc { margin: 0; font-size: var(--font-size-xs, 12px); line-height: 1.5; }
+
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .flex-1 { width: 100%; }
+
+    .table-wrapper {
+      background: var(--color-canvas, #090d16);
+      border: 1px solid var(--color-border, #334155);
+      border-radius: var(--radius-xl, 12px);
+      overflow-x: auto;
+    }
+    .fulfill-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .fulfill-table th {
+      padding: 10px 14px;
+      background: var(--color-surface-alt, #243247);
+      color: var(--color-text-secondary, #cbd5e1);
+      font-size: 10px;
+      font-weight: var(--font-weight-extrabold, 800);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .fulfill-table td { padding: 12px 14px; border-bottom: 1px solid rgba(51, 65, 85, 0.4); font-size: 12px; vertical-align: middle; }
+
+    .item-name { font-size: 13px; }
+    .item-type-badge { font-size: 10px; }
+
+    .qty-field {
+      width: 70px;
+      background: var(--color-surface, #1e293b);
+      border: 1px solid var(--color-border, #334155);
+      border-radius: var(--radius-md, 6px);
+      color: #ffffff;
+      padding: 4px;
+      text-align: center;
+      font-size: 13px;
+      outline: none;
+    }
+    .qty-field:focus { border-color: var(--color-cyan-light, #22d3ee); }
+
+    .cost-input-box {
+      display: inline-flex;
+      align-items: center;
+      background: var(--color-surface, #1e293b);
+      border: 1px solid var(--color-border, #334155);
+      border-radius: var(--radius-md, 6px);
+      padding: 2px 6px;
+    }
+    .cost-field {
+      width: 80px;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 13px;
+      text-align: right;
+      outline: none;
+    }
+
+    .grand-total-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 24px;
+      padding: 12px 16px;
+      background: var(--color-canvas, #090d16);
+      border: 1px solid var(--color-border, #334155);
+      border-radius: var(--radius-lg, 8px);
+    }
+    .total-col { display: flex; align-items: baseline; gap: 8px; }
+    .tot-label { font-size: 11px; text-transform: uppercase; font-weight: var(--font-weight-extrabold, 800); }
+
+    .modal-actions {
+      padding: 16px 20px;
+      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid var(--color-border, #334155);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--color-border, #334155);
+      color: var(--color-text-secondary, #cbd5e1);
+      font-size: 12px;
+      font-weight: var(--font-weight-bold, 700);
+      border-radius: var(--radius-full, 9999px);
+      padding: 8px 18px;
+      cursor: pointer;
+    }
+    .btn-fulfill-mint {
+      background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+      color: #090d16 !important;
+      font-size: 12px;
+      font-weight: var(--font-weight-black, 900);
+      border: none;
+      border-radius: var(--radius-full, 9999px);
+      padding: 8px 24px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .btn-fulfill-mint mat-icon { font-size: 16px !important; width: 16px !important; height: 16px !important; }
+
+    .font-mono { font-family: var(--font-family-mono); }
+    .text-white { color: #ffffff !important; }
+    .text-cyan { color: var(--color-cyan-light, #22d3ee) !important; }
+    .text-mint { color: var(--color-mint-success, #34d399) !important; }
+    .text-gold { color: var(--color-gold-light, #fbbf24) !important; }
+    .text-muted { color: var(--color-text-secondary, #cbd5e1) !important; }
+    .currency-prefix { color: var(--color-gold-light, #fbbf24) !important; font-weight: var(--font-weight-bold, 700); }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-lg { font-size: 18px; }
+  `]
 })
 export class FulfillRequestModalComponent implements OnInit {
-    private dialogRef = inject(MatDialogRef<FulfillRequestModalComponent>);
-    public request = inject<PurchaseRequest>(MAT_DIALOG_DATA);
-    private prService = inject(PurchaseRequestService);
-    private snackBar = inject(MatSnackBar);
+  dialogRef = inject(MatDialogRef<FulfillRequestModalComponent>);
+  private prService = inject(PurchaseRequestService);
+  private snackBar = inject(MatSnackBar);
+  private data = inject<{ request: PurchaseRequest }>(MAT_DIALOG_DATA);
 
-    supplierName = '';
-    paidVia: OutgoingPaymentSource = 'CASH_DRAWER';
-    paymentReference = '';
-    receivingNotes = '';
-    submitting = signal(false);
+  request!: PurchaseRequest;
+  items: FulfillLineItem[] = [];
 
-    items: FulfillLineItem[] = [];
+  supplierName = '';
+  paidVia: OutgoingPaymentSource = 'CASH_DRAWER';
+  paymentReference = '';
+  isSubmitting = false;
 
-    ngOnInit(): void {
-        this.supplierName = this.request.supplierName || '';
-        this.paidVia = this.request.paidVia || 'CASH_DRAWER';
-        this.paymentReference = this.request.paymentReference || '';
+  ngOnInit(): void {
+    this.request = this.data.request;
+    this.items = this.request.items.map((i) => ({
+      ...i,
+      receivedQtyInput: i.receivedQuantity ?? i.requestedQuantity,
+      actualUnitCostInput: i.actualUnitCost ?? i.estimatedUnitCost ?? 0,
+    }));
+  }
 
-        this.items = this.request.items.map((item) => ({
-            ...item,
-            receivedQtyInput: item.approvedQuantity ?? item.requestedQuantity,
-            actualUnitCostInput: item.actualUnitCost || item.estimatedUnitCost || 0,
-        }));
+  totalActualCost(): number {
+    return this.items.reduce(
+      (sum, i) => sum + (i.receivedQtyInput || 0) * (i.actualUnitCostInput || 0),
+      0
+    );
+  }
+
+  async submit(): Promise<void> {
+    for (const item of this.items) {
+      if (item.receivedQtyInput < 0) {
+        this.snackBar.open('Received quantity cannot be negative.', 'Close', { duration: 3000 });
+        return;
+      }
     }
 
-    calculateTotal(): number {
-        return this.items.reduce((sum, i) => sum + (i.receivedQtyInput || 0) * (i.actualUnitCostInput || 0), 0);
-    }
+    this.isSubmitting = true;
+    try {
+      const fulfilledItems: PurchaseRequestItem[] = this.items.map((i) => ({
+        ...i,
+        receivedQuantity: i.receivedQtyInput,
+        actualUnitCost: i.actualUnitCostInput,
+        actualSubtotal: i.receivedQtyInput * i.actualUnitCostInput,
+      }));
 
-    isValid(): boolean {
-        if (!this.request?.id) return false;
-        if (this.items.length === 0) return false;
-        for (const item of this.items) {
-            if (item.receivedQtyInput < 0) return false;
-            if (item.actualUnitCostInput < 0) return false;
+      await this.prService.fulfillAndRestock(
+        this.request.id!,
+        this.request,
+        {
+          items: fulfilledItems,
+          paidVia: this.paidVia,
+          supplierName: this.supplierName.trim() || undefined,
+          paymentReference: this.paymentReference.trim() || undefined
         }
-        return true;
+      );
+
+      this.snackBar.open('Goods received! Inventory stock updated successfully.', 'Close', { duration: 4000 });
+      this.dialogRef.close(true);
+    } catch (err: any) {
+      this.snackBar.open(err.message || 'Failed to fulfill request.', 'Close', { duration: 4000 });
+    } finally {
+      this.isSubmitting = false;
     }
-
-    async confirmFulfillment(): Promise<void> {
-        if (!this.isValid() || this.submitting() || !this.request.id) return;
-        this.submitting.set(true);
-
-        try {
-            const updatedItems: PurchaseRequestItem[] = this.items.map((i) => ({
-                ...i,
-                receivedQuantity: Number(i.receivedQtyInput),
-                actualUnitCost: Number(i.actualUnitCostInput),
-                actualTotalCost: (Number(i.receivedQtyInput) || 0) * (Number(i.actualUnitCostInput) || 0),
-            }));
-
-            await this.prService.fulfillAndRestock(this.request.id, this.request, {
-                items: updatedItems,
-                supplierName: this.supplierName.trim(),
-                paidVia: this.paidVia,
-                paymentReference: this.paymentReference.trim(),
-                receivingNotes: this.receivingNotes.trim(),
-            });
-
-            this.snackBar.open('✅ Inventory successfully restocked & purchase completed!', 'Close', {
-                duration: 3500,
-            });
-            this.dialogRef.close(true);
-        } catch (err) {
-            console.error('Failed to fulfill request:', err);
-            this.snackBar.open('Failed to restock inventory. Please try again.', 'Close', { duration: 3500 });
-        } finally {
-            this.submitting.set(false);
-        }
-    }
+  }
 }

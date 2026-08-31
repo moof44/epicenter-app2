@@ -1,130 +1,203 @@
-<div class="dashboard-container" [@fadeIn]>
-    <!-- Greeting -->
-    <div class="greeting-header">
-        <h1 class="greeting-text">{{ greeting() }}</h1>
-        <p class="greeting-date">{{ todayDate() }}</p>
+<app-page-container maxWidth="wide" [@fadeIn]>
+    <!-- ══════════════════════════════════════════════════════════════
+         GREETING & MOTIVATIONAL KICKOFF
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="greeting-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2">
+        <div>
+            <div class="flex items-center gap-2.5">
+                <h1 class="greeting-text">{{ greeting() }}</h1>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-extrabold uppercase tracking-wider bg-cyan-dim text-cyan-light border border-cyan-focus/30 font-inter">
+                    <span class="live-dot-cyan"></span> Active Session
+                </span>
+            </div>
+            <p class="greeting-date">{{ todayDate() }}</p>
+        </div>
     </div>
 
-    <!-- Authorized Staff Attendance Terminal Banner (Top of Dashboard) -->
+    <!-- Authorized Staff Attendance Terminal Banner -->
     <app-staff-kiosk-widget></app-staff-kiosk-widget>
 
     @if (isManagerView()) {
         <!-- ==================== MANAGER / ADMIN DASHBOARD ==================== -->
-        <div class="dashboard-grid">
+        <div class="space-y-8">
 
-            <!-- Row 1: Business Pulse (Immediate Hero Render) -->
-            <div class="widget-slot">
-                <app-gym-revenue-today></app-gym-revenue-today>
-            </div>
-            <div class="widget-slot">
-                <app-monthly-progress></app-monthly-progress>
-            </div>
-            <div class="widget-slot">
-                <app-members-in-gym></app-members-in-gym>
-            </div>
+            <!-- ⚡ ZONE 1: HERO COMMAND DECK (Live Pulse) -->
+            <section class="space-y-3">
+                <div class="zone-header">
+                    <div class="flex items-center gap-2">
+                        <mat-icon class="zone-icon text-cyan-light">bolt</mat-icon>
+                        <h2 class="zone-title">Live Pulse & Command Deck</h2>
+                    </div>
+                </div>
 
-            <!-- Badge Row (shift status) -->
-            <div class="widget-slot full-width">
-                <app-badge-row></app-badge-row>
-            </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="widget-slot">
+                        <app-gym-revenue-today></app-gym-revenue-today>
+                    </div>
+                    <div class="widget-slot">
+                        <app-monthly-progress></app-monthly-progress>
+                    </div>
+                    <div class="widget-slot">
+                        <app-members-in-gym></app-members-in-gym>
+                    </div>
+                </div>
 
-            <!-- Staff Leaderboard (full width) -->
-            @defer (on viewport) {
-                <div class="widget-slot full-width">
-                    <app-staff-leaderboard></app-staff-leaderboard>
+                <!-- Shift & Opening Streak Badges -->
+                <div class="widget-slot pt-1">
+                    <app-badge-row></app-badge-row>
                 </div>
-            } @placeholder {
-                <div class="widget-slot full-width skeleton-card" style="min-height: 140px;"></div>
-            }
+            </section>
 
-            <!-- Row 2: Trends -->
-            @defer (on viewport) {
-                <div class="widget-slot full-width">
-                    <app-sales-sparkline></app-sales-sparkline>
+            <!-- 🏆 ZONE 2: TEAM MORALE & CELEBRATION -->
+            <section class="space-y-3">
+                <div class="zone-header">
+                    <div class="flex items-center gap-2">
+                        <mat-icon class="zone-icon text-eagle-gold-light">military_tech</mat-icon>
+                        <h2 class="zone-title">Team Performance & Kudos</h2>
+                    </div>
                 </div>
-                <div class="widget-slot">
-                    <app-week-trend></app-week-trend>
-                </div>
-                <div class="widget-slot">
-                    <app-vs-last-month></app-vs-last-month>
-                </div>
-                <div class="widget-slot">
-                    <app-top-product></app-top-product>
-                </div>
-            } @placeholder {
-                <div class="widget-slot full-width skeleton-card" style="min-height: 120px;"></div>
-            }
 
-            <!-- Row 3: Payment + Peak Hours -->
-            @defer (on viewport) {
-                <div class="widget-slot">
-                    <app-payment-split></app-payment-split>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <div class="widget-slot lg:col-span-2">
+                        @defer (on viewport) {
+                            <app-staff-leaderboard></app-staff-leaderboard>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 140px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot">
+                        @defer (on viewport) {
+                            <app-commendation></app-commendation>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 140px;"></div>
+                        }
+                    </div>
                 </div>
-                <div class="widget-slot">
-                    <app-peak-hours></app-peak-hours>
-                </div>
-                <div class="widget-slot">
-                    <app-members-checked-in></app-members-checked-in>
-                </div>
-                <div class="widget-slot commendation-slot">
-                    <app-commendation></app-commendation>
-                </div>
-            } @placeholder {
-                <div class="widget-slot skeleton-card" style="min-height: 120px;"></div>
-            }
+            </section>
 
-            <!-- Member Health (full width) -->
-            @defer (on viewport) {
-                <div class="widget-slot full-width">
-                    <app-member-health></app-member-health>
+            <!-- 📊 ZONE 3: ATHLETIC SALES TRENDS & FLOW -->
+            <section class="space-y-3">
+                <div class="zone-header">
+                    <div class="flex items-center gap-2">
+                        <mat-icon class="zone-icon text-cyan-light">trending_up</mat-icon>
+                        <h2 class="zone-title">Sales Trends & Volume Dynamics</h2>
+                    </div>
                 </div>
-            } @placeholder {
-                <div class="widget-slot full-width skeleton-card" style="min-height: 100px;"></div>
-            }
 
-            <!-- Low Stock Alerts -->
-            @defer (on viewport) {
-                <div class="widget-slot full-width">
-                    <app-low-stock-alerts></app-low-stock-alerts>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="widget-slot md:col-span-2 lg:col-span-4">
+                        @defer (on viewport) {
+                            <app-sales-sparkline></app-sales-sparkline>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 120px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot">
+                        @defer (on viewport) {
+                            <app-week-trend></app-week-trend>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 120px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot">
+                        @defer (on viewport) {
+                            <app-vs-last-month></app-vs-last-month>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 120px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot">
+                        @defer (on viewport) {
+                            <app-top-product></app-top-product>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 120px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot">
+                        @defer (on viewport) {
+                            <app-payment-split></app-payment-split>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 120px;"></div>
+                        }
+                    </div>
                 </div>
-            } @placeholder {
-                <div class="widget-slot full-width skeleton-card" style="min-height: 80px;"></div>
-            }
+            </section>
 
-            <!-- Operational Alerts Row -->
-            @defer (on viewport) {
-                <div class="widget-slot">
-                    <app-recent-voids></app-recent-voids>
+            <!-- 🛡️ ZONE 4: OPERATIONAL RADAR & INVENTORY HEALTH -->
+            <section class="space-y-3">
+                <div class="zone-header">
+                    <div class="flex items-center gap-2">
+                        <mat-icon class="zone-icon text-mint-success">health_and_safety</mat-icon>
+                        <h2 class="zone-title">Operational Health & Radar</h2>
+                    </div>
                 </div>
-                <div class="widget-slot">
-                    <app-cash-discrepancies></app-cash-discrepancies>
-                </div>
-            } @placeholder {
-                <div class="widget-slot skeleton-card" style="min-height: 100px;"></div>
-            }
 
-            <!-- Activity Feed -->
-            @defer (on viewport) {
-                <div class="widget-slot full-width">
-                    <app-activity-feed></app-activity-feed>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div class="widget-slot md:col-span-2 lg:col-span-2">
+                        @defer (on viewport) {
+                            <app-member-health></app-member-health>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 140px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot">
+                        @defer (on viewport) {
+                            <app-peak-hours></app-peak-hours>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 140px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot md:col-span-2 lg:col-span-3">
+                        @defer (on viewport) {
+                            <app-low-stock-alerts></app-low-stock-alerts>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 80px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot">
+                        @defer (on viewport) {
+                            <app-recent-voids></app-recent-voids>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 100px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot">
+                        @defer (on viewport) {
+                            <app-cash-discrepancies></app-cash-discrepancies>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 100px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot">
+                        @defer (on viewport) {
+                            <app-members-checked-in></app-members-checked-in>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 100px;"></div>
+                        }
+                    </div>
+                    <div class="widget-slot md:col-span-2 lg:col-span-3">
+                        @defer (on viewport) {
+                            <app-activity-feed></app-activity-feed>
+                        } @placeholder {
+                            <div class="skeleton-card" style="min-height: 120px;"></div>
+                        }
+                    </div>
                 </div>
-            } @placeholder {
-                <div class="widget-slot full-width skeleton-card" style="min-height: 120px;"></div>
-            }
+            </section>
 
-            <!-- My Performance (Collapsible) -->
+            <!-- 👤 MY PERFORMANCE (Collapsible) -->
             @defer (on idle) {
-                <div class="widget-slot full-width">
+                <div class="widget-slot">
                     <mat-expansion-panel class="my-performance-panel">
                         <mat-expansion-panel-header>
                             <mat-panel-title>
                                 <mat-icon class="panel-icon">person</mat-icon>
-                                My Performance
+                                My Personal Performance
                             </mat-panel-title>
-                            <mat-panel-description>Your personal sales, streak, and records</mat-panel-description>
+                            <mat-panel-description>Your individual sales, streak, and timecard</mat-panel-description>
                         </mat-expansion-panel-header>
 
-                        <div class="my-performance-grid">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 pt-3">
                             <div class="widget-slot">
                                 <app-todays-sales></app-todays-sales>
                             </div>
@@ -143,76 +216,94 @@
 
     } @else {
         <!-- ==================== STAFF / TRAINER DASHBOARD ==================== -->
-        <div class="dashboard-grid">
+        <div class="space-y-8">
 
-            <!-- Row 1: Hero cards (Sales + Progress Ring) -->
-            @if (hasSalesRole()) {
-                <div class="widget-slot">
-                    <app-todays-sales></app-todays-sales>
+            <!-- ⚡ ZONE 1: STAFF HERO PULSE -->
+            <section class="space-y-3">
+                <div class="zone-header">
+                    <div class="flex items-center gap-2">
+                        <mat-icon class="zone-icon text-cyan-light">bolt</mat-icon>
+                        <h2 class="zone-title">Today's Pulse & Targets</h2>
+                    </div>
                 </div>
-                <div class="widget-slot">
-                    <app-monthly-progress></app-monthly-progress>
-                </div>
-            }
 
-            <!-- Badge Row -->
-            @if (hasSalesRole()) {
-                <div class="widget-slot full-width">
-                    <app-badge-row></app-badge-row>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    @if (hasSalesRole()) {
+                        <div class="widget-slot">
+                            <app-todays-sales></app-todays-sales>
+                        </div>
+                        <div class="widget-slot">
+                            <app-monthly-progress></app-monthly-progress>
+                        </div>
+                    }
                 </div>
-            }
 
-            <!-- Row 2: Comparisons -->
-            @defer (on viewport) {
                 @if (hasSalesRole()) {
-                    <div class="widget-slot">
-                        <app-week-trend></app-week-trend>
-                    </div>
-                    <div class="widget-slot">
-                        <app-vs-last-month></app-vs-last-month>
-                    </div>
-                    <div class="widget-slot">
-                        <app-top-product></app-top-product>
+                    <div class="widget-slot pt-1">
+                        <app-badge-row></app-badge-row>
                     </div>
                 }
+            </section>
 
-                <!-- Row 3: People + Commendation + Attendance -->
-                <div class="widget-slot">
-                    <app-members-checked-in></app-members-checked-in>
-                </div>
-                <div class="widget-slot">
-                    <app-my-attendance-widget></app-my-attendance-widget>
-                </div>
-                <div class="widget-slot commendation-slot">
-                    <app-commendation></app-commendation>
-                </div>
-            } @placeholder {
-                <div class="widget-slot skeleton-card" style="min-height: 100px;"></div>
-            }
-
-            <!-- Low Stock (ADMIN/MANAGER only — won't show for STAFF) -->
-            @if (hasInventoryRole()) {
-                @defer (on viewport) {
-                    <div class="widget-slot full-width">
-                        <app-low-stock-alerts></app-low-stock-alerts>
+            <!-- 🏆 ZONE 2: MOTIVATION & ATTENDANCE -->
+            <section class="space-y-3">
+                <div class="zone-header">
+                    <div class="flex items-center gap-2">
+                        <mat-icon class="zone-icon text-eagle-gold-light">military_tech</mat-icon>
+                        <h2 class="zone-title">Your Progress & Recognition</h2>
                     </div>
-                } @placeholder {
-                    <div class="widget-slot full-width skeleton-card" style="min-height: 80px;"></div>
-                }
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="widget-slot">
+                        <app-members-checked-in></app-members-checked-in>
+                    </div>
+                    <div class="widget-slot">
+                        <app-my-attendance-widget></app-my-attendance-widget>
+                    </div>
+                    <div class="widget-slot">
+                        <app-commendation></app-commendation>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 📊 ZONE 3: COMPARISONS -->
+            @if (hasSalesRole()) {
+                <section class="space-y-3">
+                    <div class="zone-header">
+                        <div class="flex items-center gap-2">
+                            <mat-icon class="zone-icon text-cyan-light">trending_up</mat-icon>
+                            <h2 class="zone-title">Your Sales Rhythm</h2>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div class="widget-slot">
+                            <app-week-trend></app-week-trend>
+                        </div>
+                        <div class="widget-slot">
+                            <app-vs-last-month></app-vs-last-month>
+                        </div>
+                        <div class="widget-slot">
+                            <app-top-product></app-top-product>
+                        </div>
+                    </div>
+                </section>
             }
 
-            <!-- Activity Feed & Personal Bests -->
-            @defer (on viewport) {
-                <div class="widget-slot full-width">
+            <!-- 🛡️ ACTIVITY FEED -->
+            <section class="space-y-3">
+                <div class="zone-header">
+                    <div class="flex items-center gap-2">
+                        <mat-icon class="zone-icon text-mint-success">history</mat-icon>
+                        <h2 class="zone-title">Live Activity Feed</h2>
+                    </div>
+                </div>
+
+                <div class="widget-slot">
                     <app-activity-feed></app-activity-feed>
                 </div>
-                <div class="widget-slot full-width">
-                    <app-personal-bests></app-personal-bests>
-                </div>
-            } @placeholder {
-                <div class="widget-slot full-width skeleton-card" style="min-height: 120px;"></div>
-            }
-
+            </section>
         </div>
     }
-</div>
+</app-page-container>

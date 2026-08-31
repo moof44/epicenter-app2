@@ -1,0 +1,161 @@
+<div class="notifications-page-container" [@fadeIn]>
+
+  <!-- ── Page Header Deck ── -->
+  <div class="page-header">
+    <div class="header-left-group">
+      <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-titles">
+        <h1 class="page-title">Vigilance Notifications Center</h1>
+        <p class="page-subtitle">Real-time alerts, operational warnings, and system audit updates</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-purge-danger" (click)="purgeSpam()" [disabled]="isPurging()" matTooltip="Delete old check-in spam and reset unread badges">
+        <mat-icon class="btn-icon" *ngIf="!isPurging()">auto_delete</mat-icon>
+        <mat-spinner diameter="16" *ngIf="isPurging()"></mat-spinner>
+        <span>{{ isPurging() ? 'Cleaning...' : 'Purge Old Spam' }}</span>
+      </button>
+
+      <button type="button" class="btn-mark-read-gold" *ngIf="notifService.unreadCount() > 0" (click)="markAllRead()">
+        <mat-icon class="btn-icon">done_all</mat-icon>
+        <span>Mark All Read</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 4-Card Executive Summary Metrics Deck ── -->
+  <div class="summary-cards">
+    <!-- 1. Total Notifications -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-cyan">
+        <mat-icon>notifications</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Total History</span>
+        <span class="value text-white">{{ totalCount() }} message{{ totalCount() === 1 ? '' : 's' }}</span>
+      </div>
+    </div>
+
+    <!-- 2. Unread Messages -->
+    <div class="summary-card" [class.alert-card]="unreadCount() > 0">
+      <div class="card-icon-seal icon-cyan">
+        <mat-icon>mark_email_unread</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Unread Messages</span>
+        <span class="value text-cyan">{{ unreadCount() }} unread</span>
+      </div>
+    </div>
+
+    <!-- 3. Critical Alerts -->
+    <div class="summary-card" [class.danger-card]="alertCount() > 0">
+      <div class="card-icon-seal icon-rose">
+        <mat-icon>error_outline</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Critical Alerts</span>
+        <span class="value" [class.text-rose]="alertCount() > 0" [class.text-white]="alertCount() === 0">
+          {{ alertCount() }} alert{{ alertCount() === 1 ? '' : 's' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- 4. System Summaries -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-gold">
+        <mat-icon>analytics</mat-icon>
+      </div>
+      <div class="card-info">
+        <span class="label">Reports & Updates</span>
+        <span class="value text-gold">{{ summaryCount() }} report{{ summaryCount() === 1 ? '' : 's' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Severity Filter Chips Deck ── -->
+  <div class="filter-chips-card">
+    <span class="filter-lbl text-muted">Filter Severity:</span>
+    <div class="chips-row">
+      <button type="button" class="filter-chip" [class.active]="selectedFilter() === 'ALL'" (click)="setFilter('ALL')">
+        All Messages ({{ totalCount() }})
+      </button>
+      <button type="button" class="filter-chip" [class.active]="selectedFilter() === 'UNREAD'" (click)="setFilter('UNREAD')">
+        Unread Only ({{ unreadCount() }})
+      </button>
+      <button type="button" class="filter-chip chip-rose" [class.active]="selectedFilter() === 'alert'" (click)="setFilter('alert')">
+        Alerts ({{ alertCount() }})
+      </button>
+      <button type="button" class="filter-chip chip-amber" [class.active]="selectedFilter() === 'warning'" (click)="setFilter('warning')">
+        Warnings
+      </button>
+      <button type="button" class="filter-chip chip-purple" [class.active]="selectedFilter() === 'summary'" (click)="setFilter('summary')">
+        Summaries
+      </button>
+      <button type="button" class="filter-chip chip-cyan" [class.active]="selectedFilter() === 'info'" (click)="setFilter('info')">
+        Info
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Master Notifications Cards Deck ── -->
+  <div class="notifications-deck-card">
+    <div class="deck-header">
+      <div class="deck-title-wrap">
+        <mat-icon class="text-cyan">feed</mat-icon>
+        <h3>Notification Feed</h3>
+      </div>
+      <span class="count-pill">{{ filteredNotifications().length }} message{{ filteredNotifications().length === 1 ? '' : 's' }}</span>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state-card" *ngIf="filteredNotifications().length === 0">
+      <div class="empty-icon-seal">
+        <mat-icon>notifications_off</mat-icon>
+      </div>
+      <h4>No notifications found</h4>
+      <p>There are no notifications matching your active severity filter.</p>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notif-feed-list" *ngIf="filteredNotifications().length > 0">
+      <button type="button"
+              *ngFor="let item of filteredNotifications()"
+              class="notif-feed-row"
+              [class.unread-row]="!item.read"
+              (click)="handleRowClick(item)">
+        
+        <!-- Severity Icon Seal -->
+        <div class="notif-type-seal" [ngClass]="item.type || 'info'">
+          <mat-icon *ngIf="item.type === 'alert'">error_outline</mat-icon>
+          <mat-icon *ngIf="item.type === 'warning'">warning_amber</mat-icon>
+          <mat-icon *ngIf="item.type === 'summary'">analytics</mat-icon>
+          <mat-icon *ngIf="item.type === 'info' || !item.type">info_outline</mat-icon>
+        </div>
+
+        <!-- Content Area -->
+        <div class="notif-content-area">
+          <div class="notif-header-line">
+            <strong class="feed-item-title text-white">{{ item.title }}</strong>
+            <span class="feed-item-time text-muted">{{ formatDateTime(item.timestamp) }}</span>
+          </div>
+
+          <p class="feed-item-body text-body">{{ item.body }}</p>
+
+          <div class="feed-action-link" *ngIf="item.actionUrl">
+            <mat-icon class="link-arrow">arrow_forward</mat-icon>
+            <span>Click to view details & take action</span>
+          </div>
+        </div>
+
+        <!-- Glowing Unread Indicator Dot -->
+        <div class="unread-glow-dot" *ngIf="!item.read"></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="bottom-scroll-spacer"></div>
+
+</div>

@@ -14,6 +14,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserService, UserPayslip } from '../../../../core/services/user.service';
 import { User, EmployeeDocument, DocumentCategory } from '../../../../core/models/user.model';
@@ -29,7 +31,7 @@ import { fadeIn } from '../../../../core/animations/animations';
     CommonModule, FormsModule, ReactiveFormsModule, MatTabsModule,
     MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatChipsModule, MatDialogModule,
-    MatSnackBarModule, MatTooltipModule, MatProgressSpinnerModule
+    MatSnackBarModule, MatTooltipModule, MatProgressSpinnerModule, MatDatepickerModule, MatNativeDateModule
   ],
   templateUrl: './user-profile.html',
   styleUrl: './user-profile.css',
@@ -364,6 +366,19 @@ export class UserProfileComponent implements OnInit, OnDestroy {
       console.error('Delete failed:', err);
       this.snackBar.open('Failed to delete document', 'Close', { duration: 3000 });
     }
+  }
+
+  getFormattedGender(gender?: string): string {
+    if (!gender || gender === 'PREFER_NOT_TO_SAY') return 'Prefer not to say';
+    if (gender === 'MALE') return 'Male';
+    if (gender === 'FEMALE') return 'Female';
+    if (gender === 'OTHER') return 'Other';
+    return gender;
+  }
+
+  getFormattedEmploymentType(type?: string): string {
+    if (!type) return 'Not Set';
+    return type.replace(/_/g, ' ');
   }
 
   openPayslip(payslip: UserPayslip): void {

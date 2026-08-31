@@ -1,99 +1,54 @@
 <div class="claim-dialog-container">
-
-  <!-- Header -->
-  <div class="dialog-header">
-    <div class="header-icon">🎁</div>
-    <div class="header-text">
-      <h2>Fulfill Reward Voucher</h2>
-      <p>Enter or scan member's 6-digit claim pass code</p>
+  <div class="claim-header">
+    <div class="dialog-title-row">
+      <div class="dialog-icon-seal">
+        <mat-icon>confirmation_number</mat-icon>
+      </div>
+      <div>
+        <h2 class="dialog-title">Fulfill Reward Voucher</h2>
+        <span class="dialog-sub">Redeem member gym reward claim code</span>
+      </div>
     </div>
-    <button mat-icon-button (click)="onClose()" class="close-btn">
+    <button type="button" class="btn-close-dialog" (click)="onClose()" matTooltip="Close">
       <mat-icon>close</mat-icon>
     </button>
   </div>
 
-  <mat-dialog-content class="dialog-content">
+  <div class="dialog-body">
+    <mat-form-field appearance="outline" class="full-width custom-mat-field">
+      <mat-label>Voucher Code</mat-label>
+      <input matInput [(ngModel)]="voucherCode" placeholder="Enter 6-8 digit code (e.g. CLAIM-1234)"
+             (keyup.enter)="onFulfill()" [disabled]="isProcessing()">
+      <mat-icon matSuffix class="text-cyan">qr_code_scanner</mat-icon>
+      <mat-hint>Scan QR code or type voucher claim code</mat-hint>
+    </mat-form-field>
 
-    <!-- Success View -->
-    <div *ngIf="successData()" class="success-card">
-      <div class="success-icon">✓</div>
-      <h3>Reward Claimed Successfully!</h3>
-      
-      <div class="voucher-details">
-        <div class="detail-row">
-          <span>Member:</span>
-          <strong>{{ successData()?.memberName }}</strong>
-        </div>
-        <div class="detail-row">
-          <span>Product Issued:</span>
-          <strong class="highlight-item">{{ successData()?.productName }}</strong>
-        </div>
-        <div class="detail-row">
-          <span>Coins Burned:</span>
-          <strong>🪙 {{ successData()?.coinsSpent | number }} Coins</strong>
-        </div>
-      </div>
-
-      <p class="fulfilled-note">1 unit deducted from Inventory & logged under current shift.</p>
+    <div class="error-alert" *ngIf="errorMessage()">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ errorMessage() }}</span>
     </div>
 
-    <!-- Claim Input Form -->
-    <div *ngIf="!successData()" class="claim-form">
-      <mat-form-field appearance="outline" class="full-width code-field">
-        <mat-label>Voucher Claim Code</mat-label>
-        <mat-icon matPrefix>qr_code_scanner</mat-icon>
-        <input 
-          type="text" 
-          matInput 
-          [(ngModel)]="voucherCode" 
-          placeholder="e.g. CLAIM-8492"
-          (keyup.enter)="onFulfill()"
-          [disabled]="isProcessing()"
-         
-          style="text-transform: uppercase; font-family: monospace; letter-spacing: 2px; font-weight: 700;"
-        >
-        <mat-hint>Type or scan code shown on Member's Phone</mat-hint>
-      </mat-form-field>
-
-      <!-- Error alert -->
-      <div *ngIf="errorMessage()" class="error-banner">
-        <mat-icon>error_outline</mat-icon>
-        <span>{{ errorMessage() }}</span>
+    <div class="success-banner" *ngIf="successData()">
+      <mat-icon class="text-mint">check_circle</mat-icon>
+      <div class="success-meta">
+        <strong>Voucher Verified & Fulfilled!</strong>
+        <span>Member: <strong>{{ successData()?.memberName }}</strong></span>
+        <span>Product: <strong>{{ successData()?.productName }}</strong></span>
+        <small>{{ successData()?.coinsSpent }} Gym Coins Deducted</small>
       </div>
     </div>
+  </div>
 
-  </mat-dialog-content>
-
-  <!-- Actions -->
-  <mat-dialog-actions align="end" class="dialog-actions">
-    <button *ngIf="!successData()" mat-button (click)="onClose()" [disabled]="isProcessing()" class="cancel-btn">
-      Cancel
+  <div class="dialog-actions-bar">
+    <button type="button" class="btn-refund-outline" (click)="onCancelAndRefund()" *ngIf="voucherCode.trim() && !successData()" [disabled]="isProcessing()">
+      <mat-icon>undo</mat-icon>
+      <span>Cancel & Refund</span>
     </button>
-    <button 
-      *ngIf="!successData() && voucherCode.trim()" 
-      mat-stroked-button 
-      color="warn" 
-      (click)="onCancelAndRefund()" 
-      [disabled]="isProcessing()"
-      style="border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; font-weight: 700; border-radius: 10px;"
-    >
-      ✖ Refund Coins
+    <button type="button" class="btn-cancel" (click)="onClose()" [disabled]="isProcessing()">Close</button>
+    <button type="button" class="btn-confirm-gold" (click)="onFulfill()" [disabled]="isProcessing() || !voucherCode.trim()">
+      <mat-icon class="btn-icon" *ngIf="!isProcessing()">check</mat-icon>
+      <mat-spinner diameter="16" *ngIf="isProcessing()"></mat-spinner>
+      <span>{{ isProcessing() ? 'Verifying...' : 'Fulfill Reward' }}</span>
     </button>
-    <button 
-      *ngIf="!successData()" 
-      mat-flat-button 
-      color="primary" 
-      (click)="onFulfill()" 
-      [disabled]="isProcessing() || !voucherCode.trim()"
-      class="fulfill-btn"
-    >
-      <mat-spinner *ngIf="isProcessing()" diameter="20" class="btn-spinner"></mat-spinner>
-      <span *ngIf="!isProcessing()">✓ Fulfill & Issue Product</span>
-    </button>
-
-    <button *ngIf="successData()" mat-flat-button color="primary" (click)="onClose()" class="fulfill-btn">
-      Done
-    </button>
-  </mat-dialog-actions>
-
+  </div>
 </div>

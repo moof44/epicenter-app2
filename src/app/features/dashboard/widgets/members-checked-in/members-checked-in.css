@@ -1,148 +1,120 @@
 .checkin-card {
-    background: white;
-    border-radius: 8px;
-    padding: 24px;
-    min-height: 120px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    cursor: pointer;
-    transition: box-shadow 0.2s;
+  background-color: var(--color-app);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  padding: 20px;
+  min-height: 140px;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: all 150ms ease;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .checkin-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border-color: var(--color-border-focus);
 }
 
 .card-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .card-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-    color: var(--mat-sys-primary, #3f51b5);
-    opacity: 0.7;
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  color: var(--color-mint-success);
 }
 
 .card-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--mat-sys-on-surface-variant, #6b7280);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-sans);
 }
 
 .count-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 4px 0;
 }
 
 .count-number {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--mat-sys-primary, #3f51b5);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-black);
+  color: var(--color-mint-success);
+  font-family: var(--font-family-sans);
+  line-height: 1.1;
 }
 
 .count-label {
-    font-size: 16px;
-    color: var(--mat-sys-on-surface-variant, #6b7280);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-sans);
+  text-transform: uppercase;
 }
 
 .names-line {
-    font-size: 13px;
-    color: var(--mat-sys-on-surface-variant, #6b7280);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 4px;
-}
-
-.extra-count {
-    font-weight: 500;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-sans);
 }
 
 .latest-line {
-    font-size: 12px;
-    color: var(--mat-sys-on-surface-variant, #9e9e9e);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-pure);
+  font-family: var(--font-family-sans);
 }
 
-/* Empty state */
+.extra-count {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-cyan-light);
+}
+
 .checkin-card.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
 }
 
 .empty-icon {
-    font-size: 40px;
-    width: 40px;
-    height: 40px;
-    color: var(--mat-sys-on-surface-variant, #9e9e9e);
-    opacity: 0.5;
+  font-size: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  color: var(--color-mint-success);
+  opacity: 0.8;
 }
 
 .empty-text {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--mat-sys-on-surface, #1f2937);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-pure);
+  font-family: var(--font-family-sans);
 }
 
 .empty-subtext {
-    font-size: 13px;
-    color: var(--mat-sys-on-surface-variant, #9e9e9e);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-sans);
 }
 
-/* Skeleton */
-.skeleton-card {
-    background: white;
-    border-radius: 8px;
-    padding: 24px;
-    min-height: 120px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.skeleton-line {
-    height: 16px;
-    border-radius: 4px;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-}
-
-.skeleton-line.short { width: 50%; }
-.skeleton-line.large { width: 30%; height: 28px; }
-.skeleton-line.medium { width: 70%; }
-
-@keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-/* Mobile */
-@media (max-width: 599px) {
-    .checkin-card {
-        padding: 16px;
-        min-height: 100px;
-    }
-
-    .count-number {
-        font-size: 22px;
-    }
-
-    .count-label {
-        font-size: 14px;
-    }
-
-    .names-line {
-        font-size: 12px;
-    }
-}
+.skeleton-card { background-color: var(--color-app); border: 1px solid var(--color-border); border-radius: var(--radius-2xl); padding: 20px; }
+.skeleton-line { background-color: var(--color-surface); border-radius: var(--radius-sm); }
+.skeleton-line.short { width: 40%; height: 14px; margin-bottom: 8px; }
+.skeleton-line.large { width: 60%; height: 32px; margin-bottom: 8px; }
+.skeleton-line.medium { width: 80%; height: 14px; }

@@ -1,98 +1,191 @@
 .gym-card {
-    background: var(--mat-sys-surface-container, white);
-    border-radius: 8px;
-    padding: 24px;
-    min-height: 120px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    cursor: pointer;
-    transition: box-shadow 0.2s;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.22) 0%, rgba(15, 23, 42, 0.95) 55%, rgba(52, 211, 153, 0.08) 100%), var(--color-app);
+  border: 1.5px solid rgba(52, 211, 153, 0.45);
+  border-top: 4px solid var(--color-mint-success);
+  border-radius: var(--radius-2xl);
+  padding: 22px;
+  min-height: 160px;
+  box-shadow: var(--shadow-card), 0 0 25px rgba(52, 211, 153, 0.12);
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .gym-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  border-color: var(--color-mint-success);
+  box-shadow: var(--shadow-card-elevated), 0 0 35px rgba(52, 211, 153, 0.25);
 }
 
 .card-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .card-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-    color: var(--mat-sys-primary);
-    opacity: 0.7;
+  font-size: 22px !important;
+  width: 22px !important;
+  height: 22px !important;
+  color: var(--color-mint-success);
 }
 
 .card-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--mat-sys-on-surface-variant);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-extrabold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-mint-success);
+  font-family: var(--font-family-sans);
+}
+
+.live-beacon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: var(--font-weight-extrabold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-mint-success);
+  background-color: var(--color-success-dim);
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-mint-success);
+  box-shadow: 0 0 10px var(--color-mint-success);
+  animation: live-pulse-green 1.6s infinite ease-in-out;
+}
+
+@keyframes live-pulse-green {
+  0% { transform: scale(0.9); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+  100% { transform: scale(0.9); opacity: 1; }
 }
 
 .count-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
 }
 
 .count-number {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--mat-sys-primary);
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-weight: var(--font-weight-black);
+  color: var(--color-mint-success);
+  font-family: var(--font-family-sans);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-shadow: 0 0 20px rgba(52, 211, 153, 0.35);
+}
+
+.count-meta {
+  display: flex;
+  flex-direction: column;
 }
 
 .count-label {
-    font-size: 16px;
-    color: var(--mat-sys-on-surface-variant);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-pure);
+  font-family: var(--font-family-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.names-line {
-    font-size: 13px;
-    color: var(--mat-sys-on-surface-variant);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.floor-status {
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-sans);
 }
 
-.extra-count {
-    font-weight: 500;
+.member-chips-cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-/* Empty state */
+.member-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 4px;
+  border-radius: var(--radius-full);
+  background-color: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-pure);
+  font-family: var(--font-family-sans);
+}
+
+.chip-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-mint-success);
+  color: #090d16;
+  font-size: 10px;
+  font-weight: var(--font-weight-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.extra-chip {
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-cyan-light);
+  padding: 3px 6px;
+}
+
 .gym-card.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
 }
 
 .empty-icon {
-    font-size: 40px;
-    width: 40px;
-    height: 40px;
-    color: var(--mat-sys-on-surface-variant);
-    opacity: 0.5;
+  font-size: 36px !important;
+  width: 36px !important;
+  height: 36px !important;
+  color: var(--color-mint-success);
+  opacity: 0.9;
+  margin-bottom: 4px;
 }
 
 .empty-text {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--mat-sys-on-surface);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-pure);
+  font-family: var(--font-family-sans);
 }
 
 .empty-subtext {
-    font-size: 13px;
-    color: var(--mat-sys-on-surface-variant);
-}
-
-@media (max-width: 599px) {
-    .gym-card { padding: 16px; min-height: 100px; }
-    .count-number { font-size: 22px; }
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-sans);
 }

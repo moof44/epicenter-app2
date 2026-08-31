@@ -1,143 +1,259 @@
-<div class="page-container">
-    <mat-card class="form-card">
-        <mat-card-header>
-            <mat-card-title>{{ formTitle }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="progress-form">
+<div class="progress-form-page" [@fadeIn]>
 
-                <!-- 📸 Body Composition Scale Report Image Upload -->
-                <div class="image-upload-card">
-                    <div class="image-upload-header">
-                        <mat-icon color="primary">document_scanner</mat-icon>
-                        <div>
-                            <h4>Body Scale Report Image (Starfit / InBody)</h4>
-                            <p>Attach the scan sheet image. Numerical fields below are optional and can be filled now or later.</p>
-                        </div>
-                    </div>
+  <!-- Top Header Navigation -->
+  <header class="form-header">
+    <div class="header-left">
+      <button type="button" class="back-btn" (click)="cancel()" title="Back to Progress Hub">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <h1 class="form-title">{{ formTitle }}</h1>
+        <p class="form-subtitle">Record body composition metrics, scale scan sheet, and segmental measurements</p>
+      </div>
+    </div>
+  </header>
 
-                    <!-- File Selector Button -->
-                    <div class="upload-dropzone" *ngIf="!imagePreview && !existingImageUrl">
-                        <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" style="display:none">
-                        <button type="button" mat-stroked-button color="primary" (click)="fileInput.click()">
-                            <mat-icon>cloud_upload</mat-icon> Select / Snap Report Photo
-                        </button>
-                        <span class="upload-hint">Supports JPG, PNG, WebP</span>
-                    </div>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-body">
 
-                    <!-- Image Preview Card -->
-                    <div class="image-preview-container" *ngIf="imagePreview || existingImageUrl">
-                        <div class="preview-wrapper">
-                            <img [src]="imagePreview || existingImageUrl" alt="Body Composition Scan Report" class="preview-img">
-                            <button type="button" mat-mini-fab color="warn" class="remove-img-btn" (click)="removeSelectedImage()" title="Remove image">
-                                <mat-icon>close</mat-icon>
-                            </button>
-                        </div>
-                        <div class="preview-info">
-                            <span class="preview-status" *ngIf="selectedFile">✓ New image selected: <strong>{{ selectedFile.name }}</strong></span>
-                            <span class="preview-status" *ngIf="!selectedFile && existingImageUrl">✓ Scan sheet attached</span>
-                        </div>
-                    </div>
-                </div>
+    <!-- 1️⃣ CARD: SCALE SCAN SHEET IMAGE UPLOAD -->
+    <div class="form-card scan-upload-card">
+      <div class="card-section-header">
+        <mat-icon class="section-icon text-cyan">document_scanner</mat-icon>
+        <div>
+          <h2 class="section-title">Body Composition Scale Scan Sheet</h2>
+          <p class="section-subtitle">Attach the physical printout or scan sheet from Starfit / InBody scales</p>
+        </div>
+      </div>
 
-                <h3>Checkup Date & General Metrics</h3>
-                <div class="form-grid">
-                    <mat-form-field appearance="outline">
-                        <mat-label>Date</mat-label>
-                        <input matInput [matDatepicker]="picker" formControlName="date">
-                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                        <mat-datepicker #picker></mat-datepicker>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Height (cm) (Optional)</mat-label>
-                        <input matInput type="number" formControlName="height" step="0.1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Weight (kg) (Optional)</mat-label>
-                        <input matInput type="number" formControlName="weight" step="0.1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>BMI</mat-label>
-                        <input matInput type="number" formControlName="bmi" step="0.1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Resting Metabolism (kcal)</mat-label>
-                        <input matInput type="number" formControlName="metabolism" step="1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Body Age</mat-label>
-                        <input matInput type="number" formControlName="bodyAge" step="1">
-                    </mat-form-field>
-                </div>
+      <!-- File Selector Dropzone -->
+      <div class="upload-dropzone" *ngIf="!imagePreview && !existingImageUrl">
+        <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" class="hidden-input">
+        <div class="dropzone-icon-wrap">
+          <mat-icon class="dropzone-icon">cloud_upload</mat-icon>
+        </div>
+        <div class="dropzone-text">
+          <span class="primary-text">Drag & drop scan image, or <button type="button" class="browse-link" (click)="fileInput.click()">browse photo</button></span>
+          <span class="sub-text">Supports JPG, PNG, WebP · Numerical metrics below are optional if image is attached</span>
+        </div>
+      </div>
 
-                <h3>Body Composition (Full Body)</h3>
-                <div class="form-grid">
-                    <mat-form-field appearance="outline">
-                        <mat-label>Body Fat (%)</mat-label>
-                        <input matInput type="number" formControlName="bodyFat" step="0.1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Skeletal Muscle (%)</mat-label>
-                        <input matInput type="number" formControlName="muscleMass" step="0.1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Visceral Fat (Level)</mat-label>
-                        <input matInput type="number" formControlName="visceralFat" step="1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Subcutaneous Fat (Full %)</mat-label>
-                        <input matInput type="number" formControlName="subcutaneousFat" step="0.1">
-                    </mat-form-field>
-                </div>
+      <!-- Image Preview Card -->
+      <div class="image-preview-container" *ngIf="imagePreview || existingImageUrl">
+        <div class="preview-wrapper">
+          <img [src]="imagePreview || existingImageUrl" alt="Body Composition Scan Report" class="preview-img">
+          <button type="button" class="remove-img-btn" (click)="removeSelectedImage()" title="Remove image">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="preview-status-box">
+          <span class="preview-badge" *ngIf="selectedFile">✓ New image ready: {{ selectedFile.name }}</span>
+          <span class="preview-badge" *ngIf="!selectedFile && existingImageUrl">✓ Scan sheet attached</span>
+        </div>
+      </div>
+    </div>
 
-                <h3>Segmental Analysis</h3>
-                <div class="form-grid">
-                    <mat-form-field appearance="outline">
-                        <mat-label>S-Fat (Full % - Detailed)</mat-label>
-                        <input matInput type="number" formControlName="sinistralFatFull" step="0.1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Muscle (Full % - Detailed)</mat-label>
-                        <input matInput type="number" formControlName="muscleFull" step="0.1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>S-Fat Arms (%)</mat-label>
-                        <input matInput type="number" formControlName="subcutaneousFatArms" step="0.1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Muscle Arms (%)</mat-label>
-                        <input matInput type="number" formControlName="muscleArms" step="0.1">
-                    </mat-form-field>
+    <!-- 2️⃣ CARD: CHECKUP DATE & GENERAL METRICS -->
+    <div class="form-card">
+      <div class="card-section-header">
+        <mat-icon class="section-icon text-gold">calendar_today</mat-icon>
+        <div>
+          <h2 class="section-title">Checkup Date & Core Metrics</h2>
+          <p class="section-subtitle">General baseline measurements</p>
+        </div>
+      </div>
 
-                    <mat-form-field appearance="outline">
-                        <mat-label>S-Fat Trunk (%)</mat-label>
-                        <input matInput type="number" formControlName="subcutaneousFatTrunk" step="0.1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Muscle Trunk (%)</mat-label>
-                        <input matInput type="number" formControlName="muscleTrunk" step="0.1">
-                    </mat-form-field>
+      <div class="field-grid">
+        <!-- Date -->
+        <div class="field-wrap">
+          <label class="field-label">Checkup Date <span class="req">*</span></label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput [matDatepicker]="picker" formControlName="date" placeholder="MM/DD/YYYY">
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-icon matPrefix>event</mat-icon>
+            <mat-error *ngIf="form.get('date')?.hasError('required')">Checkup date is required</mat-error>
+          </mat-form-field>
+        </div>
 
-                    <mat-form-field appearance="outline">
-                        <mat-label>S-Fat Legs (%)</mat-label>
-                        <input matInput type="number" formControlName="subcutaneousFatLegs" step="0.1">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                        <mat-label>Muscle Legs (%)</mat-label>
-                        <input matInput type="number" formControlName="muscleLegs" step="0.1">
-                    </mat-form-field>
-                </div>
+        <!-- Height -->
+        <div class="field-wrap">
+          <label class="field-label">Height (cm)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="height" placeholder="e.g. 175" step="0.1">
+            <mat-icon matPrefix>height</mat-icon>
+          </mat-form-field>
+        </div>
 
-                <div class="form-actions">
-                    <a mat-button [routerLink]="['/members', memberId, 'progress']">Cancel</a>
-                    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">
-                        <span class="flex-center">
-                            <mat-spinner diameter="20" *ngIf="loading" class="mr-2"></mat-spinner>
-                            {{ loading ? 'Saving...' : (isEditMode ? 'Update Entry' : 'Save Entry') }}
-                        </span>
-                    </button>
-                </div>
-            </form>
-        </mat-card-content>
-    </mat-card>
+        <!-- Weight -->
+        <div class="field-wrap">
+          <label class="field-label">Weight (kg)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="weight" placeholder="e.g. 72.5" step="0.1">
+            <mat-icon matPrefix>scale</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- BMI -->
+        <div class="field-wrap">
+          <label class="field-label">BMI</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="bmi" placeholder="e.g. 23.4" step="0.1">
+            <mat-icon matPrefix>speed</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Resting Metabolism -->
+        <div class="field-wrap">
+          <label class="field-label">Resting Metabolism (kcal)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="metabolism" placeholder="e.g. 1650" step="1">
+            <mat-icon matPrefix>local_fire_department</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Body Age -->
+        <div class="field-wrap">
+          <label class="field-label">Body Age (yrs)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="bodyAge" placeholder="e.g. 26" step="1">
+            <mat-icon matPrefix>cake</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3️⃣ CARD: CORE BODY COMPOSITION (FULL BODY) -->
+    <div class="form-card">
+      <div class="card-section-header">
+        <mat-icon class="section-icon text-mint">donut_large</mat-icon>
+        <div>
+          <h2 class="section-title">Core Body Composition (Full Body %)</h2>
+          <p class="section-subtitle">Body fat, muscle mass, and visceral fat indicators</p>
+        </div>
+      </div>
+
+      <div class="field-grid">
+        <!-- Body Fat -->
+        <div class="field-wrap">
+          <label class="field-label">Body Fat (%)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="bodyFat" placeholder="e.g. 18.5" step="0.1">
+            <mat-icon matPrefix>donut_small</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Skeletal Muscle -->
+        <div class="field-wrap">
+          <label class="field-label">Skeletal Muscle Mass (%)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="muscleMass" placeholder="e.g. 35.2" step="0.1">
+            <mat-icon matPrefix>fitness_center</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Visceral Fat -->
+        <div class="field-wrap">
+          <label class="field-label">Visceral Fat (Level)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="visceralFat" placeholder="e.g. 5" step="1">
+            <mat-icon matPrefix>warning_amber</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Subcutaneous Fat -->
+        <div class="field-wrap">
+          <label class="field-label">Subcutaneous Fat (Full %)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="subcutaneousFat" placeholder="e.g. 15.0" step="0.1">
+            <mat-icon matPrefix>opacity</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4️⃣ CARD: SEGMENTAL ANALYSIS -->
+    <div class="form-card">
+      <div class="card-section-header">
+        <mat-icon class="section-icon text-cyan">accessibility_new</mat-icon>
+        <div>
+          <h2 class="section-title">Segmental Analysis (Arms, Trunk, Legs)</h2>
+          <p class="section-subtitle">Isolated body segment muscle and fat distributions</p>
+        </div>
+      </div>
+
+      <div class="field-grid">
+        <!-- Arms -->
+        <div class="field-wrap">
+          <label class="field-label">S-Fat Arms (%)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="subcutaneousFatArms" placeholder="e.g. 12.5" step="0.1">
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label class="field-label">Muscle Arms (%)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="muscleArms" placeholder="e.g. 38.0" step="0.1">
+          </mat-form-field>
+        </div>
+
+        <!-- Trunk -->
+        <div class="field-wrap">
+          <label class="field-label">S-Fat Trunk (%)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="subcutaneousFatTrunk" placeholder="e.g. 16.2" step="0.1">
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label class="field-label">Muscle Trunk (%)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="muscleTrunk" placeholder="e.g. 32.5" step="0.1">
+          </mat-form-field>
+        </div>
+
+        <!-- Legs -->
+        <div class="field-wrap">
+          <label class="field-label">S-Fat Legs (%)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="subcutaneousFatLegs" placeholder="e.g. 14.1" step="0.1">
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label class="field-label">Muscle Legs (%)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="muscleLegs" placeholder="e.g. 42.0" step="0.1">
+          </mat-form-field>
+        </div>
+
+        <!-- Detailed Full Metrics -->
+        <div class="field-wrap">
+          <label class="field-label">Sinistral Fat Full (%)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="sinistralFatFull" placeholder="e.g. 15.2" step="0.1">
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label class="field-label">Muscle Full (%)</label>
+          <mat-form-field appearance="outline" class="custom-mat-field full-width">
+            <input matInput type="number" formControlName="muscleFull" placeholder="e.g. 36.1" step="0.1">
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Submit Actions Dock (At the very bottom with full 120px buffer) -->
+    <div class="form-actions-dock">
+      <button type="button" class="btn-cancel" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn-submit-gold" [disabled]="form.invalid || loading">
+        <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+        <mat-icon class="btn-icon" *ngIf="!loading">save</mat-icon>
+        <span *ngIf="!loading">{{ isEditMode ? 'Update Checkup' : 'Save Progress Entry' }}</span>
+      </button>
+    </div>
+
+  </form>
+
 </div>

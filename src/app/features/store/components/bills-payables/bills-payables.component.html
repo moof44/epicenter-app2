@@ -1,76 +1,109 @@
-<div class="payables-container" [@fadeIn]>
-  <!-- Page Header -->
+<div class="payables-page-container" @fadeIn>
+
+  <!-- ── Page Header Deck ── -->
   <div class="page-header">
-    <div class="header-titles">
-      <h1>Bills & Accounts Payable</h1>
-      <p class="subtitle">Track recurring utilities, staff wages, supplier credits, and liabilities.</p>
+    <div class="header-left-group">
+      <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Store Management">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-titles">
+        <h1 class="page-title">Bills, Recurring Outflows & Payables</h1>
+        <p class="page-subtitle">Track recurring utilities, staff wages, supplier credits, and direct disbursements</p>
+      </div>
     </div>
+
     <div class="header-actions">
-      <button mat-raised-button color="primary" class="add-bill-btn" (click)="openCreateModal()">
-        <mat-icon>add</mat-icon> New Bill / Payable
+      <button type="button" class="btn-add-bill-gold" (click)="openCreateModal()">
+        <mat-icon class="btn-icon">post_add</mat-icon>
+        <span>Record New Bill</span>
       </button>
     </div>
   </div>
 
-  <!-- KPI Summary Cards -->
-  <div class="kpi-grid">
-    <div class="kpi-card unpaid">
-      <div class="kpi-icon-wrap">
+  <!-- ── 4-Card Executive Summary Deck ── -->
+  <div class="summary-cards">
+    <!-- 1. Total Unpaid -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-gold">
         <mat-icon>pending_actions</mat-icon>
       </div>
-      <div class="kpi-data">
-        <span class="kpi-label">Total Unpaid Balance</span>
-        <strong class="kpi-val">₱{{ totalUnpaidAmount() | number:'1.2-2' }}</strong>
+      <div class="card-info">
+        <span class="label">Total Unpaid Balance</span>
+        <strong class="value font-mono text-gold">₱{{ totalUnpaidAmount() | number:'1.2-2' }}</strong>
       </div>
     </div>
 
-    <div class="kpi-card due-soon">
-      <div class="kpi-icon-wrap">
+    <!-- 2. Due in Next 7 Days -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-cyan">
         <mat-icon>alarm</mat-icon>
       </div>
-      <div class="kpi-data">
-        <span class="kpi-label">Due in Next 7 Days</span>
-        <strong class="kpi-val">{{ dueSoonCount() }} bills</strong>
+      <div class="card-info">
+        <span class="label">Due in Next 7 Days</span>
+        <strong class="value font-mono text-cyan">{{ dueSoonCount() }} bills</strong>
       </div>
     </div>
 
-    <div class="kpi-card overdue" [class.alert]="overdueCount() > 0">
-      <div class="kpi-icon-wrap">
+    <!-- 3. Overdue Bills -->
+    <div class="summary-card" [class.card-alert]="overdueCount() > 0">
+      <div class="card-icon-seal icon-rose">
         <mat-icon>warning</mat-icon>
       </div>
-      <div class="kpi-data">
-        <span class="kpi-label">Overdue Bills</span>
-        <strong class="kpi-val">{{ overdueCount() }} bills</strong>
+      <div class="card-info">
+        <span class="label">Overdue Bills</span>
+        <strong class="value font-mono text-rose">{{ overdueCount() }} bills</strong>
       </div>
     </div>
 
-    <div class="kpi-card register">
-      <div class="kpi-icon-wrap">
+    <!-- 4. Cash Drawer Status -->
+    <div class="summary-card">
+      <div class="card-icon-seal icon-mint">
         <mat-icon>point_of_sale</mat-icon>
       </div>
-      <div class="kpi-data">
-        <span class="kpi-label">Front Desk Drawer</span>
-        <strong class="kpi-val" *ngIf="currentShift$ | async as shift">
+      <div class="card-info">
+        <span class="label">Active Till Cash</span>
+        <strong class="value font-mono text-mint" *ngIf="currentShift$ | async as shift">
           ₱{{ shift.expectedClosingBalance | number:'1.2-2' }}
         </strong>
-        <strong class="kpi-val text-muted" *ngIf="!(currentShift$ | async)">
-          Closed
+        <strong class="value text-muted" *ngIf="!(currentShift$ | async)">
+          Till Closed
         </strong>
       </div>
     </div>
   </div>
 
-  <!-- Controls & Filters Bar -->
-  <div class="controls-card mat-elevation-z1">
-    <div class="search-filter-row">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-label>Search title, supplier, invoice...</mat-label>
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="e.g. Meralco, WheyKing">
+  <!-- ── Filter & Search Controls Deck ── -->
+  <div class="filters-card">
+    <!-- Status Tabs -->
+    <div class="status-tabs-row">
+      <button type="button" class="tab-chip" [class.active]="selectedStatus() === 'ALL'" (click)="setStatusFilter('ALL')">
+        All ({{ bills().length }})
+      </button>
+      <button type="button" class="tab-chip chip-gold" [class.active]="selectedStatus() === 'UNPAID'" (click)="setStatusFilter('UNPAID')">
+        Unpaid
+      </button>
+      <button type="button" class="tab-chip chip-cyan" [class.active]="selectedStatus() === 'PARTIALLY_PAID'" (click)="setStatusFilter('PARTIALLY_PAID')">
+        Partially Paid
+      </button>
+      <button type="button" class="tab-chip chip-mint" [class.active]="selectedStatus() === 'PAID'" (click)="setStatusFilter('PAID')">
+        Fully Paid
+      </button>
+      <button type="button" class="tab-chip chip-rose" [class.active]="selectedStatus() === 'OVERDUE'" (click)="setStatusFilter('OVERDUE')">
+        Overdue ({{ overdueCount() }})
+      </button>
+    </div>
+
+    <div class="filters-grid">
+      <!-- Search Field -->
+      <mat-form-field appearance="outline" class="custom-mat-field search-span" subscriptSizing="dynamic">
+        <mat-label>Search Title, Supplier, or Invoice #</mat-label>
+        <mat-icon matPrefix class="search-icon">search</mat-icon>
+        <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="e.g. Meralco, Rent, Whey...">
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="category-filter">
-        <mat-label>Category Filter</mat-label>
+      <!-- Category Filter -->
+      <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
+        <mat-label>Category</mat-label>
         <mat-select [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)">
           <mat-option value="ALL">All Categories</mat-option>
           <mat-option *ngFor="let cat of categories" [value]="cat.category">
@@ -79,148 +112,209 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-
-      <mat-form-field appearance="outline" class="status-filter">
-        <mat-label>Status</mat-label>
-        <mat-select [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)">
-          <mat-option value="ALL">All Statuses</mat-option>
-          <mat-option value="UNPAID">Unpaid Only</mat-option>
-          <mat-option value="PARTIALLY_PAID">Partially Paid</mat-option>
-          <mat-option value="PAID">Fully Paid</mat-option>
-          <mat-option value="OVERDUE">Overdue Only</mat-option>
-        </mat-select>
-      </mat-form-field>
     </div>
   </div>
 
-  <!-- Bills Table -->
-  <div class="table-card mat-elevation-z2">
-    <table mat-table [dataSource]="filteredBills()" class="payables-table">
-
-      <!-- Category -->
-      <ng-container matColumnDef="category">
-        <th mat-header-cell *matHeaderCellDef>Category</th>
-        <td mat-cell *matCellDef="let bill">
-          <div class="cat-pill" [style.color]="getCategoryMeta(bill.category).color" [style.background]="getCategoryMeta(bill.category).color + '15'" [style.border-color]="getCategoryMeta(bill.category).color + '35'">
-            <mat-icon>{{ getCategoryMeta(bill.category).icon }}</mat-icon>
-            <span>{{ getCategoryMeta(bill.category).label }}</span>
-          </div>
-        </td>
-      </ng-container>
-
-      <!-- Title & Invoice -->
-      <ng-container matColumnDef="title">
-        <th mat-header-cell *matHeaderCellDef>Bill Title / Description</th>
-        <td mat-cell *matCellDef="let bill">
-          <div class="bill-title-cell">
-            <strong class="title">{{ bill.title }}</strong>
-            <span *ngIf="bill.invoiceNumber" class="inv-num">Inv #{{ bill.invoiceNumber }}</span>
-          </div>
-        </td>
-      </ng-container>
-
-      <!-- Biller / Supplier -->
-      <ng-container matColumnDef="biller">
-        <th mat-header-cell *matHeaderCellDef>Biller / Supplier</th>
-        <td mat-cell *matCellDef="let bill">
-          <span class="biller-name">{{ bill.billerOrSupplier }}</span>
-        </td>
-      </ng-container>
-
-      <!-- Due Date -->
-      <ng-container matColumnDef="dueDate">
-        <th mat-header-cell *matHeaderCellDef>Due Date</th>
-        <td mat-cell *matCellDef="let bill">
-          <div class="due-cell" [class.overdue-text]="isOverdue(bill.dueDate, bill.status)">
-            <span>{{ bill.dueDate | date:'mediumDate' }}</span>
-            <small *ngIf="isOverdue(bill.dueDate, bill.status)" class="overdue-tag">OVERDUE</small>
-          </div>
-        </td>
-      </ng-container>
-
-      <!-- Total Amount Due -->
-      <ng-container matColumnDef="totalAmount">
-        <th mat-header-cell *matHeaderCellDef>Total Due</th>
-        <td mat-cell *matCellDef="let bill">
-          ₱{{ bill.totalAmountDue | number:'1.2-2' }}
-        </td>
-      </ng-container>
-
-      <!-- Paid Amount -->
-      <ng-container matColumnDef="paidAmount">
-        <th mat-header-cell *matHeaderCellDef>Paid</th>
-        <td mat-cell *matCellDef="let bill">
-          <span class="paid-amount">₱{{ bill.totalAmountPaid | number:'1.2-2' }}</span>
-        </td>
-      </ng-container>
-
-      <!-- Remaining Balance -->
-      <ng-container matColumnDef="remainingBalance">
-        <th mat-header-cell *matHeaderCellDef>Remaining</th>
-        <td mat-cell *matCellDef="let bill">
-          <strong class="remaining-val" [class.settled]="bill.remainingBalance <= 0">
-            ₱{{ bill.remainingBalance | number:'1.2-2' }}
-          </strong>
-        </td>
-      </ng-container>
-
-      <!-- Status -->
-      <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef>Status</th>
-        <td mat-cell *matCellDef="let bill">
-          <span class="status-badge" [ngClass]="getStatusClass(bill.status, bill.dueDate)">
-            {{ isOverdue(bill.dueDate, bill.status) ? 'OVERDUE' : (bill.status | titlecase) }}
-          </span>
-        </td>
-      </ng-container>
-
-      <!-- Actions -->
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Actions</th>
-        <td mat-cell *matCellDef="let bill">
-          <div class="actions-cell">
-            <button *ngIf="bill.remainingBalance > 0" mat-flat-button color="primary" class="pay-btn" (click)="openPaymentModal(bill)" matTooltip="Record Payment">
-              <mat-icon>payments</mat-icon> Pay
-            </button>
-            <button mat-icon-button (click)="openHistoryDrawer(bill)" matTooltip="View Payment History">
-              <mat-icon>history</mat-icon>
-            </button>
-            <button mat-icon-button color="warn" (click)="deleteBill(bill)" matTooltip="Delete Bill">
-              <mat-icon>delete_outline</mat-icon>
-            </button>
-          </div>
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-    </table>
-
-    <div *ngIf="filteredBills().length === 0 && !isLoading()" class="empty-state">
-      <mat-icon>check_circle_outline</mat-icon>
-      <h3>No bills found</h3>
-      <p>All clear or no payables matched the current filters.</p>
+  <!-- ── Master Payables Table Card ── -->
+  <div class="payables-deck-card">
+    <div class="deck-header">
+      <div class="deck-title-wrap">
+        <mat-icon class="text-gold">receipt_long</mat-icon>
+        <h3>Payable Line Items</h3>
+      </div>
+      <span class="count-pill">{{ filteredBills().length }} Bill{{ filteredBills().length === 1 ? '' : 's' }}</span>
     </div>
+
+    <!-- Loading State -->
+    <div class="loading-state-card" *ngIf="isLoading() && bills().length === 0">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading accounts payable...</span>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-history-state" *ngIf="!isLoading() && filteredBills().length === 0">
+      <div class="empty-icon-seal">
+        <mat-icon>check_circle_outline</mat-icon>
+      </div>
+      <h4>No payables found</h4>
+      <p>All clear or no records matched the selected filters.</p>
+    </div>
+
+    <!-- ── Desktop Table (≥ 640px) ── -->
+    <div class="desktop-table-wrapper" *ngIf="filteredBills().length > 0">
+      <table mat-table [dataSource]="filteredBills()" class="desktop-payables-table">
+
+        <!-- Category Column -->
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef class="col-cat"> Category </th>
+          <td mat-cell *matCellDef="let bill" class="col-cat">
+            <div class="cat-badge-wrap">
+              <mat-icon class="cat-icon" [style.color]="getCategoryMeta(bill.category).color">
+                {{ getCategoryMeta(bill.category).icon }}
+              </mat-icon>
+              <span class="cat-label text-white">{{ getCategoryMeta(bill.category).label }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Title Column -->
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef class="col-title"> Title & Ref # </th>
+          <td mat-cell *matCellDef="let bill" class="col-title">
+            <strong class="bill-title text-white">{{ bill.title }}</strong>
+            <small class="bill-sub text-muted" *ngIf="bill.invoiceNumber">Ref: {{ bill.invoiceNumber }}</small>
+          </td>
+        </ng-container>
+
+        <!-- Biller Column -->
+        <ng-container matColumnDef="biller">
+          <th mat-header-cell *matHeaderCellDef class="col-biller"> Biller / Vendor </th>
+          <td mat-cell *matCellDef="let bill" class="col-biller text-cyan font-semibold">
+            {{ bill.billerOrSupplier }}
+          </td>
+        </ng-container>
+
+        <!-- Due Date Column -->
+        <ng-container matColumnDef="dueDate">
+          <th mat-header-cell *matHeaderCellDef class="col-due"> Due Date </th>
+          <td mat-cell *matCellDef="let bill" class="col-due font-mono">
+            <div [class.text-rose]="isOverdue(bill.dueDate, bill.status)" [class.font-bold]="isOverdue(bill.dueDate, bill.status)">
+              {{ bill.dueDate | date:'MMM d, y' }}
+            </div>
+            <small *ngIf="isOverdue(bill.dueDate, bill.status)" class="overdue-tag">OVERDUE</small>
+          </td>
+        </ng-container>
+
+        <!-- Total Amount Column -->
+        <ng-container matColumnDef="totalAmount">
+          <th mat-header-cell *matHeaderCellDef class="col-amt"> Total Due </th>
+          <td mat-cell *matCellDef="let bill" class="col-amt font-mono font-bold text-white">
+            ₱{{ bill.totalAmountDue | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <!-- Paid Amount Column -->
+        <ng-container matColumnDef="paidAmount">
+          <th mat-header-cell *matHeaderCellDef class="col-amt"> Paid </th>
+          <td mat-cell *matCellDef="let bill" class="col-amt font-mono text-mint">
+            ₱{{ bill.totalAmountPaid | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <!-- Remaining Balance Column -->
+        <ng-container matColumnDef="remainingBalance">
+          <th mat-header-cell *matHeaderCellDef class="col-amt"> Balance </th>
+          <td mat-cell *matCellDef="let bill" class="col-amt font-mono font-black text-gold">
+            ₱{{ bill.remainingBalance | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef class="col-status"> Status </th>
+          <td mat-cell *matCellDef="let bill" class="col-status">
+            <span class="status-pill" [ngClass]="getStatusClass(bill.status, bill.dueDate)">
+              {{ getStatusLabel(bill.status, bill.dueDate) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="col-actions"> Actions </th>
+          <td mat-cell *matCellDef="let bill" class="col-actions">
+            <div class="actions-group">
+              <button type="button" class="btn-action-pay" *ngIf="bill.status !== 'PAID'" (click)="openPaymentModal(bill)" matTooltip="Record Payment">
+                <mat-icon>payments</mat-icon> Pay
+              </button>
+              <button type="button" class="btn-action-history" (click)="openHistoryDrawer(bill)" matTooltip="Payment History">
+                <mat-icon>history</mat-icon>
+              </button>
+              <button type="button" class="btn-action-delete" (click)="deleteBill(bill)" matTooltip="Delete Bill">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="payables-table-row"></tr>
+      </table>
+    </div>
+
+    <!-- ── Mobile Cards Deck (< 640px - Failure #25 Prevention) ── -->
+    <div class="mobile-cards-deck" *ngIf="filteredBills().length > 0">
+      <div *ngFor="let bill of filteredBills()" class="mobile-bill-card">
+        
+        <div class="mobile-card-top-line">
+          <div class="cat-badge-wrap">
+            <mat-icon class="cat-icon" [style.color]="getCategoryMeta(bill.category).color">
+              {{ getCategoryMeta(bill.category).icon }}
+            </mat-icon>
+            <span class="cat-label text-white">{{ getCategoryMeta(bill.category).label }}</span>
+          </div>
+          <span class="status-pill" [ngClass]="getStatusClass(bill.status, bill.dueDate)">
+            {{ getStatusLabel(bill.status, bill.dueDate) }}
+          </span>
+        </div>
+
+        <div class="mobile-card-body">
+          <strong class="mobile-bill-title text-white">{{ bill.title }}</strong>
+          <span class="text-cyan font-semibold">{{ bill.billerOrSupplier }}</span>
+          <div class="mobile-due-row text-muted font-mono">
+            <span>Due:</span>
+            <strong [class.text-rose]="isOverdue(bill.dueDate, bill.status)">
+              {{ bill.dueDate | date:'mediumDate' }}
+            </strong>
+          </div>
+        </div>
+
+        <div class="mobile-card-financials-bar">
+          <div class="fin-col">
+            <span class="fin-lbl text-muted">Total Due</span>
+            <strong class="font-mono text-white">₱{{ bill.totalAmountDue | number:'1.2-2' }}</strong>
+          </div>
+          <div class="fin-col">
+            <span class="fin-lbl text-muted">Remaining</span>
+            <strong class="font-mono text-gold">₱{{ bill.remainingBalance | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="mobile-card-actions-row">
+          <button type="button" class="btn-mobile-pay" *ngIf="bill.status !== 'PAID'" (click)="openPaymentModal(bill)">
+            <mat-icon>payments</mat-icon> Pay Now
+          </button>
+          <button type="button" class="btn-mobile-history" (click)="openHistoryDrawer(bill)">
+            <mat-icon>history</mat-icon> Logs
+          </button>
+          <button type="button" class="btn-mobile-del" (click)="deleteBill(bill)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
   <!-- ==========================================
-       CREATE BILL MODAL
+       CREATE BILL MODAL (Dark Pro)
        ========================================== -->
   <div class="modal-backdrop" *ngIf="showCreateModal">
     <div class="modal-card" [@fadeIn]>
       <div class="modal-header">
         <div class="modal-title">
-          <mat-icon>post_add</mat-icon>
-          <h2>Create New Bill / Payable</h2>
+          <mat-icon class="text-gold">post_add</mat-icon>
+          <h2>Record New Bill / Outflow</h2>
         </div>
-        <button mat-icon-button (click)="closeCreateModal()">
+        <button type="button" class="btn-modal-close" (click)="closeCreateModal()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
 
       <form (ngSubmit)="submitCreateBill()" class="modal-body">
         <div class="form-grid-2">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
             <mat-label>Category</mat-label>
             <mat-select [(ngModel)]="newBill.category" name="category" required>
               <mat-option *ngFor="let cat of categories" [value]="cat.category">
@@ -230,47 +324,47 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
             <mat-label>Biller / Supplier Name</mat-label>
-            <input matInput [(ngModel)]="newBill.billerOrSupplier" name="biller" required placeholder="e.g., Meralco, Maynilad, WheyKing">
+            <input matInput [(ngModel)]="newBill.billerOrSupplier" name="biller" required placeholder="e.g. Meralco, PLDT, Rent...">
           </mat-form-field>
         </div>
 
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline" class="custom-mat-field full-width" subscriptSizing="dynamic">
           <mat-label>Bill Title / Description</mat-label>
-          <input matInput [(ngModel)]="newBill.title" name="title" required placeholder="e.g., August 2026 Electricity Bill">
+          <input matInput [(ngModel)]="newBill.title" name="title" required placeholder="e.g. August 2026 Electricity Bill">
         </mat-form-field>
 
         <div class="form-grid-2">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
             <mat-label>Total Amount Due</mat-label>
-            <span matTextPrefix>₱&nbsp;</span>
+            <span matTextPrefix class="currency-prefix">₱&nbsp;</span>
             <input matInput type="number" [(ngModel)]="newBill.totalAmountDue" name="totalAmount" required min="0.01" step="0.01">
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
             <mat-label>Due Date</mat-label>
-            <input matInput [matDatepicker]="picker" [(ngModel)]="newBill.dueDate" name="dueDate" required>
-            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
+            <input matInput [matDatepicker]="createPicker" [(ngModel)]="newBill.dueDate" name="dueDate" required>
+            <mat-datepicker-toggle matIconSuffix [for]="createPicker"></mat-datepicker-toggle>
+            <mat-datepicker #createPicker></mat-datepicker>
           </mat-form-field>
         </div>
 
         <div class="form-grid-2">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
             <mat-label>Invoice / Reference # (Optional)</mat-label>
             <input matInput [(ngModel)]="newBill.invoiceNumber" name="invoiceNumber" placeholder="e.g. INV-2026-081">
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
             <mat-label>Notes (Optional)</mat-label>
-            <input matInput [(ngModel)]="newBill.notes" name="notes" placeholder="Account #, special instructions">
+            <input matInput [(ngModel)]="newBill.notes" name="notes" placeholder="Account #, terms...">
           </mat-form-field>
         </div>
 
         <div class="modal-actions">
-          <button mat-button type="button" (click)="closeCreateModal()">Cancel</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="isSubmitting">
+          <button type="button" class="btn-cancel" (click)="closeCreateModal()">Cancel</button>
+          <button type="submit" class="btn-save-gold" [disabled]="isSubmitting">
             {{ isSubmitting ? 'Creating...' : 'Create Bill' }}
           </button>
         </div>
@@ -279,42 +373,42 @@
   </div>
 
   <!-- ==========================================
-       RECORD PAYMENT MODAL
+       RECORD PAYMENT MODAL (Dark Pro)
        ========================================== -->
   <div class="modal-backdrop" *ngIf="showPaymentModal && selectedBillForPayment">
     <div class="modal-card" [@fadeIn]>
       <div class="modal-header">
         <div class="modal-title">
-          <mat-icon>payments</mat-icon>
-          <h2>Record Payment</h2>
+          <mat-icon class="text-mint">payments</mat-icon>
+          <h2>Disburse Bill Payment</h2>
         </div>
-        <button mat-icon-button (click)="closePaymentModal()">
+        <button type="button" class="btn-modal-close" (click)="closePaymentModal()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
 
       <div class="bill-summary-banner">
-        <div class="banner-title">{{ selectedBillForPayment.title }}</div>
-        <div class="banner-sub">Biller: <strong>{{ selectedBillForPayment.billerOrSupplier }}</strong> · Total: ₱{{ selectedBillForPayment.totalAmountDue | number:'1.2-2' }}</div>
+        <div class="banner-title text-white">{{ selectedBillForPayment.title }}</div>
+        <div class="banner-sub text-muted">Biller: <strong class="text-cyan">{{ selectedBillForPayment.billerOrSupplier }}</strong> · Total: ₱{{ selectedBillForPayment.totalAmountDue | number:'1.2-2' }}</div>
         <div class="banner-remaining">
-          <span>Remaining Balance:</span>
-          <strong>₱{{ selectedBillForPayment.remainingBalance | number:'1.2-2' }}</strong>
+          <span class="text-muted">Remaining Balance:</span>
+          <strong class="text-gold font-mono text-base">₱{{ selectedBillForPayment.remainingBalance | number:'1.2-2' }}</strong>
         </div>
       </div>
 
       <form (ngSubmit)="submitPayment()" class="modal-body">
         <div class="form-grid-2">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
             <mat-label>Payment Amount</mat-label>
-            <span matTextPrefix>₱&nbsp;</span>
+            <span matTextPrefix class="currency-prefix">₱&nbsp;</span>
             <input matInput type="number" [(ngModel)]="paymentForm.amount" name="payAmount" required min="0.01" [max]="selectedBillForPayment.remainingBalance" step="0.01">
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
             <mat-label>Payment Source / Channel</mat-label>
             <mat-select [(ngModel)]="paymentForm.paymentSource" name="paySource" required>
               <mat-option value="DRAWER_CASH" [disabled]="!isShiftOpen()">
-                💵 Cash Drawer (Till) {{ !isShiftOpen() ? '(Register Closed)' : '' }}
+                💵 Cash Drawer (Till) {{ !isShiftOpen() ? '(Till Closed)' : '' }}
               </mat-option>
               <mat-option value="BANK_TRANSFER">🏦 Bank Transfer</mat-option>
               <mat-option value="GCASH_BUSINESS">📱 GCash</mat-option>
@@ -324,25 +418,25 @@
         </div>
 
         <div class="drawer-notice" *ngIf="paymentForm.paymentSource === 'DRAWER_CASH'">
-          <mat-icon>info</mat-icon>
-          <span>Paying from <strong>Cash Drawer</strong> will automatically record an Expense in the active shift and deduct ₱{{ paymentForm.amount | number:'1.2-2' }} from drawer cash.</span>
+          <mat-icon class="text-cyan">info</mat-icon>
+          <span>Paying from <strong>Cash Drawer</strong> will automatically log an Expense in the active shift and deduct ₱{{ paymentForm.amount | number:'1.2-2' }} from till cash.</span>
         </div>
 
         <div class="form-grid-2">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
             <mat-label>Reference # / Tx ID (Optional)</mat-label>
             <input matInput [(ngModel)]="paymentForm.referenceNumber" name="refNum" placeholder="e.g. GCash Ref / Bank Tx ID">
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="custom-mat-field" subscriptSizing="dynamic">
             <mat-label>Payment Notes (Optional)</mat-label>
             <input matInput [(ngModel)]="paymentForm.notes" name="payNotes" placeholder="Remarks">
           </mat-form-field>
         </div>
 
         <div class="modal-actions">
-          <button mat-button type="button" (click)="closePaymentModal()">Cancel</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="isSubmitting">
+          <button type="button" class="btn-cancel" (click)="closePaymentModal()">Cancel</button>
+          <button type="submit" class="btn-save-mint" [disabled]="isSubmitting">
             {{ isSubmitting ? 'Recording...' : 'Confirm Payment' }}
           </button>
         </div>
@@ -351,59 +445,59 @@
   </div>
 
   <!-- ==========================================
-       PAYMENT HISTORY DRAWER
+       PAYMENT HISTORY DRAWER (Dark Pro)
        ========================================== -->
   <div class="modal-backdrop" *ngIf="showHistoryDrawer && selectedBillForHistory">
     <div class="drawer-panel" [@fadeIn]>
       <div class="drawer-header">
         <div class="drawer-title">
-          <mat-icon>history</mat-icon>
-          <h2>Payment History</h2>
+          <mat-icon class="text-cyan">history</mat-icon>
+          <h2>Disbursement History</h2>
         </div>
-        <button mat-icon-button (click)="closeHistoryDrawer()">
+        <button type="button" class="btn-modal-close" (click)="closeHistoryDrawer()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
 
       <div class="drawer-bill-card">
-        <h3>{{ selectedBillForHistory.title }}</h3>
-        <p>{{ selectedBillForHistory.billerOrSupplier }} · Total Due: ₱{{ selectedBillForHistory.totalAmountDue | number:'1.2-2' }}</p>
-        <div class="drawer-progress">
+        <h3 class="text-white">{{ selectedBillForHistory.title }}</h3>
+        <p class="text-muted">{{ selectedBillForHistory.billerOrSupplier }} · Total Due: ₱{{ selectedBillForHistory.totalAmountDue | number:'1.2-2' }}</p>
+        <div class="drawer-progress font-mono">
           <div class="prog-item">
-            <span>Total Paid:</span>
-            <strong class="paid-val">₱{{ selectedBillForHistory.totalAmountPaid | number:'1.2-2' }}</strong>
+            <span class="text-muted">Total Paid:</span>
+            <strong class="text-mint">₱{{ selectedBillForHistory.totalAmountPaid | number:'1.2-2' }}</strong>
           </div>
           <div class="prog-item">
-            <span>Remaining:</span>
-            <strong class="rem-val">₱{{ selectedBillForHistory.remainingBalance | number:'1.2-2' }}</strong>
+            <span class="text-muted">Remaining:</span>
+            <strong class="text-gold">₱{{ selectedBillForHistory.remainingBalance | number:'1.2-2' }}</strong>
           </div>
         </div>
       </div>
 
       <div class="drawer-history-list">
-        <h4>Past Payments ({{ selectedBillForHistory.payments.length || 0 }})</h4>
-        <div *ngIf="selectedBillForHistory.payments.length === 0" class="no-payments">
+        <h4 class="text-white">Past Payments ({{ selectedBillForHistory.payments.length || 0 }})</h4>
+        <div *ngIf="selectedBillForHistory.payments.length === 0" class="no-payments text-muted">
           <p>No payments recorded yet.</p>
         </div>
 
         <div class="payment-record-card" *ngFor="let p of selectedBillForHistory.payments">
           <div class="pay-top">
-            <span class="pay-amount">₱{{ p.amount | number:'1.2-2' }}</span>
-            <span class="pay-date">{{ p.paymentDate | date:'medium' }}</span>
+            <strong class="pay-amount font-mono text-mint">₱{{ p.amount | number:'1.2-2' }}</strong>
+            <span class="pay-date font-mono text-muted">{{ p.paymentDate | date:'medium' }}</span>
           </div>
-          <div class="pay-details">
-            <span class="pay-source">{{ getPaymentSourceLabel(p.paymentSource) }}</span>
-            <span class="pay-by">Recorded by: {{ p.recordedBy }}</span>
+          <div class="pay-details text-muted">
+            <span class="pay-source text-white">{{ getPaymentSourceLabel(p.paymentSource) }}</span>
+            <span class="pay-by">By: <strong class="text-cyan">{{ p.recordedBy }}</strong></span>
           </div>
-          <div class="pay-ref" *ngIf="p.referenceNumber">
+          <div class="pay-ref font-mono text-muted" *ngIf="p.referenceNumber">
             <small>Ref: {{ p.referenceNumber }}</small>
-          </div>
-          <div class="pay-notes" *ngIf="p.notes">
-            <small>Note: {{ p.notes }}</small>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- ── Safe Area Physical Scroll Spacer (Failure #24 & #26 Prevention) ── -->
+  <div class="bottom-scroll-spacer"></div>
 
 </div>

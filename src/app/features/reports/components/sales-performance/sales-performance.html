@@ -1,7 +1,25 @@
-<div class="chart-wrapper">
-    <div class="chart-container">
-        <apx-chart [series]="chartOptions.series!" [chart]="chartOptions.chart!" [xaxis]="chartOptions.xaxis!"
-            [yaxis]="chartOptions.yaxis!" [labels]="chartOptions.labels!" [stroke]="chartOptions.stroke!"
-            [dataLabels]="chartOptions.dataLabels!" [colors]="chartOptions.colors!"></apx-chart>
+<div class="sales-perf-container">
+  <div class="chart-header">
+    <div class="header-left">
+      <h3 class="text-white">Sales Revenue vs Targets</h3>
+      <p class="text-muted">Daily retail and membership income measured against target quotas</p>
     </div>
+  </div>
+
+  <div class="chart-content">
+    <apx-chart
+      [series]="chartOptions.series!"
+      [chart]="chartOptions.chart!"
+      [xaxis]="chartOptions.xaxis!"
+      [yaxis]="chartOptions.yaxis!"
+      [title]="chartOptions.title!"
+      [stroke]="chartOptions.stroke!"
+      [dataLabels]="chartOptions.dataLabels!"
+      [labels]="chartOptions.labels!"
+      [legend]="chartOptions.legend!"
+      [grid]="chartOptions.grid!"
+      [tooltip]="chartOptions.tooltip!"
+      [colors]="chartOptions.colors!">
+    </apx-chart>
+  </div>
 </div>

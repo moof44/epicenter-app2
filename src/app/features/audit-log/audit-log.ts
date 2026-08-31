@@ -17,6 +17,7 @@ import { AttendanceService } from '../../core/services/attendance.service';
 import { CashRegisterService } from '../../core/services/cash-register.service';
 import { UserService } from '../../core/services/user.service';
 import { toLocalDateStr } from '../../core/utils/date.utils';
+import { Router, RouterModule } from '@angular/router';
 import { fadeIn } from '../../core/animations/animations';
 import { AuditLogStateService } from './audit-log-state.service';
 
@@ -42,6 +43,7 @@ function safeToDate(value: any): Date {
     selector: 'app-audit-log',
     standalone: true,
     imports: [
+        RouterModule,
         CommonModule, FormsModule, MatCardModule, MatIconModule, MatButtonModule,
         MatFormFieldModule, MatInputModule, MatSelectModule,
         MatDatepickerModule, MatNativeDateModule, MatChipsModule, MatProgressSpinnerModule,
@@ -56,6 +58,7 @@ export class AuditLogComponent {
     private attendanceService = inject(AttendanceService);
     private cashRegisterService = inject(CashRegisterService);
     private userService = inject(UserService);
+    private router = inject(Router);
 
     // State preserved across navigations via root-level service
     private state = inject(AuditLogStateService);
@@ -84,6 +87,14 @@ export class AuditLogComponent {
     totalPages = computed(() => Math.ceil(this.events().length / this.pageSize));
     isEmpty = computed(() => this.events().length === 0 && !this.isLoading());
     totalCount = computed(() => this.events().length);
+    // Computed KPI Metrics
+    salesCount = computed(() => this.events().filter(e => e.type === 'sale' || e.type === 'void').length);
+    shiftsCount = computed(() => this.events().filter(e => e.type === 'shift_open' || e.type === 'shift_close' || e.type === 'float' || e.type === 'expense').length);
+    checkinsCount = computed(() => this.events().filter(e => e.type === 'checkin' || e.type === 'checkout').length);
+
+    goBack() {
+        this.router.navigate(['/dashboard']);
+    }
 
     eventTypes = [
         { key: 'sale', label: 'Sales', icon: 'point_of_sale' },
