@@ -1,5 +1,6 @@
 import { Component, inject, ViewChild, AfterViewInit, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -10,6 +11,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSidenavModule, MatDrawer } from '@angular/material/sidenav';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { FormsModule } from '@angular/forms';
 import { CashRegisterService } from '../../../../core/services/cash-register.service';
 import { ShiftSession, CashTransaction, HandoverDenominationAudit, DenominationAuditDiffItem } from '../../../../core/models/cash-register.model';
 import {
@@ -20,11 +26,8 @@ import {
   formatShiftDate,
   compareDenominations
 } from '../../../../core/utils/cash-register.utils';
+import { safeToDate } from '../../../../core/utils/date.utils';
 import { fadeIn } from '../../../../core/animations/animations';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatInputModule } from '@angular/material/input';
-import { FormsModule } from '@angular/forms';
 
 export interface EnrichedShiftSession extends ShiftSession {
   prevShift?: ShiftSession | null;
@@ -38,10 +41,11 @@ export interface EnrichedShiftSession extends ShiftSession {
 
 @Component({
   selector: 'app-shift-history',
+  standalone: true,
   imports: [
     CommonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatButtonModule,
     MatIconModule, MatChipsModule, MatTooltipModule, MatSidenavModule, MatDividerModule,
-    MatTabsModule, MatDatepickerModule, MatNativeDateModule, MatInputModule, FormsModule
+    MatTabsModule, MatDatepickerModule, MatNativeDateModule, MatInputModule, MatFormFieldModule, FormsModule
   ],
   templateUrl: './shift-history.html',
   styleUrl: './shift-history.css',
@@ -49,6 +53,7 @@ export interface EnrichedShiftSession extends ShiftSession {
 })
 export class ShiftHistory implements AfterViewInit, OnInit {
   private cashRegisterService = inject(CashRegisterService);
+  private router = inject(Router);
 
   dataSource = new MatTableDataSource<EnrichedShiftSession>([]);
   displayedColumns = ['date', 'openingCash', 'sales', 'expenses', 'endingBalance', 'variance', 'actions'];
@@ -72,8 +77,6 @@ export class ShiftHistory implements AfterViewInit, OnInit {
   endDate: Date | null = null;
   staffFilter = '';
 
-  constructor() { }
-
   ngOnInit() {
     this.loadShifts();
   }
@@ -84,7 +87,7 @@ export class ShiftHistory implements AfterViewInit, OnInit {
       this.startDate || undefined,
       this.endDate || undefined
     ).subscribe(shifts => {
-      let filtered = shifts.filter(s => s.status === 'CLOSED');
+      let filtered = (shifts || []).filter(s => s.status === 'CLOSED');
 
       if (this.staffFilter) {
         const term = this.staffFilter.toLowerCase();
@@ -93,8 +96,8 @@ export class ShiftHistory implements AfterViewInit, OnInit {
 
       // Sort chronologically (oldest to newest) to accurately link consecutive shifts
       const chronological = [...filtered].sort((a, b) => {
-        const timeA = formatShiftDate(a.startTime).getTime();
-        const timeB = formatShiftDate(b.startTime).getTime();
+        const timeA = safeToDate(a.startTime).getTime();
+        const timeB = safeToDate(b.startTime).getTime();
         return timeA - timeB;
       });
 
@@ -173,14 +176,25 @@ export class ShiftHistory implements AfterViewInit, OnInit {
     this.loadShifts();
   }
 
+  resetFilters() {
+    this.startDate = null;
+    this.endDate = null;
+    this.staffFilter = '';
+    this.loadShifts();
+  }
+
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   }
 
+  goBack() {
+    this.router.navigate(['/store']);
+  }
+
   // Helper methods
   formatDate(timestamp: any): Date {
-    return formatShiftDate(timestamp);
+    return safeToDate(timestamp);
   }
 
   getVariance(shift: ShiftSession): number {
@@ -279,5 +293,41 @@ export class ShiftHistory implements AfterViewInit, OnInit {
   hasHandoverDiscrepancies(shift: EnrichedShiftSession): boolean {
     if (!shift.computedHandoverAudit) return false;
     return shift.computedHandoverAudit.status !== 'PERFECT_MATCH';
+  }
+
+  getHandoverHeadline(audit?: HandoverDenominationAudit | null): string {
+    if (!audit) return 'Initial Recorded Shift';
+    switch (audit.status) {
+      case 'PERFECT_MATCH':
+        return 'Exact 1-to-1 Handover Match';
+      case 'DENOM_REALLOCATION':
+        return 'Denomination Reallocation (Total Matched)';
+      case 'CASH_MISMATCH':
+        return 'Handover Cash Discrepancy Detected';
+      case 'INITIAL_SHIFT':
+        return 'First Recorded Shift in System';
+      case 'MANUAL_OVERRIDE':
+        return 'Manual Lump-Sum Handover Override';
+      default:
+        return 'Handover Custody Recorded';
+    }
+  }
+
+  getHandoverExplanation(audit?: HandoverDenominationAudit | null): string {
+    if (!audit) return 'This is the earliest recorded shift in the timeline.';
+    switch (audit.status) {
+      case 'PERFECT_MATCH':
+        return 'All itemized bills and coins matched the previous shift closing counts exactly.';
+      case 'DENOM_REALLOCATION':
+        return 'Total opening float matches previous closing cash, but specific bills or coins were swapped.';
+      case 'CASH_MISMATCH':
+        return `Variance of ${audit.cashVariance > 0 ? '+' : ''}₱${audit.cashVariance.toFixed(2)} vs previous shift closing cash.`;
+      case 'INITIAL_SHIFT':
+        return 'No previous shift exists to compare physical denominations against.';
+      case 'MANUAL_OVERRIDE':
+        return 'Staff bypassed itemized denomination count during shift opening.';
+      default:
+        return '';
+    }
   }
 }

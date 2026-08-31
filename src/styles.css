@@ -138,6 +138,18 @@
     --radius-3xl: 28px;
     --radius-full: 9999px;
 
+    /* Spacing tokens */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 20px;
+    --spacing-xl: 24px;
+    --spacing-2xl: 32px;
+
+    /* Transition tokens */
+    --transition-fast: all 0.15s ease;
+    --transition-normal: all 0.25s ease;
+
     --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
     --shadow-card-elevated: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
     --shadow-glow-cyan: 0 0 25px rgba(6, 182, 212, 0.25);

@@ -384,3 +384,46 @@ ightarrow$ Championship Podium).
 * **Permanent Prevention Protocol**:
   1. **Direct Focus Modal for Deep Item Inspections**: Multi-day attendance logs, detailed timecards, or heavy itemized breakdowns must be rendered inside a dedicated **Dark Pro Focus Modal** (`StaffWeeklyMatrixModalComponent`).
   2. **Preserve Scroll Position**: Opening a modal keeps the user's background list in place so closing the modal immediately returns the user to the exact row they were reviewing with zero scrolling overhead.
+
+---
+
+### 32. ❌ Failure #32: Unconstrained Side Drawer Height & Viewport Fold Traps in `<mat-drawer>`
+* **Discovery Date**: 2026-09-01
+* **Symptom / User Report**:
+  > *"in /store/reports page, see image... this area, I cannot view what's below... in desktop, not full list is viewable...same with tablet... in mobile, it is the same long scrollable space below... please check why? as in this is very long"* (with screenshots showing the bottom physical cash count card and transaction tabs clipped off at the bottom window edge with internal scrolling trapped).
+* **Root Cause**:
+  1. In Angular Material, `<mat-drawer mode="over">` defaults to `position: absolute; top: 0; bottom: 0;` relative to its `<mat-drawer-container>`. When the background table on the main page was tall (e.g. 1500px), the drawer itself expanded to 1500px tall.
+  2. Because the drawer had 1500px of vertical space, its internal scroll container (`.drawer-body`) assumed the content easily fit without triggering a scrollbar.
+  3. However, the user's browser window is only ~800px tall, so everything between 800px and 1500px was physically rendered below the viewport fold, and because `<mat-drawer mode="over">` applies a backdrop that disables main window scrolling, the user was permanently trapped from seeing the bottom tabs.
+  4. On mobile, compounding `min-height: 100vh;` on `.drawer-container`, `padding-bottom: 140px;` on `.drawer-content-scroll`, and an extra `80px` spacer created 2.5x to 3x viewport heights of empty dark void.
+* **Fix & Prevention (Mandatory Viewport-Fixed Side Drawer Protocol)**:
+  1. **Direct Viewport Pinning (`position: fixed !important;`)**:
+     * Side drawers (`<mat-drawer>` / `.detail-drawer`) MUST be pinned directly to the browser viewport:
+       ```css
+       .detail-drawer {
+         position: fixed !important;
+         top: 60px !important;
+         bottom: 0 !important;
+         right: 0 !important;
+         height: calc(100vh - 60px) !important;
+         max-height: calc(100vh - 60px) !important;
+         display: flex !important;
+         flex-direction: column !important;
+         z-index: 1000 !important;
+       }
+       ```
+  2. **Flex Column Chain on Angular Material Inner Container**:
+     * Always enforce flex structure on Angular Material's internal wrapper:
+       ```css
+       .detail-drawer ::ng-deep .mat-drawer-inner-container {
+         display: flex !important;
+         flex-direction: column !important;
+         height: 100% !important;
+         overflow: hidden !important;
+       }
+       ```
+  3. **Strictly Constrained Scroll Body**:
+     * `.drawer-header` must be `flex-shrink: 0;`.
+     * `.drawer-body` must be `flex: 1; min-height: 0; overflow-y: auto !important; padding: 16px 16px 36px 16px !important;` to ensure internal scrolling always activates at the exact viewport boundary.
+  4. **Eliminate Redundant Artificial Spacers**:
+     * Never stack `min-height: 100vh` on nested content wrappers with `padding-bottom: 140px` and large spacer divs. Use compact natural padding (`14px–24px`) with a small `16px` scroll spacer.

@@ -1,333 +1,451 @@
-<mat-drawer-container class="drawer-container">
+<mat-drawer-container class="drawer-container" [hasBackdrop]="true">
   <!-- Main Content -->
-  <mat-drawer-content>
+  <mat-drawer-content class="drawer-content-scroll">
+    
+    <!-- ── Page Header Deck ── -->
     <div class="page-header">
-      <h1>Cash Reports & Shift History</h1>
+      <div class="header-titles">
+        <button type="button" class="back-btn" (click)="goBack()" matTooltip="Back to Store Dashboard">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <h1 class="page-title">Cash Reports & Shift History</h1>
+          <p class="page-subtitle">Complete chronological ledger of store till shifts, physical cash audits, and handover chain of custody</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="count-pill">
+          <mat-icon>history_toggle_off</mat-icon>
+          <span>{{ closedShiftsCount }} Closed Shifts</span>
+        </span>
+      </div>
     </div>
 
-    <!-- 📊 KPI Summary Overview Cards -->
+    <!-- ── 📊 KPI Summary Overview Cards ── -->
     <div class="kpi-summary-cards" *ngIf="dataSource.data.length > 0" [@fadeIn]>
+      <!-- 1. Total Sales -->
       <div class="kpi-card">
-        <div class="kpi-icon-wrap sales"><mat-icon>point_of_sale</mat-icon></div>
+        <div class="kpi-icon-seal icon-cyan">
+          <mat-icon>point_of_sale</mat-icon>
+        </div>
         <div class="kpi-info">
           <span class="kpi-label">Total Revenue</span>
-          <span class="kpi-value positive">₱{{ totalSales | number:'1.2-2' }}</span>
+          <span class="kpi-value text-cyan">₱{{ totalSales | number:'1.2-2' }}</span>
+          <small class="kpi-hint">Across loaded shifts</small>
         </div>
       </div>
 
+      <!-- 2. Total Expenses -->
       <div class="kpi-card">
-        <div class="kpi-icon-wrap expenses"><mat-icon>receipt_long</mat-icon></div>
+        <div class="kpi-icon-seal icon-rose">
+          <mat-icon>receipt_long</mat-icon>
+        </div>
         <div class="kpi-info">
-          <span class="kpi-label">Total Expenses</span>
-          <span class="kpi-value negative">₱{{ totalExpenses | number:'1.2-2' }}</span>
+          <span class="kpi-label">Total Outflows</span>
+          <span class="kpi-value text-rose">-₱{{ totalExpenses | number:'1.2-2' }}</span>
+          <small class="kpi-hint">Shift expenses & payouts</small>
         </div>
       </div>
 
+      <!-- 3. Shift Close Variance -->
       <div class="kpi-card">
-        <div class="kpi-icon-wrap" [ngClass]="totalShiftVariance >= 0 ? 'balanced' : 'shortage'">
+        <div class="kpi-icon-seal" [ngClass]="totalShiftVariance === 0 ? 'icon-mint' : (totalShiftVariance > 0 ? 'icon-gold' : 'icon-rose')">
           <mat-icon>{{ totalShiftVariance === 0 ? 'balance' : (totalShiftVariance > 0 ? 'arrow_upward' : 'arrow_downward') }}</mat-icon>
         </div>
         <div class="kpi-info">
           <span class="kpi-label">Shift Close Variance</span>
-          <span class="kpi-value" [class.negative]="totalShiftVariance < 0" [class.positive]="totalShiftVariance > 0">
+          <span class="kpi-value" [ngClass]="totalShiftVariance === 0 ? 'text-mint' : (totalShiftVariance > 0 ? 'text-gold' : 'text-rose')">
             {{ totalShiftVariance > 0 ? '+' : '' }}₱{{ totalShiftVariance | number:'1.2-2' }}
           </span>
           <small class="kpi-hint">Inside shift discrepancies</small>
         </div>
       </div>
 
+      <!-- 4. Handover Discrepancies -->
       <div class="kpi-card" [class.kpi-alert]="mismatchCount > 0">
-        <div class="kpi-icon-wrap" [ngClass]="totalHandoverDiscrepancy === 0 ? 'balanced' : (totalHandoverDiscrepancy > 0 ? 'overage' : 'shortage')">
-          <mat-icon>{{ mismatchCount > 0 ? 'compare_arrows' : 'check_circle' }}</mat-icon>
+        <div class="kpi-icon-seal" [ngClass]="mismatchCount === 0 ? 'icon-mint' : 'icon-gold'">
+          <mat-icon>{{ mismatchCount > 0 ? 'compare_arrows' : 'verified_user' }}</mat-icon>
         </div>
         <div class="kpi-info">
-          <span class="kpi-label">Handover Discrepancies</span>
-          <span class="kpi-value" [class.negative]="totalHandoverDiscrepancy < 0" [class.positive]="totalHandoverDiscrepancy > 0">
-            {{ totalHandoverDiscrepancy > 0 ? '+' : '' }}₱{{ totalHandoverDiscrepancy | number:'1.2-2' }}
+          <span class="kpi-label">Handover Custody</span>
+          <span class="kpi-value" [ngClass]="mismatchCount === 0 ? 'text-mint' : 'text-gold'">
+            {{ mismatchCount === 0 ? '100% Balanced' : mismatchCount + ' Mismatch' + (mismatchCount > 1 ? 'es' : '') }}
           </span>
-          <small class="kpi-hint danger" *ngIf="mismatchCount > 0">{{ mismatchCount }} handover mismatch{{ mismatchCount > 1 ? 'es' : '' }}</small>
-          <small class="kpi-hint success" *ngIf="mismatchCount === 0">All handovers balanced</small>
+          <small class="kpi-hint danger" *ngIf="mismatchCount > 0">Discrepancy: {{ totalHandoverDiscrepancy > 0 ? '+' : '' }}₱{{ totalHandoverDiscrepancy | number:'1.2-2' }}</small>
+          <small class="kpi-hint success" *ngIf="mismatchCount === 0">All handovers aligned</small>
         </div>
       </div>
     </div>
 
-    <div class="filters-section">
-      <mat-form-field appearance="outline">
-        <mat-label>Date Range</mat-label>
-        <mat-date-range-input [rangePicker]="picker">
-          <input matStartDate [(ngModel)]="startDate" placeholder="Start date">
-          <input matEndDate [(ngModel)]="endDate" placeholder="End date" (dateChange)="applyFilters()">
-        </mat-date-range-input>
-        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-date-range-picker #picker></mat-date-range-picker>
-      </mat-form-field>
+    <!-- ── Filter & Search Deck ── -->
+    <div class="filters-card">
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Date Range</mat-label>
+          <mat-date-range-input [rangePicker]="picker">
+            <input matStartDate [(ngModel)]="startDate" placeholder="Start date">
+            <input matEndDate [(ngModel)]="endDate" placeholder="End date" (dateChange)="applyFilters()">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Opened By</mat-label>
-        <input matInput [(ngModel)]="staffFilter" (keyup.enter)="applyFilters()" placeholder="Staff name...">
-        <button mat-icon-button matSuffix (click)="applyFilters()">
-          <mat-icon>search</mat-icon>
-        </button>
-      </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field staff-search-field">
+          <mat-label>Opened By Staff</mat-label>
+          <mat-icon matPrefix class="search-prefix-icon">search</mat-icon>
+          <input matInput [(ngModel)]="staffFilter" (keyup.enter)="applyFilters()" placeholder="Staff name...">
+          <button mat-icon-button matSuffix *ngIf="staffFilter" (click)="staffFilter = ''; applyFilters()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button type="button" class="btn-filter-cyan" (click)="applyFilters()">
+            <mat-icon>filter_alt</mat-icon>
+            <span>Filter</span>
+          </button>
+          <button type="button" class="btn-reset-outline" (click)="resetFilters()" *ngIf="startDate || endDate || staffFilter">
+            <mat-icon>refresh</mat-icon>
+            <span>Reset</span>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="mat-elevation-z2 table-container" [@fadeIn]>
-      <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
+    <!-- ── Desktop Table View (≥ 640px) ── -->
+    <div class="desktop-table-card" [@fadeIn]>
+      <div class="table-responsive-wrapper">
+        <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
 
-        <!-- Date Column -->
-        <ng-container matColumnDef="date">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Date/Time</th>
-          <td mat-cell *matCellDef="let shift">
-            <div class="date-cell">
-              <span class="date">{{ formatDate(shift.startTime) | date:'mediumDate' }}</span>
-              <span class="time">{{ formatDate(shift.startTime) | date:'shortTime' }} - {{ formatDate(shift.endTime) |
-                date:'shortTime' }}</span>
-              <small class="opened-by">By: <strong>{{ shift.openedBy || 'Staff' }}</strong></small>
-            </div>
-          </td>
-        </ng-container>
-
-        <!-- Opening Cash Column (with Handover Comparison Badge) -->
-        <ng-container matColumnDef="openingCash">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Opening & Handover</th>
-          <td mat-cell *matCellDef="let shift">
-            <div class="opening-cell">
-              <span class="opening-amount">₱{{ shift.openingBalance | number:'1.2-2' }}</span>
-              
-              <!-- Handover Comparison Badge vs Previous Shift Closing -->
-              <span class="handover-badge mismatch" *ngIf="shift.handoverStatus === 'SHORTAGE' || shift.handoverStatus === 'OVERAGE'" [matTooltip]="getHandoverTooltip(shift)">
-                <mat-icon>warning</mat-icon>
-                <span>{{ shift.handoverDiscrepancy > 0 ? '+' : '' }}₱{{ shift.handoverDiscrepancy | number:'1.2-2' }} vs prev close</span>
-              </span>
-
-              <!-- Denomination Reallocation Badge -->
-              <span class="handover-badge realloc" *ngIf="shift.computedHandoverAudit?.status === 'DENOM_REALLOCATION'" matTooltip="Total cash matched, but specific bills/coins were swapped">
-                <mat-icon>published_with_changes</mat-icon>
-                <span>Denom Swap</span>
-              </span>
-
-              <span class="handover-badge matched" *ngIf="shift.handoverStatus === 'MATCHED' && shift.computedHandoverAudit?.status === 'PERFECT_MATCH'" matTooltip="Exact 1-to-1 match with previous shift closing denominations">
-                <mat-icon>check_circle</mat-icon>
-                <span>Exact Match</span>
-              </span>
-
-              <span class="handover-badge initial" *ngIf="shift.handoverStatus === 'INITIAL'">
-                <span>First shift</span>
-              </span>
-            </div>
-          </td>
-        </ng-container>
-
-        <!-- Sales Column -->
-        <ng-container matColumnDef="sales">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Sales Breakdown</th>
-          <td mat-cell *matCellDef="let shift">
-            <div class="sales-cell">
-              <strong class="total-sales">₱{{ (shift.totalRevenue || shift.totalSales) | number:'1.2-2' }}</strong>
-              <div class="sales-sub">
-                <span class="cash-tag" *ngIf="shift.totalCashSales > 0">💵 ₱{{ shift.totalCashSales | number:'1.2-2' }}</span>
-                <span class="gcash-tag" *ngIf="shift.totalGcashSales > 0">📱 ₱{{ shift.totalGcashSales | number:'1.2-2' }}</span>
+          <!-- 1. Date Column -->
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="sticky-col">Date / Shift Period</th>
+            <td mat-cell *matCellDef="let shift" class="sticky-col">
+              <div class="date-cell">
+                <span class="date-text text-pure">{{ formatDate(shift.startTime) | date:'mediumDate' }}</span>
+                <span class="time-text text-secondary">{{ formatDate(shift.startTime) | date:'shortTime' }} – {{ formatDate(shift.endTime) | date:'shortTime' }}</span>
+                <small class="opened-by text-muted">Staff: <strong class="text-white">{{ shift.openedBy || 'Staff' }}</strong></small>
               </div>
-            </div>
-          </td>
-        </ng-container>
+            </td>
+          </ng-container>
 
-        <!-- Expenses Column -->
-        <ng-container matColumnDef="expenses">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Outflows</th>
-          <td mat-cell *matCellDef="let shift">
-            <span class="expense-amount" [class.has-expenses]="shift.totalExpenses > 0">
-              ₱{{ shift.totalExpenses | number:'1.2-2' }}
-            </span>
-          </td>
-        </ng-container>
+          <!-- 2. Opening Cash & Handover Badge -->
+          <ng-container matColumnDef="openingCash">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Opening Float & Custody</th>
+            <td mat-cell *matCellDef="let shift">
+              <div class="opening-cell">
+                <span class="opening-amount text-pure">₱{{ shift.openingBalance | number:'1.2-2' }}</span>
+                
+                <!-- Handover Comparison Badge vs Previous Shift Closing -->
+                <span class="handover-badge mismatch" *ngIf="shift.handoverStatus === 'SHORTAGE' || shift.handoverStatus === 'OVERAGE'" [matTooltip]="getHandoverTooltip(shift)">
+                  <mat-icon>warning</mat-icon>
+                  <span>{{ shift.handoverDiscrepancy > 0 ? '+' : '' }}₱{{ shift.handoverDiscrepancy | number:'1.2-2' }}</span>
+                </span>
 
-        <!-- Ending Cash Column -->
-        <ng-container matColumnDef="endingBalance">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Ending Cash</th>
-          <td mat-cell *matCellDef="let shift">
-            <div class="ending-cell">
-              <span class="actual-end">₱{{ (shift.actualClosingBalance !== null ? shift.actualClosingBalance : shift.expectedClosingBalance) | number:'1.2-2' }}</span>
-              <small class="expected-end">Exp: ₱{{ shift.expectedClosingBalance | number:'1.2-2' }}</small>
-            </div>
-          </td>
-        </ng-container>
+                <!-- Denomination Reallocation Badge -->
+                <span class="handover-badge realloc" *ngIf="shift.computedHandoverAudit?.status === 'DENOM_REALLOCATION'" matTooltip="Total cash matched, but specific bills/coins were swapped">
+                  <mat-icon>published_with_changes</mat-icon>
+                  <span>Denom Swap</span>
+                </span>
 
-        <!-- Variance Column -->
-        <ng-container matColumnDef="variance">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Shift Variance</th>
-          <td mat-cell *matCellDef="let shift">
-            <span class="variance-badge" [class]="getVarianceType(shift)">
-              <mat-icon>{{ getVarianceIcon(getVarianceType(shift)) }}</mat-icon>
-              {{ getVarianceLabel(getVarianceType(shift)) }}
-              <span *ngIf="getVariance(shift) !== 0">
-                ({{ getVariance(shift) > 0 ? '+' : '' }}₱{{ getVariance(shift) | number:'1.2-2' }})
+                <span class="handover-badge matched" *ngIf="shift.handoverStatus === 'MATCHED' && shift.computedHandoverAudit?.status === 'PERFECT_MATCH'" matTooltip="Exact 1-to-1 match with previous shift closing denominations">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Exact Match</span>
+                </span>
+
+                <span class="handover-badge initial" *ngIf="shift.handoverStatus === 'INITIAL'">
+                  <span>First shift</span>
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- 3. Sales Breakdown Column -->
+          <ng-container matColumnDef="sales">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Sales Breakdown</th>
+            <td mat-cell *matCellDef="let shift">
+              <div class="sales-cell">
+                <strong class="total-sales text-cyan">₱{{ (shift.totalRevenue || shift.totalSales) | number:'1.2-2' }}</strong>
+                <div class="sales-sub">
+                  <span class="cash-tag" *ngIf="shift.totalCashSales > 0">💵 ₱{{ shift.totalCashSales | number:'1.2-2' }}</span>
+                  <span class="gcash-tag" *ngIf="shift.totalGcashSales > 0">📱 ₱{{ shift.totalGcashSales | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- 4. Expenses Column -->
+          <ng-container matColumnDef="expenses">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Outflows</th>
+            <td mat-cell *matCellDef="let shift">
+              <span class="expense-amount" [class.has-expenses]="shift.totalExpenses > 0">
+                -₱{{ shift.totalExpenses | number:'1.2-2' }}
               </span>
-            </span>
-          </td>
-        </ng-container>
+            </td>
+          </ng-container>
 
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let shift">
-            <button mat-icon-button color="primary" (click)="viewDetails(shift)" matTooltip="View shift transactions, cash count, and handover audit">
-              <mat-icon>visibility</mat-icon>
-            </button>
-          </td>
-        </ng-container>
+          <!-- 5. Ending Cash Column -->
+          <ng-container matColumnDef="endingBalance">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Ending Cash</th>
+            <td mat-cell *matCellDef="let shift">
+              <div class="ending-cell">
+                <span class="actual-end text-pure">₱{{ (shift.actualClosingBalance !== null ? shift.actualClosingBalance : shift.expectedClosingBalance) | number:'1.2-2' }}</span>
+                <small class="expected-end text-muted">Expected: ₱{{ shift.expectedClosingBalance | number:'1.2-2' }}</small>
+              </div>
+            </td>
+          </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="shift-row"></tr>
+          <!-- 6. Variance Column -->
+          <ng-container matColumnDef="variance">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Variance</th>
+            <td mat-cell *matCellDef="let shift">
+              <span class="variance-badge" [class]="getVarianceType(shift)">
+                <mat-icon class="var-icon">{{ getVarianceIcon(getVarianceType(shift)) }}</mat-icon>
+                <span>{{ getVarianceLabel(getVarianceType(shift)) }}</span>
+                <span *ngIf="getVariance(shift) !== 0">
+                  ({{ getVariance(shift) > 0 ? '+' : '' }}₱{{ getVariance(shift) | number:'1.2-2' }})
+                </span>
+              </span>
+            </td>
+          </ng-container>
 
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell empty-cell" [attr.colspan]="displayedColumns.length">
-            <mat-icon>history</mat-icon>
-            <p>No shift records found</p>
-          </td>
-        </tr>
-      </table>
+          <!-- 7. Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Action</th>
+            <td mat-cell *matCellDef="let shift" class="text-right">
+              <button type="button" class="btn-inspect-action" (click)="viewDetails(shift)" matTooltip="View forensic shift audit & transactions">
+                <mat-icon>visibility</mat-icon>
+                <span>Details</span>
+              </button>
+            </td>
+          </ng-container>
 
-      <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="shift-row" (click)="viewDetails(row)"></tr>
+
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell empty-table-cell" [attr.colspan]="displayedColumns.length">
+              <div class="empty-state-box">
+                <mat-icon>history_toggle_off</mat-icon>
+                <p class="empty-title">No Shift Records Found</p>
+                <span class="empty-subtitle">Adjust your date range or staff filter to inspect past shift ledgers.</span>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons class="dark-paginator"></mat-paginator>
     </div>
+
+    <!-- ── Mobile Touch Cards Deck (< 640px) ── -->
+    <div class="mobile-cards-deck" [@fadeIn]>
+      <div class="mobile-shift-card" *ngFor="let shift of dataSource.data">
+        <div class="card-top-row">
+          <div class="shift-date-box">
+            <span class="date text-pure">{{ formatDate(shift.startTime) | date:'mediumDate' }}</span>
+            <span class="time text-secondary">{{ formatDate(shift.startTime) | date:'shortTime' }} – {{ formatDate(shift.endTime) | date:'shortTime' }}</span>
+          </div>
+          <span class="variance-badge" [class]="getVarianceType(shift)">
+            <mat-icon class="var-icon">{{ getVarianceIcon(getVarianceType(shift)) }}</mat-icon>
+            <span>{{ getVarianceLabel(getVarianceType(shift)) }}</span>
+          </span>
+        </div>
+
+        <div class="staff-row">
+          <span class="staff-tag">👤 Staff: <strong class="text-white">{{ shift.openedBy || 'Staff' }}</strong></span>
+          <span class="handover-badge mismatch" *ngIf="shift.handoverStatus === 'SHORTAGE' || shift.handoverStatus === 'OVERAGE'">
+            ⚠️ {{ (shift.handoverDiscrepancy || 0) > 0 ? '+' : '' }}₱{{ (shift.handoverDiscrepancy || 0) | number:'1.2-2' }}
+          </span>
+          <span class="handover-badge matched" *ngIf="shift.handoverStatus === 'MATCHED'">
+            ✓ Exact Match
+          </span>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="m-label">Revenue</span>
+            <span class="m-val text-cyan">₱{{ (shift.totalRevenue || shift.totalSales) | number:'1.2-2' }}</span>
+          </div>
+          <div class="metric-item">
+            <span class="m-label">Outflows</span>
+            <span class="m-val text-rose">-₱{{ shift.totalExpenses | number:'1.2-2' }}</span>
+          </div>
+          <div class="metric-item">
+            <span class="m-label">Opening</span>
+            <span class="m-val text-pure">₱{{ shift.openingBalance | number:'1.2-2' }}</span>
+          </div>
+          <div class="metric-item">
+            <span class="m-label">Ending Cash</span>
+            <span class="m-val text-gold">₱{{ (shift.actualClosingBalance !== null ? shift.actualClosingBalance : shift.expectedClosingBalance) | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <button type="button" class="btn-mobile-details" (click)="viewDetails(shift)">
+          <mat-icon>visibility</mat-icon>
+          <span>View Forensic Details & Cash Count</span>
+        </button>
+      </div>
+
+      <div class="empty-state-box" *ngIf="dataSource.data.length === 0">
+        <mat-icon>history_toggle_off</mat-icon>
+        <p class="empty-title">No Shift Records Found</p>
+      </div>
+    </div>
+
+    <!-- Bottom Scroll Spacer -->
+    <div class="bottom-scroll-spacer"></div>
+
   </mat-drawer-content>
 
-  <!-- Details Drawer -->
+  <!-- ── Forensic Audit Drawer ── -->
   <mat-drawer #detailDrawer mode="over" position="end" class="detail-drawer">
     <ng-container *ngIf="selectedShift">
+      
+      <!-- Fixed Drawer Header -->
       <div class="drawer-header">
         <div class="header-title">
-          <h2>Shift Audit & Forensic Details</h2>
-          <span class="subtitle">{{ formatDate(selectedShift.startTime) | date:'medium' }}</span>
+          <div class="title-row">
+            <mat-icon class="header-icon text-cyan">fact_check</mat-icon>
+            <h2>Shift Audit & Forensic Details</h2>
+          </div>
+          <span class="subtitle text-secondary">{{ formatDate(selectedShift.startTime) | date:'medium' }}</span>
         </div>
-        <button mat-icon-button (click)="closeDetails()">
+        <button type="button" class="drawer-close-btn" (click)="closeDetails()" matTooltip="Close Details">
           <mat-icon>close</mat-icon>
         </button>
       </div>
 
+      <!-- Scrollable Drawer Body with flex constraint & safe-area buffer -->
       <div class="drawer-body">
-        <!-- Shift Overview Summary Card -->
+        
+        <!-- 1. Shift Overview Summary Card -->
         <div class="drawer-section summary-card">
           <div class="section-title">
-            <mat-icon>insights</mat-icon>
-            <strong>Shift Financial Overview</strong>
+            <mat-icon class="text-cyan">insights</mat-icon>
+            <strong class="text-pure">Shift Financial Overview</strong>
           </div>
 
-          <div class="summary-row">
-            <span class="label">Duration</span>
-            <span class="value">
-              {{ formatDate(selectedShift.startTime) | date:'shortTime' }} -
-              {{ formatDate(selectedShift.endTime) | date:'shortTime' }}
-            </span>
-          </div>
-          <div class="summary-row">
-            <span class="label">Opened By</span>
-            <span class="value">{{ selectedShift.openedBy }}</span>
-          </div>
-          <div class="summary-row">
-            <span class="label">Closed By</span>
-            <span class="value">{{ selectedShift.closedBy }}</span>
-          </div>
-
-          <div class="summary-row">
-            <span class="label">Opening Balance</span>
-            <span class="value">₱{{ selectedShift.openingBalance | number:'1.2-2' }}</span>
-          </div>
-
-          <mat-divider></mat-divider>
-
-          <div class="summary-row">
-            <span class="label">Total Revenue</span>
-            <span class="value">₱{{ (selectedShift.totalRevenue || selectedShift.totalSales) | number:'1.2-2' }}</span>
-          </div>
-          <div class="summary-row sub-row">
-            <span class="label">Cash Sales</span>
-            <span class="value">₱{{ (selectedShift.totalCashSales || 0) | number:'1.2-2' }}</span>
-          </div>
-          <div class="summary-row sub-row">
-            <span class="label">GCash Sales</span>
-            <span class="value">₱{{ (selectedShift.totalGcashSales || 0) | number:'1.2-2' }}</span>
-          </div>
-
-          <mat-divider></mat-divider>
-
-          <div class="summary-row">
-            <span class="label">Net Cash Flow</span>
-            <span class="value" [class.positive]="getNetCashFlow(selectedShift) >= 0"
-              [class.negative]="getNetCashFlow(selectedShift) < 0">
-              {{ getNetCashFlow(selectedShift) >= 0 ? '+' : '' }}₱{{ getNetCashFlow(selectedShift) | number:'1.2-2' }}
-            </span>
-          </div>
-          <div class="summary-row highlight">
-            <span class="label">Variance</span>
-            <span class="value variance" [class]="getVarianceType(selectedShift)">
-              <mat-icon>{{ getVarianceIcon(getVarianceType(selectedShift)) }}</mat-icon>
-              {{ getVarianceLabel(getVarianceType(selectedShift)) }}
-              <span *ngIf="getVariance(selectedShift) !== 0">
-                ({{ getVariance(selectedShift) > 0 ? '+' : '' }}₱{{ getVariance(selectedShift) | number:'1.2-2' }})
+          <div class="summary-grid">
+            <div class="summary-row">
+              <span class="label text-secondary">Duration</span>
+              <span class="value text-pure">
+                {{ formatDate(selectedShift.startTime) | date:'shortTime' }} – {{ formatDate(selectedShift.endTime) | date:'shortTime' }}
               </span>
-            </span>
+            </div>
+            <div class="summary-row">
+              <span class="label text-secondary">Opened By</span>
+              <span class="value text-pure">{{ selectedShift.openedBy || 'Staff' }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="label text-secondary">Closed By</span>
+              <span class="value text-pure">{{ selectedShift.closedBy || 'Staff' }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="label text-secondary">Opening Float</span>
+              <span class="value text-pure">₱{{ selectedShift.openingBalance | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="summary-row highlight">
+              <span class="label text-secondary">Total Revenue</span>
+              <span class="value text-cyan">₱{{ (selectedShift.totalRevenue || selectedShift.totalSales) | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-row sub-row">
+              <span class="label text-muted">💵 Cash Sales</span>
+              <span class="value text-pure">₱{{ (selectedShift.totalCashSales || 0) | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-row sub-row">
+              <span class="label text-muted">📱 GCash Sales</span>
+              <span class="value text-pure">₱{{ (selectedShift.totalGcashSales || 0) | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="summary-row">
+              <span class="label text-secondary">Expenses / Outflows</span>
+              <span class="value text-rose">-₱{{ (selectedShift.totalExpenses || 0) | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="label text-secondary">Cash In (Float)</span>
+              <span class="value text-mint">+₱{{ (selectedShift.totalFloatIn || 0) | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="label text-secondary">Cash Out (Remit)</span>
+              <span class="value text-amber">-₱{{ (selectedShift.totalFloatOut || 0) | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="summary-row highlight">
+              <span class="label text-secondary">Expected Closing Cash</span>
+              <span class="value text-pure">₱{{ selectedShift.expectedClosingBalance | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-row highlight">
+              <span class="label text-secondary">Actual Physical Cash</span>
+              <span class="value text-gold">₱{{ (selectedShift.actualClosingBalance !== null ? selectedShift.actualClosingBalance : selectedShift.expectedClosingBalance) | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-row highlight">
+              <span class="label text-secondary">Closing Cash Variance</span>
+              <span class="value" [ngClass]="getVariance(selectedShift) === 0 ? 'text-mint' : (getVariance(selectedShift) > 0 ? 'text-gold' : 'text-rose')">
+                {{ getVariance(selectedShift) > 0 ? '+' : '' }}₱{{ getVariance(selectedShift) | number:'1.2-2' }}
+              </span>
+            </div>
           </div>
         </div>
 
-        <!-- 🔍 FORENSIC EVIDENCE: HANDOVER DENOMINATION COMPARISON MATRIX -->
+        <!-- 2. 🛡️ Handover Chain of Custody & Denomination Audit Section -->
         <div class="drawer-section handover-evidence-card">
           <div class="section-title">
-            <mat-icon>compare_arrows</mat-icon>
-            <strong>Handover Denomination Audit Evidence</strong>
+            <mat-icon class="text-gold">shield</mat-icon>
+            <strong class="text-pure">Handover Chain-of-Custody Audit</strong>
           </div>
 
-          <!-- Handover Status Banner -->
-          <div class="handover-status-box" [ngClass]="{
-            'status-perfect': selectedShift.computedHandoverAudit?.status === 'PERFECT_MATCH',
-            'status-realloc': selectedShift.computedHandoverAudit?.status === 'DENOM_REALLOCATION',
-            'status-mismatch': selectedShift.computedHandoverAudit?.status === 'CASH_MISMATCH',
-            'status-initial': selectedShift.computedHandoverAudit?.status === 'INITIAL_SHIFT'
-          }">
-            <mat-icon *ngIf="selectedShift.computedHandoverAudit?.status === 'PERFECT_MATCH'">check_circle</mat-icon>
-            <mat-icon *ngIf="selectedShift.computedHandoverAudit?.status === 'DENOM_REALLOCATION'">published_with_changes</mat-icon>
-            <mat-icon *ngIf="selectedShift.computedHandoverAudit?.status === 'CASH_MISMATCH'">warning</mat-icon>
-
+          <!-- Status Message Box -->
+          <div class="handover-status-box"
+               [class.status-perfect]="selectedShift.computedHandoverAudit?.status === 'PERFECT_MATCH'"
+               [class.status-realloc]="selectedShift.computedHandoverAudit?.status === 'DENOM_REALLOCATION'"
+               [class.status-mismatch]="selectedShift.computedHandoverAudit?.status === 'CASH_MISMATCH'"
+               [class.status-initial]="selectedShift.computedHandoverAudit?.status === 'INITIAL_SHIFT' || selectedShift.handoverStatus === 'INITIAL'">
+            <mat-icon class="status-box-icon">
+              {{ selectedShift.computedHandoverAudit?.status === 'PERFECT_MATCH' ? 'verified' : (selectedShift.computedHandoverAudit?.status === 'DENOM_REALLOCATION' ? 'swap_horiz' : 'warning') }}
+            </mat-icon>
             <div class="status-msg">
-              <strong *ngIf="selectedShift.computedHandoverAudit?.status === 'PERFECT_MATCH'">Verified Balanced Handover (1-to-1 Match)</strong>
-              <strong *ngIf="selectedShift.computedHandoverAudit?.status === 'DENOM_REALLOCATION'">Denomination Reallocation (Total Matched · Swapped Bills)</strong>
-              <strong *ngIf="selectedShift.computedHandoverAudit?.status === 'CASH_MISMATCH'">Cash Handover Variance (Shortage / Overage)</strong>
-              <strong *ngIf="!selectedShift.computedHandoverAudit || selectedShift.computedHandoverAudit.status === 'INITIAL_SHIFT'">Initial Shift in Timeline</strong>
-              
-              <p *ngIf="selectedShift.prevShift">Handover from <strong>{{ selectedShift.prevShift.closedBy || selectedShift.prevShift.openedBy || 'Previous Staff' }}</strong> to <strong>{{ selectedShift.openedBy }}</strong></p>
+              <strong>{{ getHandoverHeadline(selectedShift.computedHandoverAudit) }}</strong>
+              <p>{{ getHandoverExplanation(selectedShift.computedHandoverAudit) }}</p>
             </div>
           </div>
 
-          <!-- Opening Remarks as Evidence -->
+          <!-- Remarks if any -->
           <div class="evidence-remarks-box" *ngIf="selectedShift.openingRemarks">
-            <div class="remarks-header">
-              <mat-icon>format_quote</mat-icon>
-              <span>Opening Cashier Remarks (Recorded at Shift Start):</span>
+            <div class="remarks-header text-gold">
+              <mat-icon>comment</mat-icon>
+              <span>Shift Opener Note:</span>
             </div>
             <p class="remarks-text">"{{ selectedShift.openingRemarks }}"</p>
           </div>
 
-          <!-- Side-by-Side Comparison Matrix Table -->
+          <!-- Itemized Denomination Handover Comparison Table -->
           <div class="evidence-table-wrap" *ngIf="getHandoverDiffItems(selectedShift).length > 0">
             <table class="evidence-table">
               <thead>
                 <tr>
-                  <th>Denomination</th>
+                  <th>Denom</th>
                   <th class="text-center">Prev Close</th>
-                  <th class="text-center">Open Count</th>
+                  <th class="text-center">This Open</th>
                   <th class="text-center">Unit Diff</th>
                   <th class="text-right">Value Diff</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let item of getHandoverDiffItems(selectedShift)" [class.mismatch-row]="!item.isMatched">
+                <tr *ngFor="let item of getHandoverDiffItems(selectedShift)" [class.mismatch-row]="item.unitDiff !== 0">
                   <td>
-                    <span class="denom-pill" [class.bill]="item.type === 'BILL'" [class.coin]="item.type === 'COIN'">
-                      {{ item.label }}
+                    <span class="denom-pill" [class.bill]="item.denomination >= 20" [class.coin]="item.denomination < 20">
+                      ₱{{ item.denomination >= 1 ? (item.denomination | number:'1.0-0') : (item.denomination | number:'1.2-2') }}
                     </span>
                   </td>
-                  <td class="text-center">{{ item.prevCount }} pcs</td>
-                  <td class="text-center">{{ item.openCount }} pcs</td>
+                  <td class="text-center text-muted">{{ item.prevCount }} pcs</td>
+                  <td class="text-center text-pure">{{ item.openCount }} pcs</td>
                   <td class="text-center">
                     <span class="unit-diff-badge" [class.matched]="item.unitDiff === 0" [class.plus]="item.unitDiff > 0" [class.minus]="item.unitDiff < 0">
                       {{ item.unitDiff > 0 ? '+' : '' }}{{ item.unitDiff }}
@@ -342,12 +460,12 @@
               </tbody>
               <tfoot>
                 <tr class="foot-total-row">
-                  <td colspan="3"><strong>Total Handover Cash</strong></td>
+                  <td colspan="3" class="text-pure"><strong>Total Handover Cash</strong></td>
                   <td class="text-center">
-                    <strong>{{ selectedShift.computedHandoverAudit?.isDenomMatched ? 'Matched' : 'Diff' }}</strong>
+                    <strong class="text-cyan">{{ selectedShift.computedHandoverAudit?.isDenomMatched ? 'Matched' : 'Diff' }}</strong>
                   </td>
                   <td class="text-right">
-                    <strong [class.positive]="(selectedShift.computedHandoverAudit?.cashVariance || 0) > 0" [class.negative]="(selectedShift.computedHandoverAudit?.cashVariance || 0) < 0">
+                    <strong [class.text-mint]="(selectedShift.computedHandoverAudit?.cashVariance || 0) === 0" [class.text-rose]="(selectedShift.computedHandoverAudit?.cashVariance || 0) !== 0">
                       {{ (selectedShift.computedHandoverAudit?.cashVariance || 0) > 0 ? '+' : '' }}₱{{ (selectedShift.computedHandoverAudit?.cashVariance || 0) | number:'1.2-2' }}
                     </strong>
                   </td>
@@ -357,19 +475,19 @@
           </div>
         </div>
 
-        <!-- 💵 Shift Ending Physical Cash Count Audit Section -->
+        <!-- 3. 💵 Shift Ending Physical Cash Count Audit Section -->
         <div class="drawer-section denom-audit-card">
           <div class="section-title">
-            <mat-icon>calculate</mat-icon>
-            <strong>Shift Closing Physical Cash Count</strong>
+            <mat-icon class="text-cyan">calculate</mat-icon>
+            <strong class="text-pure">Shift Closing Physical Cash Count</strong>
           </div>
 
           <!-- When Override was used -->
           <div class="override-drawer-notice" *ngIf="selectedShift.isManualClosingCountOverride">
-            <mat-icon>warning</mat-icon>
+            <mat-icon class="text-gold">warning</mat-icon>
             <div class="alert-info">
-              <strong>Manual Lump-Sum Count Override</strong>
-              <span>Staff entered the total cash count directly without itemized denomination breakdown.</span>
+              <strong class="text-pure">Manual Lump-Sum Count Override</strong>
+              <span class="text-secondary">Staff entered the total cash count directly without itemized denomination breakdown.</span>
             </div>
           </div>
 
@@ -390,14 +508,14 @@
                       ₱{{ d.value >= 1 ? (d.value | number:'1.0-0') : (d.value | number:'1.2-2') }}
                     </span>
                   </td>
-                  <td class="text-center">{{ d.count }} pcs</td>
-                  <td class="text-right">₱{{ d.subtotal | number:'1.2-2' }}</td>
+                  <td class="text-center text-pure">{{ d.count }} pcs</td>
+                  <td class="text-right text-pure">₱{{ d.subtotal | number:'1.2-2' }}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="2"><strong>Total Physical Count</strong></td>
-                  <td class="text-right"><strong>₱{{ selectedShift.actualClosingBalance | number:'1.2-2' }}</strong></td>
+                  <td colspan="2" class="text-pure"><strong>Total Physical Count</strong></td>
+                  <td class="text-right text-gold"><strong>₱{{ selectedShift.actualClosingBalance | number:'1.2-2' }}</strong></td>
                 </tr>
               </tfoot>
             </table>
@@ -405,122 +523,131 @@
 
           <!-- No denomination data available (legacy shift) -->
           <div class="no-denom-data" *ngIf="!selectedShift.isManualClosingCountOverride && getDenominationEntries(selectedShift).length === 0">
+            <mat-icon class="text-muted">receipt</mat-icon>
             <span>No itemized denomination breakdown recorded for this shift close.</span>
           </div>
         </div>
 
-        <!-- Transaction Tabs -->
-        <mat-tab-group>
-          <!-- Sales Tab -->
-          <mat-tab>
-            <ng-template mat-tab-label>
-              <mat-icon>point_of_sale</mat-icon>
-              Sales ({{ getSalesTransactions(selectedShift).length }})
-            </ng-template>
-            <div class="tab-content">
-              <div *ngIf="getSalesTransactions(selectedShift).length === 0" class="empty-tab">
-                No sales in this shift
-              </div>
-              <div *ngFor="let tx of getSalesTransactions(selectedShift)" class="transaction-item" [class.voided-item]="tx.voided">
-                <div class="tx-main">
-                  <div class="tx-info">
-                    <span class="tx-reason">{{ tx.reason }}</span>
-                    <span class="tx-products" *ngIf="tx.productsSummary">{{ tx.productsSummary }}</span>
-                    <div class="tx-meta">
-                      <span class="tx-time">{{ formatDate(tx.timestamp) | date:'shortDate' }} · {{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
-                      <span class="tx-performer" *ngIf="tx.performedBy">· {{ tx.performedBy }}</span>
+        <!-- 4. 📑 Transaction Tabs -->
+        <div class="drawer-section tabs-section">
+          <mat-tab-group class="dark-drawer-tabs">
+            
+            <!-- Sales Tab -->
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tab-label-icon">point_of_sale</mat-icon>
+                <span>Sales ({{ getSalesTransactions(selectedShift).length }})</span>
+              </ng-template>
+              <div class="tab-content">
+                <div *ngIf="getSalesTransactions(selectedShift).length === 0" class="empty-tab">
+                  <mat-icon class="text-muted">shopping_bag</mat-icon>
+                  <p>No sales recorded in this shift</p>
+                </div>
+                <div *ngFor="let tx of getSalesTransactions(selectedShift)" class="transaction-item" [class.voided-item]="tx.voided">
+                  <div class="tx-main">
+                    <div class="tx-info">
+                      <span class="tx-reason text-pure">{{ tx.reason }}</span>
+                      <span class="tx-products text-secondary" *ngIf="tx.productsSummary">{{ tx.productsSummary }}</span>
+                      <div class="tx-meta text-muted">
+                        <span>{{ formatDate(tx.timestamp) | date:'shortDate' }} · {{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
+                        <span class="tx-user text-cyan">By: {{ tx.performedBy }}</span>
+                        <span class="tx-member text-gold" *ngIf="tx.memberName">→ {{ tx.memberName }}</span>
+                      </div>
                     </div>
-                    <span class="tx-member" *ngIf="tx.memberName">{{ tx.memberName }}</span>
+                    <div class="tx-amount-wrap">
+                      <span class="tx-amount text-mint">+₱{{ tx.amount | number:'1.2-2' }}</span>
+                      <span class="tx-method-tag">{{ tx.paymentMethod }}</span>
+                    </div>
                   </div>
-                  <div class="tx-right">
-                    <span class="tx-method" *ngIf="tx.paymentMethod" [class.gcash]="tx.paymentMethod === 'GCASH'" [class.split]="tx.paymentMethod === 'SPLIT'"
-                      [matTooltip]="tx.paymentMethod === 'SPLIT' ? '💵 Cash: ₱' + ((tx.cashAmount || 0) | number:'1.2-2') + ' | 📱 GCash: ₱' + ((tx.gcashAmount || 0) | number:'1.2-2') : ''">
-                      {{ tx.paymentMethod }}
-                    </span>
-                    <span class="tx-void-badge" *ngIf="tx.voided">VOIDED</span>
+                  <div class="void-banner" *ngIf="tx.voided">
+                    <mat-icon>cancel</mat-icon>
+                    <span>VOIDED TRANSACTION</span>
                   </div>
                 </div>
               </div>
-              <div class="tab-total" *ngIf="getSalesTransactions(selectedShift).length > 0">
-                <span>Total Sales</span>
-                <span class="positive">₱{{ selectedShift.totalSales | number:'1.2-2' }}</span>
-              </div>
-            </div>
-          </mat-tab>
+            </mat-tab>
 
-          <!-- Expenses Tab -->
-          <mat-tab>
-            <ng-template mat-tab-label>
-              <mat-icon>receipt</mat-icon>
-              Expenses ({{ getExpenseTransactions(selectedShift).length }})
-            </ng-template>
-            <div class="tab-content">
-              <div *ngIf="getExpenseTransactions(selectedShift).length === 0" class="empty-tab">
-                No expenses in this shift
-              </div>
-              <div *ngFor="let tx of getExpenseTransactions(selectedShift)" class="transaction-item">
-                <div class="tx-main">
-                  <div class="tx-info">
-                    <span class="tx-reason">{{ tx.reason }}</span>
-                    <div class="tx-meta">
-                      <span class="tx-time">{{ formatDate(tx.timestamp) | date:'shortDate' }} · {{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
-                      <span class="tx-performer">· {{ tx.performedBy }}</span>
+            <!-- Expenses Tab -->
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tab-label-icon">receipt_long</mat-icon>
+                <span>Expenses ({{ getExpenseTransactions(selectedShift).length }})</span>
+              </ng-template>
+              <div class="tab-content">
+                <div *ngIf="getExpenseTransactions(selectedShift).length === 0" class="empty-tab">
+                  <mat-icon class="text-muted">receipt</mat-icon>
+                  <p>No expenses recorded in this shift</p>
+                </div>
+                <div *ngFor="let tx of getExpenseTransactions(selectedShift)" class="transaction-item">
+                  <div class="tx-main">
+                    <div class="tx-info">
+                      <span class="tx-reason text-pure">{{ tx.reason }}</span>
+                      <div class="tx-meta text-muted">
+                        <span>{{ formatDate(tx.timestamp) | date:'shortDate' }} · {{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
+                        <span class="tx-user text-cyan">By: {{ tx.performedBy }}</span>
+                        <span class="tx-supplier text-gold" *ngIf="tx.billerOrSupplier">Payee: {{ tx.billerOrSupplier }}</span>
+                      </div>
                     </div>
+                    <span class="tx-amount text-rose">-₱{{ tx.amount | number:'1.2-2' }}</span>
                   </div>
-                  <span class="tx-amount negative">-₱{{ tx.amount | number:'1.2-2' }}</span>
                 </div>
               </div>
-              <div class="tab-total" *ngIf="getExpenseTransactions(selectedShift).length > 0">
-                <span>Total Expenses</span>
-                <span class="negative">₱{{ selectedShift.totalExpenses | number:'1.2-2' }}</span>
-              </div>
-            </div>
-          </mat-tab>
+            </mat-tab>
 
-          <!-- Float In/Out Tab -->
-          <mat-tab>
-            <ng-template mat-tab-label>
-              <mat-icon>swap_horiz</mat-icon>
-              Float ({{ getFloatInTransactions(selectedShift).length + getFloatOutTransactions(selectedShift).length }})
-            </ng-template>
-            <div class="tab-content">
-              <div
-                *ngIf="getFloatInTransactions(selectedShift).length === 0 && getFloatOutTransactions(selectedShift).length === 0"
-                class="empty-tab">
-                No float transactions in this shift
-              </div>
-
-              <div *ngFor="let tx of getFloatInTransactions(selectedShift)" class="transaction-item">
-                <div class="tx-main">
-                  <div class="tx-info">
-                    <mat-icon class="tx-icon positive">add_circle</mat-icon>
-                    <span class="tx-reason">{{ tx.reason }}</span>
-                    <div class="tx-meta">
-                      <span class="tx-time">{{ formatDate(tx.timestamp) | date:'shortDate' }} · {{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
-                      <span class="tx-performer">· {{ tx.performedBy }}</span>
-                    </div>
-                  </div>
-                  <span class="tx-amount positive">+₱{{ tx.amount | number:'1.2-2' }}</span>
+            <!-- Float / Movements Tab -->
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="tab-label-icon">sync_alt</mat-icon>
+                <span>Float ({{ getFloatInTransactions(selectedShift).length + getFloatOutTransactions(selectedShift).length }})</span>
+              </ng-template>
+              <div class="tab-content">
+                <div *ngIf="getFloatInTransactions(selectedShift).length === 0 && getFloatOutTransactions(selectedShift).length === 0" class="empty-tab">
+                  <mat-icon class="text-muted">savings</mat-icon>
+                  <p>No float movements in this shift</p>
                 </div>
-              </div>
 
-              <div *ngFor="let tx of getFloatOutTransactions(selectedShift)" class="transaction-item">
-                <div class="tx-main">
-                  <div class="tx-info">
-                    <mat-icon class="tx-icon negative">remove_circle</mat-icon>
-                    <span class="tx-reason">{{ tx.reason }}</span>
-                    <div class="tx-meta">
-                      <span class="tx-time">{{ formatDate(tx.timestamp) | date:'shortDate' }} · {{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
-                      <span class="tx-performer">· {{ tx.performedBy }}</span>
+                <!-- Float In -->
+                <div *ngFor="let tx of getFloatInTransactions(selectedShift)" class="transaction-item">
+                  <div class="tx-main">
+                    <div class="tx-info">
+                      <span class="tx-type-tag text-mint">📥 Cash In (Float)</span>
+                      <span class="tx-reason text-pure">{{ tx.reason }}</span>
+                      <div class="tx-meta text-muted">
+                        <span>{{ formatDate(tx.timestamp) | date:'shortDate' }} · {{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
+                        <span class="tx-user text-cyan">By: {{ tx.performedBy }}</span>
+                      </div>
                     </div>
+                    <span class="tx-amount text-mint">+₱{{ tx.amount | number:'1.2-2' }}</span>
                   </div>
-                  <span class="tx-amount negative">-₱{{ tx.amount | number:'1.2-2' }}</span>
                 </div>
+
+                <!-- Float Out -->
+                <div *ngFor="let tx of getFloatOutTransactions(selectedShift)" class="transaction-item">
+                  <div class="tx-main">
+                    <div class="tx-info">
+                      <span class="tx-type-tag text-amber">📤 Cash Out (Remit)</span>
+                      <span class="tx-reason text-pure">{{ tx.reason }}</span>
+                      <div class="tx-meta text-muted">
+                        <span>{{ formatDate(tx.timestamp) | date:'shortDate' }} · {{ formatDate(tx.timestamp) | date:'shortTime' }}</span>
+                        <span class="tx-user text-cyan">By: {{ tx.performedBy }}</span>
+                      </div>
+                    </div>
+                    <span class="tx-amount text-amber">-₱{{ tx.amount | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+
               </div>
-            </div>
-          </mat-tab>
-        </mat-tab-group>
+            </mat-tab>
+
+          </mat-tab-group>
+        </div>
+
+        <!-- Safe-Area Bottom Buffer Spacer inside Drawer -->
+        <div class="drawer-bottom-spacer"></div>
+
       </div>
+
     </ng-container>
   </mat-drawer>
+
 </mat-drawer-container>
