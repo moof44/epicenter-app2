@@ -343,6 +343,34 @@ export class ShiftControlModal implements OnInit {
       return;
     }
 
+    const expected = this.shiftSummary?.expectedClosingBalance || 0;
+    if (this.actualClosingBalance === 0 && expected > 0) {
+      const confirmed = confirm(
+        `⚠️ ZERO CASH COUNT WARNING:\n\n` +
+        `Actual counted cash is ₱0.00, but expected cash in drawer is ₱${expected.toFixed(2)}.\n\n` +
+        `Did you perform a physical cash count?\n` +
+        `• Click "Cancel" to go back and count bills and coins.\n` +
+        `• Click "OK" ONLY if the physical cash drawer is truly empty (₱0.00).`
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    const discrepancy = this.getDiscrepancy();
+    if (Math.abs(discrepancy) >= 500 && this.actualClosingBalance > 0) {
+      const confirmed = confirm(
+        `⚠️ LARGE CASH DISCREPANCY DETECTED:\n\n` +
+        `Expected: ₱${expected.toFixed(2)}\n` +
+        `Counted: ₱${this.actualClosingBalance.toFixed(2)}\n` +
+        `Discrepancy: ${discrepancy > 0 ? '+' : ''}₱${discrepancy.toFixed(2)}\n\n` +
+        `Are you sure you want to close this shift with this variance?`
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
     this.isLoading = true;
     try {
       const user = this.authService.userProfile();
