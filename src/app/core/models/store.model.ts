@@ -18,6 +18,8 @@ export interface Product {
     lastCostPrice?: number;
     averageCost?: number;
     lastModifiedBy?: AuditTrace;
+    isActive?: boolean;
+    disabled?: boolean;
 }
 
 export interface CartItem {

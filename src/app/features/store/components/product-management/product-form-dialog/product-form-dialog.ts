@@ -55,7 +55,8 @@ export class ProductFormDialog {
       minStockLevel: [product?.minStockLevel || 5, [Validators.required, Validators.min(0)]],
       imageUrl: [product?.imageUrl || ''],
       type: [product?.type || defaultType],
-      stock: [product?.stock || 0]
+      stock: [product?.stock || 0],
+      isActive: [product?.isActive !== false && !product?.disabled]
     });
   }
 
@@ -72,6 +73,9 @@ export class ProductFormDialog {
     if (formValue.type === 'CONSUMABLE') {
       formValue.price = 0;
     }
+
+    formValue.isActive = !!formValue.isActive;
+    formValue.disabled = !formValue.isActive;
 
     try {
       if (this.isEditing && this.data.product?.id) {

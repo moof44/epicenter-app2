@@ -41,7 +41,7 @@ export class ProductManagement implements AfterViewInit {
   private dialog = inject(MatDialog);
 
   dataSource = new MatTableDataSource<Product>([]);
-  displayedColumns = ['name', 'category', 'price', 'stock', 'actions'];
+  displayedColumns = ['name', 'category', 'price', 'stock', 'status', 'actions'];
   categories: ProductCategory[] = ['Training', 'Supplements', 'Drinks', 'Boxing'];
 
   // Data State
@@ -52,6 +52,7 @@ export class ProductManagement implements AfterViewInit {
   currentFilter = signal<ProductType>('RETAIL');
   searchQuery = signal<string>('');
   selectedCategory = signal<string>('ALL');
+  statusFilter = signal<'ALL' | 'ACTIVE' | 'DISABLED'>('ALL');
 
   // Products filtered by type (for metrics)
   typeProducts = computed(() => {
@@ -62,9 +63,17 @@ export class ProductManagement implements AfterViewInit {
 
   // Summary Metrics
   totalSkus = computed(() => this.typeProducts().length);
+  activeSkusCount = computed(() => {
+    return this.typeProducts().filter(p => p.isActive !== false && !p.disabled).length;
+  });
+  disabledSkusCount = computed(() => {
+    return this.typeProducts().filter(p => p.isActive === false || p.disabled === true).length;
+  });
   totalInventoryValue = computed(() => {
     if (this.currentFilter() !== 'RETAIL') return 0;
-    return this.typeProducts().reduce((sum, p) => sum + (p.price || 0) * (p.stock || 0), 0);
+    return this.typeProducts()
+      .filter(p => p.isActive !== false && !p.disabled)
+      .reduce((sum, p) => sum + (p.price || 0) * (p.stock || 0), 0);
   });
   lowStockCount = computed(() => {
     return this.typeProducts().filter(p => p.stock > 0 && p.stock <= (p.minStockLevel || 5)).length;
@@ -78,9 +87,16 @@ export class ProductManagement implements AfterViewInit {
     let list = this.typeProducts();
     const q = this.searchQuery().trim().toLowerCase();
     const cat = this.selectedCategory();
+    const status = this.statusFilter();
 
     if (cat !== 'ALL') {
       list = list.filter(p => p.category === cat);
+    }
+
+    if (status === 'ACTIVE') {
+      list = list.filter(p => p.isActive !== false && !p.disabled);
+    } else if (status === 'DISABLED') {
+      list = list.filter(p => p.isActive === false || p.disabled === true);
     }
 
     if (q) {
@@ -101,9 +117,9 @@ export class ProductManagement implements AfterViewInit {
       this.dataSource.data = this.filteredProducts();
 
       if (this.currentFilter() === 'CONSUMABLE') {
-        this.displayedColumns = ['name', 'unit', 'stock', 'actions'];
+        this.displayedColumns = ['name', 'unit', 'stock', 'status', 'actions'];
       } else {
-        this.displayedColumns = ['name', 'category', 'price', 'stock', 'actions'];
+        this.displayedColumns = ['name', 'category', 'price', 'stock', 'status', 'actions'];
       }
       this.cdr.markForCheck();
     });
@@ -181,6 +197,37 @@ export class ProductManagement implements AfterViewInit {
       case 'Drinks': return '#34d399';
       case 'Boxing': return '#f87171';
       default: return '#94a3b8';
+    }
+  }
+
+  isProductActive(product: Product): boolean {
+    return product.isActive !== false && !product.disabled;
+  }
+
+  setStatusFilter(status: 'ALL' | 'ACTIVE' | 'DISABLED'): void {
+    this.statusFilter.set(status);
+  }
+
+  async toggleProductActive(product: Product): Promise<void> {
+    if (!product.id) return;
+    const currentActive = this.isProductActive(product);
+    const nextActive = !currentActive;
+
+    try {
+      await this.productService.updateProduct(product.id, {
+        isActive: nextActive,
+        disabled: !nextActive
+      });
+      this.snackBar.open(
+        `"${product.name}" is now ${nextActive ? 'Active (visible in POS)' : 'Disabled (hidden from POS)'}`,
+        'Close',
+        { duration: 2500 }
+      );
+    } catch (err) {
+      console.error('Error toggling product status:', err);
+      this.snackBar.open('Failed to update product status', 'Close', { duration: 3000 });
+    } finally {
+      this.cdr.markForCheck();
     }
   }
 }

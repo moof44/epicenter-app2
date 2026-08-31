@@ -58,7 +58,7 @@ export class ProductCatalogComponent {
 
     // Computed
     filteredProducts = computed(() => {
-        const allProducts = this.products();
+        const allProducts = this.products().filter(p => p.type !== 'CONSUMABLE' && p.isActive !== false && !p.disabled);
         const category = this.selectedCategory();
 
         if (!category || category === 'All') {

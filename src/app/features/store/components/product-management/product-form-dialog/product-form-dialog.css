@@ -153,6 +153,48 @@
   color: inherit !important;
 }
 
+/* Status Toggle Card */
+.status-toggle-card {
+  background: var(--color-surface-input, #0b0f19);
+  border: 1px solid var(--color-border, #334155);
+  border-radius: var(--radius-xl, 12px);
+  padding: 12px 14px;
+}
+
+.status-toggle-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.status-checkbox {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-mint-success, #34d399);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.status-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle-title {
+  font-size: 13px;
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-pure, #ffffff);
+}
+
+.toggle-sub {
+  font-size: 11px;
+  color: var(--color-text-secondary, #cbd5e1);
+  line-height: 1.35;
+}
+
 @media (max-width: 639px) {
   .dialog-header { padding: 14px 16px; }
   .dialog-body { padding: 16px; gap: 12px; }

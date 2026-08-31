@@ -4,7 +4,7 @@
   <div class="page-header">
     <div class="header-titles">
       <h1 class="page-title">Product & Inventory Management</h1>
-      <p class="page-subtitle">Track stock levels, retail pricing, and internal consumable assets</p>
+      <p class="page-subtitle">Track stock levels, retail pricing, active POS catalog visibility, and internal consumable assets</p>
     </div>
     <div class="header-actions">
       <button type="button" class="btn-add-product-gold" (click)="openAddForm()">
@@ -23,7 +23,8 @@
       </div>
       <div class="card-info">
         <span class="label">Active {{ currentFilter() === 'RETAIL' ? 'Retail SKUs' : 'Consumables' }}</span>
-        <span class="value text-cyan">{{ totalSkus() }} item{{ totalSkus() === 1 ? '' : 's' }}</span>
+        <span class="value text-cyan">{{ activeSkusCount() }} active</span>
+        <span class="sub-label text-muted" *ngIf="disabledSkusCount() > 0">({{ disabledSkusCount() }} disabled in POS)</span>
       </div>
     </div>
 
@@ -35,6 +36,7 @@
       <div class="card-info">
         <span class="label">Total Retail Value</span>
         <span class="value text-gold">₱{{ totalInventoryValue() | number:'1.2-2' }}</span>
+        <span class="sub-label text-muted">Active stock only</span>
       </div>
     </div>
 
@@ -48,6 +50,7 @@
         <span class="value" [class.text-amber]="lowStockCount() > 0" [class.text-white]="lowStockCount() === 0">
           {{ lowStockCount() }} item{{ lowStockCount() === 1 ? '' : 's' }}
         </span>
+        <span class="sub-label text-muted">Below min threshold</span>
       </div>
     </div>
 
@@ -61,11 +64,12 @@
         <span class="value" [class.text-rose]="outOfStockCount() > 0" [class.text-white]="outOfStockCount() === 0">
           {{ outOfStockCount() }} item{{ outOfStockCount() === 1 ? '' : 's' }}
         </span>
+        <span class="sub-label text-muted">Requires replenishment</span>
       </div>
     </div>
   </div>
 
-  <!-- ── Inventory Control Deck (Tabs & Search Bar) ── -->
+  <!-- ── Inventory Control Deck (Tabs, Search & Filter Bar) ── -->
   <div class="inventory-controls-card">
     <div class="tabs-and-search-row">
       <!-- High Contrast Tabs -->
@@ -84,14 +88,32 @@
       </div>
     </div>
 
-    <!-- Category Filter Pills (Retail Items) -->
-    <div class="category-pills-row" *ngIf="currentFilter() === 'RETAIL'">
-      <button type="button" class="cat-pill" [class.active]="selectedCategory() === 'ALL'" (click)="setCategoryFilter('ALL')">
-        All Categories
-      </button>
-      <button type="button" class="cat-pill" *ngFor="let cat of categories" [class.active]="selectedCategory() === cat" (click)="setCategoryFilter(cat)">
-        {{ cat }}
-      </button>
+    <!-- Filter Deck: Categories & POS Status Filter -->
+    <div class="filters-deck-row">
+      <!-- Category Filter Pills (Retail Items) -->
+      <div class="category-pills-row" *ngIf="currentFilter() === 'RETAIL'">
+        <button type="button" class="cat-pill" [class.active]="selectedCategory() === 'ALL'" (click)="setCategoryFilter('ALL')">
+          All Categories
+        </button>
+        <button type="button" class="cat-pill" *ngFor="let cat of categories" [class.active]="selectedCategory() === cat" (click)="setCategoryFilter(cat)">
+          {{ cat }}
+        </button>
+      </div>
+
+      <!-- POS Status Filter Pills -->
+      <div class="status-filter-pills">
+        <button type="button" class="status-filter-btn" [class.active]="statusFilter() === 'ALL'" (click)="setStatusFilter('ALL')">
+          All Status
+        </button>
+        <button type="button" class="status-filter-btn active-state" [class.active]="statusFilter() === 'ACTIVE'" (click)="setStatusFilter('ACTIVE')">
+          <mat-icon class="mini-icon">check_circle</mat-icon>
+          Active in POS
+        </button>
+        <button type="button" class="status-filter-btn disabled-state" [class.active]="statusFilter() === 'DISABLED'" (click)="setStatusFilter('DISABLED')">
+          <mat-icon class="mini-icon">visibility_off</mat-icon>
+          Disabled
+        </button>
+      </div>
     </div>
   </div>
 
@@ -107,16 +129,21 @@
 
     <!-- 📱 1. ADAPTIVE MOBILE CARD DECK (< 640px) -->
     <div class="mobile-cards-deck" *ngIf="filteredProducts().length > 0">
-      <div class="product-mobile-card" *ngFor="let product of filteredProducts()">
+      <div class="product-mobile-card" *ngFor="let product of filteredProducts()" [class.card-disabled]="!isProductActive(product)">
         
-        <!-- Top Row: Thumbnail + Title + Category -->
+        <!-- Top Row: Thumbnail + Title + Category + Status -->
         <div class="mobile-card-top">
           <div class="mobile-thumb-wrap">
             <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="mobile-thumb" />
             <mat-icon *ngIf="!product.imageUrl" class="mobile-placeholder-icon">inventory_2</mat-icon>
           </div>
           <div class="mobile-card-titles">
-            <strong class="mobile-product-title text-white">{{ product.name }}</strong>
+            <div class="mobile-title-row">
+              <strong class="mobile-product-title text-white">{{ product.name }}</strong>
+              <span class="status-pill mini" [class.active]="isProductActive(product)" [class.disabled]="!isProductActive(product)">
+                {{ isProductActive(product) ? 'Active' : 'Disabled' }}
+              </span>
+            </div>
             <div class="mobile-badges-row">
               <span *ngIf="(product.type || 'RETAIL') === 'RETAIL' && product.category" class="category-pill"
                     [style.border-color]="getCategoryColor(product.category) + '60'"
@@ -154,13 +181,22 @@
           </div>
 
           <div class="mobile-actions-row">
+            <!-- Quick Consume (Consumables Only) -->
             <button type="button" *ngIf="product.type === 'CONSUMABLE'" class="btn-quick-consume" (click)="quickConsume(product)" matTooltip="Quick consume 1 unit">
               <mat-icon>remove_circle_outline</mat-icon>
               <span>-1</span>
             </button>
+            <!-- 1-Click Toggle Active Status -->
+            <button type="button" class="btn-action-toggle" [class.is-disabled]="!isProductActive(product)"
+                    (click)="toggleProductActive(product)"
+                    [matTooltip]="isProductActive(product) ? 'Disable product (hide from POS)' : 'Enable product (show in POS)'">
+              <mat-icon>{{ isProductActive(product) ? 'visibility' : 'visibility_off' }}</mat-icon>
+            </button>
+            <!-- Edit Action -->
             <button type="button" class="btn-action-edit" (click)="openEditForm(product)" matTooltip="Edit product">
               <mat-icon>edit</mat-icon>
             </button>
+            <!-- Delete Action -->
             <button type="button" class="btn-action-delete" (click)="deleteProduct(product)" matTooltip="Delete product">
               <mat-icon>delete</mat-icon>
             </button>
@@ -243,7 +279,18 @@
           </td>
         </ng-container>
 
-        <!-- 6. Actions -->
+        <!-- 6. Status Column (Active / Disabled) -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>POS Visibility</th>
+          <td mat-cell *matCellDef="let product">
+            <span class="status-pill" [class.active]="isProductActive(product)" [class.disabled]="!isProductActive(product)">
+              <mat-icon class="status-dot-icon">{{ isProductActive(product) ? 'check_circle' : 'visibility_off' }}</mat-icon>
+              <span>{{ isProductActive(product) ? 'Active' : 'Disabled' }}</span>
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- 7. Actions -->
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef class="text-right">Actions</th>
           <td mat-cell *matCellDef="let product" class="text-right">
@@ -252,6 +299,13 @@
               <button type="button" *ngIf="product.type === 'CONSUMABLE'" class="btn-quick-consume" (click)="quickConsume(product)" matTooltip="Quick consume 1 unit">
                 <mat-icon>remove_circle_outline</mat-icon>
                 <span>-1 Unit</span>
+              </button>
+
+              <!-- 1-Click Toggle Active Status -->
+              <button type="button" class="btn-action-toggle" [class.is-disabled]="!isProductActive(product)"
+                      (click)="toggleProductActive(product)"
+                      [matTooltip]="isProductActive(product) ? 'Disable product (hide from POS)' : 'Enable product (show in POS)'">
+                <mat-icon>{{ isProductActive(product) ? 'visibility' : 'visibility_off' }}</mat-icon>
               </button>
 
               <!-- Edit Action -->
@@ -268,7 +322,7 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns" [class.disabled-row]="!isProductActive(row)"></tr>
       </table>
     </div>
 

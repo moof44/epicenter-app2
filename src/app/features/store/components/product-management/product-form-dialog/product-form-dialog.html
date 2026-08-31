@@ -80,6 +80,17 @@
         <img [src]="productForm.get('imageUrl')?.value" alt="Preview" class="preview-img" (error)="$any($event.target).style.display='none'">
       </div>
 
+      <!-- Active / Disabled Status Toggle -->
+      <div class="status-toggle-card">
+        <label class="status-toggle-label">
+          <input type="checkbox" formControlName="isActive" class="status-checkbox">
+          <div class="status-toggle-info">
+            <span class="toggle-title">Active in POS Terminal & Catalog</span>
+            <span class="toggle-sub">When unchecked, this product is immediately hidden from the POS terminal and cannot be rung up.</span>
+          </div>
+        </label>
+      </div>
+
     </div>
 
     <!-- ── Actions Bar ── -->

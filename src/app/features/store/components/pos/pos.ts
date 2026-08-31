@@ -79,7 +79,7 @@ export class PosComponent {
   ), { initialValue: {} as Record<string, BadgeDefinition> });
 
   products$: Observable<Product[]> = this.productService.getProducts().pipe(
-    map(products => products.filter(p => p.type !== 'CONSUMABLE'))
+    map(products => products.filter(p => p.type !== 'CONSUMABLE' && p.isActive !== false && !p.disabled))
   );
   cart$: Observable<CartItem[]> = toObservable(this.cartStore.items);
   cartTotal$: Observable<number> = toObservable(this.cartStore.total);
