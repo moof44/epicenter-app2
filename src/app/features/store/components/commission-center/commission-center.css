@@ -1,10 +1,11 @@
 .commission-container {
-  padding: 24px;
+  padding: 24px 24px 120px 24px;
   max-width: 1400px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-height: 100%;
 }
 
 .commission-header {
@@ -13,6 +14,20 @@
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+
+.manager-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .title-badge {
@@ -111,10 +126,13 @@
 /* Tabs */
 .tab-nav-bar {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   border-bottom: 1px solid var(--color-border, #1e293b);
-  padding-bottom: 12px;
+  padding-bottom: 16px;
+  margin-top: 20px;
+  margin-bottom: 8px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tab-btn {
@@ -632,9 +650,88 @@
 .text-right { text-align: right; }
 
 @media (max-width: 768px) {
-  .commission-container { padding: 16px; }
+  .commission-container {
+    padding: 16px 16px 140px 16px;
+    gap: 16px;
+  }
+  .header-left {
+    gap: 6px;
+  }
+  .page-title {
+    font-size: 20px;
+    line-height: 1.25;
+  }
+  .page-subtitle {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .kpi-deck {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .kpi-card {
+    padding: 12px;
+    gap: 10px;
+  }
+  .kpi-icon-wrap {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+  .kpi-icon-wrap mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+  .kpi-label {
+    font-size: 9px;
+  }
+  .kpi-val {
+    font-size: 16px;
+  }
+  .kpi-sub {
+    font-size: 10px;
+  }
+  .tab-nav-bar {
+    gap: 8px;
+    padding-bottom: 10px;
+    margin-top: 14px;
+    margin-bottom: 12px;
+  }
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    gap: 6px;
+  }
   .card-details-grid { grid-template-columns: 1fr; }
   .comm-card { flex-direction: column; align-items: stretch; }
   .card-row-actions { justify-content: flex-end; }
   .mini-row { grid-template-columns: 1fr 1fr; gap: 4px; }
+}
+
+@media (max-width: 480px) {
+  .commission-container {
+    padding: 12px 12px 160px 12px;
+  }
+  .kpi-deck {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .kpi-card {
+    padding: 10px 8px;
+    gap: 8px;
+  }
+  .kpi-val {
+    font-size: 15px;
+  }
+  .tab-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .tab-btn mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
 }

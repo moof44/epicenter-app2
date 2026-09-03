@@ -73,10 +73,6 @@ export class MemberList implements OnInit {
   ngOnInit() {
     this.setupUrlPersistence();
     this.setupDataLoading();
-    // Auto-sync any existing scan reports across all members in background
-    this.memberService.syncAllMembersProgressScans().catch(err => {
-      console.warn('[MemberList] Scan backfill notice:', err);
-    });
   }
 
   getAvatarInitials(name: string): string {
