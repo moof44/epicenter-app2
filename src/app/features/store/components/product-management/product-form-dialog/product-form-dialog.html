@@ -80,6 +80,35 @@
         <img [src]="productForm.get('imageUrl')?.value" alt="Preview" class="preview-img" (error)="$any($event.target).style.display='none'">
       </div>
 
+      <!-- Staff Sales Commission Configuration (Retail Only) -->
+      <div class="commission-config-card" *ngIf="isRetail">
+        <div class="commission-config-header">
+          <mat-icon class="text-cyan">monetization_on</mat-icon>
+          <div>
+            <strong class="text-pure">Sales Commission for Selling Staff</strong>
+            <span class="commission-sub text-secondary">Optional reward earned by the staff member who sells this item</span>
+          </div>
+        </div>
+
+        <div class="form-row-2 commission-inputs">
+          <mat-form-field appearance="outline" class="custom-mat-field">
+            <mat-label>Commission Type</mat-label>
+            <mat-select formControlName="commissionType">
+              <mat-option value="NONE">No Commission</mat-option>
+              <mat-option value="PERCENTAGE">Percentage (%) of Sale</mat-option>
+              <mat-option value="FIXED">Fixed Amount (₱) per Unit</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="custom-mat-field" *ngIf="productForm.get('commissionType')?.value !== 'NONE'">
+            <mat-label>{{ productForm.get('commissionType')?.value === 'PERCENTAGE' ? 'Commission Rate' : 'Commission Amount' }}</mat-label>
+            <span matTextPrefix *ngIf="productForm.get('commissionType')?.value === 'FIXED'">₱&nbsp;</span>
+            <input matInput type="number" formControlName="commissionValue" min="0" step="0.5" placeholder="0">
+            <span matTextSuffix *ngIf="productForm.get('commissionType')?.value === 'PERCENTAGE'">&nbsp;%</span>
+          </mat-form-field>
+        </div>
+      </div>
+
       <!-- Active / Disabled Status Toggle -->
       <div class="status-toggle-card">
         <label class="status-toggle-label">

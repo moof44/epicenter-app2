@@ -17,9 +17,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { AuthService } from '../../../../core/services/auth.service';
-import { UserService, UserPayslip } from '../../../../core/services/user.service';
+import { UserService, UserPayslip, UserCommissionPayslip } from '../../../../core/services/user.service';
 import { User, EmployeeDocument, DocumentCategory } from '../../../../core/models/user.model';
 import { PayslipViewDialogComponent } from '../../components/payslip-view-dialog/payslip-view-dialog';
+import { CommissionPayslipDialog } from '../../components/commission-payslip-dialog/commission-payslip-dialog';
 import { DocumentViewerDialogComponent } from '../../components/document-viewer-dialog/document-viewer-dialog';
 import { Subscription } from 'rxjs';
 import { fadeIn } from '../../../../core/animations/animations';
@@ -54,6 +55,7 @@ export class UserProfileComponent implements OnInit, OnDestroy {
   selectedTabIndex = signal<number>(0);
 
   payslips = signal<UserPayslip[]>([]);
+  commissionPayslips = signal<UserCommissionPayslip[]>([]);
   isLoadingPayslips = signal<boolean>(true);
 
   targetUid = '';
@@ -61,6 +63,7 @@ export class UserProfileComponent implements OnInit, OnDestroy {
 
   profileForm!: FormGroup;
   selectedDocCategory: DocumentCategory = 'GOVERNMENT_ID';
+  private commissionPayslipSub?: Subscription;
 
   private userSub?: Subscription;
   private payslipSub?: Subscription;
@@ -216,6 +219,7 @@ export class UserProfileComponent implements OnInit, OnDestroy {
   private loadPayslips(user: User): void {
     this.isLoadingPayslips.set(true);
     this.payslipSub?.unsubscribe();
+    this.commissionPayslipSub?.unsubscribe();
 
     this.payslipSub = this.userService.getEmployeePaidPayslips(user.uid, user.displayName).subscribe({
       next: (list) => {
@@ -225,6 +229,15 @@ export class UserProfileComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error loading employee payslips:', err);
         this.isLoadingPayslips.set(false);
+      }
+    });
+
+    this.commissionPayslipSub = this.userService.getEmployeePaidCommissionPayslips(user.uid, user.displayName).subscribe({
+      next: (list) => {
+        this.commissionPayslips.set(list);
+      },
+      error: (err) => {
+        console.error('Error loading employee commission payslips:', err);
       }
     });
   }
@@ -389,6 +402,14 @@ export class UserProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+  openCommissionPayslip(payslip: UserCommissionPayslip): void {
+    this.dialog.open(CommissionPayslipDialog, {
+      data: payslip,
+      maxWidth: '95vw',
+      maxHeight: '95vh'
+    });
+  }
+
   getRoleColor(role: string): string {
     switch (role) {
       case 'ADMIN': return 'warn';
@@ -408,5 +429,6 @@ export class UserProfileComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.userSub?.unsubscribe();
     this.payslipSub?.unsubscribe();
+    this.commissionPayslipSub?.unsubscribe();
   }
 }

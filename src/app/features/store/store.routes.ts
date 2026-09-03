@@ -44,6 +44,12 @@ export const storeRoutes: Routes = [
     data: { animation: 'PayablesPage', roles: ['ADMIN', 'MANAGER'] }
   },
   {
+    path: 'commissions',
+    loadComponent: () => import('./components/commission-center/commission-center').then(m => m.CommissionCenter),
+    canActivate: [roleGuard],
+    data: { animation: 'CommissionsPage', roles: ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'] }
+  },
+  {
     path: 'financial-health',
     loadComponent: () => import('./components/financial-health/financial-health.component').then(m => m.FinancialHealthComponent),
     canActivate: [roleGuard],

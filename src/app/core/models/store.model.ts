@@ -1,4 +1,5 @@
 import { AuditTrace } from '../utils/firestore-converter.utils';
+import { CommissionType } from './commission.model';
 
 export type ProductCategory = 'Training' | 'Supplements' | 'Drinks' | 'Boxing';
 export type ProductType = 'RETAIL' | 'CONSUMABLE';
@@ -20,6 +21,8 @@ export interface Product {
     lastModifiedBy?: AuditTrace;
     isActive?: boolean;
     disabled?: boolean;
+    commissionType?: CommissionType;
+    commissionValue?: number;
 }
 
 export interface CartItem {
@@ -35,6 +38,9 @@ export interface CartItem {
     discountAmount?: number;
     appliedDiscountId?: string;
     appliedDiscountName?: string;
+    commissionType?: CommissionType;
+    commissionValue?: number;
+    earnedCommission?: number;
 }
 
 export type PaymentMethod = 'CASH' | 'GCASH' | 'SPLIT';
@@ -54,6 +60,17 @@ export interface Transaction {
     items: CartItem[];
     staffId?: string | null;
     staffName?: string | null;
+    cashierId?: string | null;
+    cashierName?: string | null;
+    attributedStaffId?: string | null;
+    attributedStaffName?: string | null;
+    hasCommission?: boolean;
+    commissionIds?: string[];
+    commissionClaimStatus?: 'NONE' | 'CLAIM_PENDING' | 'CLAIM_APPROVED' | 'CLAIM_REJECTED';
+    claimantStaffId?: string | null;
+    claimantStaffName?: string | null;
+    claimReason?: string | null;
+    claimRequestedAt?: Date;
     paymentMethod: PaymentMethod;
     referenceNumber?: string | null;
     amountTendered?: number | null;

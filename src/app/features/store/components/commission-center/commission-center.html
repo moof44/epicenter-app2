@@ -1,0 +1,416 @@
+<div class="commission-container" [@fadeIn]>
+
+  <!-- 👑 HEADER & HERO -->
+  <header class="commission-header">
+    <div class="header-left">
+      <div class="title-badge">
+        <mat-icon class="text-gold">monetization_on</mat-icon>
+        <span class="badge-tag">FINANCIAL REWARD SYSTEM</span>
+      </div>
+      <h1 class="page-title">{{ isManagerView() ? 'Product Commission Command Center' : 'My Sales & Commissions' }}</h1>
+      <p class="page-subtitle">
+        {{ isManagerView() 
+           ? 'Review staff sales, verify attribution claims, batch-approve commissions, and cash out to Bills & Payables.' 
+           : 'Track your product sales, monitor customer purchases, and review approved commission earnings.' }}
+      </p>
+    </div>
+  </header>
+
+  <!-- ════════════════ MANAGER / ADMIN VIEW ════════════════ -->
+  <div *ngIf="isManagerView()" class="manager-workspace">
+
+    <!-- 📊 KPI METRIC CARDS -->
+    <div class="kpi-deck">
+      <div class="kpi-card pending-card">
+        <div class="kpi-icon-wrap"><mat-icon>hourglass_top</mat-icon></div>
+        <div class="kpi-content">
+          <span class="kpi-label">Pending Approval</span>
+          <strong class="kpi-val text-gold">₱{{ totalPendingAmount() | number:'1.2-2' }}</strong>
+          <span class="kpi-sub text-muted">{{ pendingCommissions().length }} sales items</span>
+        </div>
+      </div>
+
+      <div class="kpi-card approved-card">
+        <div class="kpi-icon-wrap"><mat-icon>check_circle</mat-icon></div>
+        <div class="kpi-content">
+          <span class="kpi-label">Approved (Ready to Cash Out)</span>
+          <strong class="kpi-val text-mint">₱{{ totalApprovedAmount() | number:'1.2-2' }}</strong>
+          <span class="kpi-sub text-muted">{{ approvedCommissions().length }} sales items</span>
+        </div>
+      </div>
+
+      <div class="kpi-card claims-card" [class.highlight]="pendingClaimsCount() > 0">
+        <div class="kpi-icon-wrap"><mat-icon>transfer_within_a_station</mat-icon></div>
+        <div class="kpi-content">
+          <span class="kpi-label">Attribution Claims</span>
+          <strong class="kpi-val text-cyan">{{ pendingClaimsCount() }}</strong>
+          <span class="kpi-sub text-muted">Awaiting transfer review</span>
+        </div>
+      </div>
+
+      <div class="kpi-card history-card">
+        <div class="kpi-icon-wrap"><mat-icon>payments</mat-icon></div>
+        <div class="kpi-content">
+          <span class="kpi-label">Total Cashed Out</span>
+          <strong class="kpi-val text-white">₱{{ totalHistoryAmount() | number:'1.2-2' }}</strong>
+          <span class="kpi-sub text-muted">{{ historyCommissions().length }} items settled</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🗂️ MANAGER NAVIGATION TABS -->
+    <div class="tab-nav-bar">
+      <button type="button" class="tab-btn" [class.active]="activeManagerTab === 'APPROVALS'" (click)="activeManagerTab = 'APPROVALS'">
+        <mat-icon>fact_check</mat-icon>
+        <span>Approval & Claims Queue ({{ pendingCommissions().length }})</span>
+      </button>
+
+      <button type="button" class="tab-btn" [class.active]="activeManagerTab === 'CASHOUT'" (click)="activeManagerTab = 'CASHOUT'">
+        <mat-icon>account_balance_wallet</mat-icon>
+        <span>Cash Out to Payables ({{ approvedByStaff().length }} Staff)</span>
+      </button>
+
+      <button type="button" class="tab-btn" [class.active]="activeManagerTab === 'HISTORY'" (click)="activeManagerTab = 'HISTORY'">
+        <mat-icon>history</mat-icon>
+        <span>Payout History ({{ historyCommissions().length }})</span>
+      </button>
+    </div>
+
+    <!-- 📋 TAB 1: APPROVAL & CLAIMS QUEUE -->
+    <div class="tab-panel" *ngIf="activeManagerTab === 'APPROVALS'">
+
+      <!-- Batch Action Toolbar -->
+      <div class="batch-toolbar" *ngIf="pendingCommissions().length > 0">
+        <div class="toolbar-left">
+          <label class="select-all-label">
+            <input type="checkbox" [checked]="isAllPendingSelected()" (change)="toggleSelectAllPending()">
+            <span>Select All Pending ({{ selectedCommissionIds.size }} selected)</span>
+          </label>
+        </div>
+
+        <div class="toolbar-right" *ngIf="selectedCommissionIds.size > 0">
+          <button type="button" class="btn-batch-deny" (click)="batchDeny()">
+            <mat-icon>close</mat-icon>
+            <span>Deny Selected ({{ selectedCommissionIds.size }})</span>
+          </button>
+
+          <button type="button" class="btn-batch-approve" (click)="batchApprove()">
+            <mat-icon>check</mat-icon>
+            <span>Approve Selected ({{ selectedCommissionIds.size }})</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pending Commissions List / Matrix -->
+      <div class="items-deck" *ngIf="pendingCommissions().length > 0; else noPendingState">
+        <div *ngFor="let item of pendingCommissions()" class="comm-card" [class.selected]="isSelected(item.id)" [class.claim-card]="item.isClaimPending">
+          
+          <div class="card-checkbox-cell">
+            <input type="checkbox" [checked]="isSelected(item.id)" (change)="toggleSelection(item.id)">
+          </div>
+
+          <div class="card-main-content">
+            <!-- Attribution Claim Header Banner -->
+            <div class="claim-alert-banner" *ngIf="item.isClaimPending">
+              <mat-icon class="text-gold">transfer_within_a_station</mat-icon>
+              <div class="claim-info">
+                <strong>Attribution Claim Requested</strong>
+                <span><strong>{{ item.claimantStaffName }}</strong> claims this sale from {{ item.sellerName }}</span>
+                <small *ngIf="item.claimReason" class="text-secondary">Note: "{{ item.claimReason }}"</small>
+              </div>
+              <div class="claim-actions">
+                <button type="button" class="btn-claim-approve" (click)="approveClaim(item)">Accept Transfer</button>
+                <button type="button" class="btn-claim-reject" (click)="rejectClaim(item)">Reject</button>
+              </div>
+            </div>
+
+            <div class="card-details-grid">
+              <div class="detail-block">
+                <span class="detail-label">Product Sold</span>
+                <strong class="text-white">{{ item.productName }}</strong>
+                <small class="text-secondary">{{ item.productCategory }} | Qty: {{ item.quantity }}</small>
+              </div>
+
+              <div class="detail-block">
+                <span class="detail-label">Customer ("Sold To")</span>
+                <strong class="text-cyan">👤 {{ item.memberName }}</strong>
+                <small class="text-muted font-mono">Ref #{{ item.receiptNumber }}</small>
+              </div>
+
+              <div class="detail-block">
+                <span class="detail-label">Credited Seller</span>
+                <strong class="text-white">🏷️ {{ item.sellerName }}</strong>
+                <small class="text-muted" *ngIf="item.cashierName && item.cashierName !== item.sellerName">Punched by: {{ item.cashierName }}</small>
+              </div>
+
+              <div class="detail-block">
+                <span class="detail-label">Sale Date</span>
+                <span class="text-body">{{ formatDate(item.transactionDate) | date:'MMM d, y, h:mm a' }}</span>
+                <small class="text-muted">Sale Total: ₱{{ item.subtotal | number:'1.2-2' }}</small>
+              </div>
+
+              <div class="detail-block comm-amt-block">
+                <span class="detail-label">Commission</span>
+                <strong class="text-gold comm-value">₱{{ item.commissionAmount | number:'1.2-2' }}</strong>
+                <small class="text-secondary">({{ item.commissionType === 'PERCENTAGE' ? item.commissionRate + '%' : '₱' + item.commissionRate + ' flat' }})</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Row Actions -->
+          <div class="card-row-actions">
+            <button type="button" class="btn-quick-deny" (click)="quickDeny(item)" matTooltip="Deny this item">
+              <mat-icon>close</mat-icon>
+            </button>
+            <button type="button" class="btn-quick-approve" (click)="quickApprove(item)" matTooltip="Approve this item">
+              <mat-icon>check</mat-icon>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <ng-template #noPendingState>
+        <div class="empty-box">
+          <mat-icon class="text-cyan">done_all</mat-icon>
+          <h3>All Caught Up!</h3>
+          <p>There are no pending sales commissions or attribution claims awaiting review.</p>
+        </div>
+      </ng-template>
+
+    </div>
+
+    <!-- 💳 TAB 2: CASH OUT TO BILLS & PAYABLES -->
+    <div class="tab-panel" *ngIf="activeManagerTab === 'CASHOUT'">
+      
+      <div class="cashout-header-card" *ngIf="approvedByStaff().length > 0">
+        <div class="cashout-info">
+          <h3>Ready for Payout</h3>
+          <p>Approved commissions can be posted to <strong>Bills & Payables</strong> as individual employee bills. Once posted, they are locked and will be disbursed through Finance.</p>
+        </div>
+        <button type="button" class="btn-post-all" (click)="postAllApprovedToBills()" [disabled]="isPostingToBills()">
+          <mat-icon>post_add</mat-icon>
+          <span>Post All to Bills & Payables (₱{{ totalApprovedAmount() | number:'1.2-2' }})</span>
+        </button>
+      </div>
+
+      <div class="staff-cashout-deck" *ngIf="approvedByStaff().length > 0; else noApprovedState">
+        <div *ngFor="let staff of approvedByStaff()" class="staff-cashout-card">
+          <div class="staff-card-header">
+            <div class="staff-title-row">
+              <div class="avatar-seal">{{ staff.staffName.slice(0, 2).toUpperCase() }}</div>
+              <div>
+                <h4 class="staff-name">{{ staff.staffName }}</h4>
+                <span class="staff-items-count">{{ staff.items.length }} approved sale item{{ staff.items.length === 1 ? '' : 's' }}</span>
+              </div>
+            </div>
+            <div class="staff-total-wrap">
+              <span class="total-lbl">Payable Amount:</span>
+              <strong class="total-val text-gold">₱{{ staff.total | number:'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <!-- Staff Breakdown List -->
+          <div class="staff-items-mini-table">
+            <div class="mini-row mini-header">
+              <span>Product</span>
+              <span>Buyer</span>
+              <span>Sale Date</span>
+              <span class="text-right">Commission</span>
+            </div>
+            <div *ngFor="let it of staff.items" class="mini-row">
+              <span class="text-white">{{ it.productName }} (x{{ it.quantity }})</span>
+              <span class="text-cyan">{{ it.memberName }}</span>
+              <span class="text-muted">{{ formatDate(it.transactionDate) | date:'shortDate' }}</span>
+              <span class="text-gold text-right font-mono">₱{{ it.commissionAmount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <div class="staff-card-footer">
+            <button type="button" class="btn-post-individual" (click)="postStaffToBills(staff)" [disabled]="isPostingToBills()">
+              <mat-icon>receipt_long</mat-icon>
+              <span>Post {{ staff.staffName }}'s Bill (₱{{ staff.total | number:'1.2-2' }})</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noApprovedState>
+        <div class="empty-box">
+          <mat-icon class="text-cyan">account_balance_wallet</mat-icon>
+          <h3>No Commissions Queued for Cash Out</h3>
+          <p>Approve items in the Approval Queue to prepare payouts for Bills & Payables.</p>
+        </div>
+      </ng-template>
+
+    </div>
+
+    <!-- 📜 TAB 3: PAYOUT HISTORY -->
+    <div class="tab-panel" *ngIf="activeManagerTab === 'HISTORY'">
+      <div class="history-table-wrapper" *ngIf="historyCommissions().length > 0; else noHistoryState">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date Submitted</th>
+              <th>Seller</th>
+              <th>Product Sold</th>
+              <th>Sold To</th>
+              <th>Commission</th>
+              <th>Bill #</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let h of historyCommissions()">
+              <td>{{ formatDate(h.submittedAt || h.transactionDate) | date:'MMM d, y, h:mm a' }}</td>
+              <td class="text-white"><strong>{{ h.sellerName }}</strong></td>
+              <td>{{ h.productName }}</td>
+              <td class="text-cyan">{{ h.memberName }}</td>
+              <td class="text-gold font-mono">₱{{ h.commissionAmount | number:'1.2-2' }}</td>
+              <td>
+                <span class="bill-pill font-mono">#{{ h.billId ? h.billId.slice(0, 8).toUpperCase() : 'N/A' }}</span>
+              </td>
+              <td>
+                <span class="status-pill" [class.paid]="h.status === 'PAID'" [class.submitted]="h.status === 'SUBMITTED'">
+                  {{ h.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #noHistoryState>
+        <div class="empty-box">
+          <mat-icon class="text-cyan">history</mat-icon>
+          <h3>No Past Payout History</h3>
+          <p>Commissions posted to Bills & Payables will be archived here permanently.</p>
+        </div>
+      </ng-template>
+    </div>
+
+  </div>
+
+
+  <!-- ════════════════ STAFF SELF-SERVICE VIEW ════════════════ -->
+  <div *ngIf="!isManagerView()" class="staff-workspace">
+
+    <!-- Staff Summary Card -->
+    <div class="staff-hero-card">
+      <div class="hero-left">
+        <span class="hero-label">Total Commission Earnings</span>
+        <strong class="hero-val text-gold">₱{{ staffTotalEarned() | number:'1.2-2' }}</strong>
+        <span class="hero-sub text-secondary">Earned from all approved & completed product sales</span>
+      </div>
+    </div>
+
+    <!-- Staff Tabs -->
+    <div class="tab-nav-bar">
+      <button type="button" class="tab-btn" [class.active]="activeStaffTab === 'APPROVED'" (click)="activeStaffTab = 'APPROVED'">
+        <mat-icon>check_circle</mat-icon>
+        <span>Approved & Queued ({{ staffApproved().length }})</span>
+      </button>
+
+      <button type="button" class="tab-btn" [class.active]="activeStaffTab === 'PENDING'" (click)="activeStaffTab = 'PENDING'">
+        <mat-icon>hourglass_top</mat-icon>
+        <span>Pending Review ({{ staffPending().length }})</span>
+      </button>
+
+      <button type="button" class="tab-btn" [class.active]="activeStaffTab === 'SUBMITTED'" (click)="activeStaffTab = 'SUBMITTED'">
+        <mat-icon>payments</mat-icon>
+        <span>Cashed Out / Paid ({{ staffSubmitted().length }})</span>
+      </button>
+
+      <button type="button" class="tab-btn" [class.active]="activeStaffTab === 'REJECTED'" (click)="activeStaffTab = 'REJECTED'">
+        <mat-icon>cancel</mat-icon>
+        <span>Denied ({{ staffRejected().length }})</span>
+      </button>
+    </div>
+
+    <!-- Active List Display -->
+    <div class="staff-items-deck">
+      <ng-container [ngSwitch]="activeStaffTab">
+        
+        <!-- Approved -->
+        <div *ngSwitchCase="'APPROVED'">
+          <div *ngIf="staffApproved().length > 0; else noStaffItems">
+            <div *ngFor="let it of staffApproved()" class="staff-comm-item-card">
+              <div class="item-main">
+                <strong class="item-title text-white">{{ it.productName }} (x{{ it.quantity }})</strong>
+                <span class="item-buyer text-cyan">Sold to: {{ it.memberName }}</span>
+                <small class="item-date text-muted">{{ formatDate(it.transactionDate) | date:'mediumDate' }}</small>
+              </div>
+              <div class="item-amount">
+                <span class="status-tag tag-approved">Approved</span>
+                <strong class="item-val text-gold">₱{{ it.commissionAmount | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending -->
+        <div *ngSwitchCase="'PENDING'">
+          <div *ngIf="staffPending().length > 0; else noStaffItems">
+            <div *ngFor="let it of staffPending()" class="staff-comm-item-card">
+              <div class="item-main">
+                <strong class="item-title text-white">{{ it.productName }} (x{{ it.quantity }})</strong>
+                <span class="item-buyer text-cyan">Sold to: {{ it.memberName }}</span>
+                <small class="item-date text-muted">{{ formatDate(it.transactionDate) | date:'mediumDate' }}</small>
+              </div>
+              <div class="item-amount">
+                <span class="status-tag tag-pending">Pending Review</span>
+                <strong class="item-val text-gold">₱{{ it.commissionAmount | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submitted / Paid -->
+        <div *ngSwitchCase="'SUBMITTED'">
+          <div *ngIf="staffSubmitted().length > 0; else noStaffItems">
+            <div *ngFor="let it of staffSubmitted()" class="staff-comm-item-card">
+              <div class="item-main">
+                <strong class="item-title text-white">{{ it.productName }} (x{{ it.quantity }})</strong>
+                <span class="item-buyer text-cyan">Sold to: {{ it.memberName }}</span>
+                <small class="item-date text-muted">Disbursed on {{ formatDate(it.submittedAt || it.transactionDate) | date:'mediumDate' }}</small>
+              </div>
+              <div class="item-amount">
+                <span class="status-tag tag-paid">{{ it.status === 'PAID' ? 'Paid' : 'In Payables' }}</span>
+                <strong class="item-val text-gold">₱{{ it.commissionAmount | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rejected -->
+        <div *ngSwitchCase="'REJECTED'">
+          <div *ngIf="staffRejected().length > 0; else noStaffItems">
+            <div *ngFor="let it of staffRejected()" class="staff-comm-item-card">
+              <div class="item-main">
+                <strong class="item-title text-white">{{ it.productName }} (x{{ it.quantity }})</strong>
+                <span class="item-buyer text-cyan">Sold to: {{ it.memberName }}</span>
+                <small class="item-date text-muted">{{ formatDate(it.transactionDate) | date:'mediumDate' }}</small>
+                <div class="rejection-note text-rose" *ngIf="it.rejectionReason">Reason: "{{ it.rejectionReason }}"</div>
+              </div>
+              <div class="item-amount">
+                <span class="status-tag tag-rejected">Denied</span>
+                <strong class="item-val text-muted">₱{{ it.commissionAmount | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+
+      <ng-template #noStaffItems>
+        <div class="empty-box">
+          <mat-icon class="text-cyan">info</mat-icon>
+          <h3>No Items</h3>
+          <p>No sales commissions in this category.</p>
+        </div>
+      </ng-template>
+    </div>
+
+  </div>
+
+</div>

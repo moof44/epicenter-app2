@@ -174,11 +174,20 @@
           <div class="mobile-total-wrap">
             <span class="mobile-total-lbl">Total Paid:</span>
             <strong class="mobile-total-val text-gold">₱{{ tx.totalAmount | number:'1.2-2' }}</strong>
+            <span class="claim-pending-tag" *ngIf="tx.commissionClaimStatus === 'CLAIM_PENDING'">
+              ⏳ Claim: {{ tx.claimantStaffName }}
+            </span>
           </div>
-          <button type="button" class="btn-view-receipt-gold" (click)="openDetail(tx)">
-            <mat-icon>receipt</mat-icon>
-            <span>Receipt</span>
-          </button>
+          <div class="mobile-actions-deck">
+            <button type="button" class="btn-mobile-claim" *ngIf="tx.status !== 'VOID'" (click)="claimSale(tx)" [disabled]="tx.commissionClaimStatus === 'CLAIM_PENDING'">
+              <mat-icon>{{ tx.commissionClaimStatus === 'CLAIM_PENDING' ? 'hourglass_top' : 'transfer_within_a_station' }}</mat-icon>
+              <span>{{ tx.commissionClaimStatus === 'CLAIM_PENDING' ? 'Pending' : 'Claim' }}</span>
+            </button>
+            <button type="button" class="btn-view-receipt-gold" (click)="openDetail(tx)">
+              <mat-icon>receipt</mat-icon>
+              <span>Receipt</span>
+            </button>
+          </div>
         </div>
 
       </div>
@@ -214,10 +223,23 @@
 
         <!-- 3. Customer & Staff -->
         <ng-container matColumnDef="customerStaff">
-          <th mat-header-cell *matHeaderCellDef>Cashier & Customer</th>
+          <th mat-header-cell *matHeaderCellDef>Cashier, Seller & Customer</th>
           <td mat-cell *matCellDef="let tx">
             <div class="people-cell">
-              <span class="staff-text text-white">👤 {{ tx.staffName || 'Staff' }}</span>
+              <div class="staff-line">
+                <span class="staff-text text-white">👤 {{ tx.staffName || 'Staff' }}</span>
+                <span class="attrib-tag" *ngIf="tx.attributedStaffName && tx.attributedStaffName !== tx.staffName" matTooltip="Attributed Selling Coach">
+                  🏷️ {{ tx.attributedStaffName }}
+                </span>
+                <span class="commission-pill" *ngIf="tx.hasCommission" matTooltip="Contains Commission Eligible Product">
+                  ₱ Comm
+                </span>
+              </div>
+              <div class="claim-line" *ngIf="tx.commissionClaimStatus === 'CLAIM_PENDING'">
+                <span class="claim-pending-tag" [matTooltip]="tx.claimReason || 'Claim pending review'">
+                  ⏳ Claim: {{ tx.claimantStaffName }}
+                </span>
+              </div>
               <span *ngIf="tx.memberName" class="member-text text-cyan">→ {{ tx.memberName }}</span>
             </div>
           </td>
@@ -278,7 +300,10 @@
         <!-- 8. Actions -->
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef class="text-right">Actions</th>
-          <td mat-cell *matCellDef="let tx" class="text-right">
+          <td mat-cell *matCellDef="let tx" class="text-right actions-cell">
+            <button type="button" class="btn-action-claim" *ngIf="tx.status !== 'VOID'" (click)="claimSale(tx)" [disabled]="tx.commissionClaimStatus === 'CLAIM_PENDING'" [matTooltip]="tx.commissionClaimStatus === 'CLAIM_PENDING' ? 'Claim already submitted' : 'Claim sale credit to you'">
+              <mat-icon>{{ tx.commissionClaimStatus === 'CLAIM_PENDING' ? 'hourglass_top' : 'transfer_within_a_station' }}</mat-icon>
+            </button>
             <button type="button" class="btn-action-view" (click)="openDetail(tx)" matTooltip="View Full Receipt">
               <mat-icon>receipt</mat-icon>
             </button>

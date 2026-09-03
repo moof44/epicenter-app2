@@ -186,6 +186,12 @@
               <mat-icon class="nav-icon">receipt_long</mat-icon>
               <span class="nav-title">Sales History</span>
             </a>
+
+            <a routerLink="/store/commissions" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon">monetization_on</mat-icon>
+              <span class="nav-title">{{ authService.hasAnyRole(['ADMIN', 'MANAGER']) ? 'Commissions Hub' : 'My Commissions' }}</span>
+            </a>
           </ng-container>
 
           <!-- ── Collapsible: Inventory Management (Admin / Manager) ── -->

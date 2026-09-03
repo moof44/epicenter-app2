@@ -12,6 +12,7 @@ import {
     arrayUnion,
 } from '@angular/fire/firestore';
 import { CartItem, Transaction, InventoryLog, Product } from '../models/store.model';
+import { ProductCommission } from '../models/commission.model';
 import { AuthService } from './auth.service';
 import { CartStore } from '../store/cart.store';
 import { CashRegisterService } from './cash-register.service';
@@ -173,7 +174,57 @@ export class CheckoutService {
             batch.set(logRef, cleanUndefined(log));
         }
 
-        // 3. Create transaction record
+        // 3. Evaluate and generate commissions (if any products have commission enabled)
+        const commissionIds: string[] = [];
+        const commissionsCol = collection(this.firestore, 'commissions');
+        const transactionRef = doc(this.transactionsCollection);
+
+        for (const item of cartItems) {
+            const product = productsMap.get(item.productId);
+            const commRate = Number(product?.commissionValue || 0);
+            if (product?.commissionType && product.commissionType !== 'NONE' && commRate > 0) {
+                let commissionAmount = 0;
+                if (product.commissionType === 'PERCENTAGE') {
+                    commissionAmount = Math.round(((item.subtotal || 0) * (commRate / 100)) * 100) / 100;
+                } else if (product.commissionType === 'FIXED') {
+                    commissionAmount = Math.round((commRate * (item.quantity || 1)) * 100) / 100;
+                }
+
+                if (commissionAmount > 0) {
+                    item.commissionType = product.commissionType;
+                    item.commissionValue = commRate;
+                    item.earnedCommission = commissionAmount;
+
+                    const commDocRef = doc(commissionsCol);
+                    commissionIds.push(commDocRef.id);
+
+                    const commData: ProductCommission = {
+                        transactionId: transactionRef.id,
+                        transactionDate: timestamp,
+                        receiptNumber: transactionRef.id.slice(0, 8).toUpperCase(),
+                        productId: item.productId,
+                        productName: item.productName,
+                        productCategory: product.category || item.productCategory || 'Supplements',
+                        unitPrice: item.price,
+                        quantity: item.quantity,
+                        subtotal: item.subtotal,
+                        commissionType: product.commissionType,
+                        commissionRate: commRate,
+                        commissionAmount,
+                        sellerId: staff?.uid || 'UNKNOWN_STAFF',
+                        sellerName: staff?.displayName || performedBy || 'Front Desk Staff',
+                        cashierId: staff?.uid || 'UNKNOWN_STAFF',
+                        cashierName: staff?.displayName || performedBy || 'Front Desk Staff',
+                        memberId: memberId || null,
+                        memberName: memberName || 'Walk-in Guest',
+                        status: 'PENDING'
+                    };
+                    batch.set(commDocRef, cleanUndefined(commData));
+                }
+            }
+        }
+
+        // 4. Create transaction record
         const transaction: Omit<Transaction, 'id'> = {
             date: timestamp,
             totalAmount: total,
@@ -181,6 +232,13 @@ export class CheckoutService {
             items: cartItems,
             staffId: staff?.uid || null,
             staffName: staff?.displayName || null,
+            cashierId: staff?.uid || null,
+            cashierName: staff?.displayName || null,
+            attributedStaffId: staff?.uid || null,
+            attributedStaffName: staff?.displayName || null,
+            hasCommission: commissionIds.length > 0,
+            commissionIds,
+            commissionClaimStatus: 'NONE',
             paymentMethod,
             referenceNumber: referenceNumber || null,
             amountTendered: amountTendered || null,
@@ -197,7 +255,6 @@ export class CheckoutService {
             memberId: memberId || null,
             memberName: memberName || 'Walk-in',
         };
-        const transactionRef = doc(this.transactionsCollection);
         batch.set(transactionRef, cleanUndefined(transaction));
 
         // 3.5. Auto-tag member with 'FOUNDER' badge if buying eligible launch products (July 1 - August 31, 2026)

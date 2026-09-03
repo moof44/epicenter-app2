@@ -563,6 +563,68 @@
         </div>
       </mat-tab>
 
+      <!-- TAB 4: CONFIDENTIAL SALES COMMISSION PAYSLIPS -->
+      <mat-tab>
+        <ng-template matTabLabel>
+          <mat-icon class="tab-icon">monetization_on</mat-icon> Commission Payslips
+          <span class="badge-count" *ngIf="commissionPayslips().length">{{ commissionPayslips().length }}</span>
+        </ng-template>
+
+        <div class="tab-body">
+          <div class="confidentiality-notice-card">
+            <div class="notice-icon-wrap">
+              <mat-icon>verified</mat-icon>
+            </div>
+            <div class="notice-text">
+              <strong class="notice-title">OFFICIAL SALES COMMISSION DISBURSEMENT RECORDS</strong>
+              <p class="notice-desc">This section contains your verified product sales commission payout vouchers released through Bills & Payables. Each voucher includes full itemized details of products sold and customer attributions.</p>
+            </div>
+          </div>
+
+          <!-- Loading -->
+          <div class="loading-wrap" *ngIf="isLoadingPayslips()">
+            <mat-spinner diameter="32"></mat-spinner>
+            <p>Loading commission vouchers...</p>
+          </div>
+
+          <!-- Commission Payslips List -->
+          <div class="payslips-list-container" *ngIf="!isLoadingPayslips() && commissionPayslips().length > 0; else noCommPayslips">
+            <div class="payslip-row-card" *ngFor="let cp of commissionPayslips()">
+              <div class="p-left">
+                <div class="p-icon-box">
+                  <mat-icon>monetization_on</mat-icon>
+                </div>
+                <div class="p-details">
+                  <h4 class="p-title">{{ cp.title }}</h4>
+                  <p class="p-period">Voucher: <strong class="font-mono">#COMM-{{ cp.billId.substring(0, 8).toUpperCase() }}</strong> • <strong>{{ cp.itemCount }}</strong> Product Sale{{ cp.itemCount === 1 ? '' : 's' }}</p>
+                  <small class="p-date">Disbursed on {{ cp.paidDate | date:'mediumDate' }} via <span class="p-channel">{{ cp.paymentSource.replace('_', ' ') }}</span></small>
+                </div>
+              </div>
+
+              <div class="p-right">
+                <div class="p-amount-box">
+                  <span class="p-lbl">Commission Payout</span>
+                  <strong class="p-amt text-gold">₱{{ cp.totalCommission | number:'1.2-2' }}</strong>
+                  <small class="p-gross">Status: CLEARED</small>
+                </div>
+                <button type="button" class="btn-view-slip" (click)="openCommissionPayslip(cp)">
+                  <mat-icon class="btn-icon">print</mat-icon>
+                  <span>View Voucher</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noCommPayslips>
+            <div class="empty-docs-box" *ngIf="!isLoadingPayslips()">
+              <mat-icon class="empty-icon">monetization_on</mat-icon>
+              <h4 class="empty-title">No Commission Payslips Available</h4>
+              <p class="empty-sub">Your sales commission vouchers will appear here automatically once posted to and cleared in Bills & Payables.</p>
+            </div>
+          </ng-template>
+        </div>
+      </mat-tab>
+
     </mat-tab-group>
   </div>
 </div>

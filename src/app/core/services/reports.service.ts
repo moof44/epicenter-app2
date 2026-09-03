@@ -102,8 +102,9 @@ export class ReportsService {
             salesPerPerson.set(memberId, personEntry);
 
             // Staff
-            if (tx.staffName) {
-                staffPerformance.set(tx.staffName, (staffPerformance.get(tx.staffName) || 0) + tx.totalAmount);
+            const creditedStaff = tx.attributedStaffName || tx.staffName;
+            if (creditedStaff) {
+                staffPerformance.set(creditedStaff, (staffPerformance.get(creditedStaff) || 0) + tx.totalAmount);
             }
 
             // Products

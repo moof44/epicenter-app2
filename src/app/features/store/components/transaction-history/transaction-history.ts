@@ -13,11 +13,15 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { TransactionService } from '../../../../core/services/transaction.service';
+import { CommissionService } from '../../../../core/services/commission.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { Transaction, CartItem } from '../../../../core/models/store.model';
 import { fadeIn } from '../../../../core/animations/animations';
 import { firstValueFrom } from 'rxjs';
 import { TransactionDetailDialog } from './transaction-detail-dialog/transaction-detail-dialog';
+import { ClaimSaleDialog } from './claim-sale-dialog/claim-sale-dialog';
 
 @Component({
   selector: 'app-transaction-history',
@@ -34,6 +38,9 @@ import { TransactionDetailDialog } from './transaction-detail-dialog/transaction
 })
 export class TransactionHistory implements AfterViewInit, OnInit {
   private transactionService = inject(TransactionService);
+  private commissionService = inject(CommissionService);
+  private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private cdr = inject(ChangeDetectorRef);
 
@@ -138,6 +145,39 @@ export class TransactionHistory implements AfterViewInit, OnInit {
       maxWidth: '94vw',
       maxHeight: '92vh',
       data: { transaction: tx }
+    });
+  }
+
+  claimSale(tx: Transaction): void {
+    if (!tx.id) return;
+    const user = this.authService.userProfile();
+    const currentUserName = user?.displayName || user?.email || 'Staff';
+
+    const dialogRef = this.dialog.open(ClaimSaleDialog, {
+      width: '480px',
+      maxWidth: '94vw',
+      data: {
+        transaction: tx,
+        currentUserName
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(async result => {
+      if (!result) return;
+      try {
+        await this.commissionService.requestAttributionClaim(
+          tx.id!,
+          user?.uid || 'UNKNOWN',
+          currentUserName,
+          result.reason
+        );
+        tx.commissionClaimStatus = 'CLAIM_PENDING';
+        tx.claimantStaffName = currentUserName;
+        this.cdr.markForCheck();
+        this.snackBar.open('Attribution claim submitted for manager review.', 'Close', { duration: 4000 });
+      } catch (err: any) {
+        this.snackBar.open('Failed to submit claim: ' + err.message, 'Close', { duration: 4000 });
+      }
     });
   }
 

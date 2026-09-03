@@ -56,7 +56,9 @@ export class ProductFormDialog {
       imageUrl: [product?.imageUrl || ''],
       type: [product?.type || defaultType],
       stock: [product?.stock || 0],
-      isActive: [product?.isActive !== false && !product?.disabled]
+      isActive: [product?.isActive !== false && !product?.disabled],
+      commissionType: [product?.commissionType || 'NONE'],
+      commissionValue: [product?.commissionValue || 0]
     });
   }
 

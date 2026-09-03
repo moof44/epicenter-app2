@@ -1,0 +1,54 @@
+<div class="claim-dialog-wrapper">
+  <div class="dialog-header">
+    <div class="dialog-title-row">
+      <mat-icon class="text-gold">verified</mat-icon>
+      <h3>Claim Sale & Commission Credit</h3>
+    </div>
+    <button mat-icon-button class="btn-close" (click)="onCancel()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="dialog-body">
+    <div class="info-banner">
+      <mat-icon class="text-cyan">info</mat-icon>
+      <span>
+        You are requesting to credit this sale to <strong>{{ data.currentUserName }}</strong>. 
+        Once submitted, a Manager or Admin will review and approve the attribution transfer.
+      </span>
+    </div>
+
+    <div class="summary-box">
+      <div class="summary-row">
+        <span class="label">Transaction:</span>
+        <span class="val font-mono">#{{ data.transaction.id?.slice(-6)?.toUpperCase() || 'POS' }}</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Current Cashier:</span>
+        <span class="val">{{ data.transaction.staffName || 'Staff' }}</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Customer:</span>
+        <span class="val text-cyan">{{ data.transaction.memberName || 'Walk-in Guest' }}</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Total Sale:</span>
+        <strong class="val text-gold">₱{{ data.transaction.totalAmount | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <mat-form-field appearance="outline" class="reason-field">
+      <mat-label>Explanation / Reason for Claim</mat-label>
+      <textarea matInput [(ngModel)]="reason" rows="3" placeholder="e.g. Conducted the trial session and closed the PT package with this member..."></textarea>
+      <mat-hint>Help the manager quickly verify and approve this attribution.</mat-hint>
+    </mat-form-field>
+  </div>
+
+  <div class="dialog-actions-bar">
+    <button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
+    <button type="button" class="btn-submit-gold" (click)="onSubmit()">
+      <mat-icon>send</mat-icon>
+      <span>Submit Claim Request</span>
+    </button>
+  </div>
+</div>

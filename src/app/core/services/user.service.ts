@@ -37,6 +37,20 @@ export interface UserPayslip {
     notes?: string;
 }
 
+export interface UserCommissionPayslip {
+    billId: string;
+    title: string;
+    paidDate: Date;
+    paymentSource: string;
+    referenceNumber?: string;
+    staffId: string;
+    staffName: string;
+    totalCommission: number;
+    itemCount: number;
+    commissionIds: string[];
+    createdAt: Date;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -219,6 +233,9 @@ export class UserService {
                 const targetName = (staffName || '').toLowerCase().trim();
 
                 for (const bill of bills) {
+                    // Exclude sales commission payout bills from standard attendance payslips
+                    if (bill.metadata?.payoutType === 'COMMISSION') continue;
+
                     const items = (bill.payrollItems || []) as any[];
                     // Find matching staff entry
                     const staffItem = items.find(item => 
@@ -275,6 +292,59 @@ export class UserService {
                 });
 
                 return payslips;
+            })
+        );
+    }
+
+    /**
+     * Fetches all PAID Sales Commission Payslips for an employee.
+     */
+    getEmployeePaidCommissionPayslips(uid: string, staffName: string): Observable<UserCommissionPayslip[]> {
+        const billsCol = collection(this.firestore, 'bills_payables');
+        const q = query(
+            billsCol,
+            where('category', '==', 'SALARY_STAFF'),
+            where('status', '==', 'PAID')
+        );
+
+        return collectionData(q, { idField: 'id' }).pipe(
+            map((bills: any[]) => {
+                const payslips: UserCommissionPayslip[] = [];
+                const targetUid = uid.toLowerCase();
+                const targetName = (staffName || '').toLowerCase().trim();
+
+                for (const bill of bills) {
+                    if (bill.metadata?.payoutType !== 'COMMISSION') continue;
+
+                    const billStaffId = (bill.metadata?.staffId || '').toLowerCase();
+                    const billStaffName = (bill.metadata?.staffName || bill.payee || '').toLowerCase().trim();
+
+                    if (billStaffId === targetUid || billStaffName === targetName) {
+                        const lastPayment = (bill.payments && bill.payments.length > 0)
+                            ? bill.payments[bill.payments.length - 1]
+                            : null;
+
+                        const paidDate = lastPayment?.paymentDate?.toDate
+                            ? lastPayment.paymentDate.toDate()
+                            : (lastPayment?.paymentDate ? new Date(lastPayment.paymentDate) : (bill.updatedAt?.toDate ? bill.updatedAt.toDate() : new Date()));
+
+                        payslips.push({
+                            billId: bill.id,
+                            title: bill.title,
+                            paidDate,
+                            paymentSource: lastPayment?.paymentSource || 'OWNER_CASH_ON_HAND',
+                            referenceNumber: lastPayment?.referenceNumber || '',
+                            staffId: bill.metadata?.staffId || uid,
+                            staffName: bill.metadata?.staffName || staffName,
+                            totalCommission: Number(bill.amount || 0),
+                            itemCount: Number(bill.metadata?.itemCount || (bill.metadata?.commissionIds?.length || 0)),
+                            commissionIds: bill.metadata?.commissionIds || [],
+                            createdAt: bill.createdAt?.toDate ? bill.createdAt.toDate() : new Date()
+                        });
+                    }
+                }
+
+                return payslips.sort((a, b) => b.paidDate.getTime() - a.paidDate.getTime());
             })
         );
     }

@@ -1,0 +1,122 @@
+<div class="payslip-dialog-wrapper">
+  <!-- Confidential Header Banner -->
+  <div class="confidential-banner">
+    <div class="banner-left">
+      <mat-icon class="shield-icon">verified_user</mat-icon>
+      <span>Official Sales Commission Voucher • Private & Confidential</span>
+    </div>
+    <button mat-icon-button class="close-btn" (click)="dialogRef.close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Printable Body Document -->
+  <div class="payslip-printable-document" id="printable-commission-voucher">
+    
+    <!-- 1. Enterprise Brand Header -->
+    <div class="doc-header">
+      <div class="brand-left">
+        <h2 class="org-name">EPICENTER FITNESS</h2>
+        <span class="org-sub">COMMISSION DISBURSEMENT VOUCHER</span>
+      </div>
+      <div class="meta-right">
+        <div class="meta-item">
+          <span class="meta-lbl">VOUCHER NO.</span>
+          <strong class="font-mono">#COMM-{{ payslip.billId.substring(0, 8).toUpperCase() }}</strong>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl">DATE PAID</span>
+          <strong>{{ payslip.paidDate | date:'mediumDate' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Staff & Payment Details -->
+    <div class="employee-meta-grid">
+      <div class="meta-col">
+        <span class="lbl">PAYEE NAME</span>
+        <strong class="val name-val">{{ payslip.staffName }}</strong>
+      </div>
+      <div class="meta-col">
+        <span class="lbl">TOTAL ITEMS</span>
+        <strong class="val">{{ payslip.itemCount }} Sale Item{{ payslip.itemCount === 1 ? '' : 's' }}</strong>
+      </div>
+      <div class="meta-col">
+        <span class="lbl">PAYMENT METHOD</span>
+        <strong class="val">{{ payslip.paymentSource.replace('_', ' ') }}</strong>
+        <small *ngIf="payslip.referenceNumber" class="text-muted">Ref: {{ payslip.referenceNumber }}</small>
+      </div>
+    </div>
+
+    <!-- 3. Itemized Product Breakdown Table -->
+    <div class="breakdown-card">
+      <div class="card-title-row">
+        <span>Itemized Sales Breakdown</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Product Sold</th>
+              <th>Sold To (Member)</th>
+              <th class="text-right">Sale Price</th>
+              <th class="text-right">Commission Rate</th>
+              <th class="text-right">Commission Earned</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let it of items()">
+              <td>{{ formatDate(it.transactionDate) | date:'shortDate' }}</td>
+              <td><strong>{{ it.productName }}</strong> (x{{ it.quantity }})</td>
+              <td class="text-cyan">{{ it.memberName }}</td>
+              <td class="text-right">₱{{ it.subtotal | number:'1.2-2' }}</td>
+              <td class="text-right">{{ it.commissionType === 'PERCENTAGE' ? it.commissionRate + '%' : '₱' + it.commissionRate + ' flat' }}</td>
+              <td class="text-right text-gold font-mono"><strong>₱{{ it.commissionAmount | number:'1.2-2' }}</strong></td>
+            </tr>
+            <tr *ngIf="items().length === 0">
+              <td colspan="6" class="text-center text-muted">
+                {{ isLoading() ? 'Loading itemized receipts...' : payslip.itemCount + ' verified product sales' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. Total Payout Summary -->
+    <div class="net-payout-box">
+      <div class="net-left">
+        <span class="net-lbl">TOTAL COMMISSION DISBURSED</span>
+        <span class="net-note">Net amount released and cleared in Bills & Payables</span>
+      </div>
+      <div class="net-right">
+        <strong class="net-amount">₱{{ payslip.totalCommission | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <!-- 5. Signature Acknowledgement Block -->
+    <div class="sign-block">
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <span class="sig-title">Prepared by: Finance & Operations</span>
+      </div>
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <span class="sig-title">Received by: {{ payslip.staffName }}</span>
+        <small class="sig-date">Date: {{ payslip.paidDate | date:'mediumDate' }}</small>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Action Bar -->
+  <div class="dialog-actions-bar">
+    <button mat-button (click)="dialogRef.close()">Close</button>
+    <button mat-raised-button color="primary" class="print-btn" (click)="printPayslip()">
+      <mat-icon>print</mat-icon>
+      <span>Print Voucher</span>
+    </button>
+  </div>
+</div>
