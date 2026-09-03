@@ -50,11 +50,13 @@ export class CommissionService {
     const q = query(
       this.commissionsCol,
       where('status', '==', 'PENDING'),
-      orderBy('transactionDate', 'desc'),
       limit(200)
     );
     return collectionData(q, { idField: 'id' }).pipe(
-      map(items => items.map(i => this.convertCommissionDates(i)))
+      map(items => {
+        const converted = items.map(i => this.convertCommissionDates(i));
+        return converted.sort((a, b) => b.transactionDate.getTime() - a.transactionDate.getTime());
+      })
     );
   }
 
@@ -63,11 +65,13 @@ export class CommissionService {
     const q = query(
       this.commissionsCol,
       where('status', '==', 'APPROVED'),
-      orderBy('transactionDate', 'desc'),
       limit(200)
     );
     return collectionData(q, { idField: 'id' }).pipe(
-      map(items => items.map(i => this.convertCommissionDates(i)))
+      map(items => {
+        const converted = items.map(i => this.convertCommissionDates(i));
+        return converted.sort((a, b) => b.transactionDate.getTime() - a.transactionDate.getTime());
+      })
     );
   }
 
@@ -76,11 +80,13 @@ export class CommissionService {
     const q = query(
       this.commissionsCol,
       where('sellerId', '==', sellerId),
-      orderBy('transactionDate', 'desc'),
       limit(300)
     );
     return collectionData(q, { idField: 'id' }).pipe(
-      map(items => items.map(i => this.convertCommissionDates(i)))
+      map(items => {
+        const converted = items.map(i => this.convertCommissionDates(i));
+        return converted.sort((a, b) => b.transactionDate.getTime() - a.transactionDate.getTime());
+      })
     );
   }
 
@@ -89,11 +95,17 @@ export class CommissionService {
     const q = query(
       this.commissionsCol,
       where('status', 'in', ['SUBMITTED', 'PAID']),
-      orderBy('submittedAt', 'desc'),
       limit(limitCount)
     );
     return collectionData(q, { idField: 'id' }).pipe(
-      map(items => items.map(i => this.convertCommissionDates(i)))
+      map(items => {
+        const converted = items.map(i => this.convertCommissionDates(i));
+        return converted.sort((a, b) => {
+          const tA = (a.submittedAt || a.transactionDate).getTime();
+          const tB = (b.submittedAt || b.transactionDate).getTime();
+          return tB - tA;
+        });
+      })
     );
   }
 

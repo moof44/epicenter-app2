@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
@@ -14,7 +14,7 @@ import { CommissionService } from '../../../../core/services/commission.service'
 import { AuthService } from '../../../../core/services/auth.service';
 import { ProductCommission, CommissionStatus } from '../../../../core/models/commission.model';
 import { fadeIn } from '../../../../core/animations/animations';
-import { firstValueFrom } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-commission-center',
@@ -28,11 +28,14 @@ import { firstValueFrom } from 'rxjs';
   animations: [fadeIn],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CommissionCenter implements OnInit {
+export class CommissionCenter implements OnInit, OnDestroy {
   private commissionService = inject(CommissionService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
   private cdr = inject(ChangeDetectorRef);
+
+  private subs = new Subscription();
+  private dataSubs = new Subscription();
 
   // User & Role
   currentUser = computed(() => this.authService.userProfile());
@@ -44,7 +47,7 @@ export class CommissionCenter implements OnInit {
   activeManagerTab: 'APPROVALS' | 'CASHOUT' | 'HISTORY' = 'APPROVALS';
   activeStaffTab: 'APPROVED' | 'PENDING' | 'SUBMITTED' | 'REJECTED' = 'APPROVED';
 
-  // Data Signals
+  // Signals for Data
   pendingCommissions = signal<ProductCommission[]>([]);
   approvedCommissions = signal<ProductCommission[]>([]);
   staffCommissions = signal<ProductCommission[]>([]);
@@ -98,35 +101,89 @@ export class CommissionCenter implements OnInit {
   });
 
   ngOnInit(): void {
-    this.loadData();
+    this.isLoading.set(true);
+    // Listen to user profile to initialize and react as soon as auth state resolves
+    this.subs.add(
+      this.authService.user$.subscribe(user => {
+        if (user) {
+          this.setupDataStreams(user);
+        }
+      })
+    );
+  }
+
+  setupDataStreams(user: any) {
+    this.dataSubs.unsubscribe();
+    this.dataSubs = new Subscription();
+    this.isLoading.set(true);
+
+    const isManager = this.authService.hasAnyRole(['ADMIN', 'MANAGER', 'COACH_OWNER']);
+
+    if (isManager) {
+      this.dataSubs.add(
+        this.commissionService.getPendingCommissions$().subscribe({
+          next: items => {
+            this.pendingCommissions.set(items);
+            this.isLoading.set(false);
+            this.cdr.markForCheck();
+          },
+          error: err => {
+            console.error('Pending commissions error:', err);
+            this.isLoading.set(false);
+            this.cdr.markForCheck();
+          }
+        })
+      );
+
+      this.dataSubs.add(
+        this.commissionService.getApprovedCommissions$().subscribe({
+          next: items => {
+            this.approvedCommissions.set(items);
+            this.cdr.markForCheck();
+          },
+          error: err => console.error('Approved commissions error:', err)
+        })
+      );
+
+      this.dataSubs.add(
+        this.commissionService.getSubmittedCommissions$().subscribe({
+          next: items => {
+            this.historyCommissions.set(items);
+            this.cdr.markForCheck();
+          },
+          error: err => console.error('History commissions error:', err)
+        })
+      );
+    }
+
+    if (user?.uid) {
+      this.dataSubs.add(
+        this.commissionService.getStaffCommissions$(user.uid).subscribe({
+          next: items => {
+            this.staffCommissions.set(items);
+            if (!isManager) this.isLoading.set(false);
+            this.cdr.markForCheck();
+          },
+          error: err => {
+            console.error('Staff commissions error:', err);
+            if (!isManager) this.isLoading.set(false);
+            this.cdr.markForCheck();
+          }
+        })
+      );
+    }
   }
 
   async loadData() {
-    this.isLoading.set(true);
-    try {
-      if (this.isManagerView()) {
-        const [pending, approved, history] = await Promise.all([
-          firstValueFrom(this.commissionService.getPendingCommissions$()),
-          firstValueFrom(this.commissionService.getApprovedCommissions$()),
-          firstValueFrom(this.commissionService.getSubmittedCommissions$())
-        ]);
-        this.pendingCommissions.set(pending);
-        this.approvedCommissions.set(approved);
-        this.historyCommissions.set(history);
-      } else {
-        const uid = this.currentUser()?.uid;
-        if (uid) {
-          const staffItems = await firstValueFrom(this.commissionService.getStaffCommissions$(uid));
-          this.staffCommissions.set(staffItems);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load commissions:', err);
-      this.snackBar.open('Failed to load commissions data', 'Close', { duration: 3000 });
-    } finally {
-      this.isLoading.set(false);
-      this.cdr.markForCheck();
+    const user = this.authService.userProfile();
+    if (user) {
+      this.setupDataStreams(user);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.subs.unsubscribe();
+    this.dataSubs.unsubscribe();
   }
 
   // Batch Selection
