@@ -61,11 +61,10 @@ export class ShiftControlModal implements OnInit {
     { denomination: 200, label: '₱200', type: 'BILL', count: 0 },
     { denomination: 100, label: '₱100', type: 'BILL', count: 0 },
     { denomination: 50, label: '₱50', type: 'BILL', count: 0 },
-    { denomination: 20, label: '₱20', type: 'BILL', count: 0 }
+    { denomination: 20, label: '₱20 (Bill / Coin)', type: 'BILL', count: 0 }
   ];
 
   openingCoinDenominations: DenominationItem[] = [
-    { denomination: 20, label: '₱20 Coin', type: 'COIN', count: 0 },
     { denomination: 10, label: '₱10 Coin', type: 'COIN', count: 0 },
     { denomination: 5, label: '₱5 Coin', type: 'COIN', count: 0 },
     { denomination: 1, label: '₱1 Coin', type: 'COIN', count: 0 },
@@ -84,11 +83,10 @@ export class ShiftControlModal implements OnInit {
     { denomination: 200, label: '₱200', type: 'BILL', count: 0 },
     { denomination: 100, label: '₱100', type: 'BILL', count: 0 },
     { denomination: 50, label: '₱50', type: 'BILL', count: 0 },
-    { denomination: 20, label: '₱20', type: 'BILL', count: 0 }
+    { denomination: 20, label: '₱20 (Bill / Coin)', type: 'BILL', count: 0 }
   ];
 
   coinDenominations: DenominationItem[] = [
-    { denomination: 20, label: '₱20 Coin', type: 'COIN', count: 0 },
     { denomination: 10, label: '₱10 Coin', type: 'COIN', count: 0 },
     { denomination: 5, label: '₱5 Coin', type: 'COIN', count: 0 },
     { denomination: 1, label: '₱1 Coin', type: 'COIN', count: 0 },

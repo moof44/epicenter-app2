@@ -287,7 +287,19 @@ export class ShiftHistory implements AfterViewInit, OnInit {
   }
 
   getHandoverDiffItems(shift: EnrichedShiftSession): DenominationAuditDiffItem[] {
-    return shift.computedHandoverAudit?.diffItems || [];
+    const raw = shift.computedHandoverAudit?.diffItems || [];
+    if (!raw.length) return [];
+
+    // Defensive deduplication by denomination to guard against legacy records with duplicate ₱20 entries
+    const seen = new Set<number>();
+    const deduped: DenominationAuditDiffItem[] = [];
+    for (const item of raw) {
+      if (!seen.has(item.denomination)) {
+        seen.add(item.denomination);
+        deduped.push(item);
+      }
+    }
+    return deduped;
   }
 
   hasHandoverDiscrepancies(shift: EnrichedShiftSession): boolean {
