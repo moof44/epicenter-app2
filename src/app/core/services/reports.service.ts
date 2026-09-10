@@ -11,10 +11,21 @@ import { TransactionService } from './transaction.service';
 import { AttendanceService } from './attendance.service';
 import { IncidentService } from './incident.service';
 import { FinancialAnalyticsService } from './financial-analytics.service';
+import { MemberRepository } from '../repositories/member.repository';
 import { toLocalDateStr } from '../utils/date.utils';
 import { firstValueFrom } from 'rxjs';
 import { SystemAnomaly, IncidentReport } from '../models/incident.model';
-import { FinancialHealthSummary } from '../models/financial-health.model';
+
+export interface UnrenewedMember {
+  memberId: string;
+  memberName: string;
+  contactNumber: string;
+  type: 'MEMBERSHIP' | 'TRAINING' | 'BOTH';
+  membershipExpiration?: Date | null;
+  trainingExpiration?: Date | null;
+  status: string;
+  daysAgo: number;
+}
 
 export interface DailyPerformanceResult {
   dateStr: string;
@@ -102,6 +113,12 @@ export interface MonthlyPerformanceResult {
   };
   systemAnomalies: SystemAnomaly[];
   manualIncidents: IncidentReport[];
+  unrenewedSummary: {
+    totalUnrenewed: number;
+    membershipLapsedCount: number;
+    trainingLapsedCount: number;
+    members: UnrenewedMember[];
+  };
 }
 
 @Injectable({
@@ -113,6 +130,7 @@ export class ReportsService {
   private attendanceService = inject(AttendanceService);
   private incidentService = inject(IncidentService);
   private financialAnalyticsService = inject(FinancialAnalyticsService);
+  private memberRepository = inject(MemberRepository);
 
   /**
    * 1. Volume or number of gym goers every day with time peak highlight (original method preserved)
@@ -744,8 +762,6 @@ export class ReportsService {
     const hourlyCounts = new Map<string, number>();
     let weekdayVisits = 0;
     let weekendVisits = 0;
-    const weekdayDays = 0;
-    const weekendDays = 0;
 
     const uniqueMembers = new Set<string>();
 
@@ -821,6 +837,76 @@ export class ReportsService {
     const totalIncidents = manualIncidents.length + anomalies.length;
     const resolvedCount = manualIncidents.filter(m => m.status === 'RESOLVED' || m.status === 'CLOSED').length + anomalies.filter(a => a.isResolved).length;
 
+    // Member Retention & Lapsed Tracking (from local Dexie IndexedDB cache - 0 Firestore reads)
+    let newMembersCount = 0;
+    const unrenewedMembers: UnrenewedMember[] = [];
+    let memLapsedCount = 0;
+    let trainLapsedCount = 0;
+
+    try {
+      const allMembers = await firstValueFrom(this.memberRepository.getMembersLive());
+      
+      const toDate = (val: any): Date | null => {
+        if (!val) return null;
+        if (val instanceof Date) return val;
+        if (val.toDate) return val.toDate();
+        if (val.seconds) return new Date(val.seconds * 1000);
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? null : d;
+      };
+
+      allMembers.forEach(m => {
+        // Count new members created this month
+        const createdDate = toDate(m.createdBy?.timestamp);
+        if (createdDate && createdDate >= startDate && createdDate <= endDate) {
+          newMembersCount++;
+        }
+
+        const memExp = toDate(m.membershipExpiration || m.expiration);
+        const trainExp = toDate(m.trainingExpiration);
+
+        const memLapsed = !!(memExp && memExp >= startDate && memExp <= endDate);
+        const trainLapsed = !!(trainExp && trainExp >= startDate && trainExp <= endDate);
+
+        if (memLapsed || trainLapsed) {
+          let type: 'MEMBERSHIP' | 'TRAINING' | 'BOTH' = 'MEMBERSHIP';
+          if (memLapsed && trainLapsed) {
+            type = 'BOTH';
+            memLapsedCount++;
+            trainLapsedCount++;
+          } else if (trainLapsed) {
+            type = 'TRAINING';
+            trainLapsedCount++;
+          } else {
+            memLapsedCount++;
+          }
+
+          const primaryExp = memLapsed ? memExp! : trainExp!;
+          const daysAgo = Math.max(0, Math.floor((now.getTime() - primaryExp.getTime()) / (1000 * 60 * 60 * 24)));
+
+          unrenewedMembers.push({
+            memberId: m.id || '',
+            memberName: m.name || 'Unknown Member',
+            contactNumber: m.contactNumber || 'No Contact',
+            type,
+            membershipExpiration: memExp,
+            trainingExpiration: trainExp,
+            status: m.membershipStatus || 'Inactive',
+            daysAgo
+          });
+        }
+      });
+
+      // Sort unrenewed by expiration date descending
+      unrenewedMembers.sort((a, b) => {
+        const tA = (a.membershipExpiration || a.trainingExpiration)?.getTime() || 0;
+        const tB = (b.membershipExpiration || b.trainingExpiration)?.getTime() || 0;
+        return tB - tA;
+      });
+    } catch (err) {
+      console.warn('[ReportsService] Error querying member retention from Dexie:', err);
+    }
+
     return {
       year,
       month,
@@ -832,7 +918,7 @@ export class ReportsService {
       financialHealth: finHealth,
       totalCheckIns: attendance.length,
       uniqueVisitors: uniqueMembers.size,
-      newMembersCount: 0, // Fallback if member collection isn't joined
+      newMembersCount,
       weekdayAvgCheckIns,
       weekendAvgCheckIns,
       topPeakHours,
@@ -843,7 +929,13 @@ export class ReportsService {
         resolutionRatePct: totalIncidents > 0 ? Math.round((resolvedCount / totalIncidents) * 100) : 100
       },
       systemAnomalies: anomalies,
-      manualIncidents
+      manualIncidents,
+      unrenewedSummary: {
+        totalUnrenewed: unrenewedMembers.length,
+        membershipLapsedCount: memLapsedCount,
+        trainingLapsedCount: trainLapsedCount,
+        members: unrenewedMembers
+      }
     };
   }
 }

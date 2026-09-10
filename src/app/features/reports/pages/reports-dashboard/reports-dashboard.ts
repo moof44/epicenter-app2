@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ReportsService, DailyPerformanceResult, WeeklyPerformanceResult, MonthlyPerformanceResult } from '../../../../core/services/reports.service';
 import { IncidentService } from '../../../../core/services/incident.service';
@@ -19,7 +20,7 @@ import { SalesPerformanceComponent } from '../../components/sales-performance/sa
 import { StaffSalesComponent } from '../../components/staff-sales/staff-sales';
 import { ProductBreakdownComponent } from '../../components/product-breakdown/product-breakdown';
 import { MemberAttendanceComponent } from '../../components/member-attendance/member-attendance';
-import { IncidentReport, SystemAnomaly } from '../../../../core/models/incident.model';
+import { IncidentReport } from '../../../../core/models/incident.model';
 import { toLocalDateStr } from '../../../../core/utils/date.utils';
 import { firstValueFrom } from 'rxjs';
 import { fadeIn } from '../../../../core/animations/animations';
@@ -41,6 +42,7 @@ export type PerformanceCadence = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
     MatIconModule,
     MatTooltipModule,
     MatDialogModule,
+    MatSnackBarModule,
     VolumeChartComponent,
     SalesPerformanceComponent,
     StaffSalesComponent,
@@ -58,6 +60,7 @@ export class ReportsDashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
 
   // Active Cadence Mode
   activeCadence = signal<PerformanceCadence>('DAILY');
@@ -80,6 +83,44 @@ export class ReportsDashboardComponent implements OnInit {
   weeklyData = signal<WeeklyPerformanceResult | null>(null);
   monthlyData = signal<MonthlyPerformanceResult | null>(null);
 
+  // Unrenewed Subscriptions & Training State
+  unrenewedFilter = signal<'ALL' | 'MEMBERSHIP' | 'TRAINING'>('ALL');
+  unrenewedSearchQuery = signal<string>('');
+
+  filteredUnrenewedMembers = computed(() => {
+    const data = this.monthlyData();
+    if (!data?.unrenewedSummary?.members) return [];
+    const filter = this.unrenewedFilter();
+    const query = this.unrenewedSearchQuery().toLowerCase().trim();
+
+    return data.unrenewedSummary.members.filter(m => {
+      if (filter === 'MEMBERSHIP' && m.type !== 'MEMBERSHIP' && m.type !== 'BOTH') return false;
+      if (filter === 'TRAINING' && m.type !== 'TRAINING' && m.type !== 'BOTH') return false;
+
+      if (query) {
+        const nameMatch = m.memberName.toLowerCase().includes(query);
+        const contactMatch = m.contactNumber.toLowerCase().includes(query);
+        return nameMatch || contactMatch;
+      }
+      return true;
+    });
+  });
+
+  setUnrenewedFilter(f: 'ALL' | 'MEMBERSHIP' | 'TRAINING') {
+    this.unrenewedFilter.set(f);
+  }
+
+  onUnrenewedSearch(event: Event) {
+    const val = (event.target as HTMLInputElement).value || '';
+    this.unrenewedSearchQuery.set(val);
+  }
+
+  copyContact(contact: string, name: string) {
+    if (!contact || contact === 'No Contact') return;
+    navigator.clipboard?.writeText(contact);
+    this.snackBar.open(`Copied ${name}'s contact: ${contact}`, 'Close', { duration: 2500 });
+  }
+
   // Legacy/Custom Range Data Cache
   volumeData: { date: string; count: number }[] = [];
   peakHours: { hour: string; count: number }[] = [];
@@ -88,6 +129,10 @@ export class ReportsDashboardComponent implements OnInit {
   staffData: { name: string; total: number }[] = [];
   productData: { name: string; quantity: number; revenue: number }[] = [];
   memberData: { name: string; count: number }[] = [];
+
+  get customRangeTotalSales(): number {
+    return this.salesData.reduce((s, x) => s + x.total, 0);
+  }
 
   // Weekly Date Range Computations
   weekRange = computed(() => {

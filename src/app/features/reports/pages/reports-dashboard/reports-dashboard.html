@@ -207,7 +207,13 @@
       <div class="incident-items-grid" *ngIf="d.systemAnomalies.length > 0 || d.manualIncidents.length > 0">
         
         <!-- Manual Incidents -->
-        <div *ngFor="let inc of d.manualIncidents" class="incident-row-card manual-card" (click)="openEditIncidentDialog(inc)">
+        <div 
+          *ngFor="let inc of d.manualIncidents" 
+          class="incident-row-card manual-card" 
+          role="button" 
+          tabindex="0"
+          (click)="openEditIncidentDialog(inc)"
+          (keydown.enter)="openEditIncidentDialog(inc)">
           <div class="inc-icon-box" [ngClass]="'inc-' + inc.severity.toLowerCase()">
             <mat-icon>{{ inc.category === 'EQUIPMENT' ? 'fitness_center' : (inc.category === 'FACILITY' ? 'apartment' : 'report') }}</mat-icon>
           </div>
@@ -364,7 +370,13 @@
       <!-- List of weekly items -->
       <div class="incident-items-grid" *ngIf="w.incidentTally.total > 0">
         <!-- Manual Incidents -->
-        <div *ngFor="let inc of w.manualIncidents" class="incident-row-card manual-card" (click)="openEditIncidentDialog(inc)">
+        <div 
+          *ngFor="let inc of w.manualIncidents" 
+          class="incident-row-card manual-card" 
+          role="button" 
+          tabindex="0"
+          (click)="openEditIncidentDialog(inc)"
+          (keydown.enter)="openEditIncidentDialog(inc)">
           <div class="inc-icon-box" [ngClass]="'inc-' + inc.severity.toLowerCase()">
             <mat-icon>{{ inc.category === 'EQUIPMENT' ? 'fitness_center' : (inc.category === 'FACILITY' ? 'apartment' : 'report') }}</mat-icon>
           </div>
@@ -500,6 +512,129 @@
       </div>
     </div>
 
+    <!-- 👥 Member Retention: Lapsed & Unrenewed Subscriptions Deck -->
+    <div class="report-section-card retention-card" *ngIf="m.unrenewedSummary as u">
+      <div class="retention-header">
+        <div class="title-with-icon">
+          <mat-icon class="text-rose">person_off</mat-icon>
+          <div>
+            <h3>Member Retention: Lapsed & Unrenewed Subscriptions</h3>
+            <span class="sub-caption">Members whose subscription or personal training expired in this month without a renewal</span>
+          </div>
+        </div>
+        <div class="retention-tallies">
+          <div class="tally-pill tally-total" [matTooltip]="u.totalUnrenewed + ' total members did not renew in this period'">
+            <span class="tally-num font-mono">{{ u.totalUnrenewed }}</span>
+            <span class="tally-lbl">Total Unrenewed</span>
+          </div>
+          <div class="tally-pill tally-sub" [matTooltip]="u.membershipLapsedCount + ' monthly memberships lapsed'">
+            <span class="tally-num font-mono">{{ u.membershipLapsedCount }}</span>
+            <span class="tally-lbl">Memberships</span>
+          </div>
+          <div class="tally-pill tally-train" [matTooltip]="u.trainingLapsedCount + ' training packages lapsed'">
+            <span class="tally-num font-mono">{{ u.trainingLapsedCount }}</span>
+            <span class="tally-lbl">Training</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls: Filter Chips + Search -->
+      <div class="retention-controls-bar">
+        <div class="filter-chips-group">
+          <button type="button" class="filter-chip" [class.active]="unrenewedFilter() === 'ALL'" (click)="setUnrenewedFilter('ALL')">
+            All ({{ u.totalUnrenewed }})
+          </button>
+          <button type="button" class="filter-chip" [class.active]="unrenewedFilter() === 'MEMBERSHIP'" (click)="setUnrenewedFilter('MEMBERSHIP')">
+            Memberships ({{ u.membershipLapsedCount }})
+          </button>
+          <button type="button" class="filter-chip" [class.active]="unrenewedFilter() === 'TRAINING'" (click)="setUnrenewedFilter('TRAINING')">
+            Training ({{ u.trainingLapsedCount }})
+          </button>
+        </div>
+
+        <div class="retention-search-box">
+          <mat-icon>search</mat-icon>
+          <input 
+            type="text" 
+            placeholder="Search member name or contact..." 
+            [value]="unrenewedSearchQuery()"
+            (input)="onUnrenewedSearch($event)"
+            class="search-input font-mono"
+          />
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredUnrenewedMembers().length === 0" class="empty-retention-notice">
+        <mat-icon class="text-mint">verified</mat-icon>
+        <div class="notice-texts">
+          <strong>No Unrenewed Members Found</strong>
+          <p *ngIf="u.totalUnrenewed === 0">All members whose subscriptions expired during this month have renewed or there were no expirations.</p>
+          <p *ngIf="u.totalUnrenewed > 0">No members match your current filter or search criteria.</p>
+        </div>
+      </div>
+
+      <!-- Table of Unrenewed Members -->
+      <div class="retention-table-wrap" *ngIf="filteredUnrenewedMembers().length > 0">
+        <table class="retention-table">
+          <thead>
+            <tr>
+              <th>Member Name</th>
+              <th>Contact Number</th>
+              <th>Lapsed Type</th>
+              <th>Expiration Date</th>
+              <th>Days Lapsed</th>
+              <th>Account Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let member of filteredUnrenewedMembers()">
+              <td class="col-name">
+                <div class="member-name-cell">
+                  <mat-icon class="member-avatar-icon">account_circle</mat-icon>
+                  <strong>{{ member.memberName }}</strong>
+                </div>
+              </td>
+              <td class="col-contact">
+                <div class="contact-cell">
+                  <a *ngIf="member.contactNumber && member.contactNumber !== 'No Contact'" [href]="'tel:' + member.contactNumber" class="contact-link font-mono">
+                    {{ member.contactNumber }}
+                  </a>
+                  <span *ngIf="!member.contactNumber || member.contactNumber === 'No Contact'" class="text-muted">No Contact</span>
+                  <button 
+                    *ngIf="member.contactNumber && member.contactNumber !== 'No Contact'" 
+                    type="button" 
+                    class="btn-copy-contact" 
+                    matTooltip="Copy contact number"
+                    (click)="copyContact(member.contactNumber, member.memberName)">
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                </div>
+              </td>
+              <td class="col-type">
+                <span class="type-pill" [ngClass]="'type-' + member.type.toLowerCase()">
+                  {{ member.type === 'BOTH' ? 'Subscription + PT' : (member.type === 'MEMBERSHIP' ? 'Subscription' : 'Personal Training') }}
+                </span>
+              </td>
+              <td class="col-date font-mono">
+                {{ (member.membershipExpiration || member.trainingExpiration) | date:'mediumDate' }}
+              </td>
+              <td class="col-days">
+                <span class="days-lapsed-badge" [ngClass]="member.daysAgo > 30 ? 'badge-stale' : 'badge-recent'">
+                  {{ member.daysAgo }}d ago
+                </span>
+              </td>
+              <td class="col-status">
+                <span class="status-indicator" [ngClass]="(member.status || '').toLowerCase() === 'active' ? 'status-active' : 'status-inactive'">
+                  {{ member.status || 'Inactive' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Monthly Revenue Streams & Peak Hours Summary Grid -->
     <div class="charts-dual-grid">
       <!-- Revenue Streams Breakdown -->
@@ -582,7 +717,7 @@
         <div class="card-icon-seal icon-gold"><mat-icon>payments</mat-icon></div>
         <div class="card-info">
           <span class="label">Period Gross Sales</span>
-          <strong class="value font-mono text-gold">₱{{ salesData.reduce((s, x) => s + x.total, 0) | number:'1.2-2' }}</strong>
+          <strong class="value font-mono text-gold">₱{{ customRangeTotalSales | number:'1.2-2' }}</strong>
         </div>
       </div>
     </div>
