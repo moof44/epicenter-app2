@@ -15,6 +15,7 @@ import { MemberRepository } from '../repositories/member.repository';
 import { toLocalDateStr } from '../utils/date.utils';
 import { firstValueFrom } from 'rxjs';
 import { SystemAnomaly, IncidentReport } from '../models/incident.model';
+import type { FinancialHealthSummary } from '../models/financial-health.model';
 
 export interface UnrenewedMember {
   memberId: string;
