@@ -1,8 +1,8 @@
 export interface ShiftDefinition {
     id: string;
     name: string;
-    startTime: string; // '06:00' or 'Flexible'
-    endTime: string;   // '13:00' or 'Flexible'
+    startTime: string; // '08:00' or 'Flexible'
+    endTime: string;   // '15:00' or 'Flexible'
     requiredHours: number;
     isFlexible?: boolean;
     colorHex?: string;

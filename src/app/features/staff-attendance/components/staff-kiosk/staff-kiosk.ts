@@ -166,12 +166,24 @@ export class StaffKioskComponent implements OnInit, OnDestroy {
             const users = await firstValueFrom(this.userService.getStaffUsers());
             this.staffList.set((users || []).filter(u => u.isActive !== false));
 
-            // Load shifts from settings or default
-            const settings = await this.settingsService.getSettingsOnce();
-            if (settings?.staffShifts && settings.staffShifts.length > 0) {
-                this.shiftsList.set(settings.staffShifts);
+            // Load shifts from shift definitions (Firestore) or settings or fallback
+            const dbShifts = await firstValueFrom(this.shiftScheduleService.getShiftDefinitions());
+            if (dbShifts && dbShifts.length > 0) {
+                this.shiftsList.set(dbShifts.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    startTime: s.startTime,
+                    endTime: s.endTime,
+                    isFlexible: s.isFlexible,
+                    requiredHours: s.requiredHours || 7
+                })));
             } else {
-                this.shiftsList.set(DEFAULT_STAFF_SHIFTS);
+                const settings = await this.settingsService.getSettingsOnce();
+                if (settings?.staffShifts && settings.staffShifts.length > 0) {
+                    this.shiftsList.set(settings.staffShifts);
+                } else {
+                    this.shiftsList.set(DEFAULT_STAFF_SHIFTS);
+                }
             }
 
             // Auto-detect current Manila shift

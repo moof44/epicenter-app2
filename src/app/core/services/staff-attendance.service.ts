@@ -35,6 +35,13 @@ import { toLocalDateStr } from '../utils/date.utils';
 
 export const DEFAULT_STAFF_SHIFTS: StaffShiftDefinition[] = [
     {
+        id: 'opening',
+        name: 'Opening Shift',
+        startTime: '08:00',
+        endTime: '15:00',
+        requiredHours: 7
+    },
+    {
         id: 'morning',
         name: 'Morning Shift',
         startTime: '08:00',
@@ -198,18 +205,18 @@ export class StaffAttendanceService {
         const now = this.getManilaNow();
         const currentHours = now.getHours();
 
-        const morningShift = shifts.find(s => s.id === 'morning') || shifts[0];
+        const openingShift = shifts.find(s => s.id === 'opening') || shifts.find(s => s.id === 'morning') || shifts[0];
         const nightShift = shifts.find(s => s.id === 'night') || shifts[shifts.length - 1];
 
-        // 4:00 AM to 1:59 PM -> Morning Shift (08:00 - 15:00)
+        // 4:00 AM to 1:59 PM -> Opening / Morning Shift (08:00 - 15:00)
         // 2:00 PM to 11:59 PM -> Night Shift (15:00 - 22:00)
         if (currentHours >= 4 && currentHours < 14) {
-            return morningShift;
+            return openingShift;
         } else if (currentHours >= 14 && currentHours <= 23) {
             return nightShift;
         }
 
-        return morningShift;
+        return openingShift;
     }
 
     // ==========================================

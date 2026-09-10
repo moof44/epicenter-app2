@@ -15,12 +15,13 @@ import {
     formatShiftSchedule,
     formatTime12Hour
 } from '../../../../core/services/staff-attendance.service';
+import { ShiftScheduleService } from '../../../../core/services/shift-schedule.service';
 import { UserService } from '../../../../core/services/user.service';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { User } from '../../../../core/models/user.model';
 import { StaffShiftDefinition } from '../../../../core/models/staff-attendance.model';
 import { fadeIn } from '../../../../core/animations/animations';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-staff-kiosk-dialog',
@@ -44,6 +45,7 @@ import { firstValueFrom } from 'rxjs';
 })
 export class StaffKioskDialogComponent implements OnInit, OnDestroy {
     private attendanceService = inject(StaffAttendanceService);
+    private shiftScheduleService = inject(ShiftScheduleService);
     private userService = inject(UserService);
     private settingsService = inject(SettingsService);
     private dialogRef = inject(MatDialogRef<StaffKioskDialogComponent>);
@@ -80,11 +82,13 @@ export class StaffKioskDialogComponent implements OnInit, OnDestroy {
     formatShiftSchedule = formatShiftSchedule;
 
     private timerInterval: any = null;
+    private staffChangeSub?: Subscription;
 
     async ngOnInit() {
         this.updateClock();
         this.timerInterval = setInterval(() => this.updateClock(), 1000);
         this.deviceName.set(this.attendanceService.getLocalDeviceName());
+        this.setupStaffChangeListener();
         await this.loadData();
     }
 
@@ -92,6 +96,36 @@ export class StaffKioskDialogComponent implements OnInit, OnDestroy {
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
         }
+        this.staffChangeSub?.unsubscribe();
+    }
+
+    private setupStaffChangeListener() {
+        this.staffChangeSub = this.clockInForm.get('staffId')?.valueChanges.subscribe(async (staffId) => {
+            if (!staffId) return;
+            try {
+                const scheduled = await this.shiftScheduleService.getTodayShiftForStaff(staffId);
+                if (scheduled) {
+                    let shiftDef = this.shiftsList().find(s => s.id === scheduled.shiftId);
+                    if (!shiftDef) {
+                        shiftDef = {
+                            id: scheduled.shiftId,
+                            name: scheduled.shiftName,
+                            startTime: scheduled.startTime,
+                            endTime: scheduled.endTime,
+                            isFlexible: scheduled.isFlexible,
+                            requiredHours: 7
+                        };
+                        this.shiftsList.update(list => [...list, shiftDef!]);
+                    }
+                    this.clockInForm.patchValue({ shiftId: shiftDef.id });
+                } else {
+                    const autoShift = this.attendanceService.autoDetectCurrentShift(this.shiftsList());
+                    this.clockInForm.patchValue({ shiftId: autoShift.id });
+                }
+            } catch (e) {
+                console.warn('Error auto-binding scheduled shift on kiosk dialog:', e);
+            }
+        });
     }
 
     private updateClock() {
@@ -105,9 +139,22 @@ export class StaffKioskDialogComponent implements OnInit, OnDestroy {
             const users = await firstValueFrom(this.userService.getStaffUsers());
             this.staffList.set((users || []).filter(u => u.isActive !== false));
 
-            const settings = await this.settingsService.getSettingsOnce();
-            if (settings?.staffShifts && settings.staffShifts.length > 0) {
-                this.shiftsList.set(settings.staffShifts);
+            // Load shifts from shift definitions (Firestore) or settings or fallback
+            const dbShifts = await firstValueFrom(this.shiftScheduleService.getShiftDefinitions());
+            if (dbShifts && dbShifts.length > 0) {
+                this.shiftsList.set(dbShifts.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    startTime: s.startTime,
+                    endTime: s.endTime,
+                    isFlexible: s.isFlexible,
+                    requiredHours: s.requiredHours || 7
+                })));
+            } else {
+                const settings = await this.settingsService.getSettingsOnce();
+                if (settings?.staffShifts && settings.staffShifts.length > 0) {
+                    this.shiftsList.set(settings.staffShifts);
+                }
             }
 
             // Default shift auto-detection

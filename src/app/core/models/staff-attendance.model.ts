@@ -17,8 +17,8 @@ export interface StaffAttendanceRecord {
     date: string; // YYYY-MM-DD (Manila date)
     shiftId: string;
     shiftName: string;
-    scheduledStartTime: string; // '06:00'
-    scheduledEndTime: string; // '13:00'
+    scheduledStartTime: string; // '08:00'
+    scheduledEndTime: string; // '15:00'
     checkInTime: Date;
     checkOutTime?: Date;
     status: StaffAttendanceStatus;

@@ -11,7 +11,7 @@ Shifts are configurable via a dedicated management drawer/modal.
 ### Standard Shift Types
 | Shift ID | Name | Time Window (24h) | Time Window (12h) | Required Hours | Type | Color Tag |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| `opening` | **Opening Shift** | 06:00 – 13:00 | 6:00 AM – 1:00 PM | 7 Hours | Fixed | 🟡 Amber |
+| `opening` | **Opening Shift** | 08:00 – 15:00 | 8:00 AM – 3:00 PM | 7 Hours | Fixed | 🟡 Amber |
 | `morning` | **Morning Shift** | 08:00 – 15:00 | 8:00 AM – 3:00 PM | 7 Hours | Fixed | 🔵 Sky Blue |
 | `night` | **Night / Closing Shift** | 15:00 – 22:00 | 3:00 PM – 10:00 PM | 7 Hours | Fixed | 🟣 Purple |
 | `flexible` | **Flexible Shift** | Flexible | Flexible | 7 Hours | Flexible | 🟢 Emerald |

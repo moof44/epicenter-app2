@@ -295,7 +295,21 @@ export class ReportsService {
 
       staffSnap.forEach(stDoc => {
         const sData = stDoc.data();
-        const late = Number(sData['lateMinutes'] || 0);
+        let scheduledStart = sData['scheduledStartTime'] || '08:00';
+        let late = Number(sData['lateMinutes'] || 0);
+
+        // Gym operational hours are strictly 8:00 AM to 10:00 PM daily.
+        // Defensively sanitize legacy '06:00' fallback: Kris and opening staff start at 08:00
+        if (scheduledStart === '06:00') {
+          scheduledStart = '08:00';
+          const checkIn = sData['checkInTime']?.toDate ? sData['checkInTime'].toDate() : (sData['checkInTime'] ? new Date(sData['checkInTime']) : new Date());
+          const [sH, sM] = scheduledStart.split(':').map(Number);
+          const schedTime = new Date(checkIn);
+          schedTime.setHours(sH, sM, 0, 0);
+          const diffMins = Math.round((checkIn.getTime() - schedTime.getTime()) / 60000);
+          late = diffMins > 0 ? diffMins : 0;
+        }
+
         if (late > 0) {
           const checkIn = sData['checkInTime']?.toDate ? sData['checkInTime'].toDate() : (sData['checkInTime'] ? new Date(sData['checkInTime']) : new Date());
           anomalies.push({
@@ -305,7 +319,7 @@ export class ReportsService {
             timestamp: checkIn,
             dateStr: sData['date'] || toLocalDateStr(checkIn),
             severity: late > 30 ? 'HIGH' : 'LOW',
-            details: `Scheduled at ${sData['scheduledStartTime'] || 'Shift'}, checked in at ${checkIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
+            details: `Scheduled at ${scheduledStart}, checked in at ${checkIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
             personName: sData['staffName'],
             referenceId: stDoc.id,
             isResolved: sData['adjustmentStatus'] === 'APPROVED'
@@ -583,9 +597,9 @@ export class ReportsService {
       }
     });
 
-    // Peak Hours across the entire week (Hourly distribution 06:00 to 22:00)
+    // Peak Hours across the entire week (Hourly distribution 08:00 to 22:00)
     const hourlyCounts = new Map<string, number>();
-    for (let h = 6; h <= 22; h++) {
+    for (let h = 8; h <= 22; h++) {
       hourlyCounts.set(h.toString().padStart(2, '0') + ':00', 0);
     }
 
@@ -697,7 +711,7 @@ export class ReportsService {
    * ── MONTHLY PERFORMANCE VIEW ──
    * Aggregates full-month quota achievement, net operating profit, monthly peak windows, and category breakdowns.
    */
-  async getMonthlyPerformance(year: number, month: number, monthlyQuota: number = 0): Promise<MonthlyPerformanceResult> {
+  async getMonthlyPerformance(year: number, month: number, monthlyQuota = 0): Promise<MonthlyPerformanceResult> {
     const startDate = new Date(year, month, 1, 0, 0, 0, 0);
     const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
     const startStr = toLocalDateStr(startDate);
@@ -730,8 +744,8 @@ export class ReportsService {
     const hourlyCounts = new Map<string, number>();
     let weekdayVisits = 0;
     let weekendVisits = 0;
-    let weekdayDays = 0;
-    let weekendDays = 0;
+    const weekdayDays = 0;
+    const weekendDays = 0;
 
     const uniqueMembers = new Set<string>();
 

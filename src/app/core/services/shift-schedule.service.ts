@@ -29,8 +29,8 @@ export const DEFAULT_SHIFTS: ShiftDefinition[] = [
     {
         id: 'opening',
         name: 'Opening Shift',
-        startTime: '06:00',
-        endTime: '13:00',
+        startTime: '08:00',
+        endTime: '15:00',
         requiredHours: 7,
         colorHex: '#f59e0b', // Amber
         isActive: true
