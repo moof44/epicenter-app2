@@ -12,6 +12,7 @@ import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angul
 import { ReportsService, DailyPerformanceResult, WeeklyPerformanceResult, MonthlyPerformanceResult } from '../../../../core/services/reports.service';
 import { IncidentService } from '../../../../core/services/incident.service';
 import { SettingsService } from '../../../../core/services/settings.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { IncidentDialogComponent } from '../../components/incident-dialog/incident-dialog.component';
 import { VolumeChartComponent } from '../../components/volume-chart/volume-chart';
 import { SalesPerformanceComponent } from '../../components/sales-performance/sales-performance';
@@ -54,6 +55,7 @@ export class ReportsDashboardComponent implements OnInit {
   private reportsService = inject(ReportsService);
   private incidentService = inject(IncidentService);
   private settingsService = inject(SettingsService);
+  private authService = inject(AuthService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
 
@@ -124,6 +126,12 @@ export class ReportsDashboardComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.authService.user$.subscribe(user => {
+      if (user && !this.authService.hasAnyRole(['ADMIN', 'MANAGER'])) {
+        this.router.navigate(['/dashboard']);
+        return;
+      }
+    });
     this.loadSettings();
     this.refreshCurrentCadence();
   }
