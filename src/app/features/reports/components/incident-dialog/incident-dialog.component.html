@@ -1,0 +1,119 @@
+<div class="incident-dialog-container">
+
+  <!-- Dialog Header -->
+  <div class="dialog-header">
+    <div class="header-seal">
+      <mat-icon>{{ isEditMode ? 'edit_note' : 'warning_amber' }}</mat-icon>
+    </div>
+    <div class="header-titles">
+      <h2 class="dialog-title">{{ isEditMode ? 'Update Incident & Resolution' : 'File New Incident Report' }}</h2>
+      <p class="dialog-subtitle">
+        {{ isEditMode ? ('Auditing report ' + data.incident?.incidentNumber) : 'Record facility, equipment, member, or operational issues for administrative review.' }}
+      </p>
+    </div>
+    <button type="button" class="btn-close" (click)="onCancel()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Dialog Body Form -->
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="dialog-form">
+    
+    <!-- Title -->
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Incident Title</mat-label>
+      <input matInput formControlName="title" placeholder="e.g. Treadmill #3 Belt Slipping / Water Leak in Locker" maxlength="100">
+      <mat-error *ngIf="form.get('title')?.hasError('required')">Incident title is required</mat-error>
+    </mat-form-field>
+
+    <!-- Category & Severity Row -->
+    <div class="form-row-dual">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Category</mat-label>
+        <mat-select formControlName="category">
+          <mat-option *ngFor="let cat of categories" [value]="cat.value">
+            {{ cat.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Severity Level</mat-label>
+        <mat-select formControlName="severity">
+          <mat-option *ngFor="let sev of severities" [value]="sev.value">
+            <span [ngClass]="sev.colorClass" class="severity-pill">{{ sev.label }}</span>
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Date, Time, Location Row -->
+    <div class="form-row-tri">
+      <mat-form-field appearance="outline">
+        <mat-label>Date (YYYY-MM-DD)</mat-label>
+        <input matInput type="date" formControlName="incidentDate">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Time (24h)</mat-label>
+        <input matInput type="time" formControlName="incidentTime">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Location in Gym</mat-label>
+        <input matInput formControlName="location" placeholder="e.g. Cardio Zone">
+      </mat-form-field>
+    </div>
+
+    <!-- Description -->
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Incident Description & Details</mat-label>
+      <textarea matInput formControlName="description" rows="3" placeholder="Provide factual description of what happened, equipment involved, or actions taken immediately..."></textarea>
+      <mat-error *ngIf="form.get('description')?.hasError('required')">Description is required</mat-error>
+    </mat-form-field>
+
+    <!-- Involved Persons -->
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Involved Persons (Optional, comma-separated)</mat-label>
+      <input matInput formControlName="involvedPersonsStr" placeholder="e.g. Member: John Doe, Staff: Coach Bryan">
+    </mat-form-field>
+
+    <!-- Resolution Section (For Edit Mode or Manager Action) -->
+    <div *ngIf="isEditMode" class="resolution-box">
+      <div class="resolution-header">
+        <mat-icon class="text-cyan">verified</mat-icon>
+        <span>Resolution & Administrative Audit</span>
+      </div>
+
+      <div class="form-row-dual">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Current Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option *ngFor="let st of statuses" [value]="st.value">
+              {{ st.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Resolution Notes & Actions Taken</mat-label>
+        <textarea matInput formControlName="resolutionNotes" rows="2" placeholder="e.g. Technician replaced frayed cable; machine tested and safe for member use."></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Dialog Actions -->
+    <div class="dialog-actions">
+      <button type="button" class="btn-cancel" (click)="onCancel()" [disabled]="isSubmitting()">
+        Cancel
+      </button>
+
+      <button type="submit" class="btn-submit" [disabled]="form.invalid || isSubmitting()">
+        <mat-icon>{{ isSubmitting() ? 'hourglass_top' : (isEditMode ? 'check_circle' : 'save') }}</mat-icon>
+        <span>{{ isSubmitting() ? 'Saving...' : (isEditMode ? 'Update Incident' : 'Submit Report') }}</span>
+      </button>
+    </div>
+
+  </form>
+
+</div>

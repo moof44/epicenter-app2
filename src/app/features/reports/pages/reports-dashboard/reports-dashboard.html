@@ -1,113 +1,614 @@
 <div class="reports-container" @fadeIn>
 
-  <!-- ── Page Header Deck ── -->
+  <!-- ── 1. Page Header Deck ── -->
   <div class="page-header">
     <div class="header-left-group">
       <button type="button" class="btn-back-circle" (click)="goBack()" matTooltip="Back to Dashboard">
         <mat-icon>arrow_back</mat-icon>
       </button>
       <div class="header-titles">
-        <h1 class="page-title">Business Intelligence & Executive Analytics</h1>
-        <p class="page-subtitle">Track member volume check-ins, store sales vs targets, employee performance, and product margins</p>
+        <div class="title-badge-hub">
+          <mat-icon class="text-gold">analytics</mat-icon>
+          <span>EXECUTIVE INTELLIGENCE</span>
+        </div>
+        <h1 class="page-title">Gym Performance & Operational Audit Hub</h1>
+        <p class="page-subtitle">Unified daily closeouts, weekly pacing, monthly financial health, peak hours, and incident resolution tracking.</p>
       </div>
     </div>
 
     <div class="header-actions">
-      <div class="filters-form-wrap">
-        <mat-form-field appearance="outline" class="dense-form-field" subscriptSizing="dynamic">
-          <mat-label>Date Range</mat-label>
-          <mat-date-range-input [formGroup]="range" [rangePicker]="picker">
-            <input matStartDate formControlName="start" placeholder="Start date">
-            <input matEndDate formControlName="end" placeholder="End date">
-          </mat-date-range-input>
-          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-date-range-picker #picker></mat-date-range-picker>
-        </mat-form-field>
+      <button type="button" class="btn-file-incident" (click)="openCreateIncidentDialog()">
+        <mat-icon>warning_amber</mat-icon>
+        <span>File Incident Report</span>
+      </button>
+    </div>
+  </div>
 
-        <button type="button" class="btn-generate-cyan" (click)="refreshCharts()" [disabled]="isLoading()">
-          <mat-icon class="btn-icon">{{ isLoading() ? 'hourglass_top' : 'refresh' }}</mat-icon>
-          <span>{{ isLoading() ? 'Generating...' : 'Generate Report' }}</span>
+  <!-- ── 2. Cadence Switcher Bar ── -->
+  <div class="cadence-nav-bar">
+    <button type="button" class="cadence-btn" [class.active]="activeCadence() === 'DAILY'" (click)="setCadence('DAILY')">
+      <mat-icon>wb_sunny</mat-icon>
+      <span>Daily Performance</span>
+    </button>
+
+    <button type="button" class="cadence-btn" [class.active]="activeCadence() === 'WEEKLY'" (click)="setCadence('WEEKLY')">
+      <mat-icon>date_range</mat-icon>
+      <span>Weekly Performance</span>
+    </button>
+
+    <button type="button" class="cadence-btn" [class.active]="activeCadence() === 'MONTHLY'" (click)="setCadence('MONTHLY')">
+      <mat-icon>insights</mat-icon>
+      <span>Monthly Performance</span>
+    </button>
+
+    <button type="button" class="cadence-btn" [class.active]="activeCadence() === 'CUSTOM'" (click)="setCadence('CUSTOM')">
+      <mat-icon>tune</mat-icon>
+      <span>Custom Range</span>
+    </button>
+  </div>
+
+  <!-- ── 3. Date / Period Navigator Bar ── -->
+  <div class="period-navigator-bar">
+    
+    <!-- DAILY NAV -->
+    <div *ngIf="activeCadence() === 'DAILY'" class="nav-cluster">
+      <button type="button" class="nav-cycle-btn" (click)="prevDay()" matTooltip="Previous Day">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <div class="period-label-wrap">
+        <mat-icon class="text-cyan">calendar_today</mat-icon>
+        <span class="period-title">{{ dailyDateLabel() }}</span>
+      </div>
+      <button type="button" class="nav-cycle-btn" (click)="nextDay()" matTooltip="Next Day">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <button type="button" class="btn-quick-jump" (click)="setDailyToday()">Today</button>
+      <input type="date" class="date-input-hidden" (change)="onDailyDatePicked($event)">
+    </div>
+
+    <!-- WEEKLY NAV -->
+    <div *ngIf="activeCadence() === 'WEEKLY'" class="nav-cluster">
+      <button type="button" class="nav-cycle-btn" (click)="prevWeek()" matTooltip="Previous Week">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <div class="period-label-wrap">
+        <mat-icon class="text-gold">view_week</mat-icon>
+        <span class="period-title">Week: {{ weeklyDateLabel() }}</span>
+      </div>
+      <button type="button" class="nav-cycle-btn" (click)="nextWeek()" matTooltip="Next Week">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <button type="button" class="btn-quick-jump" (click)="setWeeklyCurrent()">Current Week</button>
+    </div>
+
+    <!-- MONTHLY NAV -->
+    <div *ngIf="activeCadence() === 'MONTHLY'" class="nav-cluster">
+      <button type="button" class="nav-cycle-btn" (click)="prevMonth()" matTooltip="Previous Month">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <div class="period-label-wrap">
+        <mat-icon class="text-mint">calendar_month</mat-icon>
+        <span class="period-title">{{ monthlyDateLabel() }}</span>
+      </div>
+      <button type="button" class="nav-cycle-btn" (click)="nextMonth()" matTooltip="Next Month">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <button type="button" class="btn-quick-jump" (click)="setMonthlyCurrent()">This Month</button>
+    </div>
+
+    <!-- CUSTOM NAV -->
+    <div *ngIf="activeCadence() === 'CUSTOM'" class="filters-form-wrap">
+      <mat-form-field appearance="outline" class="dense-form-field" subscriptSizing="dynamic">
+        <mat-label>Date Range</mat-label>
+        <mat-date-range-input [formGroup]="range" [rangePicker]="picker">
+          <input matStartDate formControlName="start" placeholder="Start date">
+          <input matEndDate formControlName="end" placeholder="End date">
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-date-range-picker #picker></mat-date-range-picker>
+      </mat-form-field>
+
+      <button type="button" class="btn-generate-cyan" (click)="loadCustomRangeReport()" [disabled]="isLoading()">
+        <mat-icon class="btn-icon">{{ isLoading() ? 'hourglass_top' : 'refresh' }}</mat-icon>
+        <span>{{ isLoading() ? 'Loading...' : 'Apply Filter' }}</span>
+      </button>
+    </div>
+
+    <!-- Refresh Action -->
+    <button type="button" class="btn-refresh" (click)="refreshCurrentCadence()" [disabled]="isLoading()" matTooltip="Reload Data">
+      <mat-icon [class.spin]="isLoading()">refresh</mat-icon>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading-bar-wrap">
+    <div class="loading-pulse-line"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       ☀️ 1. DAILY PERFORMANCE VIEW
+       ════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeCadence() === 'DAILY' && dailyData() as d" class="cadence-content-deck">
+    
+    <!-- 4 KPI Summary Cards -->
+    <div class="summary-cards">
+      <!-- Gross Sales -->
+      <div class="summary-card">
+        <div class="card-icon-seal icon-gold"><mat-icon>payments</mat-icon></div>
+        <div class="card-info">
+          <span class="label">Today's Collections</span>
+          <strong class="value font-mono text-gold">₱{{ d.grossRevenue | number:'1.2-2' }}</strong>
+          <span class="subtext text-muted">Cash: ₱{{ d.paymentBreakdown.cash | number:'1.0-0' }} • GCash: ₱{{ d.paymentBreakdown.gcash | number:'1.0-0' }}</span>
+        </div>
+      </div>
+
+      <!-- Cash Register Integrity -->
+      <div class="summary-card">
+        <div class="card-icon-seal" [ngClass]="d.cashRegister.netDifference === 0 ? 'icon-mint' : (d.cashRegister.netDifference < 0 ? 'icon-rose' : 'icon-cyan')">
+          <mat-icon>{{ d.cashRegister.netDifference === 0 ? 'check_circle' : 'point_of_sale' }}</mat-icon>
+        </div>
+        <div class="card-info">
+          <span class="label">Register Drawer Status</span>
+          <strong class="value font-mono" [ngClass]="d.cashRegister.netDifference === 0 ? 'text-mint' : (d.cashRegister.netDifference < 0 ? 'text-rose' : 'text-cyan')">
+            {{ d.cashRegister.statusText }}
+          </strong>
+          <span class="subtext text-muted">{{ d.cashRegister.shiftCount }} shifts closed today</span>
+        </div>
+      </div>
+
+      <!-- Gym Check-Ins & Peak Hour -->
+      <div class="summary-card">
+        <div class="card-icon-seal icon-cyan"><mat-icon>how_to_reg</mat-icon></div>
+        <div class="card-info">
+          <span class="label">Gym Foot Traffic</span>
+          <strong class="value font-mono text-cyan">{{ d.attendance.totalCheckIns }} check-ins</strong>
+          <span class="subtext text-muted">{{ d.attendance.uniqueMembers }} unique • Peak: {{ d.attendance.peakHour }} ({{ d.attendance.peakCount }} visits)</span>
+        </div>
+      </div>
+
+      <!-- Incidents & Anomalies -->
+      <div class="summary-card">
+        <div class="card-icon-seal" [ngClass]="(d.systemAnomalies.length + d.manualIncidents.length) === 0 ? 'icon-mint' : 'icon-amber'">
+          <mat-icon>{{ (d.systemAnomalies.length + d.manualIncidents.length) === 0 ? 'verified_user' : 'warning' }}</mat-icon>
+        </div>
+        <div class="card-info">
+          <span class="label">Operational Integrity</span>
+          <strong class="value font-mono" [ngClass]="(d.systemAnomalies.length + d.manualIncidents.length) === 0 ? 'text-mint' : 'text-gold'">
+            {{ d.systemAnomalies.length + d.manualIncidents.length }} Issues Flagged
+          </strong>
+          <span class="subtext text-muted">{{ d.manualIncidents.length }} incident reports • {{ d.systemAnomalies.length }} system flags</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🛡️ Daily Operational Incidents & Issues Deck -->
+    <div class="incidents-deck-card">
+      <div class="section-title-bar">
+        <div class="title-with-icon">
+          <mat-icon class="text-gold">report_problem</mat-icon>
+          <h3>Daily Incidents & Operational Issues</h3>
+        </div>
+        <button type="button" class="btn-file-incident-sm" (click)="openCreateIncidentDialog()">
+          <mat-icon>add</mat-icon>
+          <span>Log Incident</span>
         </button>
       </div>
-    </div>
-  </div>
 
-  <!-- ── 4-Card Executive Summary KPI Deck ── -->
-  <div class="summary-cards">
-    <!-- 1. Total Gym Check-Ins -->
-    <div class="summary-card">
-      <div class="card-icon-seal icon-cyan">
-        <mat-icon>how_to_reg</mat-icon>
+      <!-- Empty State -->
+      <div *ngIf="d.systemAnomalies.length === 0 && d.manualIncidents.length === 0" class="empty-incidents-notice">
+        <mat-icon class="text-mint">check_circle</mat-icon>
+        <div class="notice-texts">
+          <strong>No Incidents or Discrepancies Recorded</strong>
+          <p>Cash register balanced, no late staff arrivals, no overdue workout sessions, and zero filed incident reports for this date.</p>
+        </div>
       </div>
-      <div class="card-info">
-        <span class="label">Total Gym Check-Ins</span>
-        <strong class="value font-mono text-cyan">{{ totalVolume() }} visits</strong>
+
+      <!-- Incident Items List -->
+      <div class="incident-items-grid" *ngIf="d.systemAnomalies.length > 0 || d.manualIncidents.length > 0">
+        
+        <!-- Manual Incidents -->
+        <div *ngFor="let inc of d.manualIncidents" class="incident-row-card manual-card" (click)="openEditIncidentDialog(inc)">
+          <div class="inc-icon-box" [ngClass]="'inc-' + inc.severity.toLowerCase()">
+            <mat-icon>{{ inc.category === 'EQUIPMENT' ? 'fitness_center' : (inc.category === 'FACILITY' ? 'apartment' : 'report') }}</mat-icon>
+          </div>
+          <div class="inc-main-info">
+            <div class="inc-top-line">
+              <span class="inc-id-badge">{{ inc.incidentNumber }}</span>
+              <span class="inc-category-badge">{{ inc.category }}</span>
+              <span class="severity-pill" [ngClass]="'badge-' + inc.severity.toLowerCase()">{{ inc.severity }}</span>
+              <span class="status-pill" [ngClass]="'status-' + inc.status.toLowerCase()">{{ inc.status }}</span>
+            </div>
+            <strong class="inc-title">{{ inc.title }}</strong>
+            <p class="inc-desc">{{ inc.description }}</p>
+            <div class="inc-meta-line">
+              <span>Reported by {{ inc.reportedByName }} at {{ inc.incidentTime || 'Shift' }}</span>
+              <span *ngIf="inc.location">• Location: {{ inc.location }}</span>
+              <span *ngIf="inc.resolutionNotes" class="text-mint">• Resolved: {{ inc.resolutionNotes }}</span>
+            </div>
+          </div>
+          <button type="button" class="btn-action-edit" matTooltip="Review or Resolve Incident">
+            <mat-icon>edit_note</mat-icon>
+          </button>
+        </div>
+
+        <!-- System Anomalies -->
+        <div *ngFor="let anom of d.systemAnomalies" class="incident-row-card system-card">
+          <div class="inc-icon-box" [ngClass]="anom.type === 'CASH_DISCREPANCY' ? 'inc-cash' : (anom.type === 'STAFF_TARDINESS' ? 'inc-time' : 'inc-alert')">
+            <mat-icon>{{ anom.type === 'CASH_DISCREPANCY' ? 'point_of_sale' : (anom.type === 'STAFF_TARDINESS' ? 'schedule' : 'warning') }}</mat-icon>
+          </div>
+          <div class="inc-main-info">
+            <div class="inc-top-line">
+              <span class="inc-category-badge system-badge">AUTO-FLAG</span>
+              <span class="severity-pill" [ngClass]="'badge-' + anom.severity.toLowerCase()">{{ anom.severity }}</span>
+              <span class="status-pill" [ngClass]="anom.isResolved ? 'status-resolved' : 'status-open'">
+                {{ anom.isResolved ? 'Resolved' : 'Requires Action' }}
+              </span>
+            </div>
+            <strong class="inc-title">{{ anom.title }}</strong>
+            <p class="inc-desc">{{ anom.details }}</p>
+            <div class="inc-meta-line">
+              <span>Recorded: {{ anom.timestamp | date:'shortTime' }}</span>
+              <span *ngIf="anom.resolutionText" class="text-mint">• {{ anom.resolutionText }}</span>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <!-- 2. Total Store Revenue -->
-    <div class="summary-card">
-      <div class="card-icon-seal icon-gold">
-        <mat-icon>payments</mat-icon>
-      </div>
-      <div class="card-info">
-        <span class="label">Period Gross Sales</span>
-        <strong class="value font-mono text-gold">₱{{ totalSales() | number:'1.2-2' }}</strong>
-      </div>
-    </div>
-
-    <!-- 3. Top Selling Product -->
-    <div class="summary-card">
-      <div class="card-icon-seal icon-mint">
-        <mat-icon>local_fire_department</mat-icon>
-      </div>
-      <div class="card-info">
-        <span class="label">Top Retail Product</span>
-        <strong class="value font-mono text-mint text-truncate">{{ topProductName() }}</strong>
-      </div>
-    </div>
-
-    <!-- 4. Top Performing Staff -->
-    <div class="summary-card">
-      <div class="card-icon-seal icon-purple">
-        <mat-icon>emoji_events</mat-icon>
-      </div>
-      <div class="card-info">
-        <span class="label">Top Sales Staff</span>
-        <strong class="value font-mono text-white text-truncate">{{ topStaffName() }}</strong>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Visual Analytics Dashboard Grid ── -->
-  <div class="dashboard-grid">
-    <!-- 1. Volume Analysis -->
-    <div class="report-section-card">
-      <app-volume-chart [data]="volumeData" [peakHours]="peakHours"></app-volume-chart>
-    </div>
-
-    <!-- 2. Sales Performance -->
-    <div class="report-section-card">
-      <app-sales-performance [data]="salesData" [monthlyQuota]="monthlyQuota"></app-sales-performance>
-    </div>
-
-    <!-- 3. Product Breakdown & Staff Leaderboard Side-by-Side -->
+    <!-- 📊 Hourly Traffic Chart & Top Products Today -->
     <div class="charts-dual-grid">
       <div class="report-section-card">
-        <app-product-breakdown [data]="productData"></app-product-breakdown>
+        <app-volume-chart [data]="volumeData" [peakHours]="peakHours"></app-volume-chart>
       </div>
+
       <div class="report-section-card">
-        <app-staff-sales [data]="staffData"></app-staff-sales>
+        <div class="card-inner-header">
+          <div class="title-with-icon">
+            <mat-icon class="text-mint">inventory_2</mat-icon>
+            <h3>Top Retail Products Sold Today</h3>
+          </div>
+        </div>
+        <div *ngIf="d.topProducts.length === 0" class="empty-sub-notice">No retail products sold on this date.</div>
+        <div *ngIf="d.topProducts.length > 0" class="simple-leaderboard">
+          <div *ngFor="let p of d.topProducts; let i = index" class="leaderboard-item">
+            <span class="rank-badge">{{ i + 1 }}</span>
+            <div class="item-name-group">
+              <strong>{{ p.name }}</strong>
+              <span class="sub text-muted">{{ p.quantity }} units sold</span>
+            </div>
+            <strong class="font-mono text-mint">₱{{ p.revenue | number:'1.2-2' }}</strong>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- 4. Top Gym Goers Member Attendance Leaderboard -->
-    <div class="report-section-card">
-      <app-member-attendance [data]="memberData"></app-member-attendance>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       🏃 2. WEEKLY PERFORMANCE VIEW
+       ════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeCadence() === 'WEEKLY' && weeklyData() as w" class="cadence-content-deck">
+    
+    <!-- 4 KPI Summary Cards -->
+    <div class="summary-cards">
+      <!-- Total Weekly Revenue & Growth -->
+      <div class="summary-card">
+        <div class="card-icon-seal icon-gold"><mat-icon>payments</mat-icon></div>
+        <div class="card-info">
+          <span class="label">Weekly Gross Sales</span>
+          <strong class="value font-mono text-gold">₱{{ w.totalRevenue | number:'1.2-2' }}</strong>
+          <span class="subtext" [ngClass]="w.growthPct === null ? 'text-muted' : (w.growthPct >= 0 ? 'text-mint' : 'text-rose')">
+            {{ w.growthPct === null ? 'Prior week baseline' : (w.growthPct >= 0 ? '+' : '') + (w.growthPct | number:'1.1-1') + '% vs last week' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Weekly Active Members & Check-ins -->
+      <div class="summary-card">
+        <div class="card-icon-seal icon-cyan"><mat-icon>group</mat-icon></div>
+        <div class="card-info">
+          <span class="label">Weekly Active Members</span>
+          <strong class="value font-mono text-cyan">{{ w.weeklyActiveMembers }} unique members</strong>
+          <span class="subtext text-muted">{{ w.totalCheckIns }} total gym sessions logged</span>
+        </div>
+      </div>
+
+      <!-- Busiest Day & Peak Rush Hour -->
+      <div class="summary-card">
+        <div class="card-icon-seal icon-purple"><mat-icon>access_time_filled</mat-icon></div>
+        <div class="card-info">
+          <span class="label">Busiest Day & Peak Hour</span>
+          <strong class="value font-mono text-white text-truncate">{{ w.busiestDay.dayName }} ({{ w.busiestDay.count }} visits)</strong>
+          <span class="subtext text-muted">Peak Rush: {{ w.peakRushHour.hour }} (~{{ w.peakRushHour.avgCount }}/day) • Lull: {{ w.lullHour.hour }}</span>
+        </div>
+      </div>
+
+      <!-- Incident Resolution Scorecard -->
+      <div class="summary-card">
+        <div class="card-icon-seal" [ngClass]="w.incidentTally.open === 0 ? 'icon-mint' : 'icon-amber'">
+          <mat-icon>{{ w.incidentTally.open === 0 ? 'task_alt' : 'assignment_late' }}</mat-icon>
+        </div>
+        <div class="card-info">
+          <span class="label">Weekly Incident Audit</span>
+          <strong class="value font-mono" [ngClass]="w.incidentTally.open === 0 ? 'text-mint' : 'text-gold'">
+            {{ w.incidentTally.resolved }} / {{ w.incidentTally.total }} Resolved
+          </strong>
+          <span class="subtext text-muted">{{ w.incidentTally.open }} pending review before Saturday close</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🛡️ Weekly Incident & Operational Resolution Audit -->
+    <div class="incidents-deck-card">
+      <div class="section-title-bar">
+        <div class="title-with-icon">
+          <mat-icon class="text-cyan">fact_check</mat-icon>
+          <h3>Weekly Operational Integrity Audit & Resolution Status</h3>
+        </div>
+        <div class="incident-tally-badges">
+          <span class="tally-pill pill-total">{{ w.incidentTally.total }} Total</span>
+          <span class="tally-pill pill-resolved">{{ w.incidentTally.resolved }} Resolved</span>
+          <span class="tally-pill pill-open">{{ w.incidentTally.open }} Open</span>
+        </div>
+      </div>
+
+      <div *ngIf="w.incidentTally.total === 0" class="empty-incidents-notice">
+        <mat-icon class="text-mint">check_circle</mat-icon>
+        <div class="notice-texts">
+          <strong>Clean Operational Record This Week</strong>
+          <p>Zero register discrepancies, no tardy arrivals, and no unresolved incident reports logged across the entire 7-day period.</p>
+        </div>
+      </div>
+
+      <!-- List of weekly items -->
+      <div class="incident-items-grid" *ngIf="w.incidentTally.total > 0">
+        <!-- Manual Incidents -->
+        <div *ngFor="let inc of w.manualIncidents" class="incident-row-card manual-card" (click)="openEditIncidentDialog(inc)">
+          <div class="inc-icon-box" [ngClass]="'inc-' + inc.severity.toLowerCase()">
+            <mat-icon>{{ inc.category === 'EQUIPMENT' ? 'fitness_center' : (inc.category === 'FACILITY' ? 'apartment' : 'report') }}</mat-icon>
+          </div>
+          <div class="inc-main-info">
+            <div class="inc-top-line">
+              <span class="inc-id-badge">{{ inc.incidentNumber }}</span>
+              <span class="inc-category-badge">{{ inc.category }}</span>
+              <span class="severity-pill" [ngClass]="'badge-' + inc.severity.toLowerCase()">{{ inc.severity }}</span>
+              <span class="status-pill" [ngClass]="'status-' + inc.status.toLowerCase()">{{ inc.status }}</span>
+            </div>
+            <strong class="inc-title">{{ inc.title }}</strong>
+            <p class="inc-desc">{{ inc.description }}</p>
+            <div class="inc-meta-line">
+              <span>{{ inc.incidentDate }} by {{ inc.reportedByName }}</span>
+              <span *ngIf="inc.resolutionNotes" class="text-mint">• {{ inc.resolutionNotes }}</span>
+            </div>
+          </div>
+          <button type="button" class="btn-action-edit"><mat-icon>edit_note</mat-icon></button>
+        </div>
+
+        <!-- System Anomalies -->
+        <div *ngFor="let anom of w.systemAnomalies" class="incident-row-card system-card">
+          <div class="inc-icon-box" [ngClass]="anom.type === 'CASH_DISCREPANCY' ? 'inc-cash' : (anom.type === 'STAFF_TARDINESS' ? 'inc-time' : 'inc-alert')">
+            <mat-icon>{{ anom.type === 'CASH_DISCREPANCY' ? 'point_of_sale' : (anom.type === 'STAFF_TARDINESS' ? 'schedule' : 'warning') }}</mat-icon>
+          </div>
+          <div class="inc-main-info">
+            <div class="inc-top-line">
+              <span class="inc-category-badge system-badge">AUTO-FLAG</span>
+              <span class="severity-pill" [ngClass]="'badge-' + anom.severity.toLowerCase()">{{ anom.severity }}</span>
+              <span class="status-pill" [ngClass]="anom.isResolved ? 'status-resolved' : 'status-open'">
+                {{ anom.isResolved ? 'Resolved' : 'Requires Action' }}
+              </span>
+            </div>
+            <strong class="inc-title">{{ anom.title }}</strong>
+            <p class="inc-desc">{{ anom.details }}</p>
+            <div class="inc-meta-line">
+              <span>Date: {{ anom.dateStr }}</span>
+              <span *ngIf="anom.resolutionText" class="text-mint">• {{ anom.resolutionText }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📊 Weekly Day-by-Day Pace Chart & Peak Hours Distribution -->
+    <div class="dashboard-grid">
+      <div class="report-section-card">
+        <app-sales-performance [data]="salesData" [monthlyQuota]="monthlyQuota()"></app-sales-performance>
+      </div>
+
+      <div class="charts-dual-grid">
+        <div class="report-section-card">
+          <app-volume-chart [data]="volumeData" [peakHours]="peakHours"></app-volume-chart>
+        </div>
+
+        <div class="report-section-card">
+          <div class="card-inner-header">
+            <div class="title-with-icon">
+              <mat-icon class="text-purple">emoji_events</mat-icon>
+              <h3>Staff Sales & Commissions Leaderboard</h3>
+            </div>
+          </div>
+          <div *ngIf="w.staffLeaderboard.length === 0" class="empty-sub-notice">No staff sales recorded for this week.</div>
+          <div *ngIf="w.staffLeaderboard.length > 0" class="simple-leaderboard">
+            <div *ngFor="let s of w.staffLeaderboard; let i = index" class="leaderboard-item">
+              <span class="rank-badge">{{ i + 1 }}</span>
+              <div class="item-name-group">
+                <strong>{{ s.name }}</strong>
+                <span class="sub text-muted">Weekly closed volume</span>
+              </div>
+              <strong class="font-mono text-gold">₱{{ s.totalSales | number:'1.2-2' }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       📈 3. MONTHLY PERFORMANCE VIEW
+       ════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeCadence() === 'MONTHLY' && monthlyData() as m" class="cadence-content-deck">
+    
+    <!-- 4 KPI Summary Cards -->
+    <div class="summary-cards">
+      <!-- Monthly Revenue vs Quota -->
+      <div class="summary-card">
+        <div class="card-icon-seal icon-gold"><mat-icon>track_changes</mat-icon></div>
+        <div class="card-info">
+          <span class="label">Revenue vs Monthly Target</span>
+          <strong class="value font-mono text-gold">₱{{ m.totalRevenue | number:'1.2-2' }}</strong>
+          <span class="subtext text-mint">
+            {{ m.monthlyQuota > 0 ? ((m.quotaProgressPct | number:'1.1-1') + '% of ₱' + (m.monthlyQuota | number:'1.0-0') + ' Quota') : 'Quota unconfigured' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Net Operating Profit -->
+      <div class="summary-card">
+        <div class="card-icon-seal" [ngClass]="(m.financialHealth?.netProfit || 0) >= 0 ? 'icon-mint' : 'icon-rose'">
+          <mat-icon>{{ (m.financialHealth?.netProfit || 0) >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+        </div>
+        <div class="card-info">
+          <span class="label">Net Operating Profit</span>
+          <strong class="value font-mono" [ngClass]="(m.financialHealth?.netProfit || 0) >= 0 ? 'text-mint' : 'text-rose'">
+            ₱{{ (m.financialHealth?.netProfit || 0) | number:'1.2-2' }}
+          </strong>
+          <span class="subtext text-muted">
+            Margin: {{ (m.financialHealth?.netProfitMargin || 0) | number:'1.1-1' }}% • Outflows: ₱{{ (m.financialHealth?.totalOutflows || 0) | number:'1.0-0' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Foot Traffic & Windows -->
+      <div class="summary-card">
+        <div class="card-icon-seal icon-cyan"><mat-icon>groups</mat-icon></div>
+        <div class="card-info">
+          <span class="label">Total Monthly Check-Ins</span>
+          <strong class="value font-mono text-cyan">{{ m.totalCheckIns }} check-ins</strong>
+          <span class="subtext text-muted">Weekday Avg: {{ m.weekdayAvgCheckIns }}/day • Weekend Avg: {{ m.weekendAvgCheckIns }}/day</span>
+        </div>
+      </div>
+
+      <!-- Incident Audit Summary -->
+      <div class="summary-card">
+        <div class="card-icon-seal icon-purple"><mat-icon>verified</mat-icon></div>
+        <div class="card-info">
+          <span class="label">Monthly Incident Audit</span>
+          <strong class="value font-mono text-white">{{ m.incidentAudit.resolutionRatePct }}% Resolved</strong>
+          <span class="subtext text-muted">{{ m.incidentAudit.total }} total operational incidents logged</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Revenue Streams & Peak Hours Summary Grid -->
+    <div class="charts-dual-grid">
+      <!-- Revenue Streams Breakdown -->
+      <div class="report-section-card">
+        <div class="card-inner-header">
+          <div class="title-with-icon">
+            <mat-icon class="text-gold">pie_chart</mat-icon>
+            <h3>Revenue by Category Stream</h3>
+          </div>
+        </div>
+        <div class="stream-progress-list">
+          <div *ngFor="let s of m.revenueByStream" class="stream-row">
+            <div class="stream-header">
+              <span class="stream-name">{{ s.stream }}</span>
+              <strong class="font-mono text-white">₱{{ s.total | number:'1.2-2' }} ({{ s.percentage | number:'1.1-1' }}%)</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="s.percentage"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Peak Windows Summary -->
+      <div class="report-section-card">
+        <div class="card-inner-header">
+          <div class="title-with-icon">
+            <mat-icon class="text-cyan">schedule</mat-icon>
+            <h3>Monthly Peak Hours & Traffic Windows</h3>
+          </div>
+        </div>
+        <div class="peak-windows-list">
+          <div *ngFor="let pk of m.topPeakHours; let i = index" class="peak-window-card">
+            <div class="rank-seal">{{ i + 1 }}</div>
+            <div class="peak-details">
+              <strong>Peak Window: {{ pk.hour }}</strong>
+              <span class="sub text-muted">{{ pk.count }} total member visits during this slot</span>
+            </div>
+            <mat-icon class="text-cyan">trending_up</mat-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Month Visual Analytics Grid -->
+    <div class="dashboard-grid">
+      <div class="report-section-card">
+        <app-sales-performance [data]="salesData" [monthlyQuota]="monthlyQuota()"></app-sales-performance>
+      </div>
+
+      <div class="report-section-card">
+        <app-volume-chart [data]="volumeData" [peakHours]="peakHours"></app-volume-chart>
+      </div>
+
+      <div class="charts-dual-grid">
+        <div class="report-section-card">
+          <app-product-breakdown [data]="productData"></app-product-breakdown>
+        </div>
+        <div class="report-section-card">
+          <app-staff-sales [data]="staffData"></app-staff-sales>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       🔍 4. CUSTOM RANGE VIEW (LEGACY COMPATIBILITY)
+       ════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeCadence() === 'CUSTOM'" class="cadence-content-deck">
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="card-icon-seal icon-cyan"><mat-icon>how_to_reg</mat-icon></div>
+        <div class="card-info">
+          <span class="label">Total Gym Check-Ins</span>
+          <strong class="value font-mono text-cyan">{{ volumeData.length }} visits</strong>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="card-icon-seal icon-gold"><mat-icon>payments</mat-icon></div>
+        <div class="card-info">
+          <span class="label">Period Gross Sales</span>
+          <strong class="value font-mono text-gold">₱{{ salesData.reduce((s, x) => s + x.total, 0) | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="report-section-card">
+        <app-volume-chart [data]="volumeData" [peakHours]="peakHours"></app-volume-chart>
+      </div>
+      <div class="report-section-card">
+        <app-sales-performance [data]="salesData" [monthlyQuota]="monthlyQuota()"></app-sales-performance>
+      </div>
+      <div class="charts-dual-grid">
+        <div class="report-section-card">
+          <app-product-breakdown [data]="productData"></app-product-breakdown>
+        </div>
+        <div class="report-section-card">
+          <app-staff-sales [data]="staffData"></app-staff-sales>
+        </div>
+      </div>
+      <div class="report-section-card">
+        <app-member-attendance [data]="memberData"></app-member-attendance>
+      </div>
     </div>
   </div>
 
-  <!-- ── Safe Area Physical Scroll Spacer (Failure #24 & #26 Prevention) ── -->
+  <!-- ── Safe Area Physical Scroll Spacer ── -->
   <div class="bottom-scroll-spacer"></div>
 
 </div>

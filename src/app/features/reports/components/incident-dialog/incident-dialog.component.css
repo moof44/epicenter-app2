@@ -1,0 +1,204 @@
+.incident-dialog-container {
+  padding: 24px;
+  background: var(--color-surface, #0f172a);
+  color: var(--color-text-body, #e2e8f0);
+  border-radius: var(--radius-2xl, 16px);
+  max-width: 620px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border, #1e293b);
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.header-seal {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg, 10px);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: var(--color-gold-light, #fbbf24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-seal mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.header-titles {
+  flex: 1;
+}
+
+.dialog-title {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text-pure, #ffffff);
+}
+
+.dialog-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary, #cbd5e1);
+  line-height: 1.4;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted, #94a3b8);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md, 8px);
+  transition: all 0.15s ease;
+}
+
+.btn-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-pure, #ffffff);
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.form-row-dual {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row-tri {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 12px;
+}
+
+.severity-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full, 9999px);
+  text-transform: uppercase;
+}
+
+.badge-low { background: rgba(52, 211, 153, 0.15); color: var(--color-mint-success, #34d399); }
+.badge-med { background: rgba(251, 191, 36, 0.15); color: var(--color-gold-light, #fbbf24); }
+.badge-high { background: rgba(249, 115, 22, 0.15); color: #f97316; }
+.badge-crit { background: rgba(248, 113, 113, 0.15); color: var(--color-rose-danger, #f87171); }
+
+.resolution-box {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px dashed rgba(34, 211, 238, 0.3);
+  border-radius: var(--radius-lg, 10px);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.resolution-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-cyan-light, #22d3ee);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border, #1e293b);
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid var(--color-border, #1e293b);
+  color: var(--color-text-secondary, #cbd5e1);
+  padding: 10px 18px;
+  border-radius: var(--radius-lg, 10px);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cancel:hover:not([disabled]) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-pure, #ffffff);
+}
+
+.btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-cyan-light, #22d3ee);
+  color: #090d16;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-lg, 10px);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-submit:hover:not([disabled]) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-submit:disabled, .btn-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .incident-dialog-container {
+    padding: 16px;
+  }
+  .form-row-dual {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .form-row-tri {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+  .btn-submit, .btn-cancel {
+    width: 100%;
+    justify-content: center;
+  }
+}
