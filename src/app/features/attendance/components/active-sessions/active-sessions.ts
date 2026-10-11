@@ -13,6 +13,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { getRandomCommendation } from '../../../../core/constants/commendations';
 import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-active-sessions',
@@ -27,6 +28,7 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class ActiveSessions {
   private attendanceService = inject(AttendanceService);
+  private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
 
@@ -63,6 +65,11 @@ export class ActiveSessions {
   async checkOut(record: AttendanceRecord) {
     if (!record.id) return;
 
+    if (!this.authService.isLoggedIn()) {
+      this.snackBar.open('Staff login required to check out members.', 'Close', { duration: 4000 });
+      return;
+    }
+
     if (record.lockerNumber) {
       const dialogRef = this.dialog.open(ConfirmationDialog, {
         data: {
@@ -77,9 +84,12 @@ export class ActiveSessions {
       if (!result) return;
     }
 
-    await this.attendanceService.checkOut(record.id);
-
-    const message = getRandomCommendation('CHECKOUT');
-    this.snackBar.open(`${message}`, 'Close', { duration: 5000 });
+    try {
+      await this.attendanceService.checkOut(record.id);
+      const message = getRandomCommendation('CHECKOUT');
+      this.snackBar.open(`${message}`, 'Close', { duration: 5000 });
+    } catch (err: any) {
+      this.snackBar.open(err.message || 'Check out failed', 'Close', { duration: 4000 });
+    }
   }
 }

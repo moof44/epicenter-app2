@@ -15,6 +15,7 @@ import { ShiftSession, ShiftSummary, DenominationBreakdown, HandoverDenomination
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { compareDenominations } from '../../../../core/utils/cash-register.utils';
+import { safeToDate } from '../../../../core/utils/date.utils';
 
 export interface DenominationItem {
   denomination: number;
@@ -430,6 +431,11 @@ export class ShiftControlModal implements OnInit {
   getDiscrepancy(): number {
     if (!this.shiftSummary) return 0;
     return this.actualClosingBalance - this.shiftSummary.expectedClosingBalance;
+  }
+
+  formatDate(val: any): Date | null {
+    if (!val) return null;
+    return safeToDate(val);
   }
 
   cancel(): void {

@@ -228,7 +228,7 @@
         </div>
         <div class="shift-duration-badge" *ngIf="currentShift?.startTime">
           <mat-icon>schedule</mat-icon>
-          <span>Started: {{ currentShift?.startTime | date:'shortTime' }}</span>
+          <span>Started: {{ formatDate(currentShift?.startTime) | date:'shortTime' }}</span>
         </div>
       </div>
 

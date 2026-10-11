@@ -1,0 +1,269 @@
+[
+  {
+    "signature": "FirebaseError::Initialization of query 'Query(target=Target(users/DLeJiN380uOam4ntbdGCSYHjRe73/notifications, limit: 50, orderBy: [timestamp (desc), __name__ (desc)]); limitType=F)' failed: IndexedDbTransactionError: [code=unavailable]: IndexedDB transaction 'Allocate target' failed: UnknownError: Internal error opening backing store for indexedDB.open.::/staff-attendance",
+    "sampleMessage": "Initialization of query 'Query(target=Target(users/DLeJiN380uOam4ntbdGCSYHjRe73/notifications, limit: 50, orderBy: [timestamp (desc), __name__ (desc)]); limitType=F)' failed: IndexedDbTransactionError: [code=unavailable]: IndexedDB transaction 'Allocate target' failed: UnknownError: Internal error opening backing store for indexedDB.open.",
+    "errorName": "FirebaseError",
+    "severity": "ERROR",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 1,
+    "incidentDocsCount": 1,
+    "firstSeen": "2026-10-11T06:26:21.179Z",
+    "lastSeen": "2026-10-11T06:26:21.179Z",
+    "affectedUrls": [
+      "/staff-attendance"
+    ],
+    "affectedUsers": [
+      "Jireh Padua"
+    ],
+    "userAgents": [
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+    ],
+    "cleanStack": "FirebaseError: Initialization of query 'Query(target=Target(users/DLeJiN380uOam4ntbdGCSYHjRe73/notifications, limit: 50, orderBy: [timestamp (desc), __name__ (desc)]); limitType=F)' failed: IndexedDbTransactionError: [code=unavailable]: IndexedDB transaction 'Allocate target' failed: UnknownError: Internal error opening backing store for indexedDB.open.",
+    "rawSampleDocId": "altlLS3rTty20tJbFfAZ"
+  },
+  {
+    "signature": "FirebaseError::Initialization of query 'Query(target=Target(users, orderBy: [__name__ (asc)]); limitType=F)' failed: IndexedDbTransactionError: [code=unavailable]: IndexedDB transaction 'Allocate target' failed: UnknownError: Internal error opening backing store for indexedDB.open.::/shift-schedules",
+    "sampleMessage": "Initialization of query 'Query(target=Target(users, orderBy: [__name__ (asc)]); limitType=F)' failed: IndexedDbTransactionError: [code=unavailable]: IndexedDB transaction 'Allocate target' failed: UnknownError: Internal error opening backing store for indexedDB.open.",
+    "errorName": "FirebaseError",
+    "severity": "ERROR",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 1,
+    "incidentDocsCount": 1,
+    "firstSeen": "2026-10-11T06:26:21.028Z",
+    "lastSeen": "2026-10-11T06:26:21.028Z",
+    "affectedUrls": [
+      "/shift-schedules"
+    ],
+    "affectedUsers": [
+      "Jireh Padua"
+    ],
+    "userAgents": [
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+    ],
+    "cleanStack": "FirebaseError: Initialization of query 'Query(target=Target(users, orderBy: [__name__ (asc)]); limitType=F)' failed: IndexedDbTransactionError: [code=unavailable]: IndexedDB transaction 'Allocate target' failed: UnknownError: Internal error opening backing store for indexedDB.open.",
+    "rawSampleDocId": "7ZlUTkmfYTcq5D7BlGu4"
+  },
+  {
+    "signature": "Error::NG02100::at Us (https://epicenter-app.web.app/chunk.js) | at n.transform (https://epicenter-app.web.app/chunk.js)",
+    "sampleMessage": "NG02100",
+    "errorName": "Error",
+    "severity": "ERROR",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 127,
+    "incidentDocsCount": 120,
+    "firstSeen": "2026-09-11T07:07:50.196Z",
+    "lastSeen": "2026-10-10T14:17:05.404Z",
+    "affectedUrls": [
+      "/store/cash",
+      "/dashboard",
+      "/store/monthly-sales",
+      "/profile",
+      "/shift-schedules"
+    ],
+    "affectedUsers": [
+      "Aljay Tindoy",
+      "Lauren Val Manuel",
+      "Kris Ragam Manuel",
+      "Jireh Padua"
+    ],
+    "userAgents": [
+      "Mozilla/5.0 (Linux; Android 8.1.0; SMART Hf18) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Mobile Safari/537.36",
+      "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36",
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
+    ],
+    "cleanStack": "Error: NG02100\n    at Us (https://epicenter-app.web.app/chunk-BW7RIKW5.js:1:59723)\n    at n.transform (https://epicenter-app.web.app/chunk-BW7RIKW5.js:1:69847)\n    at ng (https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:93386)\n    at eb (https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:94170)\n    at Ft (https://epicenter-app.web.app/chunk-PF6IKNRJ.js:1:10039)\n    at gp (https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:22730)\n    at GI (https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28150)\n    at ic (https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29355)\n    at Mp (https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29187)\n    at _p (https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28927)",
+    "rawSampleDocId": "1gymVl5JCEaz51DGP7Si"
+  },
+  {
+    "signature": "Error::Action requires authentication::at p.get _currentUserSnapshot [as _currentUserSnapshot] (https://epicenter-app.web.app/chunk.js) | at p.checkOut (https://epicenter-app.web.app/chunk.js)",
+    "sampleMessage": "Action requires authentication",
+    "errorName": "Error",
+    "severity": "ERROR",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 14,
+    "incidentDocsCount": 2,
+    "firstSeen": "2026-10-10T10:19:17.808Z",
+    "lastSeen": "2026-10-10T10:21:47.971Z",
+    "affectedUrls": [
+      "/attendance"
+    ],
+    "affectedUsers": [],
+    "userAgents": [
+      "Mozilla/5.0 (Linux; Android 8.1.0; SMART Hf18) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.0.0 Safari/537.36"
+    ],
+    "cleanStack": "Error: Action requires authentication\n    at p.get _currentUserSnapshot [as _currentUserSnapshot] (https://epicenter-app.web.app/chunk-VARGY3HH.js:1:595)\n    at p.checkOut (https://epicenter-app.web.app/chunk-VARGY3HH.js:1:3324)\n    at t.checkOut (https://epicenter-app.web.app/chunk-J4ACQWRH.js:3:23572)\n    at https://epicenter-app.web.app/chunk-J4ACQWRH.js:3:20880\n    at $d (https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:39961)\n    at r (https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:39797)\n    at HTMLButtonElement.<anonymous> (https://epicenter-app.web.app/chunk-H6UBN4VS.js:1:6991)",
+    "rawSampleDocId": "1LocsaPXoluh7GUsFcoE"
+  },
+  {
+    "signature": "Error::NG0750::/dashboard",
+    "sampleMessage": "NG0750",
+    "errorName": "Error",
+    "severity": "ERROR",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 9,
+    "incidentDocsCount": 9,
+    "firstSeen": "2026-09-16T11:56:37.326Z",
+    "lastSeen": "2026-10-09T12:21:53.569Z",
+    "affectedUrls": [
+      "/dashboard"
+    ],
+    "affectedUsers": [
+      "Angelito Miranda"
+    ],
+    "userAgents": [
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.7.5 Mobile/15E148 Safari/604.1"
+    ],
+    "cleanStack": "T@https://epicenter-app.web.app/chunk-5XXSSO2E.js:3:34498\n@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:71836",
+    "rawSampleDocId": "EDa5ELoxLMCfpN05PazY"
+  },
+  {
+    "signature": "Error::NG02100::/store/cash",
+    "sampleMessage": "NG02100",
+    "errorName": "Error",
+    "severity": "ERROR",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 6,
+    "incidentDocsCount": 6,
+    "firstSeen": "2026-09-11T13:54:12.246Z",
+    "lastSeen": "2026-10-09T11:59:27.607Z",
+    "affectedUrls": [
+      "/store/cash"
+    ],
+    "affectedUsers": [
+      "Aljay Tindoy"
+    ],
+    "userAgents": [
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1",
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1"
+    ],
+    "cleanStack": "Us@https://epicenter-app.web.app/chunk-BW7RIKW5.js:1:59729\ntransform@https://epicenter-app.web.app/chunk-BW7RIKW5.js:1:69849\nng@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:93390\nFt@https://epicenter-app.web.app/chunk-PF6IKNRJ.js:1:10040\ngp@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:22731\nGI@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28152\nic@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29357\nMp@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29189\n_p@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28929\nGI@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28322\nic@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29357\nMp@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29189\n_p@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28929\nGI@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28322\nic@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29357\nMp@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29189\n_p@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28929\nGI@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28322\nic@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29357\nMp@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29189\nQI@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29125\nNp@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29535\nGI@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28507\nic@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29357\nMp@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29189\n_p@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28929\nGI@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28322\nic@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29357\nMp@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29189\nQI@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29125\nNp@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29535\nGI@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:28507\nic@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:29357\nWI@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:27840\nTp@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:27771\nsynchronizeOnce@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:69830\nsynchronize@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:69502\ntickImpl@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:1817\n_tick@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:68988\n@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:97437\ntick@https://epicenter-app.web.app/chunk-5XXSSO2E.js:5:97394\n@https://epicenter-app.web.app/chunk-5XXSSO2E.js:4:17096",
+    "rawSampleDocId": "BqvDlfbHBhzxJrCUmxxb"
+  },
+  {
+    "signature": "Error::You have provided invalid Date format. Please provide a valid JavaScript Date::at l (https://epicenter-app.web.app/chunk.js) | at A.parseDataAxisCharts (https://epicenter-app.web.app/chunk.js)",
+    "sampleMessage": "You have provided invalid Date format. Please provide a valid JavaScript Date",
+    "errorName": "Error",
+    "severity": "ERROR",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 11,
+    "incidentDocsCount": 9,
+    "firstSeen": "2026-09-11T15:05:23.794Z",
+    "lastSeen": "2026-09-29T01:13:33.522Z",
+    "affectedUrls": [
+      "/reports"
+    ],
+    "affectedUsers": [
+      "Jireh Padua"
+    ],
+    "userAgents": [
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    ],
+    "cleanStack": "Error: You have provided invalid Date format. Please provide a valid JavaScript Date\n    at l (https://epicenter-app.web.app/chunk-HD5SNT5W.js:27:135124)\n    at A.parseDataAxisCharts (https://epicenter-app.web.app/chunk-HD5SNT5W.js:27:136429)\n    at A.parseData (https://epicenter-app.web.app/chunk-HD5SNT5W.js:27:143434)\n    at A.create (https://epicenter-app.web.app/chunk-HD5SNT5W.js:833:3661)\n    at https://epicenter-app.web.app/chunk-HD5SNT5W.js:833:2238\n    at new Promise (<anonymous>)\n    at A.render (https://epicenter-app.web.app/chunk-HD5SNT5W.js:833:1221)\n    at https://epicenter-app.web.app/chunk-ROBBX7DT.js:1:2302\n    at rr.runOutsideAngular (https://epicenter-app.web.app/chunk-5XXSSO2E.js:4:20369)\n    at o.render (https://epicenter-app.web.app/chunk-ROBBX7DT.js:1:2258)",
+    "rawSampleDocId": "8xhLqb0jQPrKz6EOQVSd"
+  },
+  {
+    "signature": "FirebaseError::Firebase: Error (auth/network-request-failed).::at Zh (https://epicenter-app.web.app/chunk.js) | at Ut (https://epicenter-app.web.app/chunk.js)",
+    "sampleMessage": "Firebase: Error (auth/network-request-failed).",
+    "errorName": "FirebaseError",
+    "severity": "ERROR",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 1,
+    "incidentDocsCount": 1,
+    "firstSeen": "2026-09-21T23:35:09.366Z",
+    "lastSeen": "2026-09-21T23:35:09.366Z",
+    "affectedUrls": [
+      "/"
+    ],
+    "affectedUsers": [],
+    "userAgents": [
+      "Mozilla/5.0 (Linux; Android 8.1.0; SMART Hf18) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.0.0 Safari/537.36"
+    ],
+    "cleanStack": "FirebaseError: Firebase: Error (auth/network-request-failed).\n    at Zh (https://epicenter-app.web.app/chunk-BW7RIKW5.js:3:4505)\n    at Ut (https://epicenter-app.web.app/chunk-BW7RIKW5.js:3:4052)\n    at Zy (https://epicenter-app.web.app/chunk-BW7RIKW5.js:3:10360)\n    at async Bb (https://epicenter-app.web.app/chunk-BW7RIKW5.js:3:15746)\n    at async n.refresh (https://epicenter-app.web.app/chunk-BW7RIKW5.js:3:17185)\n    at async n.getToken (https://epicenter-app.web.app/chunk-BW7RIKW5.js:3:17013)\n    at async Gs (https://epicenter-app.web.app/chunk-BW7RIKW5.js:3:13407)\n    at async n.getIdToken (https://epicenter-app.web.app/chunk-BW7RIKW5.js:3:18767)\n    at async td (https://epicenter-app.web.app/chunk-BW7RIKW5.js:3:12504)",
+    "rawSampleDocId": "9BBuVC7oGYKUOsqJ6Vyp"
+  },
+  {
+    "signature": "TypeError::Failed to fetch dynamically imported module: <URL>::/",
+    "sampleMessage": "Failed to fetch dynamically imported module: https://epicenter-app.web.app/chunk-ODYOBKR4.js",
+    "errorName": "TypeError",
+    "severity": "FATAL",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 2,
+    "incidentDocsCount": 2,
+    "firstSeen": "2026-09-18T01:37:21.167Z",
+    "lastSeen": "2026-09-18T01:37:21.183Z",
+    "affectedUrls": [
+      "/"
+    ],
+    "affectedUsers": [],
+    "userAgents": [
+      "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36"
+    ],
+    "cleanStack": "TypeError: Failed to fetch dynamically imported module: https://epicenter-app.web.app/chunk-ODYOBKR4.js",
+    "rawSampleDocId": "3hhluJNGLyAy3a9rUHXL"
+  },
+  {
+    "signature": "TypeError::Importing a module script failed.::/",
+    "sampleMessage": "Importing a module script failed.",
+    "errorName": "TypeError",
+    "severity": "FATAL",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 4,
+    "incidentDocsCount": 4,
+    "firstSeen": "2026-09-17T11:28:36.760Z",
+    "lastSeen": "2026-09-17T13:16:05.138Z",
+    "affectedUrls": [
+      "/"
+    ],
+    "affectedUsers": [],
+    "userAgents": [
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.7.5 Mobile/15E148 Safari/604.1"
+    ],
+    "cleanStack": "No stack trace available",
+    "rawSampleDocId": "X1acPMDppiNqMHd5nFPi"
+  },
+  {
+    "signature": "Error::NG04002: 'logout'::at Gi.noMatchError (https://epicenter-app.web.app/chunk.js) | at Gi.match (https://epicenter-app.web.app/chunk.js)",
+    "sampleMessage": "NG04002: 'logout'",
+    "errorName": "Error",
+    "severity": "ERROR",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 1,
+    "incidentDocsCount": 1,
+    "firstSeen": "2026-09-15T14:37:56.426Z",
+    "lastSeen": "2026-09-15T14:37:56.426Z",
+    "affectedUrls": [
+      "/"
+    ],
+    "affectedUsers": [],
+    "userAgents": [
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    ],
+    "cleanStack": "Error: NG04002: 'logout'\n    at Gi.noMatchError (https://epicenter-app.web.app/chunk-NBFPB53G.js:1:42791)\n    at Gi.match (https://epicenter-app.web.app/chunk-NBFPB53G.js:1:43532)\n    at async Gi.recognize (https://epicenter-app.web.app/chunk-NBFPB53G.js:1:42930)\n    at async https://epicenter-app.web.app/chunk-NBFPB53G.js:1:47409",
+    "rawSampleDocId": "MGOmfBWJz4kQSr2ECm4d"
+  },
+  {
+    "signature": "UnknownError::Attempt to iterate a cursor that doesn't exist UnknownError: Attempt to iterate a cursor that doesn't exist::/members",
+    "sampleMessage": "Attempt to iterate a cursor that doesn't exist\n UnknownError: Attempt to iterate a cursor that doesn't exist",
+    "errorName": "UnknownError",
+    "severity": "ERROR",
+    "status": "UNRESOLVED",
+    "totalOccurrences": 1,
+    "incidentDocsCount": 1,
+    "firstSeen": "2026-09-14T12:01:46.772Z",
+    "lastSeen": "2026-09-14T12:01:46.772Z",
+    "affectedUrls": [
+      "/members?search=venz"
+    ],
+    "affectedUsers": [
+      "Angelito Miranda"
+    ],
+    "userAgents": [
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.7.5 Mobile/15E148 Safari/604.1"
+    ],
+    "cleanStack": "No stack trace available",
+    "rawSampleDocId": "Vx7F97Mgt767R6jFgxSS"
+  }
+]

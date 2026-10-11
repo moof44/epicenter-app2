@@ -116,7 +116,14 @@ export class SalesPerformanceComponent implements OnChanges {
       }
     ];
 
-    this.chartOptions.labels = this.data.map(d => d.date);
+    const labels = this.data.map(d => d.date);
+    const isDateSeries = labels.length > 0 && labels.every(l => !isNaN(new Date(l).getTime()) && l.includes('-'));
+
+    this.chartOptions.labels = labels;
+    this.chartOptions.xaxis = {
+      ...this.chartOptions.xaxis,
+      type: isDateSeries ? 'datetime' : 'category'
+    };
     this.chartOptions.colors = ['#06b6d4', '#fbbf24'];
   }
 }

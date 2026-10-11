@@ -63,6 +63,11 @@
                             <app-staff-leaderboard></app-staff-leaderboard>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 140px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 140px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load team leaderboard.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot">
@@ -70,6 +75,11 @@
                             <app-commendation></app-commendation>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 140px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 140px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load commendations.</p>
+                            </div>
                         }
                     </div>
                 </div>
@@ -90,6 +100,11 @@
                             <app-sales-sparkline></app-sales-sparkline>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 120px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 120px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load sales sparkline.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot">
@@ -97,6 +112,11 @@
                             <app-week-trend></app-week-trend>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 120px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 120px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load weekly trends.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot">
@@ -104,6 +124,11 @@
                             <app-vs-last-month></app-vs-last-month>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 120px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 120px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load comparison data.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot">
@@ -111,6 +136,11 @@
                             <app-top-product></app-top-product>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 120px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 120px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load top products.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot">
@@ -118,6 +148,11 @@
                             <app-payment-split></app-payment-split>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 120px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 120px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load payment breakdown.</p>
+                            </div>
                         }
                     </div>
                 </div>
@@ -138,6 +173,11 @@
                             <app-member-health></app-member-health>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 140px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 140px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load member health stats.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot">
@@ -145,6 +185,11 @@
                             <app-peak-hours></app-peak-hours>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 140px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 140px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load peak hours.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot md:col-span-2 lg:col-span-3">
@@ -152,6 +197,11 @@
                             <app-low-stock-alerts></app-low-stock-alerts>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 80px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 80px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load stock alerts.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot">
@@ -159,6 +209,11 @@
                             <app-recent-voids></app-recent-voids>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 100px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 100px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load recent voids.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot">
@@ -166,6 +221,11 @@
                             <app-cash-discrepancies></app-cash-discrepancies>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 100px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 100px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load discrepancies.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot">
@@ -173,6 +233,11 @@
                             <app-members-checked-in></app-members-checked-in>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 100px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 100px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load check-ins.</p>
+                            </div>
                         }
                     </div>
                     <div class="widget-slot md:col-span-2 lg:col-span-3">
@@ -180,6 +245,11 @@
                             <app-activity-feed></app-activity-feed>
                         } @placeholder {
                             <div class="skeleton-card" style="min-height: 120px;"></div>
+                        } @error {
+                            <div class="error-card" style="min-height: 120px;">
+                                <mat-icon>cloud_off</mat-icon>
+                                <p>Failed to load activity feed.</p>
+                            </div>
                         }
                     </div>
                 </div>
@@ -209,6 +279,11 @@
                             </div>
                         </div>
                     </mat-expansion-panel>
+                </div>
+            } @error {
+                <div class="error-card" style="min-height: 80px;">
+                    <mat-icon>cloud_off</mat-icon>
+                    <p>Failed to load personal performance.</p>
                 </div>
             }
 

@@ -52,6 +52,21 @@ export class GlobalErrorHandler implements ErrorHandler {
                       }
                     : null,
             });
+
+            // Auto-recover from stale dynamic chunk deployment errors
+            if (
+                extracted.name === 'ChunkLoadError' ||
+                extracted.message.includes('Failed to fetch dynamically imported module') ||
+                extracted.message.includes('Importing a module script failed')
+            ) {
+                const lastReload = sessionStorage.getItem('last_chunk_reload_ts');
+                const now = Date.now();
+                if (!lastReload || now - Number(lastReload) > 15000) {
+                    sessionStorage.setItem('last_chunk_reload_ts', String(now));
+                    console.warn('[GlobalErrorHandler] Stale chunk detected after deployment. Auto-reloading application...');
+                    window.location.reload();
+                }
+            }
         } catch (loggingErr) {
             console.error('[GlobalErrorHandler] Error while sending log to Firestore:', loggingErr);
         } finally {

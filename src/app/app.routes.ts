@@ -156,6 +156,15 @@ export const routes: Routes = [
         path: 'schedules',
         redirectTo: 'shift-schedules',
         pathMatch: 'full'
+    },
+    {
+        path: 'logout',
+        redirectTo: 'login',
+        pathMatch: 'full'
+    },
+    {
+        path: '**',
+        redirectTo: 'dashboard'
     }
 ];
 
