@@ -114,6 +114,30 @@
       </button>
     </div>
 
+    <!-- Export for AI Action Button & Dropdown -->
+    <div class="export-ai-wrapper">
+      <button type="button" class="btn-export-ai" [matMenuTriggerFor]="aiExportMenu" matTooltip="Export report formatted for ChatGPT, Claude, Gemini">
+        <mat-icon class="icon-sparkle text-cyan">auto_awesome</mat-icon>
+        <span class="btn-text">Export for AI</span>
+        <mat-icon class="icon-arrow">arrow_drop_down</mat-icon>
+      </button>
+
+      <mat-menu #aiExportMenu="matMenu" class="ai-export-dropdown-menu">
+        <button mat-menu-item (click)="exportAiReport('MARKDOWN')">
+          <mat-icon class="text-cyan">description</mat-icon>
+          <span>Download AI Briefing (.md)</span>
+        </button>
+        <button mat-menu-item (click)="exportAiReport('CLIPBOARD')">
+          <mat-icon class="text-gold">content_copy</mat-icon>
+          <span>Copy AI Prompt (Clipboard)</span>
+        </button>
+        <button mat-menu-item (click)="exportAiReport('JSON')">
+          <mat-icon class="text-mint">data_object</mat-icon>
+          <span>Download Raw Data (.json)</span>
+        </button>
+      </mat-menu>
+    </div>
+
     <!-- Refresh Action -->
     <button type="button" class="btn-refresh" (click)="refreshCurrentCadence()" [disabled]="isLoading()" matTooltip="Reload Data">
       <mat-icon [class.spin]="isLoading()">refresh</mat-icon>

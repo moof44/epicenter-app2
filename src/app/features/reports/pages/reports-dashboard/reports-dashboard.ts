@@ -9,8 +9,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatMenuModule } from '@angular/material/menu';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ReportsService, DailyPerformanceResult, WeeklyPerformanceResult, MonthlyPerformanceResult } from '../../../../core/services/reports.service';
+import { ReportAiExportService, ExportFormat } from '../../../../core/services/report-ai-export.service';
 import { IncidentService } from '../../../../core/services/incident.service';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -43,6 +45,7 @@ export type PerformanceCadence = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
     MatTooltipModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatMenuModule,
     VolumeChartComponent,
     SalesPerformanceComponent,
     StaffSalesComponent,
@@ -55,6 +58,7 @@ export type PerformanceCadence = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
 })
 export class ReportsDashboardComponent implements OnInit {
   private reportsService = inject(ReportsService);
+  private aiExportService = inject(ReportAiExportService);
   private incidentService = inject(IncidentService);
   private settingsService = inject(SettingsService);
   private authService = inject(AuthService);
@@ -414,6 +418,45 @@ export class ReportsDashboardComponent implements OnInit {
       if (res) {
         this.refreshCurrentCadence();
       }
+    });
+  }
+
+  // ── AI Report Export Handler ──
+  async exportAiReport(format: ExportFormat) {
+    const cadence = this.activeCadence();
+    let dataToExport: any = null;
+    let customMeta: { startDate: string; endDate: string } | undefined;
+
+    if (cadence === 'DAILY') {
+      dataToExport = this.dailyData();
+    } else if (cadence === 'WEEKLY') {
+      dataToExport = this.weeklyData();
+    } else if (cadence === 'MONTHLY') {
+      dataToExport = this.monthlyData();
+    } else {
+      const start = this.range.value.start ? toLocalDateStr(this.range.value.start) : '';
+      const end = this.range.value.end ? toLocalDateStr(this.range.value.end) : '';
+      customMeta = { startDate: start, endDate: end };
+      dataToExport = {
+        volumeData: this.volumeData,
+        peakHours: this.peakHours,
+        salesData: this.salesData,
+        staffData: this.staffData,
+        productData: this.productData,
+        memberData: this.memberData,
+        totalSales: this.customRangeTotalSales
+      };
+    }
+
+    if (!dataToExport) {
+      this.snackBar.open('Please wait for report data to load before exporting.', 'Close', { duration: 3000 });
+      return;
+    }
+
+    const result = await this.aiExportService.exportReport(cadence, dataToExport, format, customMeta);
+    this.snackBar.open(result.message, 'Close', {
+      duration: 3500,
+      panelClass: result.success ? 'snackbar-success' : 'snackbar-error'
     });
   }
 
