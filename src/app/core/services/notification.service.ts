@@ -57,10 +57,17 @@ export class NotificationService implements OnDestroy {
     const notifCol = collection(this.firestore, `users/${userId}/notifications`);
     const q = query(notifCol, orderBy('timestamp', 'desc'), limit(50));
 
-    this.notificationsSub = (collectionData(q, { idField: 'id' }) as Observable<NotificationItem[]>).subscribe(notifs => {
-      this.notifications.set(notifs || []);
-      const unread = (notifs || []).filter(n => !n.read).length;
-      this.unreadCount.set(unread);
+    this.notificationsSub = (collectionData(q, { idField: 'id' }) as Observable<NotificationItem[]>).subscribe({
+      next: notifs => {
+        this.notifications.set(notifs || []);
+        const unread = (notifs || []).filter(n => !n.read).length;
+        this.unreadCount.set(unread);
+      },
+      error: err => {
+        console.warn('[NotificationService] Error initializing notifications listener (IndexedDB / offline cache fallback):', err);
+        // Retain current or clear notifications safely so UI doesn't crash
+        this.unreadCount.set(0);
+      }
     });
   }
 

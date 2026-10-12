@@ -67,6 +67,21 @@ export class GlobalErrorHandler implements ErrorHandler {
                     window.location.reload();
                 }
             }
+
+            // Auto-recover from fatal browser-level IndexedDB backing store lock/corruption
+            if (
+                extracted.name === 'IndexedDbTransactionError' ||
+                extracted.message.includes('Internal error opening backing store') ||
+                extracted.message.includes('Allocate target')
+            ) {
+                const lastIdbReload = sessionStorage.getItem('last_idb_recovery_reload_ts');
+                const now = Date.now();
+                if (!lastIdbReload || now - Number(lastIdbReload) > 30000) {
+                    sessionStorage.setItem('last_idb_recovery_reload_ts', String(now));
+                    console.warn('[GlobalErrorHandler] IndexedDB backing store failure detected. Reloading page tab to reset transaction allocation...');
+                    window.location.reload();
+                }
+            }
         } catch (loggingErr) {
             console.error('[GlobalErrorHandler] Error while sending log to Firestore:', loggingErr);
         } finally {
