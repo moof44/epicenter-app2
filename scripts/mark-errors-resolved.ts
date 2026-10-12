@@ -61,6 +61,15 @@ function isErrorRemediated(docData: any): { remediated: boolean; reason?: string
     return { remediated: true, reason: 'Fix 6: Added @error fallback blocks to dashboard @defer blocks' };
   }
 
+  // Fix 7: IndexedDB Backing Store & Allocate Target failure
+  if (
+    msg.includes('IndexedDbTransactionError') ||
+    msg.includes('Internal error opening backing store') ||
+    msg.includes('Allocate target')
+  ) {
+    return { remediated: true, reason: 'Fix 7: Added error callback to notification listener and auto-recovery in global-error-handler' };
+  }
+
   return { remediated: false };
 }
 
