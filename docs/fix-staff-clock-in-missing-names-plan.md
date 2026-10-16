@@ -1,99 +1,143 @@
-# Implementation Plan: Fix Missing Staff in Clock-In/Out Dropdown
+# Implementation Plan: Fix Missing Staff Names in Clock-In/Out Dropdown (IndexedDB Local Cache + `firstValueFrom` Race Condition)
 
-## Problem Analysis
+## 1. Problem Statement & User Observations
 
-### User Report
-> *"in clock-in/out, the staffs are missing... one by one... can you check why the names in the clock-in/out are missing... only one staff name was missing before... now 2 names does not load in the dropdown of names..."*
+### Symptoms Reported by User
+1. *"In clock-in/out, the staffs are missing... one by one... only one staff name was missing before... now 2 names does not load in the dropdown of names..."*
+2. *"Still 2 names... only the staff/users who logged in..."*
+3. *"It seems the Staff Directory or `/users` page needs to load first before the names show in this dropdown."*
 
-### Root Cause Diagnosis
+---
 
-1. **Unconstrained Firestore Collection Query**:
-   In [`src/app/core/services/user.service.ts`](file:///e:/Programming/epicenter-app2/src/app/core/services/user.service.ts):
-   ```typescript
-   getUsers(): Observable<User[]> {
-       const usersCol = collection(this.firestore, 'users');
-       return collectionData(usersCol, { idField: 'uid' }) as Observable<User[]>;
-   }
+## 2. Deep Root Cause Analysis
 
-   getStaffUsers(): Observable<User[]> {
-       return this.getUsers().pipe(
-           map(users => (users || []).filter(user => this.isStaffUser(user)))
-       );
-   }
-   ```
-   - Firestore's web client and REST backend default to reading an initial page/window of documents when no query filter or limit is supplied.
-   - The `users` collection currently contains **558 total user documents** (over 540 member portal accounts + 14 staff accounts).
-   - In Firestore, documents are ordered alphabetically by **Document ID** (`__name__` / `uid`).
-   - The first window of returned documents caps around ~200 documents (the test query showed exactly 203 documents before the page token cut off).
+### Why Only Logged-In Users Appeared (Until `/users` Was Visited)
 
-2. **Why Staff Names Disappeared "One by One"**:
-   - Because documents are ordered alphabetically by `uid`:
-     - `0lQuWQyF1ROibmiAhSmmMZAgLDk2` (Lauren Val Manuel) -> Starts with `0...` (in the first 200) -> **LOADS**
-     - `0waY1ryGohPseoS7dzoUeJpJLa53` (Nabi Sai) -> Starts with `0...` (in the first 200) -> **LOADS**
-     - `B7YSFQupJbgngIN7dKW7ztDUz0r1` (Aljay Tindoy) -> Starts with `B...` (in the first 200) -> **LOADS**
-     - `DLeJiN380uOam4ntbdGCSYHjRe73` (Jireh Padua) -> Starts with `D...` (in the first 200) -> **LOADS**
-     - `LRkcyxQlSIThsFOPZVzB4Gbxx9v1` (Kris Ragam Manuel) -> Starts with `L...` -> **DROPPED** (pushed past index 200 as new member accounts were registered!)
-     - `ttdfWKJXFdeTHwuy3973fb5Gf062` (Angelito Miranda) -> Starts with `t...` -> **DROPPED** (pushed far past index 200!)
-   - Every time new members registered in the gym app / member portal, new documents with random base62 UIDs pushed documents starting with letters `L` through `z` further down the alphabetical sort order.
-   - First, `ttdf...` (Angelito Miranda) was pushed past the cutoff -> **"only one staff name was missing before"**.
-   - Then, as more members signed up this week, `LRkc...` (Kris Ragam Manuel) was also pushed past the 200 cutoff -> **"now 2 names does not load in the dropdown of names"**!
+The root cause is a classic interaction between **Firestore's `persistentLocalCache` (IndexedDB)**, **`collectionData()` (`onSnapshot`)**, and **RxJS `firstValueFrom()`**:
 
-3. **Secondary Observation**:
-   - In `staff-kiosk-dialog.ts` and `staff-kiosk.ts`:
+```mermaid
+sequenceDiagram
+    participant Auth as AuthService (Login)
+    participant IDB as Firestore IndexedDB Cache
+    participant Kiosk as StaffKiosk / Dialog
+    participant FS as Firestore Server
+    participant UsersPage as /users (UserListComponent)
+
+    Note over Auth,IDB: 1. Only users who logged in on this browser are cached
+    Auth->>IDB: docData('users/Jireh_UID') & docData('users/Nabi_UID')
+    Note right of IDB: IndexedDB 'users' collection now holds ONLY 2 docs
+
+    Note over Kiosk,FS: 2. Kiosk opens and calls firstValueFrom(getStaffUsers())
+    Kiosk->>IDB: collectionData(staffQuery) -> onSnapshot()
+    IDB-->>Kiosk: Emission #1 (0ms, fromCache: true) -> [Jireh, Nabi]
+    Note over Kiosk: firstValueFrom() resolves on Emission #1 & UNSUBSCRIBES!
+    Kiosk-xFS: In-flight network request to Firestore Server is CANCELLED!
+    Note right of Kiosk: Dropdown is stuck showing only 2 names!
+
+    Note over UsersPage,FS: 3. Why visiting /users fixed it
+    UsersPage->>IDB: users$ | async (Persistent Subscription)
+    IDB-->>UsersPage: Emission #1 (0ms, fromCache: true) -> [Jireh, Nabi]
+    UsersPage->>FS: Subscription stays open -> network request completes
+    FS-->>IDB: Emission #2 (150ms, fromServer) -> All 14 Staff Docs saved to IndexedDB!
+    IDB-->>UsersPage: Emits all 14 Staff Docs
+```
+
+### Step-by-Step Breakdown of the Bug
+
+1. **Firestore IndexedDB Persistence (`src/app/app.config.ts`)**:
+   - The app initializes Firestore with:
      ```typescript
+     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+     ```
+2. **How Individual Users Enter the Local Cache (`src/app/core/services/auth.service.ts`)**:
+   - Whenever a user logs into the app on a browser (`Jireh Padua` and `Nabi Sai` on `localhost:4200`), `AuthService` fetches `docData(doc(this.firestore, 'users', user.uid))`.
+   - This caches **only that logged-in user's document** inside the browser's IndexedDB `users` collection.
+   - Staff who only clock in/out via the Kiosk (which verifies passwords using a secondary in-memory Auth app `kioskAuthApp` without logging into the main app) never have their `users/{uid}` document individually fetched on login.
+   - Over time on the Kiosk browser, as individual cached user documents were evicted by IndexedDB's LRU garbage collector (or when staff didn't log into the main app), staff names disappeared **one by one** from the local cache.
+3. **The Fatal `firstValueFrom(collectionData(...))` Call**:
+   - In `StaffKioskDialogComponent` (`staff-kiosk-dialog.ts:139`) and `StaffKioskComponent` (`staff-kiosk.ts:166`):
+     ```typescript
+     const users = await firstValueFrom(this.userService.getStaffUsers());
      this.staffList.set((users || []).filter(u => u.isActive !== false));
      ```
-     Some staff records in Firestore do not have an explicit `isActive: true` boolean field (e.g. `isActive` is `undefined`), which currently evaluates as truthy (`u.isActive !== false`). If an admin account or cloud function previously set `isActive: false` on old staff members, those correctly get excluded. But for active staff (Lauren, Aljay, Kris, Angelito), they must never be excluded.
+   - `userService.getStaffUsers()` uses `collectionData()`, which wraps Firestore's real-time `onSnapshot()`.
+   - When `persistentLocalCache` is enabled, `onSnapshot()` **immediately and synchronously emits a cached snapshot (`fromCache: true`)** containing whatever subset of matching documents already exists in local IndexedDB (the 2 logged-in users).
+   - `firstValueFrom()` takes **only the first emission (`take(1)`)** and **immediately unsubscribes**!
+   - Unsubscribing tears down the `onSnapshot` listener before Firestore can complete the network round-trip to the server. Thus, the remaining staff documents on the server are never fetched!
+4. **Why Visiting `/users` (Staff Directory) Made the Names Appear**:
+   - `UserListComponent` (`/users`) binds `users$ = this.userService.getStaffUsers()` using Angular's `| async` pipe (a **persistent subscription**, not `firstValueFrom()`).
+   - When `/users` loads, it receives Emission #1 (the 2 cached docs), **stays subscribed**, and ~150ms later receives Emission #2 from the Firestore Server containing all 14 staff documents—which Firestore then writes into IndexedDB.
+   - Once `/users` populated IndexedDB, opening the Kiosk dropdown worked until the cache became stale or evicted entries again.
 
 ---
 
-## Proposed Solution Architecture
+## 3. Comprehensive Audit of Affected Components
 
-### 1. Targeted Server-Side Query in `UserService`
-Instead of downloading the entire 550+ document `users` collection to the client and filtering locally in JavaScript:
-- Query Firestore directly using `where('roles', 'array-contains-any', STAFF_ROLES)`:
-  ```typescript
-  export const STAFF_ROLES = ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'];
+We audited all occurrences of `getStaffUsers()` and `getShiftDefinitions()` across the entire codebase:
 
-  getStaffUsers(): Observable<User[]> {
-      const usersCol = collection(this.firestore, 'users');
-      const staffQuery = query(
-          usersCol,
-          where('roles', 'array-contains-any', STAFF_ROLES)
-      );
-      return collectionData(staffQuery, { idField: 'uid' }) as Observable<User[]>;
-  }
-  ```
-- **Performance & Bandwidth Benefit**:
-  - Drops client payload from 558+ member accounts down to **14 staff documents**.
-  - Eliminates the 200-document pagination cutoff completely.
-  - All staff accounts regardless of `uid` alphabetical sort will be returned immediately in real-time.
+| File | Current Pattern | Vulnerable to Partial Cache? |
+|------|-----------------|------------------------------|
+| `src/app/core/services/user.service.ts` | `getStaffUsers()` uses `collectionData()` | Needs `getStaffUsersOnce()` using `getDocs()` + server-side filter |
+| `src/app/features/dashboard/widgets/staff-kiosk-widget/staff-kiosk-dialog.ts` | `await firstValueFrom(this.userService.getStaffUsers())` | **YES (Bug in screenshot 1)** |
+| `src/app/features/staff-attendance/components/staff-kiosk/staff-kiosk.ts` | `await firstValueFrom(this.userService.getStaffUsers())` | **YES (Bug in screenshot 2)** |
+| `src/app/features/staff-attendance/pages/staff-attendance-admin/staff-attendance-admin.ts` | `await firstValueFrom(this.userService.getStaffUsers())` | **YES (Weekly payroll report missing staff if `/users` not loaded first)** |
+| `src/app/features/audit-log/audit-log.ts` | `await firstValueFrom(this.userService.getStaffUsers())` | **YES (Audit log staff filter missing staff if `/users` not loaded first)** |
+| `src/app/features/shift-schedules/pages/shift-schedules/shift-schedules.ts` | `.subscribe(users => ...)` | Safe (persistent subscription) |
+| `src/app/features/user-management/components/user-list/user-list.component.ts` | `users$ \| async` | Safe (persistent subscription) |
 
-### 2. Client-Side Sorting
-- Sort `staffList` alphabetically by `displayName` in `getStaffUsers()` or when setting signals:
-  ```typescript
-  map(users => (users || []).sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '')))
-  ```
-- Ensures staff dropdowns in Kiosk Dialog, Kiosk Page, User Management, Chat, Sales by User, and Shift Schedules are consistently sorted by name.
-
-### 3. Ensure Firestore Rules & Indexes
-- Firestore natively supports `array-contains-any` on single fields without requiring a composite index. (We verified this with `documents:runQuery` REST API directly on the production database, returning all 14 staff instantly with 0 errors).
+Additionally, `shiftScheduleService.getShiftDefinitions()` is also called with `firstValueFrom()` in `staff-kiosk-dialog.ts` and `staff-kiosk.ts`, which has the same local-cache-first behavior.
 
 ---
 
-## Verification & Safety Checklist
-1. **Existing Functionality Preserved**:
-   - `getStaffUsers()` returns an `Observable<User[]>`, preserving exact call signatures for all consumers:
-     - `StaffKioskDialogComponent`
-     - `StaffKioskComponent`
-     - `UserListComponent`
-     - `ShiftSchedulesComponent`
-     - `ShiftSwapModalComponent`
-     - `SalesByUserComponent`
-     - `AuditLogComponent`
-     - `ChatComponent`
-2. **Zero Breaking Changes**:
-   - Full TypeScript compilation passes.
-   - Dropdowns immediately display Angelito Miranda, Kris Ragam Manuel, Lauren Val Manuel, Aljay Tindoy, Nabi Sai, and Jireh Padua.
-3. **Responsive UI & Design System**:
-   - No CSS modifications needed; only data retrieval optimization.
+## 4. Proposed Solution
+
+### Step 1: Add `getStaffUsersOnce()` in `UserService` Using `getDocs()`
+- In `src/app/core/services/user.service.ts`:
+  - Add an explicit `async getStaffUsersOnce(): Promise<User[]>` method that uses Firestore's `getDocs(staffQuery)` instead of `collectionData()`.
+  - Unlike `firstValueFrom(collectionData())`, `getDocs(query)` **always awaits the authoritative server response** when online (and populates the local IndexedDB cache with the full result set), falling back to IndexedDB cache only if the device is offline.
+  - Keep `getStaffUsers(): Observable<User[]>` with `collectionData(staffQuery)` for real-time streams.
+
+```typescript
+/**
+ * Fetches all internal staff users once directly from Firestore (server-first with offline fallback).
+ * Avoids the partial local-cache emission race condition caused by firstValueFrom(collectionData()).
+ */
+async getStaffUsersOnce(): Promise<User[]> {
+    const usersCol = collection(this.firestore, 'users');
+    const staffQuery = query(
+        usersCol,
+        where('roles', 'array-contains-any', STAFF_ROLES)
+    );
+    const snapshot = await getDocs(staffQuery);
+    const users = snapshot.docs.map(d => ({ ...(d.data() as User), uid: d.id }));
+    return users
+        .filter(user => this.isStaffUser(user))
+        .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
+}
+```
+
+### Step 2: Add `getShiftDefinitionsOnce()` in `ShiftScheduleService` Using `getDocs()`
+- In `src/app/core/services/shift-schedule.service.ts`:
+  - Add `async getShiftDefinitionsOnce(): Promise<ShiftDefinition[]>` using `getDocs(this.shiftsCol)` so the Kiosk always gets the full server shift definitions without aborting on an empty initial cache emission.
+
+### Step 3: Update Kiosk Components & Admin Consumers
+1. **`StaffKioskDialogComponent` (`staff-kiosk-dialog.ts`)**:
+   - Subscribe to `this.userService.getStaffUsers()` via a managed `Subscription` (for instant cache display + live updates) AND call `await this.userService.getStaffUsersOnce()` in `loadData()` to guarantee all active staff are loaded immediately on first open even if `/users` was never visited.
+   - Replace `firstValueFrom(this.shiftScheduleService.getShiftDefinitions())` with `await this.shiftScheduleService.getShiftDefinitionsOnce()`.
+2. **`StaffKioskComponent` (`staff-kiosk.ts`)**:
+   - Subscribe to `this.userService.getStaffUsers()` via a managed `Subscription` AND call `await this.userService.getStaffUsersOnce()` in `loadKioskData()`.
+   - Replace `firstValueFrom(this.shiftScheduleService.getShiftDefinitions())` with `await this.shiftScheduleService.getShiftDefinitionsOnce()`.
+3. **`StaffAttendanceAdminComponent` (`staff-attendance-admin.ts`)**:
+   - Replace `await firstValueFrom(this.userService.getStaffUsers())` with `await this.userService.getStaffUsersOnce()`.
+4. **`AuditLogComponent` (`audit-log.ts`)**:
+   - Replace `await firstValueFrom(this.userService.getStaffUsers())` with `await this.userService.getStaffUsersOnce()`.
+
+### Step 4: Ensure `createStaffAccount` Cloud Function Sets `isActive: true`
+- In `functions/src/index.ts`, ensure newly created staff documents explicitly include `isActive: true` on creation so every staff record has a consistent schema.
+
+---
+
+## 5. Verification Plan
+- [x] Verify that opening `localhost:4200/dashboard` -> **Clock In / Out** or `localhost:4200/staff-kiosk` on a fresh session (without visiting `/users` first) immediately loads all 6 active staff members (`Aljay Tindoy`, `Angelito Miranda`, `Jireh Padua`, `Kris Ragam Manuel`, `Lauren Val Manuel`, `Nabi Sai`).
+- [x] Run `npm run build` and `npm run build:members` to verify zero compilation errors.
+- [x] Commit implementation plan and code fixes to Git.

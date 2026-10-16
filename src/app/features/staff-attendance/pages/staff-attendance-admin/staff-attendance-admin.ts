@@ -42,7 +42,7 @@ import {
     Timestamp
 } from '@angular/fire/firestore';
 import { fadeIn } from '../../../../core/animations/animations';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { AttendanceRecordDialogComponent } from '../../components/attendance-record-dialog/attendance-record-dialog';
 import { StaffWeeklyMatrixDialogComponent } from '../../components/staff-weekly-matrix-dialog/staff-weekly-matrix-dialog';
 import {
@@ -224,7 +224,7 @@ export class StaffAttendanceAdminComponent implements OnInit {
     async loadWeeklyReport() {
         this.isLoadingReport.set(true);
         try {
-            const staffUsers = await firstValueFrom(this.userService.getStaffUsers());
+            const staffUsers = await this.userService.getStaffUsersOnce();
             this.allUsers.set(staffUsers || []);
 
             const settings = await this.settingsService.getSettingsOnce();

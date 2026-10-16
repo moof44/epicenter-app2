@@ -10,7 +10,8 @@ import {
     updateDoc,
     query,
     where,
-    orderBy,
+    getDocs,
+    getDocsFromServer,
     Timestamp
 } from '@angular/fire/firestore';
 import { CreateUserDto, User, EmployeeDocument, DocumentCategory } from '../models/user.model';
@@ -115,6 +116,24 @@ export class UserService {
                 .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''))
             )
         );
+    }
+
+    /**
+     * Fetches all internal staff users once directly from Firestore (server-first with offline cache fallback).
+     * Prevents partial local-cache emission race conditions caused by firstValueFrom(collectionData())
+     * when persistentLocalCache only holds previously logged-in user documents.
+     */
+    async getStaffUsersOnce(): Promise<User[]> {
+        const usersCol = collection(this.firestore, 'users');
+        const staffQuery = query(
+            usersCol,
+            where('roles', 'array-contains-any', STAFF_ROLES)
+        );
+        const snapshot = await getDocsFromServer(staffQuery).catch(() => getDocs(staffQuery));
+        const users = snapshot.docs.map(d => ({ ...(d.data() as User), uid: d.id }));
+        return users
+            .filter(user => this.isStaffUser(user))
+            .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
     }
 
     /**

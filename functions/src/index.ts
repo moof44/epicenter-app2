@@ -47,6 +47,7 @@ export const createStaffAccount = functions.https.onCall(async (data: any, conte
             email,
             displayName,
             roles,
+            isActive: true,
             ...profileData, // phone, address, etc.
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         };

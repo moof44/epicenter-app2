@@ -22,7 +22,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { User } from '../../../../core/models/user.model';
 import { StaffShiftDefinition } from '../../../../core/models/staff-attendance.model';
 import { fadeIn } from '../../../../core/animations/animations';
-import { firstValueFrom, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-staff-kiosk',
@@ -88,6 +88,7 @@ export class StaffKioskComponent implements OnInit, OnDestroy {
     manilaDateStr = signal<string>('');
     private timerInterval: any = null;
     private staffChangeSub?: Subscription;
+    private staffSub?: Subscription;
 
     // UI Loading & Feedback
     isSubmitting = signal(false);
@@ -110,6 +111,7 @@ export class StaffKioskComponent implements OnInit, OnDestroy {
             clearInterval(this.timerInterval);
         }
         this.staffChangeSub?.unsubscribe();
+        this.staffSub?.unsubscribe();
     }
 
     private setupStaffChangeListener() {
@@ -162,12 +164,20 @@ export class StaffKioskComponent implements OnInit, OnDestroy {
 
     async loadKioskData() {
         try {
-            // Load active staff users
-            const users = await firstValueFrom(this.userService.getStaffUsers());
+            // Keep live subscription for reactive updates
+            this.staffSub?.unsubscribe();
+            this.staffSub = this.userService.getStaffUsers().subscribe(users => {
+                if (users && users.length > 0) {
+                    this.staffList.set(users.filter(u => u.isActive !== false));
+                }
+            });
+
+            // Fetch authoritative server list once so partial IndexedDB cache never truncates dropdown
+            const users = await this.userService.getStaffUsersOnce();
             this.staffList.set((users || []).filter(u => u.isActive !== false));
 
             // Load shifts from shift definitions (Firestore) or settings or fallback
-            const dbShifts = await firstValueFrom(this.shiftScheduleService.getShiftDefinitions());
+            const dbShifts = await this.shiftScheduleService.getShiftDefinitionsOnce();
             if (dbShifts && dbShifts.length > 0) {
                 this.shiftsList.set(dbShifts.map(s => ({
                     id: s.id,

@@ -10,6 +10,8 @@ import {
     query,
     where,
     getDoc,
+    getDocs,
+    getDocsFromServer,
     Timestamp
 } from '@angular/fire/firestore';
 import { Observable, of } from 'rxjs';
@@ -126,6 +128,29 @@ export class ShiftScheduleService {
                 return of(DEFAULT_SHIFTS);
             })
         );
+    }
+
+    /**
+     * Gets all shift definitions once directly from Firestore (server-first with offline cache fallback).
+     */
+    async getShiftDefinitionsOnce(): Promise<ShiftDefinition[]> {
+        try {
+            const snapshot = await getDocsFromServer(this.shiftsCol).catch(() => getDocs(this.shiftsCol));
+            const shifts = snapshot.docs.map(d => ({ ...(d.data() as ShiftDefinition), id: d.id }));
+            if (!shifts || shifts.length === 0) {
+                return DEFAULT_SHIFTS;
+            }
+            const combined = [...shifts];
+            for (const def of DEFAULT_SHIFTS) {
+                if (!combined.some(s => s.id === def.id)) {
+                    combined.push(def);
+                }
+            }
+            return combined.filter(s => s.isActive !== false);
+        } catch (err) {
+            console.warn('Error fetching shift definitions once, using defaults:', err);
+            return DEFAULT_SHIFTS;
+        }
     }
 
     /**
