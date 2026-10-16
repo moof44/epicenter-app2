@@ -8,6 +8,7 @@
 
   <div class="chart-content">
     <apx-chart
+      *ngIf="data && data.length > 0; else noSales"
       [series]="chartOptions.series!"
       [chart]="chartOptions.chart!"
       [xaxis]="chartOptions.xaxis!"
@@ -21,5 +22,12 @@
       [tooltip]="chartOptions.tooltip!"
       [colors]="chartOptions.colors!">
     </apx-chart>
+    <ng-template #noSales>
+      <div class="empty-chart-state">
+        <mat-icon class="empty-icon">payments</mat-icon>
+        <p class="empty-title">No Sales Records Found</p>
+        <p class="empty-desc">Revenue pacing will display once sales are registered in this date window.</p>
+      </div>
+    </ng-template>
   </div>
 </div>

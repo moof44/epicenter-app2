@@ -28,7 +28,7 @@
     <div class="filter-deck">
         <div class="search-wrap">
             <mat-icon class="search-icon">search</mat-icon>
-            <input type="text" class="search-input" [(ngModel)]="searchQuery" (keyup)="applyFilters()" placeholder="Search by name or contact #...">
+            <input type="text" class="search-input" [ngModel]="searchQuery" (ngModelChange)="onSearchChange($event)" placeholder="Search by name or contact #...">
             <button type="button" class="clear-btn" *ngIf="searchQuery" (click)="clearSearch()">
                 <mat-icon>close</mat-icon>
             </button>
@@ -36,8 +36,8 @@
 
         <div class="filter-selects">
             <div class="select-box">
-                <label class="select-label">Status</label>
-                <select class="custom-select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+                <label class="select-label" for="memberStatusFilter">Status</label>
+                <select id="memberStatusFilter" class="custom-select" [(ngModel)]="statusFilter" (change)="applyFilters()">
                     <option value="All">All Statuses</option>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
@@ -45,8 +45,8 @@
             </div>
 
             <div class="select-box">
-                <label class="select-label">Subscription</label>
-                <select class="custom-select" [(ngModel)]="subscriptionFilter" (change)="applyFilters()">
+                <label class="select-label" for="memberSubscriptionFilter">Subscription</label>
+                <select id="memberSubscriptionFilter" class="custom-select" [(ngModel)]="subscriptionFilter" (change)="applyFilters()">
                     <option value="All">All Members</option>
                     <option value="HasSubscription">Has Subscription</option>
                     <option value="NoSubscription">No Subscription</option>
@@ -54,8 +54,8 @@
             </div>
 
             <div class="select-box">
-                <label class="select-label">Body Scans</label>
-                <select class="custom-select" [(ngModel)]="progressFilter" (change)="applyFilters()">
+                <label class="select-label" for="memberProgressFilter">Body Scans</label>
+                <select id="memberProgressFilter" class="custom-select" [(ngModel)]="progressFilter" (change)="applyFilters()">
                     <option value="All">All Progress</option>
                     <option value="PendingScan">⏳ Pending Scan Data</option>
                     <option value="UpToDate">✓ Progress Up to Date</option>
@@ -189,8 +189,8 @@
     </div>
 
     <!-- 🖼️ Modal Image Lightbox for Scan Preview -->
-    <div class="image-modal-backdrop" *ngIf="previewingImageUrl" (click)="closeImagePreview()">
-        <div class="image-modal-card" (click)="$event.stopPropagation()">
+    <div class="image-modal-backdrop" *ngIf="previewingImageUrl" (click)="closeImagePreview()" (keydown.escape)="closeImagePreview()" tabindex="0" role="button" aria-label="Close image preview">
+        <div class="image-modal-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" tabindex="0" role="region" aria-label="Scan Report Details">
             <div class="image-modal-header">
                 <div>
                     <h3 class="modal-member-name">{{ previewingMemberName }}</h3>

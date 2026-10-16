@@ -12,6 +12,7 @@
 
   <div class="chart-content">
     <apx-chart
+      *ngIf="data && data.length > 0; else noProducts"
       [series]="chartOptions.series!"
       [chart]="chartOptions.chart!"
       [labels]="chartOptions.labels!"
@@ -21,5 +22,12 @@
       [tooltip]="chartOptions.tooltip!"
       [colors]="chartOptions.colors!">
     </apx-chart>
+    <ng-template #noProducts>
+      <div class="empty-chart-state">
+        <mat-icon class="empty-icon">inventory_2</mat-icon>
+        <p class="empty-title">No Product Sales Recorded</p>
+        <p class="empty-desc">Retail and supplement purchases will appear here once recorded.</p>
+      </div>
+    </ng-template>
   </div>
 </div>

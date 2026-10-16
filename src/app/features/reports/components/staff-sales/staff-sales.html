@@ -8,6 +8,7 @@
 
   <div class="chart-content">
     <apx-chart
+      *ngIf="data && data.length > 0; else noStaffSales"
       [series]="chartOptions.series!"
       [chart]="chartOptions.chart!"
       [xaxis]="chartOptions.xaxis!"
@@ -19,5 +20,12 @@
       [tooltip]="chartOptions.tooltip!"
       [colors]="chartOptions.colors!">
     </apx-chart>
+    <ng-template #noStaffSales>
+      <div class="empty-chart-state">
+        <mat-icon class="empty-icon">badge</mat-icon>
+        <p class="empty-title">No Staff Sales Recorded</p>
+        <p class="empty-desc">Attributed staff transactions will appear here once processed.</p>
+      </div>
+    </ng-template>
   </div>
 </div>

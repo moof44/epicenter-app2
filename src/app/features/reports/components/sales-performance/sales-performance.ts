@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { NgApexchartsModule, ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis, ApexDataLabels, ApexTitleSubtitle, ApexStroke, ApexMarkers, ApexLegend, ApexTooltip, ApexGrid } from "ng-apexcharts";
 
 export interface ChartOptions {
@@ -21,7 +22,7 @@ export interface ChartOptions {
 @Component({
   selector: 'app-sales-performance',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule],
+  imports: [CommonModule, NgApexchartsModule, MatIconModule],
   templateUrl: './sales-performance.html',
   styleUrl: './sales-performance.css'
 })
@@ -92,13 +93,17 @@ export class SalesPerformanceComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && this.data) {
+    if (changes['data'] || changes['monthlyQuota']) {
       this.updateChart();
     }
   }
 
   updateChart() {
-    if (!this.data) return;
+    if (!this.data || this.data.length === 0) {
+      this.chartOptions.series = [];
+      this.chartOptions.labels = [];
+      return;
+    }
     const daysInMonth = 30;
     const dailyTarget = this.monthlyQuota > 0 ? this.monthlyQuota / daysInMonth : 0;
     const targetData = this.data.map(() => dailyTarget);
@@ -107,7 +112,7 @@ export class SalesPerformanceComponent implements OnChanges {
       {
         name: "Daily Sales",
         type: "column",
-        data: this.data.map(d => d.total)
+        data: this.data.map(d => d.total || 0)
       },
       {
         name: "Daily Target",
@@ -116,8 +121,8 @@ export class SalesPerformanceComponent implements OnChanges {
       }
     ];
 
-    const labels = this.data.map(d => d.date);
-    const isDateSeries = labels.length > 0 && labels.every(l => !isNaN(new Date(l).getTime()) && l.includes('-'));
+    const labels = this.data.map(d => d.date || '');
+    const isDateSeries = labels.length > 0 && labels.every(l => !!l && !isNaN(new Date(l).getTime()) && l.includes('-'));
 
     this.chartOptions.labels = labels;
     this.chartOptions.xaxis = {

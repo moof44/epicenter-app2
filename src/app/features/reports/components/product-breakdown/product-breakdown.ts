@@ -64,7 +64,7 @@ export class ProductBreakdownComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && this.data) {
+    if (changes['data']) {
       this.updateChart();
     }
   }
@@ -75,14 +75,18 @@ export class ProductBreakdownComponent implements OnChanges {
   }
 
   updateChart() {
-    if (!this.data) return;
+    if (!this.data || this.data.length === 0) {
+      this.chartOptions.series = [];
+      this.chartOptions.labels = [];
+      return;
+    }
     const sorted = [...this.data].sort((a, b) => {
       return this.metric === 'quantity' ? b.quantity - a.quantity : b.revenue - a.revenue;
     });
     const top = sorted.slice(0, 8);
 
     this.chartOptions.series = top.map(d => this.metric === 'quantity' ? d.quantity : d.revenue);
-    this.chartOptions.labels = top.map(d => d.name);
+    this.chartOptions.labels = top.map(d => d.name || 'General Item');
     this.chartOptions.title = {
       ...this.chartOptions.title,
       text: this.metric === 'quantity' ? "Top Products by Volume (Units)" : "Top Products by Revenue (₱)"

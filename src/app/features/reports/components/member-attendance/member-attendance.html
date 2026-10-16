@@ -8,6 +8,7 @@
 
   <div class="chart-content">
     <apx-chart
+      *ngIf="data && data.length > 0; else noAttendance"
       [series]="chartOptions.series!"
       [chart]="chartOptions.chart!"
       [xaxis]="chartOptions.xaxis!"
@@ -19,5 +20,12 @@
       [tooltip]="chartOptions.tooltip!"
       [colors]="chartOptions.colors!">
     </apx-chart>
+    <ng-template #noAttendance>
+      <div class="empty-chart-state">
+        <mat-icon class="empty-icon">person_off</mat-icon>
+        <p class="empty-title">No Member Attendance Recorded</p>
+        <p class="empty-desc">Check-in volume will populate here once members scan their badge.</p>
+      </div>
+    </ng-template>
   </div>
 </div>

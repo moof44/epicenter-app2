@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgApexchartsModule, ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis, ApexDataLabels, ApexTitleSubtitle, ApexPlotOptions, ApexTooltip, ApexGrid } from "ng-apexcharts";
+import { MatIconModule } from '@angular/material/icon';
+import { NgApexchartsModule, ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis, ApexDataLabels, ApexTitleSubtitle, ApexPlotOptions, ApexTooltip, ApexGrid, ApexLegend } from "ng-apexcharts";
 
 export interface ChartOptions {
   series: ApexAxisChartSeries;
@@ -13,12 +14,13 @@ export interface ChartOptions {
   colors: string[];
   tooltip: ApexTooltip;
   grid: ApexGrid;
+  legend: ApexLegend;
 }
 
 @Component({
   selector: 'app-staff-sales',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule],
+  imports: [CommonModule, NgApexchartsModule, MatIconModule],
   templateUrl: './staff-sales.html',
   styleUrl: './staff-sales.css'
 })
@@ -72,25 +74,33 @@ export class StaffSalesComponent implements OnChanges {
         theme: 'dark',
         y: { formatter: (val) => '₱' + Number(val).toLocaleString(undefined, { minimumFractionDigits: 2 }) }
       },
-      colors: ['#34d399'] // Mint Green
+      colors: ['#34d399'], // Mint Green
+      legend: { show: false }
     };
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && this.data) {
+    if (changes['data']) {
       this.updateChart();
     }
   }
 
   updateChart() {
-    if (!this.data) return;
+    if (!this.data || this.data.length === 0) {
+      this.chartOptions.series = [];
+      this.chartOptions.xaxis = {
+        ...this.chartOptions.xaxis,
+        categories: []
+      };
+      return;
+    }
     this.chartOptions.series = [{
       name: "Sales (₱)",
-      data: this.data.map(d => d.total)
+      data: this.data.map(d => d.total || 0)
     }];
     this.chartOptions.xaxis = {
       ...this.chartOptions.xaxis,
-      categories: this.data.map(d => d.name)
+      categories: this.data.map(d => d.name || 'Staff')
     };
   }
 }

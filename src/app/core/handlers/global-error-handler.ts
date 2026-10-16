@@ -37,6 +37,15 @@ export class GlobalErrorHandler implements ErrorHandler {
                 return;
             }
 
+            // Handle WebKit / Safari transient IndexedDB cursor/transaction termination (e.g. tab backgrounding or cancelled iteration)
+            if (
+                extracted.message.includes("Attempt to iterate a cursor that doesn't exist") ||
+                extracted.message.includes("without an in-progress transaction")
+            ) {
+                console.warn('[GlobalErrorHandler] WebKit/Safari transient IndexedDB cursor drop intercepted:', extracted.message);
+                return;
+            }
+
             errorLogger.logError({
                 message: extracted.message,
                 name: extracted.name,

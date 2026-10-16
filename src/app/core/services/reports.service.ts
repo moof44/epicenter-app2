@@ -205,13 +205,12 @@ export class ReportsService {
       personEntry.count += 1;
       salesPerPerson.set(memberId, personEntry);
 
-      const creditedStaff = tx.attributedStaffName || tx.staffName;
-      if (creditedStaff) {
-        staffPerformance.set(creditedStaff, (staffPerformance.get(creditedStaff) || 0) + tx.totalAmount);
-      }
+      const creditedStaff = tx.attributedStaffName || tx.staffName || 'Unassigned Staff';
+      staffPerformance.set(creditedStaff, (staffPerformance.get(creditedStaff) || 0) + tx.totalAmount);
 
       tx.items.forEach(item => {
-        const prodEntry = productSales.get(item.productId) || { name: item.productName, quantity: 0, revenue: 0 };
+        const prodEntry = productSales.get(item.productId) || { name: item.productName || 'General Item', quantity: 0, revenue: 0 };
+        prodEntry.name = prodEntry.name || item.productName || 'General Item';
         prodEntry.quantity += item.quantity;
         prodEntry.revenue += item.subtotal;
         productSales.set(item.productId, prodEntry);
@@ -240,7 +239,8 @@ export class ReportsService {
 
     records.forEach(r => {
       const visitKey = `${r.date}_${r.memberId}`;
-      const entry = memberCounts.get(r.memberId) || { name: r.memberName, count: 0, lastVisit: null };
+      const entry = memberCounts.get(r.memberId) || { name: r.memberName || 'Gym Member', count: 0, lastVisit: null };
+      entry.name = entry.name || r.memberName || 'Gym Member';
 
       if (!dailyVisits.has(visitKey)) {
         dailyVisits.add(visitKey);
@@ -457,7 +457,8 @@ export class ReportsService {
       }
 
       t.items.forEach(i => {
-        const itemEntry = productMap.get(i.productId) || { name: i.productName, quantity: 0, revenue: 0 };
+        const itemEntry = productMap.get(i.productId) || { name: i.productName || 'General Item', quantity: 0, revenue: 0 };
+        itemEntry.name = itemEntry.name || i.productName || 'General Item';
         itemEntry.quantity += i.quantity;
         itemEntry.revenue += i.subtotal;
         productMap.set(i.productId, itemEntry);

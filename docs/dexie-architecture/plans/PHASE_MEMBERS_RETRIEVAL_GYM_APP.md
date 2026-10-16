@@ -57,6 +57,7 @@ This plan defines the precise execution steps for migrating **Member Data Retrie
 - [x] **Subscription Lifecycle Protection**: Guard component subscriptions with `takeUntilDestroyed(this.destroyRef)` to eliminate memory leaks and GC freezes.
 - [x] **Optimized Filter Predicate**: Hoist and cache filter state parameters (`nowTimestamp`, search string) outside the row loop, avoiding redundant allocations.
 - [x] **Fast Numeric Expiration Comparison**: Compare numeric millisecond timestamps in `isExpired` / `isMembershipExpired` to eliminate `new Date()` object churn during rendering.
+- [x] **Safari/WebKit Cursor & Debounce Optimization**: Eliminated dual-cursor iteration (`.count()` + `.offset().limit()`) with a single-pass `.toArray()`, added 300ms keystroke debounce on search input, and added automatic retry and error fallbacks on live queries to prevent WebKit `UnknownError: Attempt to iterate a cursor that doesn't exist`.
 
 ---
 

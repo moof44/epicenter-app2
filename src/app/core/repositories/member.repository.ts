@@ -8,7 +8,7 @@ import {
     orderBy,
 } from '@angular/fire/firestore';
 import { liveQuery } from 'dexie';
-import { Observable, from, shareReplay, catchError, of } from 'rxjs';
+import { Observable, from, shareReplay, catchError, of, retry } from 'rxjs';
 import { Member } from '../models/member.model';
 import { AppIndexedDbService } from '../services/dexie/app-indexeddb.service';
 import { createConverter } from '../utils/firestore-converter.utils';
@@ -115,13 +115,17 @@ export class MemberRepository {
                     return m.trainingExpiration;
                 }
 
-                const totalCount = await filtered.count();
-                const items = await filtered
-                    .offset(pageIndex * pageSize)
-                    .limit(pageSize)
-                    .toArray();
+                const allFiltered = await filtered.toArray();
+                const totalCount = allFiltered.length;
+                const items = allFiltered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
 
                 return { items, totalCount };
+            })
+        ).pipe(
+            retry({ count: 2, delay: 150 }),
+            catchError((err) => {
+                console.warn('[MemberRepository] Live query error recovered:', err);
+                return of({ items: [], totalCount: 0 });
             })
         );
     }
@@ -148,6 +152,11 @@ export class MemberRepository {
                     return await db.members.orderBy('name').toArray();
                 })
             ).pipe(
+                retry({ count: 2, delay: 150 }),
+                catchError((err) => {
+                    console.warn('[MemberRepository] liveMembers$ error recovered:', err);
+                    return of([]);
+                }),
                 shareReplay({ bufferSize: 1, refCount: false })
             );
 
@@ -232,6 +241,17 @@ export class MemberRepository {
                 };
             })
         ).pipe(
+            retry({ count: 2, delay: 150 }),
+            catchError((err) => {
+                console.warn('[MemberRepository] Health summary error recovered:', err);
+                return of({
+                    activeCount: 0,
+                    inactiveCount: 0,
+                    expiringCount: 0,
+                    expiringNames: [],
+                    newThisMonth: 0,
+                });
+            }),
             shareReplay({ bufferSize: 1, refCount: false })
         );
     }

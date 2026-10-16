@@ -13,7 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
-import { BehaviorSubject, switchMap } from 'rxjs';
+import { BehaviorSubject, Subject, switchMap, catchError, of, debounceTime, distinctUntilChanged } from 'rxjs';
 import { MemberService } from '../../../../core/services/member.service';
 import { Member } from '../../../../core/models/member.model';
 import { MemberQueryOptions } from '../../../../core/repositories/member.repository';
@@ -70,9 +70,26 @@ export class MemberList implements OnInit {
   previewingMemberName = '';
   loadingScanMemberId: string | null = null;
 
+  private searchSubject = new Subject<string>();
+
   ngOnInit() {
+    this.setupSearchDebounce();
     this.setupUrlPersistence();
     this.setupDataLoading();
+  }
+
+  private setupSearchDebounce() {
+    this.searchSubject
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((query) => {
+        this.searchQuery = query;
+        this.pageIndex = 0;
+        this.updateUrl();
+      });
   }
 
   getAvatarInitials(name: string): string {
@@ -134,49 +151,28 @@ export class MemberList implements OnInit {
 
   setupUrlPersistence() {
     this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      const newSearch = params['search'] || '';
-      const newStatus = params['status'] || 'All';
-      const newSub = params['subscription'] || 'All';
-      const newProg = params['progress'] || 'All';
-      const newPage = params['page'] ? parseInt(params['page'], 10) : 0;
-      const newPageSize = params['pageSize'] ? parseInt(params['pageSize'], 10) : this.pageSize;
+      this.searchQuery = params['search'] || '';
+      this.statusFilter = params['status'] || 'All';
+      this.subscriptionFilter = params['subscription'] || 'All';
+      this.progressFilter = params['progress'] || 'All';
+      this.pageIndex = params['page'] ? parseInt(params['page'], 10) : 0;
+      this.pageSize = params['pageSize'] ? parseInt(params['pageSize'], 10) : this.pageSize;
 
-      let changed = false;
-      if (this.searchQuery !== newSearch) {
-        this.searchQuery = newSearch;
-        changed = true;
-      }
-      if (this.statusFilter !== newStatus) {
-        this.statusFilter = newStatus;
-        changed = true;
-      }
-      if (this.subscriptionFilter !== newSub) {
-        this.subscriptionFilter = newSub;
-        changed = true;
-      }
-      if (this.progressFilter !== newProg) {
-        this.progressFilter = newProg;
-        changed = true;
-      }
-      if (this.pageIndex !== newPage) {
-        this.pageIndex = newPage;
-        changed = true;
-      }
-      if (this.pageSize !== newPageSize) {
-        this.pageSize = newPageSize;
-        changed = true;
-      }
-
-      if (changed) {
-        this.emitQuery();
-      }
+      this.emitQuery();
     });
   }
 
   setupDataLoading() {
     this.query$
       .pipe(
-        switchMap(options => this.memberService.getMembersPaged(options)),
+        switchMap(options =>
+          this.memberService.getMembersPaged(options).pipe(
+            catchError(err => {
+              console.warn('[MemberList] Error fetching paged members, recovering gracefully:', err);
+              return of({ items: [], totalCount: 0 });
+            })
+          )
+        ),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(res => {
@@ -198,23 +194,29 @@ export class MemberList implements OnInit {
     });
   }
 
+  onSearchChange(text: string) {
+    this.searchQuery = text;
+    this.searchSubject.next(text);
+  }
+
   applyFilters() {
     this.pageIndex = 0;
-    this.updateUrlAndEmit();
+    this.updateUrl();
   }
 
   clearSearch() {
     this.searchQuery = '';
-    this.applyFilters();
+    this.pageIndex = 0;
+    this.updateUrl();
   }
 
   onPageChange(event: PageEvent) {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
-    this.updateUrlAndEmit();
+    this.updateUrl();
   }
 
-  private updateUrlAndEmit() {
+  private updateUrl() {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
@@ -228,8 +230,6 @@ export class MemberList implements OnInit {
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
-
-    this.emitQuery();
   }
 
   async toggleStatus(member: Member) {

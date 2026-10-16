@@ -1,6 +1,8 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgApexchartsModule, ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis, ApexDataLabels, ApexTitleSubtitle, ApexPlotOptions, ApexTooltip, ApexGrid } from "ng-apexcharts";
+import { NgApexchartsModule, ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis, ApexDataLabels, ApexTitleSubtitle, ApexPlotOptions, ApexTooltip, ApexGrid, ApexLegend } from "ng-apexcharts";
+
+import { MatIconModule } from '@angular/material/icon';
 
 export interface ChartOptions {
   series: ApexAxisChartSeries;
@@ -13,12 +15,13 @@ export interface ChartOptions {
   colors: string[];
   tooltip: ApexTooltip;
   grid: ApexGrid;
+  legend: ApexLegend;
 }
 
 @Component({
   selector: 'app-member-attendance',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule],
+  imports: [CommonModule, NgApexchartsModule, MatIconModule],
   templateUrl: './member-attendance.html',
   styleUrl: './member-attendance.css'
 })
@@ -76,19 +79,28 @@ export class MemberAttendanceComponent implements OnChanges {
         theme: 'dark',
         y: { formatter: (val) => val + " Visits" }
       },
-      grid: { show: false }
+      grid: { show: false },
+      legend: { show: false }
     };
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && this.data) {
+    if (changes['data']) {
       this.updateChart();
     }
   }
 
   updateChart() {
-    if (!this.data) return;
-    const counts = this.data.map(d => d.count);
+    if (!this.data || this.data.length === 0) {
+      this.chartOptions.series = [];
+      this.chartOptions.xaxis = {
+        ...this.chartOptions.xaxis,
+        categories: []
+      };
+      this.chartOptions.colors = [];
+      return;
+    }
+    const counts = this.data.map(d => d.count || 0);
     const uniqueCounts = Array.from(new Set(counts)).sort((a, b) => b - a);
 
     const goldValue = uniqueCounts[0];
@@ -96,9 +108,10 @@ export class MemberAttendanceComponent implements OnChanges {
     const bronzeValue = uniqueCounts[2];
 
     const colors = this.data.map(d => {
-      if (d.count === goldValue) return '#fbbf24'; // Gold
-      if (d.count === silverValue) return '#cbd5e1'; // Silver
-      if (d.count === bronzeValue) return '#d97706'; // Bronze
+      const c = d.count || 0;
+      if (c === goldValue) return '#fbbf24'; // Gold
+      if (c === silverValue) return '#cbd5e1'; // Silver
+      if (c === bronzeValue) return '#d97706'; // Bronze
       return '#06b6d4'; // Cyan
     });
 
@@ -109,7 +122,7 @@ export class MemberAttendanceComponent implements OnChanges {
 
     this.chartOptions.xaxis = {
       ...this.chartOptions.xaxis,
-      categories: this.data.map(d => d.name)
+      categories: this.data.map(d => d.name || 'Gym Member')
     };
 
     this.chartOptions.colors = colors;

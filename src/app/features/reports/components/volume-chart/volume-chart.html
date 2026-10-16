@@ -8,6 +8,7 @@
 
   <div class="chart-content">
     <apx-chart
+      *ngIf="data && data.length > 0; else noVolume"
       [series]="chartOptions.series!"
       [chart]="chartOptions.chart!"
       [xaxis]="chartOptions.xaxis!"
@@ -19,6 +20,13 @@
       [grid]="chartOptions.grid!"
       [tooltip]="chartOptions.tooltip!">
     </apx-chart>
+    <ng-template #noVolume>
+      <div class="empty-chart-state">
+        <mat-icon class="empty-icon">trending_up</mat-icon>
+        <p class="empty-title">No Attendance Volume Recorded</p>
+        <p class="empty-desc">Check-in traffic trends will render once gym attendance is logged.</p>
+      </div>
+    </ng-template>
   </div>
 
   <!-- Peak Hours Grid -->

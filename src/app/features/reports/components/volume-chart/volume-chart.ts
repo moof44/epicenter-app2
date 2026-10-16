@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgApexchartsModule, ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexDataLabels, ApexTitleSubtitle, ApexStroke, ApexYAxis, ApexFill, ApexGrid, ApexTooltip } from "ng-apexcharts";
+import { MatIconModule } from '@angular/material/icon';
+import { NgApexchartsModule, ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexDataLabels, ApexTitleSubtitle, ApexStroke, ApexYAxis, ApexFill, ApexGrid, ApexTooltip, ApexLegend } from "ng-apexcharts";
 
 export interface ChartOptions {
   series: ApexAxisChartSeries;
@@ -13,12 +14,13 @@ export interface ChartOptions {
   fill: ApexFill;
   grid: ApexGrid;
   tooltip: ApexTooltip;
+  legend: ApexLegend;
 }
 
 @Component({
   selector: 'app-volume-chart',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule],
+  imports: [CommonModule, NgApexchartsModule, MatIconModule],
   templateUrl: './volume-chart.html',
   styleUrl: './volume-chart.css'
 })
@@ -101,25 +103,36 @@ export class VolumeChartComponent implements OnChanges {
       },
       tooltip: {
         theme: 'dark'
-      }
+      },
+      legend: { show: false }
     };
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && this.data) {
+    if (changes['data']) {
       this.updateChart();
     }
   }
 
   updateChart() {
-    if (!this.data) return;
+    if (!this.data || this.data.length === 0) {
+      this.chartOptions.series = [{
+        name: "Gym Check-Ins",
+        data: []
+      }];
+      this.chartOptions.xaxis = {
+        ...this.chartOptions.xaxis,
+        categories: []
+      };
+      return;
+    }
     this.chartOptions.series = [{
       name: "Gym Check-Ins",
-      data: this.data.map(d => d.count)
+      data: this.data.map(d => d.count || 0)
     }];
     this.chartOptions.xaxis = {
       ...this.chartOptions.xaxis,
-      categories: this.data.map(d => d.date)
+      categories: this.data.map(d => d.date || '')
     };
   }
 }
