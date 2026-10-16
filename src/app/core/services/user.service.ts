@@ -100,10 +100,20 @@ export class UserService {
 
     /**
      * Fetches only internal staff users (ADMIN, MANAGER, STAFF, TRAINER).
+     * Uses server-side array-contains-any filter to avoid pagination cutoffs
+     * and sorts staff alphabetically by display name.
      */
     getStaffUsers(): Observable<User[]> {
-        return this.getUsers().pipe(
-            map(users => (users || []).filter(user => this.isStaffUser(user)))
+        const usersCol = collection(this.firestore, 'users');
+        const staffQuery = query(
+            usersCol,
+            where('roles', 'array-contains-any', STAFF_ROLES)
+        );
+        return (collectionData(staffQuery, { idField: 'uid' }) as Observable<User[]>).pipe(
+            map(users => (users || [])
+                .filter(user => this.isStaffUser(user))
+                .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''))
+            )
         );
     }
 
