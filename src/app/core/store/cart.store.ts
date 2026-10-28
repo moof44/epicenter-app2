@@ -6,11 +6,13 @@ import { DiscountService } from '../services/discount.service';
 interface CartState {
     items: CartItem[];
     memberTags: string[];
+    activeVoucherCode: string | null;
 }
 
 const initialState: CartState = {
     items: [],
     memberTags: [],
+    activeVoucherCode: null,
 };
 
 function recalculateItemDiscount(
@@ -55,13 +57,34 @@ function recalculateItemDiscount(
     }
 }
 
+function recomputeCartItems(
+    rawItems: CartItem[],
+    tags: string[],
+    voucherCode: string | null,
+    discountService: DiscountService
+): CartItem[] {
+    // 1. Recalculate standard tier/tag-based discounts
+    const tagDiscounted = rawItems.map(item => {
+        if (item.isPriceOverridden && !item.appliedDiscountId) {
+            return item;
+        }
+        return recalculateItemDiscount(item, tags, discountService);
+    });
+
+    // 2. Evaluate promo voucher (single item, highest saving)
+    const voucherResult = discountService.evaluateVoucherForCart(tagDiscounted, voucherCode);
+    return voucherResult.items;
+}
+
 export const CartStore = signalStore(
     { providedIn: 'root' },
     withState(initialState),
-    withComputed(({ items }) => ({
+    withComputed(({ items, activeVoucherCode }) => ({
         total: computed(() => items().reduce((sum, item) => sum + item.subtotal, 0)),
         itemCount: computed(() => items().reduce((sum, item) => sum + item.quantity, 0)),
         isEmpty: computed(() => items().length === 0),
+        totalVoucherDiscount: computed(() => items().reduce((sum, item) => sum + (item.voucherDiscount || 0), 0)),
+        hasActiveVoucher: computed(() => !!activeVoucherCode()),
     })),
     withMethods((store, discountService = inject(DiscountService)) => ({
         addItem(product: Product, quantity = 1): void {
@@ -70,28 +93,19 @@ export const CartStore = signalStore(
             const current = store.items();
             const existingIndex = current.findIndex((item) => item.productId === product.id);
 
-            let updatedItem: CartItem;
+            let intermediateItems: CartItem[];
             if (existingIndex >= 0) {
                 const existing = current[existingIndex];
                 const newQty = existing.quantity + quantity;
-                const tempItem = {
+                const tempItem: CartItem = {
                     ...existing,
                     quantity: newQty,
                     subtotal: newQty * existing.price
                 };
 
-                if (existing.isPriceOverridden && !existing.appliedDiscountId) {
-                    updatedItem = {
-                        ...tempItem,
-                        subtotal: newQty * existing.price
-                    };
-                } else {
-                    updatedItem = recalculateItemDiscount(tempItem, store.memberTags(), discountService);
-                }
-
                 const updated = [...current];
-                updated[existingIndex] = updatedItem;
-                patchState(store, { items: updated });
+                updated[existingIndex] = tempItem;
+                intermediateItems = updated;
             } else {
                 const newItem: CartItem = {
                     productId: product.id,
@@ -103,45 +117,55 @@ export const CartStore = signalStore(
                     productCategory: product.category,
                     subtotal: quantity * product.price,
                 };
-
-                const finalItem = recalculateItemDiscount(newItem, store.memberTags(), discountService);
-                patchState(store, {
-                    items: [...current, finalItem],
-                });
+                intermediateItems = [...current, newItem];
             }
+
+            const finalItems = recomputeCartItems(
+                intermediateItems,
+                store.memberTags(),
+                store.activeVoucherCode(),
+                discountService
+            );
+            patchState(store, { items: finalItems });
         },
 
         updateQuantity(productId: string, quantity: number): void {
             if (quantity <= 0) {
-                patchState(store, { items: store.items().filter((item) => item.productId !== productId) });
+                const filtered = store.items().filter((item) => item.productId !== productId);
+                const finalItems = recomputeCartItems(
+                    filtered,
+                    store.memberTags(),
+                    store.activeVoucherCode(),
+                    discountService
+                );
+                patchState(store, { items: finalItems });
                 return;
             }
-            const updated = store.items().map((item) => {
+
+            const intermediateItems = store.items().map((item) => {
                 if (item.productId === productId) {
-                    const tempItem = {
+                    return {
                         ...item,
                         quantity,
                         subtotal: quantity * item.price
                     };
-
-                    if (item.isPriceOverridden && !item.appliedDiscountId) {
-                        return {
-                            ...tempItem,
-                            subtotal: quantity * item.price
-                        };
-                    } else {
-                        return recalculateItemDiscount(tempItem, store.memberTags(), discountService);
-                    }
                 }
                 return item;
             });
-            patchState(store, { items: updated });
+
+            const finalItems = recomputeCartItems(
+                intermediateItems,
+                store.memberTags(),
+                store.activeVoucherCode(),
+                discountService
+            );
+            patchState(store, { items: finalItems });
         },
 
         updatePrice(productId: string, newPrice: number, reason: string): void {
-            const updated = store.items().map((item) => {
+            const intermediateItems = store.items().map((item) => {
                 if (item.productId === productId) {
-                    const cleanItem = {
+                    const cleanItem: CartItem = {
                         ...item,
                         price: newPrice,
                         isPriceOverridden: newPrice !== item.originalPrice,
@@ -155,31 +179,69 @@ export const CartStore = signalStore(
                     }
                     delete cleanItem.appliedDiscountId;
                     delete cleanItem.appliedDiscountName;
+                    delete cleanItem.appliedVoucherCode;
+                    delete cleanItem.voucherDiscount;
                     return cleanItem;
                 }
                 return item;
             });
-            patchState(store, { items: updated });
+
+            const finalItems = recomputeCartItems(
+                intermediateItems,
+                store.memberTags(),
+                store.activeVoucherCode(),
+                discountService
+            );
+            patchState(store, { items: finalItems });
         },
 
         setMemberTags(tags: string[]): void {
             patchState(store, { memberTags: tags });
-            const current = store.items();
-            const updated = current.map((item) => {
-                if (item.isPriceOverridden && !item.appliedDiscountId) {
-                    return item;
-                }
-                return recalculateItemDiscount(item, tags, discountService);
-            });
-            patchState(store, { items: updated });
+            const finalItems = recomputeCartItems(
+                store.items(),
+                tags,
+                store.activeVoucherCode(),
+                discountService
+            );
+            patchState(store, { items: finalItems });
+        },
+
+        applyVoucher(code: string): void {
+            const cleanCode = (code || '').trim().toUpperCase();
+            patchState(store, { activeVoucherCode: cleanCode });
+            const finalItems = recomputeCartItems(
+                store.items(),
+                store.memberTags(),
+                cleanCode,
+                discountService
+            );
+            patchState(store, { items: finalItems });
+        },
+
+        removeVoucher(): void {
+            patchState(store, { activeVoucherCode: null });
+            const finalItems = recomputeCartItems(
+                store.items(),
+                store.memberTags(),
+                null,
+                discountService
+            );
+            patchState(store, { items: finalItems });
         },
 
         removeItem(productId: string): void {
-            patchState(store, { items: store.items().filter((item) => item.productId !== productId) });
+            const filtered = store.items().filter((item) => item.productId !== productId);
+            const finalItems = recomputeCartItems(
+                filtered,
+                store.memberTags(),
+                store.activeVoucherCode(),
+                discountService
+            );
+            patchState(store, { items: finalItems });
         },
 
         clear(): void {
-            patchState(store, { items: [], memberTags: [] });
+            patchState(store, { items: [], memberTags: [], activeVoucherCode: null });
         },
     }))
 );

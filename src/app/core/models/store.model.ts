@@ -38,6 +38,8 @@ export interface CartItem {
     discountAmount?: number;
     appliedDiscountId?: string;
     appliedDiscountName?: string;
+    voucherDiscount?: number;
+    appliedVoucherCode?: string;
     commissionType?: CommissionType;
     commissionValue?: number;
     earnedCommission?: number;
@@ -84,6 +86,8 @@ export interface Transaction {
     voidedBy?: string;
     voidReason?: string;
     voidedAt?: Date;
+    voucherCode?: string | null;
+    voucherDiscountTotal?: number;
 }
 
 export interface InventoryLog {

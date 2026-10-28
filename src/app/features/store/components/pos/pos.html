@@ -98,7 +98,7 @@
                class="product-card"
                [class.out-of-stock]="product.stock <= 0"
                [class.disabled-state]="!(isShiftOpen$ | async)"
-               (click)="addToCart(product)" [@fadeIn]>
+               tabindex="0" role="button" (click)="addToCart(product)" (keydown.enter)="addToCart(product)" [@fadeIn]>
             
             <div class="product-image-box">
               <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="prod-img">
@@ -166,6 +166,9 @@
                 <span class="item-override-reason" *ngIf="item.isPriceOverridden && item.overrideReason">
                   📝 {{ item.overrideReason }}
                 </span>
+                <span class="item-voucher-tag" *ngIf="item.voucherDiscount">
+                  🏷️ {{ item.appliedVoucherCode }} (-₱{{ item.voucherDiscount | number:'1.2-2' }})
+                </span>
                 <div class="price-pill-row">
                   <span class="original-price" *ngIf="item.isPriceOverridden">₱{{ item.originalPrice | number:'1.2-2' }}</span>
                   <span class="item-price" [class.overridden]="item.isPriceOverridden">₱{{ item.price | number:'1.2-2' }}</span>
@@ -201,6 +204,29 @@
 
       <!-- Cart Footer / Checkout Deck -->
       <div class="cart-footer">
+        <!-- Promo Voucher Section -->
+        <div class="voucher-promo-box">
+          <div *ngIf="!cartStore.hasActiveVoucher()" class="voucher-input-row">
+            <mat-icon class="voucher-icon text-cyan">confirmation_number</mat-icon>
+            <input type="text" class="voucher-inline-input" placeholder="Promo / Voucher code..."
+                   [value]="promoCodeInput()"
+                   (input)="promoCodeInput.set($any($event.target).value)"
+                   (keyup.enter)="applyPromoVoucher()">
+            <button type="button" class="btn-apply-voucher" (click)="applyPromoVoucher()">Apply</button>
+          </div>
+          <div *ngIf="cartStore.hasActiveVoucher()" class="voucher-applied-chip">
+            <div class="voucher-meta">
+              <mat-icon class="chip-icon text-gold">local_offer</mat-icon>
+              <span class="voucher-name">{{ cartStore.activeVoucherCode() }}</span>
+              <span class="voucher-discount-tag" *ngIf="cartStore.totalVoucherDiscount() > 0">-₱{{ cartStore.totalVoucherDiscount() | number:'1.2-2' }}</span>
+              <span class="voucher-pending-tag" *ngIf="cartStore.totalVoucherDiscount() === 0">Pending eligible item</span>
+            </div>
+            <button type="button" class="btn-remove-voucher" (click)="removePromoVoucher()" matTooltip="Remove voucher">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+
         <div class="cart-total-box">
           <span class="total-lbl">Total Amount Due</span>
           <span class="total-amount text-gold">₱{{ (cartTotal$ | async) | number:'1.2-2' }}</span>
@@ -310,7 +336,7 @@
                    class="product-card"
                    [class.out-of-stock]="product.stock <= 0"
                    [class.disabled-state]="!(isShiftOpen$ | async)"
-                   (click)="addToCart(product)" [@fadeIn]>
+                   tabindex="0" role="button" (click)="addToCart(product)" (keydown.enter)="addToCart(product)" [@fadeIn]>
                 <div class="product-image-box">
                   <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="prod-img">
                   <div *ngIf="!product.imageUrl" class="prod-icon-placeholder">

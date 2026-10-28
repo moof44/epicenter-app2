@@ -21,6 +21,7 @@ import { toLocalDateStr } from '../utils/date.utils';
 
 import { SyncEngineService } from './dexie/sync-engine.service';
 import { OutboxQueueService } from './dexie/outbox-queue.service';
+import { AppIndexedDbService } from './dexie/app-indexeddb.service';
 import { ProductRepository } from '../repositories/product.repository';
 
 export function cleanUndefined(obj: any): any {
@@ -57,6 +58,7 @@ export class CheckoutService {
     private syncEngineService = inject(SyncEngineService);
     private outboxQueueService = inject(OutboxQueueService);
     private productRepository = inject(ProductRepository);
+    private dbService = inject(AppIndexedDbService);
 
     private productsCollection = collection(this.firestore, 'products');
     private transactionsCollection = collection(this.firestore, 'transactions');
@@ -125,6 +127,11 @@ export class CheckoutService {
         }
 
         const batch = writeBatch(this.firestore);
+
+        // Resolve voucher code & total discount
+        const voucherItem = cartItems.find(i => i.appliedVoucherCode);
+        const appliedVoucherCode = voucherItem?.appliedVoucherCode || this.cartStore.activeVoucherCode() || null;
+        const voucherDiscountTotal = cartItems.reduce((sum, i) => sum + (i.voucherDiscount || 0), 0);
         const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
         const timestamp = new Date();
 
@@ -254,6 +261,8 @@ export class CheckoutService {
             } : null),
             memberId: memberId || null,
             memberName: memberName || 'Walk-in',
+            voucherCode: appliedVoucherCode,
+            voucherDiscountTotal: voucherDiscountTotal > 0 ? voucherDiscountTotal : undefined,
         };
         batch.set(transactionRef, cleanUndefined(transaction));
 
@@ -276,6 +285,15 @@ export class CheckoutService {
                     });
                 }
             }
+        }
+
+
+        // 3.6. Mark voucher as claimed on member record
+        if (memberId && appliedVoucherCode && voucherDiscountTotal > 0) {
+            const memberRef = doc(this.firestore, 'members', memberId);
+            batch.update(memberRef, {
+                claimedVouchers: arrayUnion(appliedVoucherCode)
+            });
         }
 
         // 4. Update daily_sales (denormalized aggregate)
@@ -334,7 +352,24 @@ export class CheckoutService {
         await batch.commit();
 
         // 6. Post-commit: refresh shift UI, clear cart, invalidate sales cache
-        cashRegisterService.refreshShift();
+cashRegisterService.refreshShift();
+
+        // Update local Dexie member claimed vouchers immediately for zero-lag consistency
+        if (memberId && appliedVoucherCode && voucherDiscountTotal > 0 && this.dbService.members) {
+            try {
+                const localMember = await this.dbService.members.get(memberId);
+                if (localMember) {
+                    const existingVouchers = localMember.claimedVouchers || [];
+                    if (!existingVouchers.includes(appliedVoucherCode)) {
+                        localMember.claimedVouchers = [...existingVouchers, appliedVoucherCode];
+                        await this.dbService.members.put(localMember);
+                    }
+                }
+            } catch (dexieErr) {
+                console.warn('[CheckoutService] Failed to update local Dexie member cache:', dexieErr);
+            }
+        }
+
 
         if (staff?.uid) {
             this.reportStateService.invalidateUserSalesReport(staff.uid, timestamp);

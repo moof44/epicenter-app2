@@ -8,6 +8,7 @@ import {
     orderBy,
     writeBatch,
     increment,
+    arrayRemove,
     limit,
     where,
     documentId,
@@ -19,6 +20,7 @@ import {
 import { Observable, map } from 'rxjs';
 import { Product, Transaction, ProductSalesData, InventoryLog, PaymentMethod } from '../models/store.model';
 import { AuthService } from './auth.service';
+import { AppIndexedDbService } from './dexie/app-indexeddb.service';
 import { CashRegisterService } from './cash-register.service';
 import { toLocalDateStr } from '../utils/date.utils';
 import { createConverter } from '../utils/firestore-converter.utils';
@@ -29,6 +31,7 @@ import { createConverter } from '../utils/firestore-converter.utils';
 export class TransactionService {
     private firestore = inject(Firestore);
     private injector = inject(Injector);
+    private dbService = inject(AppIndexedDbService);
     private authService = inject(AuthService);
     private transactionsCollection = collection(this.firestore, 'transactions').withConverter(
         createConverter<Transaction>()
@@ -260,6 +263,15 @@ export class TransactionService {
 
         const txDate = txData.date;
         const dateStr = toLocalDateStr(txDate);
+
+        // Restore claimed voucher code if this transaction used one
+        if (txData.voucherCode && txData.memberId) {
+            const memberRef = doc(this.firestore, 'members', txData.memberId);
+            batch.update(memberRef, {
+                claimedVouchers: arrayRemove(txData.voucherCode)
+            });
+        }
+
         const dfsRef = doc(this.firestore, 'daily_sales', dateStr);
         batch.set(dfsRef, { totalSales: increment(-txData.totalAmount) }, { merge: true });
 
@@ -277,7 +289,21 @@ export class TransactionService {
             console.error('Failed to pre-fetch shift updates for voiding:', e);
         }
 
-        await batch.commit();
+await batch.commit();
+
+        // Restore voucher in local Dexie member cache
+        if (txData.voucherCode && txData.memberId && this.dbService.members) {
+            try {
+                const localMember = await this.dbService.members.get(txData.memberId);
+                if (localMember && localMember.claimedVouchers) {
+                    localMember.claimedVouchers = localMember.claimedVouchers.filter(v => v !== txData.voucherCode);
+                    await this.dbService.members.put(localMember);
+                }
+            } catch (dexieErr) {
+                console.warn('[TransactionService] Failed to restore voucher in local Dexie:', dexieErr);
+            }
+        }
+
 
         // Invalidate user sales cache for the affected staff member
         const { ReportStateService } = await import('./report.state.service');

@@ -12,9 +12,40 @@ import {
     deleteDoc
 } from '@angular/fire/firestore';
 import { Observable, shareReplay } from 'rxjs';
-import { DiscountRule, QuantityTier } from '../models/discount.model';
+import { DiscountRule } from '../models/discount.model';
 import { CartItem } from '../models/store.model';
 import { createConverter } from '../utils/firestore-converter.utils';
+
+export interface PromoVoucherConfig {
+    code: string;
+    name: string;
+    expirationDate: Date;
+    priceLocks: Record<string, number>;
+}
+
+export const EPIC1000_VOUCHER: PromoVoucherConfig = {
+    code: 'EPIC1000',
+    name: 'EPIC 1000 Promo Voucher',
+    expirationDate: new Date('2026-12-31T23:59:59.999Z'),
+    priceLocks: {
+        'Qfi33eVnbxN6kIPRTGbT': 1000,
+        'TKNm92Ekg87gub4eHCHO': 2000,
+        'GxNrhJR5CVSpnQuy4PwN': 8000,
+        'kA3g2qW4jS1u235leAjK': 4000
+    }
+};
+
+export interface VoucherValidationResult {
+    valid: boolean;
+    error?: string;
+    config?: PromoVoucherConfig;
+}
+
+export interface EvaluatedVoucherCart {
+    items: CartItem[];
+    totalVoucherDiscount: number;
+    appliedProductId: string | null;
+}
 
 export interface DiscountResult {
     discountAmount: number;
@@ -210,6 +241,104 @@ export class DiscountService {
             console.error('Error during discount calculation. Bypassing safely.', error);
             return null;
         }
+    }
+
+    /**
+     * Validates a voucher code against member eligibility, expiration, and configuration.
+     */
+    validatePromoVoucher(
+        code: string,
+        member: { id?: string | null; name?: string; claimedVouchers?: string[] } | null
+    ): VoucherValidationResult {
+        const cleanCode = (code || '').trim().toUpperCase();
+        if (!cleanCode) {
+            return { valid: false, error: 'Please enter a voucher code.' };
+        }
+
+        if (cleanCode !== EPIC1000_VOUCHER.code) {
+            return { valid: false, error: 'Invalid or unknown voucher code.' };
+        }
+
+        const now = new Date();
+        if (now > EPIC1000_VOUCHER.expirationDate) {
+            return { valid: false, error: 'This voucher code expired on December 31, 2026.' };
+        }
+
+        if (member) {
+            const claimed = (member.claimedVouchers || []).map(v => v.toUpperCase());
+            if (claimed.includes(cleanCode)) {
+                return { valid: false, error: 'Voucher ' + cleanCode + ' has already been claimed by ' + (member.name || 'this member') + '.' };
+            }
+        }
+
+        return { valid: true, config: EPIC1000_VOUCHER };
+    }
+
+    /**
+     * Evaluates cart items for promo voucher application.
+     * Guarantees that only ONE single unit of the highest-discount product receives the promo price lock.
+     */
+    evaluateVoucherForCart(items: CartItem[], voucherCode: string | null): EvaluatedVoucherCart {
+        if (!voucherCode || voucherCode.trim().toUpperCase() !== EPIC1000_VOUCHER.code || items.length === 0) {
+            const cleanItems = items.map(item => {
+                if (item.appliedVoucherCode || item.voucherDiscount) {
+                    const copy = { ...item };
+                    delete copy.appliedVoucherCode;
+                    delete copy.voucherDiscount;
+                    copy.subtotal = copy.quantity * copy.price;
+                    return copy;
+                }
+                return item;
+            });
+            return { items: cleanItems, totalVoucherDiscount: 0, appliedProductId: null };
+        }
+
+        const config = EPIC1000_VOUCHER;
+        let bestProductId: string | null = null;
+        let maxSavingPerUnit = 0;
+
+        for (const item of items) {
+            const lockedPrice = config.priceLocks[item.productId];
+            if (lockedPrice !== undefined) {
+                const baseUnit = item.originalPrice || item.price;
+                const potentialSaving = Math.max(0, baseUnit - lockedPrice);
+                if (potentialSaving > maxSavingPerUnit) {
+                    maxSavingPerUnit = potentialSaving;
+                    bestProductId = item.productId;
+                }
+            }
+        }
+
+        if (!bestProductId || maxSavingPerUnit <= 0) {
+            const cleanItems = items.map(item => {
+                const copy = { ...item };
+                delete copy.appliedVoucherCode;
+                delete copy.voucherDiscount;
+                copy.subtotal = copy.quantity * copy.price;
+                return copy;
+            });
+            return { items: cleanItems, totalVoucherDiscount: 0, appliedProductId: null };
+        }
+
+        const updatedItems = items.map(item => {
+            const copy = { ...item };
+            if (item.productId === bestProductId) {
+                copy.appliedVoucherCode = config.code;
+                copy.voucherDiscount = maxSavingPerUnit;
+                copy.subtotal = Math.max(0, (item.quantity * item.price) - maxSavingPerUnit);
+            } else {
+                delete copy.appliedVoucherCode;
+                delete copy.voucherDiscount;
+                copy.subtotal = item.quantity * item.price;
+            }
+            return copy;
+        });
+
+        return {
+            items: updatedItems,
+            totalVoucherDiscount: maxSavingPerUnit,
+            appliedProductId: bestProductId
+        };
     }
 
     getDiscounts(): Observable<DiscountRule[]> {

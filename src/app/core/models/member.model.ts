@@ -22,6 +22,7 @@ export interface Member {
     earnedMonthlyBadges?: string[]; // e.g. ["2026-01", "2026-02"]
     equippedBadges?: string[]; // e.g. ["bronze-active", "2026-05"]
     tags?: string[];
+    claimedVouchers?: string[];
     hasPendingProgressScan?: boolean;
     pendingProgressDate?: any;
     latestScanImageUrl?: string;

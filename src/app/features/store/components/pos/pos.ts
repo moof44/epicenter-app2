@@ -15,6 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CheckoutService } from '../../../../core/services/checkout.service';
+import { DiscountService } from '../../../../core/services/discount.service';
 import { ProductService } from '../../../../core/services/product.service';
 import { CartStore } from '../../../../core/store/cart.store';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -36,7 +37,7 @@ import { ViewChild } from '@angular/core';
 import { PreventDoubleClickDirective } from '../../../../shared/directives/prevent-double-click.directive';
 import { ProductCatalogComponent } from '../product-catalog/product-catalog';
 
-import { Functions, httpsCallable } from '@angular/fire/functions';
+import { Functions } from '@angular/fire/functions';
 
 import { ClaimVoucherDialog } from './claim-voucher-dialog/claim-voucher-dialog';
 import { ShiftControlModal } from '../shift-control-modal/shift-control-modal';
@@ -58,6 +59,7 @@ export class PosComponent {
   @ViewChild('stepper') stepper!: MatStepper;
 
   private checkoutService = inject(CheckoutService);
+  private discountService = inject(DiscountService);
   private productService = inject(ProductService);
   private memberService = inject(MemberService);
   public cartStore = inject(CartStore);
@@ -101,12 +103,48 @@ export class PosComponent {
     });
   }
 
+  promoCodeInput = signal('');
+
+  applyPromoVoucher(codeToApply?: string): void {
+    const code = (codeToApply || this.promoCodeInput()).trim().toUpperCase();
+    if (!code) {
+      this.snackBar.open('Please enter a voucher code.', 'Close', { duration: 3000 });
+      return;
+    }
+
+    const member = this.selectedMember();
+    const validation = this.discountService.validatePromoVoucher(code, member);
+    if (!validation.valid) {
+      this.snackBar.open(validation.error || 'Invalid voucher code.', 'Close', { duration: 4000 });
+      return;
+    }
+
+    this.cartStore.applyVoucher(code);
+    this.promoCodeInput.set('');
+
+    if (this.cartStore.totalVoucherDiscount() > 0) {
+      this.snackBar.open('Promo ' + code + ' applied successfully!', 'Close', { duration: 3000 });
+    } else {
+      this.snackBar.open('Promo ' + code + ' active. Add an eligible Membership or PT package to claim discount.', 'Close', { duration: 5000 });
+    }
+  }
+
+  removePromoVoucher(): void {
+    this.cartStore.removeVoucher();
+    this.snackBar.open('Voucher removed.', 'Close', { duration: 2000 });
+  }
+
   openClaimVoucher(): void {
     const dialogRef = this.dialog.open(ClaimVoucherDialog, {
       width: '480px'
     });
 
-    dialogRef.afterClosed().subscribe(fulfilled => {
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result && result.type === 'PROMO_VOUCHER') {
+        this.applyPromoVoucher(result.code);
+        return;
+      }
+      const fulfilled = result;
       if (fulfilled) {
         this.snackBar.open('Voucher fulfilled! Inventory & shift log updated.', 'Close', { duration: 4000 });
       }
@@ -185,11 +223,11 @@ export class PosComponent {
       );
     })
   );
-  selectedMember = signal<{ id: string | null; name: string; tags: string[] } | null>(null);
+  selectedMember = signal<{ id: string | null; name: string; tags: string[]; claimedVouchers?: string[] } | null>(null);
 
   selectMember(member: any): void {
     const tags = member.tags || [];
-    this.selectedMember.set({ id: member.id, name: member.name, tags });
+    this.selectedMember.set({ id: member.id, name: member.name, tags, claimedVouchers: member.claimedVouchers || [] });
     this.cartStore.setMemberTags(tags);
   }
 
@@ -234,6 +272,20 @@ export class PosComponent {
 
     const valid = await this.cashRegisterService.ensureValidShiftForTransaction();
     if (!valid) return;
+
+    const activeVoucher = this.cartStore.activeVoucherCode();
+    const currentMember = this.selectedMember();
+    if (activeVoucher && !currentMember) {
+      this.snackBar.open('A member must be selected to claim voucher ' + activeVoucher, 'Close', { duration: 4000 });
+      return;
+    }
+    if (activeVoucher && currentMember) {
+      const vCheck = this.discountService.validatePromoVoucher(activeVoucher, currentMember);
+      if (!vCheck.valid) {
+        this.snackBar.open(vCheck.error || 'Voucher validation failed.', 'Close', { duration: 4000 });
+        return;
+      }
+    }
 
     this.isCheckoutPending = true;
 
