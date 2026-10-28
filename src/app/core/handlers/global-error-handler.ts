@@ -121,7 +121,12 @@ export class GlobalErrorHandler implements ErrorHandler {
         const stack = errObj.stack || '';
 
         let severity: 'FATAL' | 'ERROR' | 'WARNING' = 'ERROR';
-        if (name === 'ChunkLoadError' || message.includes('Loading chunk')) {
+        if (
+            name === 'ChunkLoadError' ||
+            message.includes('Loading chunk') ||
+            message.includes('Failed to fetch dynamically imported module') ||
+            message.includes('Importing a module script failed')
+        ) {
             severity = 'WARNING';
         } else if (name === 'TypeError' || name === 'ReferenceError' || name === 'NullPointerException') {
             severity = 'FATAL';
