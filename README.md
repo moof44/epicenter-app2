@@ -2,6 +2,18 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.4.
 
+## Quick Launchers (Desktop Shortcuts)
+
+For fast 1-click startup without using the terminal, desktop shortcuts are provided for both applications:
+- **Gym App**: Starts on port `4200` (or next free port) and opens browser.
+- **Members Portal**: Starts on port `4300` (or next free port) and opens browser.
+
+To re-deploy or generate the shortcuts on your desktop at any time:
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/deploy-shortcuts.ps1
+```
+For complete technical details, see [`docs/desktop-shortcuts-specs.md`](docs/desktop-shortcuts-specs.md).
+
 ## Development server
 
 To start a local development server, run:
