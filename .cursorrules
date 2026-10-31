@@ -1,0 +1,5 @@
+# Cursor AI Rules
+
+1. Always read AI_INDEX.md and docs/ai-session-context/ACTIVE_CONTEXT.md at the start of a prompt.
+2. Follow all system constraints and design rules in .agents/AGENTS.md and docs/DESIGN_SYSTEM_TOKENS.md.
+3. Before finishing your response, update docs/ai-session-context/ACTIVE_CONTEXT.md and append a session log entry to docs/ai-session-context/SESSION_LOG.md.

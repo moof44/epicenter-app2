@@ -11,8 +11,12 @@ Before finishing any task, you must audit the changes to ensure:
 
 For any feature implementation, architectural change, or significant bug fix:
 1. **Real-File Implementation Plans in `docs/`**: Every implementation plan must be written as a permanent, real Markdown file in the project's `docs/` directory (e.g. `docs/<feature-name>-implementation-plan.md` or `docs/<feature-name>-specs.md`), in addition to chat planning artifacts.
-2. **Persistence Across AI Sessions**: This ensures that if a discussion halts, any future AI agent or developer can immediately pick up where it left off, inspect the active plan, review design decisions, and resume execution seamlessly.
-3. **Commit with Code**: Always commit the plan/specification document into Git alongside the code changes.
+2. **Universal AI Knowledge Continuity & Session Logging**:
+   - At the start of any session or prompt, read AI_INDEX.md and docs/ai-session-context/ACTIVE_CONTEXT.md to understand current state and recent actions.
+   - Before completing any task or ending a turn, update docs/ai-session-context/ACTIVE_CONTEXT.md and append a session log entry to docs/ai-session-context/SESSION_LOG.md (detailing model, prompt, actions, modified files, obstacles/fixes, decisions, and pending items).
+   - Keep docs/ai-session-context/BACKLOG_AND_PENDING.md up to date with any newly discovered bugs or deferred tasks.
+3. **Persistence Across AI Sessions**: This ensures that if a discussion halts, any future AI agent or developer can immediately pick up where it left off, inspect the active plan, review design decisions, and resume execution seamlessly.
+4. **Commit with Code**: Always commit the plan/specification document into Git alongside the code changes.
 
 ## Dexie.js Offline Sync & Architecture Workflow Protocol
 
