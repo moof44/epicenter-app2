@@ -1,0 +1,245 @@
+<div class="care-hub-container">
+  
+  <!-- ══════════════════════════════════════════════════════════════
+       1. PAGE HEADER (WCAG AAA TOKENS)
+       ══════════════════════════════════════════════════════════════ -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-icon-seal">
+        <mat-icon>support_agent</mat-icon>
+      </div>
+      <div class="header-titles">
+        <h1 class="page-title">Customer Care & Call Center Hub</h1>
+        <p class="page-subtitle">
+          Drive retention, win back expired memberships, coach PT nutrition, and strengthen member relationships.
+        </p>
+      </div>
+    </div>
+
+    <div class="header-actions" *ngIf="isManagerOrAdmin">
+      <a routerLink="/customer-care/create" class="btn-primary-action">
+        <mat-icon>add_call</mat-icon>
+        <span>+ Generate Call List</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       2. KPI METRIC PULSE CARDS
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="kpi-grid">
+    <!-- Active Campaigns -->
+    <div class="kpi-card border-cyan">
+      <div class="kpi-top">
+        <span class="kpi-label">Active Campaigns</span>
+        <div class="kpi-icon-pill icon-cyan">
+          <mat-icon>campaign</mat-icon>
+        </div>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val">{{ (activeCampaigns$ | async)?.length || 0 }}</span>
+        <span class="kpi-unit">Lists</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="kpi-sub">Total generated: {{ (totalCampaigns$ | async) || 0 }}</span>
+      </div>
+    </div>
+
+    <!-- High Priority Members -->
+    <div class="kpi-card border-gold">
+      <div class="kpi-top">
+        <span class="kpi-label">🔥 High Priority Queue</span>
+        <div class="kpi-icon-pill icon-gold">
+          <mat-icon>local_fire_department</mat-icon>
+        </div>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val text-gold">{{ (highPriorityPending$ | async) || 0 }}</span>
+        <span class="kpi-unit">VIP/Urgent</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="kpi-sub">Marked by Admin/Manager</span>
+      </div>
+    </div>
+
+    <!-- Total To Contact -->
+    <div class="kpi-card border-purple">
+      <div class="kpi-top">
+        <span class="kpi-label">Pending Contacts</span>
+        <div class="kpi-icon-pill icon-purple">
+          <mat-icon>pending_actions</mat-icon>
+        </div>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val">{{ (totalPending$ | async) || 0 }}</span>
+        <span class="kpi-unit">Calls/Texts</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="kpi-sub">Awaiting outreach</span>
+      </div>
+    </div>
+
+    <!-- Completed Contacts -->
+    <div class="kpi-card border-mint">
+      <div class="kpi-top">
+        <span class="kpi-label">Completed Outreach</span>
+        <div class="kpi-icon-pill icon-mint">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val text-mint">{{ (totalCompleted$ | async) || 0 }}</span>
+        <span class="kpi-unit">Logged</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="kpi-sub">With outcome & stories</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       3. TAB SELECTOR (ACTIVE vs ARCHIVED)
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="tabs-nav-bar">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'ACTIVE'"
+      (click)="activeTab.set('ACTIVE')"
+    >
+      <mat-icon>phone_in_talk</mat-icon>
+      <span>Active Call Lists ({{ (activeCampaigns$ | async)?.length || 0 }})</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'ARCHIVED'"
+      (click)="activeTab.set('ARCHIVED')"
+    >
+      <mat-icon>archive</mat-icon>
+      <span>Archived Lists ({{ (archivedCampaigns$ | async)?.length || 0 }})</span>
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       4. CAMPAIGN CARDS GRID (ADAPTIVE 4-SCREEN)
+       ══════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="activeTab() === 'ACTIVE'">
+    <div class="campaigns-grid" *ngIf="(activeCampaigns$ | async) as campaigns">
+      
+      <!-- Empty State -->
+      <div class="empty-state-card" *ngIf="campaigns.length === 0">
+        <div class="empty-seal">
+          <mat-icon>contact_phone</mat-icon>
+        </div>
+        <h3 class="empty-title">No Active Call Campaigns</h3>
+        <p class="empty-desc">
+          Generate your first campaign list to begin calling or texting members with targeted goals.
+        </p>
+        <a routerLink="/customer-care/create" class="btn-primary-action mt-4" *ngIf="isManagerOrAdmin">
+          <mat-icon>add_call</mat-icon>
+          <span>Generate New List</span>
+        </a>
+      </div>
+
+      <!-- Campaign Card -->
+      <div class="campaign-card" *ngFor="let camp of campaigns">
+        
+        <!-- Card Header -->
+        <div class="camp-card-header">
+          <div class="camp-badge-row">
+            <span class="objective-badge">{{ camp.objectiveType }}</span>
+            <span class="attempt-badge" *ngIf="camp.attemptNumber > 1">Attempt #{{ camp.attemptNumber }}</span>
+            <span class="vip-count-badge" *ngIf="camp.stats?.highPriorityCount">
+              🔥 {{ camp.stats.highPriorityCount }} VIP
+            </span>
+          </div>
+          <h2 class="camp-card-title">{{ camp.title }}</h2>
+          <p class="camp-card-desc">{{ camp.objectiveDescription }}</p>
+        </div>
+
+        <!-- Manager's Pinned Briefing Snippet -->
+        <div class="camp-manager-briefing" *ngIf="camp.managerRemarks">
+          <mat-icon class="briefing-pin-icon">push_pin</mat-icon>
+          <div class="briefing-content">
+            <span class="briefing-lbl">Manager's Briefing:</span>
+            <p class="briefing-text">{{ camp.managerRemarks }}</p>
+          </div>
+        </div>
+
+        <!-- Progress Tracker -->
+        <div class="camp-progress-wrap">
+          <div class="progress-labels">
+            <span class="progress-ratio">
+              <strong class="text-white">{{ camp.stats?.completedCount || 0 }}</strong> of {{ camp.stats?.totalMembers || 0 }} Contacted
+            </span>
+            <span class="progress-pct font-mono text-cyan">{{ getProgressPercentage(camp) }}%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div
+              class="progress-bar-fill"
+              [style.width.%]="getProgressPercentage(camp)"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Outcome Pill Tags -->
+        <div class="camp-status-pills">
+          <span class="stat-pill pill-agreed" *ngIf="camp.stats?.statusBreakdown?.ANSWERED_AGREED">
+            ✅ {{ camp.stats.statusBreakdown.ANSWERED_AGREED }} Agreed
+          </span>
+          <span class="stat-pill pill-interested" *ngIf="camp.stats?.statusBreakdown?.ANSWERED_INTERESTED">
+            🔥 {{ camp.stats.statusBreakdown.ANSWERED_INTERESTED }} Interested
+          </span>
+          <span class="stat-pill pill-text" *ngIf="camp.stats?.statusBreakdown?.TEXT_SENT">
+            💬 {{ camp.stats.statusBreakdown.TEXT_SENT }} Texted
+          </span>
+          <span class="stat-pill pill-unreached" *ngIf="(camp.stats?.statusBreakdown?.NO_ANSWER || 0) + (camp.stats?.statusBreakdown?.CANNOT_BE_REACHED || 0) > 0">
+            📵 {{ (camp.stats?.statusBreakdown?.NO_ANSWER || 0) + (camp.stats?.statusBreakdown?.CANNOT_BE_REACHED || 0) }} Unreached
+          </span>
+        </div>
+
+        <!-- Card Footer Actions -->
+        <div class="camp-card-footer">
+          <a
+            [routerLink]="['/customer-care/campaigns', camp.id]"
+            class="btn-open-queue"
+          >
+            <mat-icon>phone_forwarded</mat-icon>
+            <span>Open Calling Queue</span>
+          </a>
+          <a
+            [routerLink]="['/customer-care/campaigns', camp.id, 'report']"
+            class="btn-report-circle"
+            matTooltip="View Outcomes Report"
+          >
+            <mat-icon>bar_chart</mat-icon>
+          </a>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="activeTab() === 'ARCHIVED'">
+    <div class="campaigns-grid" *ngIf="(archivedCampaigns$ | async) as archived">
+      <div class="empty-state-card" *ngIf="archived.length === 0">
+        <mat-icon class="text-muted">archive</mat-icon>
+        <p class="empty-desc">No archived campaigns found.</p>
+      </div>
+
+      <div class="campaign-card archived-card" *ngFor="let camp of archived">
+        <div class="camp-card-header">
+          <h2 class="camp-card-title">{{ camp.title }}</h2>
+          <p class="camp-card-desc">{{ camp.objectiveDescription }}</p>
+        </div>
+        <div class="camp-card-footer">
+          <a [routerLink]="['/customer-care/campaigns', camp.id, 'report']" class="btn-open-queue">
+            <mat-icon>insights</mat-icon>
+            <span>View Archived Report</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+</div>

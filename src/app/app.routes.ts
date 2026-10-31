@@ -153,6 +153,12 @@ export const routes: Routes = [
         data: { animation: 'DashboardPage' }
     },
     {
+        path: 'customer-care',
+        loadChildren: () => import('./features/customer-care/customer-care.routes').then(m => m.customerCareRoutes),
+        canActivate: [authGuard, roleGuard],
+        data: { animation: 'StorePage', roles: ['ADMIN', 'MANAGER', 'CUSTOMER_CARE'] }
+    },
+    {
         path: 'schedules',
         redirectTo: 'shift-schedules',
         pathMatch: 'full'

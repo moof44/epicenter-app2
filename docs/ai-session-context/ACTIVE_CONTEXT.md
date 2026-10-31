@@ -1,8 +1,8 @@
 # Active Context & Current State
 
-> **Last Updated**: 2026-11-01 03:45 AM  
-> **Status**: Healthy / Operational  
-> **Active Milestone**: October 2026 Executive Financial & Operational Performance Audit + Cross-AI Knowledge Continuity
+> **Last Updated**: 2026-11-01 05:43 AM  
+> **Status**: Healthy / Operational — Customer Care Module Built & Verified Locally  
+> **Active Milestone**: Customer Care / Call Center Department Module (`/customer-care`)
 
 ---
 
@@ -10,37 +10,36 @@
 
 - **Gym App (`gym-app`)**:
   - Running Angular 21 with Tailwind and CSS design tokens.
-  - Core features: POS, Kiosk check-in, Attendance, Shifts, Cash management, Reports.
-  - Build status: Clean.
+  - Core features: POS, Kiosk check-in, Attendance, Shifts, Cash management, Reports, and now **Customer Care Call Center (`/customer-care`)**.
+  - Build status: **Clean (Verified with `npx ng build`)**.
+  - All changes remain local per owner instruction (not committed yet).
 
 - **Members Portal (`projects/members-portal`)**:
   - Independent Angular project sharing backend and types.
-  - Core features: Member self-service, booking, profile, and progress tracker.
   - Build status: Clean.
 
 ---
 
 ## 2. Recent Major Changes
 
-1. **October 2026 Executive Performance & Financial Analysis (`docs/october-2026-performance-analysis.md`)**:
-   - Extracted live Firestore records across August, September, and October 2026 (596 transactions, 1,488 attendance check-ins, 550 member profiles, 26 products).
-   - Benchmarked October 2026 (₱53,870 gross revenue, 443 check-ins, 70 unique visitors, ₱441.56 AOV) against September (₱43,700) and August (₱52,240).
-   - Identified 34 3-month consistent loyalists, top VIP spenders, product movers vs. 19 zero-sale catalog items, 30-day unrenewed churn rosters (Group A >30 days lapsed, Group B October grace window), and 3 duplicate member profiles created in October.
+1. **Customer Care & Call Center Department Module (`/customer-care`)**:
+   - **Data Layer (`src/app/core/models/customer-care.model.ts`)**: Defined 10 campaign objectives, Taglish SMS & Call script constants with placeholders (`{firstName}`, `{goal}`, `{expirationDate}`, `{trainingExpirationDate}`), call outcome statuses, priority levels (`1 = HIGH 🔥`, `2 = NORMAL ⚡`, `3 = LOW 💤`), and item snapshot schemas.
+   - **Role Management (`UserFormDialogComponent` & `UserListComponent`)**: Added `CUSTOMER_CARE` role to staff management dialog and filters.
+   - **Navigation & Routing (`src/app/app.routes.ts` & `src/app/app.html`)**: Added `/customer-care` lazy-loaded child routes with `roleGuard` (Admin, Manager, Customer Care) and sidebar link.
+   - **Dexie Fast-Filtering Engine & Service (`CustomerCareService`)**: Built in-memory member filter utilizing local Dexie IndexedDB cache for **0 Firestore reads**, plus atomic Firestore batch writes for campaigns and items.
+   - **Campaign Hub (`CampaignHubComponent`)**: Active/archived lists with KPI pulse cards and progress tracking.
+   - **Campaign Creator Wizard (`CampaignCreatorComponent`)**: 5-step wizard with preset loader, Taglish script editor, wildcard multi-filters (including Personal Training expiration for nutrition check-ins), and member preview with Admin Priority toggles.
+   - **Calling Workspace (`CallingWorkspaceComponent`)**: Priority queue (`High -> Normal -> Low`), pinned Manager briefing banner, `.info-data-card` member context, 1-tap `tel:` and `sms:` triggers with auto-filled Taglish templates, and 1-tap outcome logger with staff story handover.
+   - **Campaign Reports (`CampaignReportComponent`)**: Conversion funnels, staff productivity leaderboard, and 1-click **Attempt #2 Follow-Up Campaign generator**.
+   - **AI Guide (`docs/AI_CALL_CENTER_GUIDE.md`)**: Full documentation for Gemini/Claude to analyze call stories or generate follow-up campaigns.
 
-2. **1-Click Desktop Shortcuts**:
-   - Deployed `Epicenter - Gym App.lnk` (Port 4200) and `Epicenter - Members Portal.lnk` (Port 4300) directly to Windows Desktop.
-   - Dynamic port collision resolver (`scripts/find-available-port.ps1`).
-   - Launcher orchestrator with auto browser launch (`scripts/run-app.ps1`).
-   - Full specification committed in `docs/desktop-shortcuts-specs.md`.
-
-3. **Universal Cross-AI Documentation Architecture**:
-   - Initialized `AI_INDEX.md` at workspace root.
-   - Set up `docs/ai-session-context/` for persistent session memory (`ACTIVE_CONTEXT.md`, `SESSION_LOG.md`, `BACKLOG_AND_PENDING.md`).
-   - Added platform-specific entry points (`CLAUDE.md`, `.cursorrules`, `.agents/AGENTS.md`).
+2. **Audit & Safety Verification**:
+   - Clean compilation verified via `npx ng build --configuration=development` (`Exit Code 0`).
+   - Zero breaking changes to existing check-in, bookings, POS, or auth systems.
 
 ---
 
 ## 3. Immediate Next Steps / In Progress
 
-- Review October 2026 Performance Audit findings with gym owner/management.
+- Owner review of the local Customer Care workspace in browser (`http://localhost:4200/customer-care`).
 - Optional data cleanup: Merge 3 duplicate member profiles discovered in October (`Hannah Grace Laguda`, `Ezra Agustin`, `Adrian L. Mendoza`) and populate missing `membershipExpiration` (`2026-11-26`) on `Angeline Reyes` (`UMZTksizaMx3OeXJ6G8o`).

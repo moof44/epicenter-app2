@@ -1,0 +1,165 @@
+<div class="report-container" *ngIf="campaign() as camp">
+  
+  <!-- ══════════════════════════════════════════════════════════════
+       1. PAGE HEADER
+       ══════════════════════════════════════════════════════════════ -->
+  <header class="page-header">
+    <div class="header-left">
+      <a [routerLink]="['/customer-care/campaigns', camp.id]" class="btn-back-circle" title="Back to Workspace">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <div class="header-titles">
+        <div class="header-badges">
+          <span class="badge-obj">{{ camp.objectiveType }}</span>
+          <span class="badge-att" *ngIf="camp.attemptNumber > 1">Attempt #{{ camp.attemptNumber }}</span>
+        </div>
+        <h1 class="page-title">{{ camp.title }} — Outcomes & Analytics Report</h1>
+      </div>
+    </div>
+
+    <!-- 1-Click Attempt #2 Follow-Up Generator (Req 7, 8, 9) -->
+    <div class="header-actions" *ngIf="isManagerOrAdmin">
+      <button
+        type="button"
+        class="btn-primary-action"
+        (click)="createAttempt2()"
+        [disabled]="isCreatingFollowUp() || unreachedResponses() === 0"
+      >
+        <mat-spinner diameter="18" *ngIf="isCreatingFollowUp()"></mat-spinner>
+        <span *ngIf="!isCreatingFollowUp()">⚡ Generate Attempt #{{ (camp.attemptNumber || 1) + 1 }} List ({{ unreachedResponses() }} Unreached)</span>
+        <mat-icon *ngIf="!isCreatingFollowUp()">forward_to_inbox</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       2. KPI METRICS DECK
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="kpi-grid">
+    <div class="kpi-card border-cyan">
+      <span class="kpi-lbl">Completion Rate</span>
+      <strong class="kpi-val text-cyan font-mono">{{ completionRate() }}%</strong>
+      <span class="kpi-sub">{{ completedCount() }} of {{ totalMembers() }} Members Contacted</span>
+    </div>
+
+    <div class="kpi-card border-mint">
+      <span class="kpi-lbl">Positive Outcomes</span>
+      <strong class="kpi-val text-mint font-mono">{{ positiveResponses() }}</strong>
+      <span class="kpi-sub">Agreed / Interested / Feedback</span>
+    </div>
+
+    <div class="kpi-card border-gold">
+      <span class="kpi-lbl">Unreached / Call Back</span>
+      <strong class="kpi-val text-gold font-mono">{{ unreachedResponses() }}</strong>
+      <span class="kpi-sub">No Answer / Cannot Reach</span>
+    </div>
+
+    <div class="kpi-card border-rose">
+      <span class="kpi-lbl">Declined / Do Not Contact</span>
+      <strong class="kpi-val text-rose font-mono">{{ negativeResponses() }}</strong>
+      <span class="kpi-sub">Explicitly Rejected</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       3. OUTCOMES FUNNEL MATRIX & AGENT LEADERBOARD
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="report-split-grid">
+    
+    <!-- Status Breakdown Deck -->
+    <div class="report-card">
+      <div class="card-head">
+        <mat-icon class="text-cyan-light">pie_chart</mat-icon>
+        <h2 class="card-title">Outcomes & Conversion Breakdown</h2>
+      </div>
+
+      <div class="breakdown-list">
+        
+        <div class="bd-row">
+          <div class="bd-info">
+            <span class="bd-pill pill-agreed">ANSWERED_AGREED</span>
+            <span class="bd-desc">Agreed to renew or visit the gym</span>
+          </div>
+          <strong class="bd-count font-mono text-mint">{{ statusBreakdown().ANSWERED_AGREED || 0 }}</strong>
+        </div>
+
+        <div class="bd-row">
+          <div class="bd-info">
+            <span class="bd-pill pill-interested">ANSWERED_INTERESTED</span>
+            <span class="bd-desc">Potential buyer / considering offer</span>
+          </div>
+          <strong class="bd-count font-mono text-gold">{{ statusBreakdown().ANSWERED_INTERESTED || 0 }}</strong>
+        </div>
+
+        <div class="bd-row">
+          <div class="bd-info">
+            <span class="bd-pill pill-text">TEXT_SENT</span>
+            <span class="bd-desc">Taglish SMS reminder text sent</span>
+          </div>
+          <strong class="bd-count font-mono text-cyan">{{ statusBreakdown().TEXT_SENT || 0 }}</strong>
+        </div>
+
+        <div class="bd-row">
+          <div class="bd-info">
+            <span class="bd-pill pill-feedback">ANSWERED_FEEDBACK_GIVEN</span>
+            <span class="bd-desc">Shared feedback or member experience</span>
+          </div>
+          <strong class="bd-count font-mono text-white">{{ statusBreakdown().ANSWERED_FEEDBACK_GIVEN || 0 }}</strong>
+        </div>
+
+        <div class="bd-row">
+          <div class="bd-info">
+            <span class="bd-pill pill-unreach">NO_ANSWER</span>
+            <span class="bd-desc">Rang out / member did not pick up</span>
+          </div>
+          <strong class="bd-count font-mono text-rose">{{ statusBreakdown().NO_ANSWER || 0 }}</strong>
+        </div>
+
+        <div class="bd-row">
+          <div class="bd-info">
+            <span class="bd-pill pill-unreach">CANNOT_BE_REACHED</span>
+            <span class="bd-desc">Phone off / out of coverage / uncontactable</span>
+          </div>
+          <strong class="bd-count font-mono text-rose">{{ statusBreakdown().CANNOT_BE_REACHED || 0 }}</strong>
+        </div>
+
+        <div class="bd-row">
+          <div class="bd-info">
+            <span class="bd-pill pill-dnc">DO_NOT_CONTACT</span>
+            <span class="bd-desc">Member requested to stop outreach</span>
+          </div>
+          <strong class="bd-count font-mono text-rose">{{ statusBreakdown().DO_NOT_CONTACT || 0 }}</strong>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Staff Productivity Leaderboard -->
+    <div class="report-card">
+      <div class="card-head">
+        <mat-icon class="text-gold-light">leaderboard</mat-icon>
+        <h2 class="card-title">Staff Outreach Productivity</h2>
+      </div>
+
+      <div class="leaderboard-list">
+        <div class="empty-lb" *ngIf="staffLeaderboard().length === 0">
+          <mat-icon class="text-muted">person_search</mat-icon>
+          <span>No staff calls logged yet.</span>
+        </div>
+
+        <div class="lb-row" *ngFor="let s of staffLeaderboard(); let i = index">
+          <div class="lb-rank font-mono">#{{ i + 1 }}</div>
+          <div class="lb-info">
+            <span class="lb-name">{{ s.name }}</span>
+            <span class="lb-sub">{{ s.calls }} total contacts logged</span>
+          </div>
+          <div class="lb-agreed-badge font-mono">
+            🏆 {{ s.agreements }} Renewals / Agreed
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,481 @@
+<div class="workspace-container" *ngIf="campaign() as camp">
+
+  <!-- ══════════════════════════════════════════════════════════════
+       1. TOP TOOLBAR & CAMPAIGN HEADER
+       ══════════════════════════════════════════════════════════════ -->
+  <header class="workspace-header">
+    <div class="wh-left">
+      <a routerLink="/customer-care" class="btn-back-circle" title="Back to Hub">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <div class="wh-titles">
+        <div class="wh-badge-row">
+          <span class="badge-obj">{{ camp.objectiveType }}</span>
+          <span class="badge-attempt" *ngIf="camp.attemptNumber > 1">Attempt #{{ camp.attemptNumber }}</span>
+          <span class="badge-stat font-mono">
+            {{ camp.stats?.completedCount || 0 }} / {{ camp.stats?.totalMembers || 0 }} Contacted
+          </span>
+        </div>
+        <h1 class="wh-title">{{ camp.title }}</h1>
+      </div>
+    </div>
+
+    <div class="wh-actions">
+      <button
+        type="button"
+        class="btn-edit-briefing"
+        *ngIf="isManagerOrAdmin"
+        (click)="openEditBriefing()"
+      >
+        <mat-icon>edit_note</mat-icon>
+        <span>Edit Briefing & Scripts</span>
+      </button>
+      <a [routerLink]="['/customer-care/campaigns', camp.id, 'report']" class="btn-view-report">
+        <mat-icon>bar_chart</mat-icon>
+        <span>Report</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       2. PINNED MANAGER'S BRIEFING BANNER
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="manager-briefing-banner" *ngIf="camp.managerRemarks">
+    <div class="banner-icon-seal">
+      <mat-icon>push_pin</mat-icon>
+    </div>
+    <div class="banner-text-wrap">
+      <span class="banner-title">Manager's Team Briefing & Overview:</span>
+      <p class="banner-body">{{ camp.managerRemarks }}</p>
+    </div>
+  </div>
+
+  <!-- Briefing Modal / Inline Editor (Admin/Manager) -->
+  <div class="briefing-edit-modal-overlay" *ngIf="isEditingBriefing()">
+    <div class="briefing-modal-card" [formGroup]="briefingForm">
+      <div class="modal-head">
+        <h2 class="modal-title">Live Update Campaign Briefing & Scripts</h2>
+        <button type="button" class="btn-close" (click)="isEditingBriefing.set(false)">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <mat-form-field appearance="outline" class="custom-mat-field">
+        <mat-label>📌 Manager's Campaign Remarks (Instructions for Staff)</mat-label>
+        <textarea matInput rows="3" formControlName="managerRemarks"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="custom-mat-field">
+        <mat-label>📱 Taglish SMS Template</mat-label>
+        <textarea matInput rows="4" formControlName="smsTemplateTaglish"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="custom-mat-field">
+        <mat-label>📞 Taglish Call Script Template</mat-label>
+        <textarea matInput rows="4" formControlName="callScriptTaglish"></textarea>
+      </mat-form-field>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" (click)="isEditingBriefing.set(false)">Cancel</button>
+        <button type="button" class="btn-primary-action" (click)="saveBriefing()">
+          <span>Save Changes</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       3. 3-ZONE WORKSPACE MATRIX
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="workspace-matrix">
+    
+    <!-- ── ZONE 1: PRIORITY QUEUE COLUMN ── -->
+    <aside class="queue-column">
+      
+      <!-- Filter Tabs -->
+      <div class="queue-tabs">
+        <button
+          type="button"
+          class="q-tab"
+          [class.active]="activeTab() === 'TO_CONTACT'"
+          (click)="activeTab.set('TO_CONTACT')"
+        >
+          <span>To Contact</span>
+        </button>
+        <button
+          type="button"
+          class="q-tab"
+          [class.active]="activeTab() === 'FOLLOW_UP'"
+          (click)="activeTab.set('FOLLOW_UP')"
+        >
+          <span>Follow-Up</span>
+        </button>
+        <button
+          type="button"
+          class="q-tab"
+          [class.active]="activeTab() === 'COMPLETED'"
+          (click)="activeTab.set('COMPLETED')"
+        >
+          <span>Done</span>
+        </button>
+        <button
+          type="button"
+          class="q-tab"
+          [class.active]="activeTab() === 'ALL'"
+          (click)="activeTab.set('ALL')"
+        >
+          <span>All</span>
+        </button>
+      </div>
+
+      <!-- Queue Item Cards List -->
+      <div class="queue-list">
+        <div class="empty-queue-hint" *ngIf="filteredItems().length === 0">
+          <mat-icon class="text-muted">done_all</mat-icon>
+          <span>No members in this tab.</span>
+        </div>
+
+        <button type="button"
+          class="queue-item-card"
+          *ngFor="let item of filteredItems()"
+          [class.active]="activeItem()?.id === item.id"
+          [class.is-done]="item.isContacted"
+          [class.is-high-priority]="item.priority === 1"
+          (click)="selectItem(item)"
+        >
+          <div class="qi-top">
+            <span class="qi-name truncate">{{ item.memberSnapshot?.name }}</span>
+            <span class="qi-prio-badge" *ngIf="item.priority === 1">🔥 VIP</span>
+          </div>
+
+          <div class="qi-meta">
+            <span class="qi-goal truncate">{{ item.memberSnapshot?.fitnessGoal || 'General Fitness' }}</span>
+            <span class="qi-status" [class.status-pending]="!item.isContacted" [class.status-done]="item.isContacted">
+              {{ item.isContacted ? item.callStatus : 'To Call' }}
+            </span>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── ZONE 2: ACTIVE MEMBER & TAGLISH SCRIPTS ── -->
+    <main class="active-member-column" *ngIf="activeItem() as current">
+      
+      <!-- Member Overview Header Card (Req 13: .info-data-card blueprint) -->
+      <div class="member-profile-card">
+        <div class="mp-header-row">
+          <div class="mp-avatar">
+            {{ current.memberSnapshot?.firstName?.charAt(0) || 'M' }}
+          </div>
+          <div class="mp-titles">
+            <div class="mp-name-badge">
+              <h2 class="mp-name">{{ current.memberSnapshot?.name }}</h2>
+              <span class="badge-priority-active" *ngIf="current.priority === 1">🔥 HIGH PRIORITY VIP</span>
+            </div>
+            <span class="mp-phone font-mono">{{ current.memberSnapshot?.contactNumber || 'No phone number' }}</span>
+          </div>
+
+          <!-- Admin Priority Quick Switcher -->
+          <div class="mp-priority-selector" *ngIf="isManagerOrAdmin">
+            <span class="prio-lbl">Priority:</span>
+            <button
+              type="button"
+              class="btn-prio-pill"
+              [class.prio-active-1]="current.priority === 1"
+              (click)="togglePriority(current, 1)"
+              title="Set VIP Priority"
+            >
+              🔥 High
+            </button>
+            <button
+              type="button"
+              class="btn-prio-pill"
+              [class.prio-active-2]="current.priority === 2"
+              (click)="togglePriority(current, 2)"
+            >
+              Normal
+            </button>
+          </div>
+        </div>
+
+        <!-- High-Contrast Info Data Grid -->
+        <div class="info-data-grid">
+          
+          <div class="info-data-card border-gold">
+            <span class="info-lbl">🎯 Fitness Goal</span>
+            <strong class="info-val text-gold">{{ current.memberSnapshot?.fitnessGoal || 'Not Set' }}</strong>
+          </div>
+
+          <div class="info-data-card">
+            <span class="info-lbl">Gym Membership Exp</span>
+            <strong class="info-val font-mono">
+              {{ current.memberSnapshot?.membershipExpiration || 'No pass' }}
+            </strong>
+            <span class="info-sub text-rose" *ngIf="current.memberSnapshot?.daysUntilOrSinceExpiration !== null && (current.memberSnapshot?.daysUntilOrSinceExpiration || 0) <= 0">
+              Expired {{ mathAbs(current.memberSnapshot?.daysUntilOrSinceExpiration) }} days ago
+            </span>
+            <span class="info-sub text-mint" *ngIf="current.memberSnapshot?.daysUntilOrSinceExpiration !== null && (current.memberSnapshot?.daysUntilOrSinceExpiration || 0) > 0">
+              Expires in {{ current.memberSnapshot?.daysUntilOrSinceExpiration }} days
+            </span>
+          </div>
+
+          <div class="info-data-card border-cyan">
+            <span class="info-lbl">Personal Training (PT)</span>
+            <strong class="info-val">
+              {{ current.memberSnapshot?.hasActivePt ? 'Enrolled Active PT' : (current.memberSnapshot?.trainingExpiration ? 'Expired PT' : 'No PT Package') }}
+            </strong>
+            <span class="info-sub font-mono" *ngIf="current.memberSnapshot?.trainingExpiration">
+              Valid: {{ current.memberSnapshot.trainingExpiration }}
+            </span>
+          </div>
+
+          <div class="info-data-card">
+            <span class="info-lbl">Last Check-In & Visits</span>
+            <strong class="info-val font-mono">
+              {{ current.memberSnapshot?.lastCheckInDate || 'Never / Lapsed' }}
+            </strong>
+            <span class="info-sub">Status: {{ current.memberSnapshot?.membershipStatus || 'Inactive' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Suite: Native Call, SMS & Taglish Scripts -->
+      <div class="outreach-actions-deck">
+        
+        <!-- Big Action Buttons (44px+ touch friendly) -->
+        <div class="channel-buttons-row">
+          <button
+            type="button"
+            class="btn-call-gold"
+            (click)="openCallNative(current)"
+          >
+            <mat-icon>phone</mat-icon>
+            <span>📞 Call Member Now</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn-sms-cyan"
+            (click)="openSmsNative(current)"
+          >
+            <mat-icon>chat</mat-icon>
+            <span>💬 Send Pre-filled SMS</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn-copy-num"
+            (click)="copyToClipboard(current.memberSnapshot?.contactNumber || '', 'Phone Number')"
+            title="Copy Number for Viber/WhatsApp"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+
+        <!-- Script Previews -->
+        <div class="script-cards-split">
+          
+          <!-- SMS Script -->
+          <div class="script-box">
+            <div class="sb-head">
+              <span class="sb-title">📱 Ready Taglish SMS (Auto-Filled)</span>
+              <button
+                type="button"
+                class="btn-copy-tiny"
+                (click)="copyToClipboard(getInterpolatedSms(current), 'SMS Text')"
+              >
+                <mat-icon>content_copy</mat-icon>
+                <span>Copy SMS</span>
+              </button>
+            </div>
+            <p class="sb-text">{{ getInterpolatedSms(current) }}</p>
+          </div>
+
+          <!-- Call Script -->
+          <div class="script-box border-gold">
+            <div class="sb-head">
+              <span class="sb-title text-gold">📞 Suggested Taglish Call Script</span>
+              <button
+                type="button"
+                class="btn-copy-tiny"
+                (click)="copyToClipboard(getInterpolatedCallScript(current), 'Call Script')"
+              >
+                <mat-icon>content_copy</mat-icon>
+                <span>Copy Script</span>
+              </button>
+            </div>
+            <p class="sb-text">{{ getInterpolatedCallScript(current) }}</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Past Outreach Timeline (Story continuity) -->
+      <div class="history-timeline-card" *ngIf="current.attemptHistory?.length">
+        <h3 class="ht-title">Past Outreach Timeline ({{ current.attemptHistory.length }} Attempts)</h3>
+        <div class="ht-list">
+          <div class="ht-entry" *ngFor="let att of current.attemptHistory">
+            <div class="ht-badge">
+              <span class="ht-num">#{{ att.attempt }}</span>
+              <span class="ht-status">{{ att.status }}</span>
+            </div>
+            <div class="ht-body">
+              <p class="ht-story">"{{ att.story }}"</p>
+              <span class="ht-meta">By {{ att.calledByName }} on {{ att.calledAt | date:'medium' }} ({{ att.channel }})</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ── ZONE 3: OUTCOME LOGGER DOCK ── -->
+    <aside class="logger-column" *ngIf="activeItem() as current" [formGroup]="outcomeForm">
+      <div class="logger-card">
+        <div class="logger-head">
+          <mat-icon class="text-cyan-light">assignment_turned_in</mat-icon>
+          <h3 class="logger-title">Log Call/Text Outcome</h3>
+        </div>
+        <p class="logger-desc">Select outcome status and write the story for the next staff member.</p>
+
+        <!-- Channel Select -->
+        <div class="logger-field-wrap">
+          <span class="field-lbl">Contact Channel Used:</span>
+          <div class="channel-toggle-row">
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="outcomeForm.get('channel')?.value === 'CALL'"
+              (click)="outcomeForm.patchValue({ channel: 'CALL' })"
+            >
+              📞 Call
+            </button>
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="outcomeForm.get('channel')?.value === 'SMS'"
+              (click)="outcomeForm.patchValue({ channel: 'SMS' })"
+            >
+              💬 Text
+            </button>
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="outcomeForm.get('channel')?.value === 'BOTH'"
+              (click)="outcomeForm.patchValue({ channel: 'BOTH' })"
+            >
+              Both
+            </button>
+          </div>
+        </div>
+
+        <!-- 1-Tap Status Pills -->
+        <div class="logger-field-wrap">
+          <span class="field-lbl">Outcome Status:</span>
+          <div class="status-pills-matrix">
+            <button
+              type="button"
+              class="status-pill-btn pill-agreed"
+              [class.active]="outcomeForm.get('status')?.value === 'ANSWERED_AGREED'"
+              (click)="setQuickStatus('ANSWERED_AGREED')"
+            >
+              ✅ Agreed to Renew / Visit
+            </button>
+            <button
+              type="button"
+              class="status-pill-btn pill-interested"
+              [class.active]="outcomeForm.get('status')?.value === 'ANSWERED_INTERESTED'"
+              (click)="setQuickStatus('ANSWERED_INTERESTED')"
+            >
+              🔥 Potential / Interested
+            </button>
+            <button
+              type="button"
+              class="status-pill-btn pill-text"
+              [class.active]="outcomeForm.get('status')?.value === 'TEXT_SENT'"
+              (click)="setQuickStatus('TEXT_SENT')"
+            >
+              💬 Reminder Text Sent
+            </button>
+            <button
+              type="button"
+              class="status-pill-btn pill-feedback"
+              [class.active]="outcomeForm.get('status')?.value === 'ANSWERED_FEEDBACK_GIVEN'"
+              (click)="setQuickStatus('ANSWERED_FEEDBACK_GIVEN')"
+            >
+              🗣️ Gave Feedback
+            </button>
+            <button
+              type="button"
+              class="status-pill-btn pill-callback"
+              [class.active]="outcomeForm.get('status')?.value === 'CALLBACK_REQUESTED'"
+              (click)="setQuickStatus('CALLBACK_REQUESTED')"
+            >
+              🕒 Asked to Call Back
+            </button>
+            <button
+              type="button"
+              class="status-pill-btn pill-noanswer"
+              [class.active]="outcomeForm.get('status')?.value === 'NO_ANSWER'"
+              (click)="setQuickStatus('NO_ANSWER')"
+            >
+              📵 No Answer / Rang Out
+            </button>
+            <button
+              type="button"
+              class="status-pill-btn pill-unreach"
+              [class.active]="outcomeForm.get('status')?.value === 'CANNOT_BE_REACHED'"
+              (click)="setQuickStatus('CANNOT_BE_REACHED')"
+            >
+              🚫 Cannot Be Reached
+            </button>
+            <button
+              type="button"
+              class="status-pill-btn pill-rejected"
+              [class.active]="outcomeForm.get('status')?.value === 'REJECTED'"
+              (click)="setQuickStatus('REJECTED')"
+            >
+              ❌ Declined / Not Interested
+            </button>
+            <button
+              type="button"
+              class="status-pill-btn pill-dnc"
+              [class.active]="outcomeForm.get('status')?.value === 'DO_NOT_CONTACT'"
+              (click)="setQuickStatus('DO_NOT_CONTACT')"
+            >
+              🛑 Do Not Contact Again
+            </button>
+          </div>
+        </div>
+
+        <!-- Remarks / Story -->
+        <div class="logger-field-wrap">
+          <span class="field-lbl">Remarks & Story (Handover for other staff):</span>
+          <mat-form-field appearance="outline" class="custom-mat-field">
+            <textarea
+              matInput
+              rows="4"
+              formControlName="story"
+              placeholder="e.g. Sinabi niya na mas busy ngayon sa work pero magre-renew siya pagka-sahod this Friday."
+            ></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Save Button -->
+        <button
+          type="button"
+          class="btn-save-outcome"
+          (click)="saveOutcome(true)"
+          [disabled]="isLogging() || outcomeForm.invalid"
+        >
+          <mat-spinner diameter="18" *ngIf="isLogging()"></mat-spinner>
+          <span *ngIf="!isLogging()">Save & Next Member</span>
+          <mat-icon *ngIf="!isLogging()">arrow_forward</mat-icon>
+        </button>
+
+      </div>
+    </aside>
+
+  </div>
+
+</div>

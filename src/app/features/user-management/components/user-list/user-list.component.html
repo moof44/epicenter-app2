@@ -84,6 +84,7 @@
         <button type="button" class="tab-chip chip-cyan" [class.active]="(roleFilter$ | async) === 'MANAGER'" (click)="setRoleFilter('MANAGER')">Manager</button>
         <button type="button" class="tab-chip chip-mint" [class.active]="(roleFilter$ | async) === 'TRAINER'" (click)="setRoleFilter('TRAINER')">Trainer</button>
         <button type="button" class="tab-chip chip-purple" [class.active]="(roleFilter$ | async) === 'STAFF'" (click)="setRoleFilter('STAFF')">Staff</button>
+        <button type="button" class="tab-chip chip-cyan" [class.active]="(roleFilter$ | async) === 'CUSTOMER_CARE'" (click)="setRoleFilter('CUSTOMER_CARE')">Care</button>
       </div>
     </div>
 

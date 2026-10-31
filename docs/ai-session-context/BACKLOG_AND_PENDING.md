@@ -24,3 +24,5 @@ This file tracks pending items, uncompleted features, known issues, and future t
 - **POS Checkout Payment Method Voids**: In October 2026, 4 out of 5 voided transactions (₱4,760 of ₱4,780) were caused by staff selecting Cash instead of GCash or wrong membership price tier during checkout.
 - **Firebase Hosting Cache**: Modifying builds occasionally updates `.firebase/hosting.*.cache` files. These can safely be staged or discarded depending on whether a deploy is targeted.
 - **Port In-Use**: If an Angular instance is forcefully closed in some versions of Windows, port 4200 might take 2-3 seconds to release TCP binding. The automatic port detector handles this by moving to 4201, or users can re-launch after 5 seconds to get 4200 back.
+
+- [ ] **Customer Care / Call Center Department Module (`/customer-care`)**: Proposal written in `docs/customer-care-call-center-proposal.md`; awaiting user approval to begin implementation.

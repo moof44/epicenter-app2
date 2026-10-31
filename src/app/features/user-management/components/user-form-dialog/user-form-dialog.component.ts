@@ -40,7 +40,7 @@ export class UserFormDialogComponent implements OnInit {
     isSubmitting = signal(false);
     isEditMode = signal(false);
 
-    rolesList = ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER'];
+    rolesList = ['ADMIN', 'MANAGER', 'STAFF', 'TRAINER', 'CUSTOMER_CARE'];
 
     userForm: FormGroup = this.fb.group({
         email: ['', [Validators.required, Validators.email]],

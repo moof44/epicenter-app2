@@ -1,0 +1,386 @@
+<div class="creator-container">
+  
+  <!-- ══════════════════════════════════════════════════════════════
+       1. PAGE HEADER
+       ══════════════════════════════════════════════════════════════ -->
+  <header class="page-header">
+    <div class="header-left">
+      <a routerLink="/customer-care" class="btn-back-circle" title="Back to Hub">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <div class="header-titles">
+        <h1 class="page-title">Generate Call Campaign</h1>
+        <p class="page-subtitle">
+          Configure outreach objective, customize Taglish scripts, filter target members, and mark high-priority VIPs.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stepper indicator -->
+    <div class="stepper-pills">
+      <button type="button" class="step-pill" [class.active]="currentStep() >= 1" (click)="currentStep.set(1)">
+        <span class="step-num">1</span>
+        <span class="step-lbl">Goal & Script</span>
+      </button>
+      <div class="step-divider"></div>
+      <button type="button" class="step-pill" [class.active]="currentStep() >= 2" (click)="currentStep() === 3 ? currentStep.set(2) : null">
+        <span class="step-num">2</span>
+        <span class="step-lbl">Filters & Criteria</span>
+      </button>
+      <div class="step-divider"></div>
+      <div class="step-pill" [class.active]="currentStep() === 3">
+        <span class="step-num">3</span>
+        <span class="step-lbl">Preview & Priority</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP 1: OBJECTIVE PRESETS & SCRIPT CUSTOMIZATION
+       ══════════════════════════════════════════════════════════════ -->
+  <section class="step-section" *ngIf="currentStep() === 1">
+    
+    <!-- Presets Grid -->
+    <div class="form-card">
+      <div class="card-head">
+        <mat-icon class="text-cyan-light">star</mat-icon>
+        <h2 class="card-title">1. Choose Campaign Objective Preset</h2>
+      </div>
+      <p class="card-desc">Click any preset to automatically populate tested Taglish SMS & Call Scripts.</p>
+
+      <div class="presets-grid">
+        <button
+          type="button"
+          class="preset-card"
+          *ngFor="let key of presetKeys"
+          [class.active]="selectedObjective() === key"
+          (click)="applyPreset(key)"
+        >
+          <div class="preset-top">
+            <span class="preset-code">{{ key }}</span>
+            <span class="channel-pill" [class.pill-sms]="presets[key].defaultChannel === 'SMS'">
+              {{ presets[key].defaultChannel }}
+            </span>
+          </div>
+          <span class="preset-title">{{ presets[key].title }}</span>
+          <p class="preset-desc">{{ presets[key].description }}</p>
+        </button>
+      </div>
+    </div>
+
+    <!-- Campaign Title & Manager Remarks -->
+    <div class="form-card" [formGroup]="campaignForm">
+      <div class="card-head">
+        <mat-icon class="text-gold-light">edit_note</mat-icon>
+        <h2 class="card-title">2. Campaign Details & Manager's Team Briefing</h2>
+      </div>
+
+      <div class="fields-grid">
+        <mat-form-field appearance="outline" class="custom-mat-field col-span-2">
+          <mat-label>Campaign Title</mat-label>
+          <input matInput formControlName="title" placeholder="e.g. Nov Week 1 - Expiring Pass Reminder">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="custom-mat-field col-span-2">
+          <mat-label>📌 Manager's Campaign Remarks / Overview Briefing (Read by Staff Before Calling)</mat-label>
+          <textarea
+            matInput
+            rows="2"
+            formControlName="managerRemarks"
+            placeholder="e.g. Unahin niyo tawagan ang mga naka-High Priority. Offer 1-month renewal pass and mention morning coaching slot."
+          ></textarea>
+        </mat-form-field>
+      </div>
+
+      <!-- Taglish Scripts -->
+      <div class="scripts-grid">
+        <!-- SMS Template -->
+        <div class="script-col">
+          <div class="script-head">
+            <mat-icon class="text-cyan-light">chat</mat-icon>
+            <h3 class="script-title">📱 Taglish SMS Text Template (Editable)</h3>
+          </div>
+          <p class="script-hint">
+            Placeholders: <code>&#123;firstName&#125;</code>, <code>&#123;goal&#125;</code>, <code>&#123;expirationDate&#125;</code>, <code>&#123;trainingExpirationDate&#125;</code>
+          </p>
+          <mat-form-field appearance="outline" class="custom-mat-field script-textarea">
+            <textarea matInput rows="6" formControlName="smsTemplateTaglish"></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Call Script -->
+        <div class="script-col">
+          <div class="script-head">
+            <mat-icon class="text-gold-light">phone_in_talk</mat-icon>
+            <h3 class="script-title">📞 Taglish Call Script Template (Editable)</h3>
+          </div>
+          <p class="script-hint">
+            Placeholders: <code>&#123;firstName&#125;</code>, <code>&#123;goal&#125;</code>, <code>&#123;staffName&#125;</code>, <code>&#123;expirationDate&#125;</code>
+          </p>
+          <mat-form-field appearance="outline" class="custom-mat-field script-textarea">
+            <textarea matInput rows="6" formControlName="callScriptTaglish"></textarea>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="form-actions-dock">
+        <button type="button" class="btn-primary-action" (click)="goToStep2()">
+          <span>Next: Set Wildcard Filters</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP 2: WILDCARD MULTI-FILTERS
+       ══════════════════════════════════════════════════════════════ -->
+  <section class="step-section" *ngIf="currentStep() === 2" [formGroup]="filterForm">
+    <div class="form-card">
+      <div class="card-head">
+        <mat-icon class="text-cyan-light">filter_alt</mat-icon>
+        <h2 class="card-title">Wildcard Target Member Filters</h2>
+      </div>
+      <p class="card-desc">
+        All filtering executes instantly in local IndexedDB memory (0 Firebase reads). Combine multiple filters freely.
+      </p>
+
+      <div class="filter-groups">
+        
+        <!-- Group 1: Gym Membership Expiration -->
+        <div class="filter-group-card">
+          <div class="fg-title">
+            <mat-icon class="text-mint-success">card_membership</mat-icon>
+            <span>Gym Membership Expiration</span>
+          </div>
+
+          <div class="fields-grid-2">
+            <mat-form-field appearance="outline" class="custom-mat-field">
+              <mat-label>Membership Status</mat-label>
+              <mat-select formControlName="membershipStatus">
+                <mat-option value="ANY">Any Status</mat-option>
+                <mat-option value="Active">Active</mat-option>
+                <mat-option value="Inactive">Inactive / Expired</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="custom-mat-field" *ngIf="selectedObjective() === 'EXPIRING_SOON'">
+              <mat-label>Expiring in next (Days)</mat-label>
+              <input matInput type="number" formControlName="expiringWithinDays" placeholder="e.g. 7">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="custom-mat-field" *ngIf="selectedObjective() === 'RECENTLY_EXPIRED' || selectedObjective() === 'LONG_EXPIRED'">
+              <mat-label>Expired Days Min (Lapsed at least)</mat-label>
+              <input matInput type="number" formControlName="expiredDaysMin" placeholder="e.g. 1">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="custom-mat-field" *ngIf="selectedObjective() === 'RECENTLY_EXPIRED'">
+              <mat-label>Expired Days Max (Lapsed up to)</mat-label>
+              <input matInput type="number" formControlName="expiredDaysMax" placeholder="e.g. 30">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Group 2: Personal Training (PT) Expiration (Req: Nutrition & PT outreach) -->
+        <div class="filter-group-card border-gold">
+          <div class="fg-title">
+            <mat-icon class="text-gold-light">sports_gymnastics</mat-icon>
+            <span>Personal Training Expiration (PT / Nutrition Outreach)</span>
+          </div>
+
+          <div class="fields-grid-2">
+            <mat-form-field appearance="outline" class="custom-mat-field">
+              <mat-label>Personal Training Status</mat-label>
+              <mat-select formControlName="trainingStatus">
+                <mat-option value="ANY">Any / Disregard PT</mat-option>
+                <mat-option value="ACTIVE_PT">Active Personal Training (Nutrition Check)</mat-option>
+                <mat-option value="EXPIRING_PT">PT Expiring Soon (Next 7 Days)</mat-option>
+                <mat-option value="EXPIRED_PT">PT Recently Expired</mat-option>
+                <mat-option value="NO_PT">Gym Member Without Personal Training</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="custom-mat-field" *ngIf="filterForm.get('trainingStatus')?.value === 'EXPIRING_PT'">
+              <mat-label>PT Expiring in next (Days)</mat-label>
+              <input matInput type="number" formControlName="trainingExpiringWithinDays" placeholder="7">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Group 3: Attendance & Demographics -->
+        <div class="filter-group-card">
+          <div class="fg-title">
+            <mat-icon class="text-violet-recovery">psychology</mat-icon>
+            <span>Attendance & Goal Keyword</span>
+          </div>
+
+          <div class="fields-grid-2">
+            <mat-form-field appearance="outline" class="custom-mat-field">
+              <mat-label>Visits in last 30 Days (≤ Max)</mat-label>
+              <input matInput type="number" formControlName="checkInsLast30DaysMax" placeholder="e.g. 2 for Low Attendance">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="custom-mat-field">
+              <mat-label>Fitness Goal Keyword Search</mat-label>
+              <input matInput formControlName="goalKeyword" placeholder="e.g. Weight Loss, Muscle, Bulking">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="custom-mat-field">
+              <mat-label>Gender Filter</mat-label>
+              <mat-select formControlName="gender">
+                <mat-option value="ALL">All Genders</mat-option>
+                <mat-option value="Male">Male</mat-option>
+                <mat-option value="Female">Female</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div class="checkbox-wrap">
+              <mat-checkbox formControlName="excludeDoNotContact" color="warn">
+                <span class="text-body font-semibold">Exclude members tagged 'Do Not Contact'</span>
+              </mat-checkbox>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Docked Actions -->
+      <div class="form-actions-dock">
+        <button type="button" class="btn-cancel" (click)="currentStep.set(1)">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Back to Scripts</span>
+        </button>
+        <button type="button" class="btn-primary-action" (click)="goToStep3Preview()" [disabled]="isScanning()">
+          <mat-spinner diameter="18" *ngIf="isScanning()"></mat-spinner>
+          <span *ngIf="!isScanning()">Scan Members & Preview</span>
+          <mat-icon *ngIf="!isScanning()">group_search</mat-icon>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP 3: MEMBER PREVIEW & PRIORITY MARKING (ADMIN PRIVILEGE)
+       ══════════════════════════════════════════════════════════════ -->
+  <section class="step-section" *ngIf="currentStep() === 3">
+    <div class="form-card">
+      <div class="preview-header-bar">
+        <div>
+          <h2 class="card-title">3. Matched Members Preview ({{ previewRows().length }} Found)</h2>
+          <p class="card-desc">
+            Uncheck anyone you wish to omit. Click Priority pills to set <strong class="text-gold">🔥 HIGH PRIORITY</strong> so your staff calls them first.
+          </p>
+        </div>
+
+        <div class="selected-summary">
+          <span class="summary-chip font-mono">
+            <strong>{{ getSelectedCount() }}</strong> Selected
+          </span>
+          <span class="summary-chip chip-gold font-mono" *ngIf="getHighPriorityCount() > 0">
+            🔥 <strong>{{ getHighPriorityCount() }}</strong> High Priority
+          </span>
+        </div>
+      </div>
+
+      <!-- Bulk Selection Toolbar -->
+      <div class="bulk-tools-bar">
+        <mat-checkbox
+          [checked]="getSelectedCount() === previewRows().length && previewRows().length > 0"
+          [indeterminate]="getSelectedCount() > 0 && getSelectedCount() < previewRows().length"
+          (change)="toggleSelectAll($event.checked)"
+        >
+          <span class="text-xs font-bold text-text-pure">Select / Deselect All</span>
+        </mat-checkbox>
+      </div>
+
+      <!-- Member Rows (Adaptive Table-to-Card Blueprint) -->
+      <div class="preview-list">
+        <div
+          class="preview-member-card"
+          *ngFor="let row of previewRows(); let i = index"
+          [class.card-selected]="row.selected"
+          [class.card-high-priority]="row.priority === 1"
+        >
+          <div class="pm-check">
+            <mat-checkbox [checked]="row.selected" (change)="toggleMemberSelection(i)"></mat-checkbox>
+          </div>
+
+          <div class="pm-info">
+            <div class="pm-name-row">
+              <span class="pm-name">{{ row.snapshot.name }}</span>
+              <span class="pm-contact font-mono">{{ row.snapshot.contactNumber || 'No Phone' }}</span>
+              <span class="pm-gender-badge" *ngIf="row.snapshot.gender">{{ row.snapshot.gender }}</span>
+            </div>
+
+            <div class="pm-badges-row">
+              <span class="info-pill pill-goal" *ngIf="row.snapshot.fitnessGoal">
+                🎯 {{ row.snapshot.fitnessGoal }}
+              </span>
+              <span class="info-pill" [class.pill-danger]="row.snapshot.daysUntilOrSinceExpiration && row.snapshot.daysUntilOrSinceExpiration <= 0">
+                Gym Exp: {{ row.snapshot.membershipExpiration || 'None' }}
+                <ng-container *ngIf="row.snapshot.daysUntilOrSinceExpiration !== null">
+                  ({{ row.snapshot.daysUntilOrSinceExpiration >= 0 ? row.snapshot.daysUntilOrSinceExpiration + 'd left' : mathAbs(row.snapshot.daysUntilOrSinceExpiration) + 'd ago' }})
+                </ng-container>
+              </span>
+              <span class="info-pill pill-pt" *ngIf="row.snapshot.hasActivePt || row.snapshot.trainingExpiration">
+                PT: {{ row.snapshot.hasActivePt ? 'Active PT' : 'Expired PT' }} ({{ row.snapshot.trainingExpiration }})
+              </span>
+            </div>
+          </div>
+
+          <!-- Priority Toggle (Admin Privilege) -->
+          <div class="pm-priority-ctrl">
+            <span class="ctrl-lbl">Priority:</span>
+            <div class="priority-btn-group">
+              <button
+                type="button"
+                class="btn-prio prio-high"
+                [class.active]="row.priority === 1"
+                (click)="setPriority(i, 1)"
+                title="VIP / Urgent (Calls first)"
+              >
+                🔥 High
+              </button>
+              <button
+                type="button"
+                class="btn-prio prio-normal"
+                [class.active]="row.priority === 2"
+                (click)="setPriority(i, 2)"
+              >
+                Normal
+              </button>
+              <button
+                type="button"
+                class="btn-prio prio-low"
+                [class.active]="row.priority === 3"
+                (click)="setPriority(i, 3)"
+              >
+                Low
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Final Generation Dock -->
+      <div class="form-actions-dock">
+        <button type="button" class="btn-cancel" (click)="currentStep.set(2)">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Adjust Filters</span>
+        </button>
+        <button
+          type="button"
+          class="btn-primary-action"
+          (click)="generateCampaign()"
+          [disabled]="isSubmitting() || getSelectedCount() === 0"
+        >
+          <mat-spinner diameter="18" *ngIf="isSubmitting()"></mat-spinner>
+          <span *ngIf="!isSubmitting()">🚀 Generate Call List ({{ getSelectedCount() }} Members)</span>
+          <mat-icon *ngIf="!isSubmitting()">check</mat-icon>
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+</div>

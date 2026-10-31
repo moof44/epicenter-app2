@@ -123,6 +123,16 @@
             </div>
           </ng-container>
 
+          <!-- ── Section: Customer Care & Outreach ── -->
+          <ng-container *ngIf="authService.hasAnyRole(['ADMIN', 'MANAGER', 'CUSTOMER_CARE'])">
+            <div class="nav-section-label mt-2">Customer Care</div>
+            <a routerLink="/customer-care" routerLinkActive="active-nav-link"
+              (click)="mobileQuery.matches ? snav.close() : null" class="nav-item">
+              <mat-icon class="nav-icon text-cyan-light">support_agent</mat-icon>
+              <span class="nav-title font-semibold text-text-pure">Call Center & Care</span>
+            </a>
+          </ng-container>
+
           <!-- ── Section: Front Desk (Always 1-Click) ── -->
           <div class="nav-section-label mt-2">Front Desk</div>
 
