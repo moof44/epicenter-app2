@@ -207,8 +207,8 @@ export class CampaignCreatorComponent implements OnInit {
     return this.previewRows().filter((r) => r.selected && r.priority === 1).length;
   }
 
-  mathAbs(num: number): number {
-    return Math.abs(num);
+  mathAbs(num: number | null | undefined): number {
+    return num != null ? Math.abs(num) : 0;
   }
 
   async generateCampaign() {

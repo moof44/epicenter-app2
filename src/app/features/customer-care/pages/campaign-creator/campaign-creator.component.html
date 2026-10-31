@@ -318,8 +318,8 @@
               </span>
               <span class="info-pill" [class.pill-danger]="row.snapshot.daysUntilOrSinceExpiration && row.snapshot.daysUntilOrSinceExpiration <= 0">
                 Gym Exp: {{ row.snapshot.membershipExpiration || 'None' }}
-                <ng-container *ngIf="row.snapshot.daysUntilOrSinceExpiration !== null">
-                  ({{ row.snapshot.daysUntilOrSinceExpiration >= 0 ? row.snapshot.daysUntilOrSinceExpiration + 'd left' : mathAbs(row.snapshot.daysUntilOrSinceExpiration) + 'd ago' }})
+                <ng-container *ngIf="row.snapshot.daysUntilOrSinceExpiration !== null && row.snapshot.daysUntilOrSinceExpiration !== undefined">
+                  ({{ (row.snapshot.daysUntilOrSinceExpiration || 0) >= 0 ? row.snapshot.daysUntilOrSinceExpiration + 'd left' : mathAbs(row.snapshot.daysUntilOrSinceExpiration) + 'd ago' }})
                 </ng-container>
               </span>
               <span class="info-pill pill-pt" *ngIf="row.snapshot.hasActivePt || row.snapshot.trainingExpiration">
