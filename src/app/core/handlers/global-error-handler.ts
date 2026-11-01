@@ -65,8 +65,11 @@ export class GlobalErrorHandler implements ErrorHandler {
             // Auto-recover from stale dynamic chunk deployment errors
             if (
                 extracted.name === 'ChunkLoadError' ||
+                extracted.message.includes('Loading chunk') ||
                 extracted.message.includes('Failed to fetch dynamically imported module') ||
-                extracted.message.includes('Importing a module script failed')
+                extracted.message.includes('Importing a module script failed') ||
+                extracted.message.includes('valid JavaScript MIME type') ||
+                extracted.message.includes('MIME type')
             ) {
                 const lastReload = sessionStorage.getItem('last_chunk_reload_ts');
                 const now = Date.now();
@@ -125,7 +128,9 @@ export class GlobalErrorHandler implements ErrorHandler {
             name === 'ChunkLoadError' ||
             message.includes('Loading chunk') ||
             message.includes('Failed to fetch dynamically imported module') ||
-            message.includes('Importing a module script failed')
+            message.includes('Importing a module script failed') ||
+            message.includes('valid JavaScript MIME type') ||
+            message.includes('MIME type')
         ) {
             severity = 'WARNING';
         } else if (name === 'TypeError' || name === 'ReferenceError' || name === 'NullPointerException') {

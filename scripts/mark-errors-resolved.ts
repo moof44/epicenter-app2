@@ -51,7 +51,9 @@ function isErrorRemediated(docData: any): { remediated: boolean; reason?: string
   if (
     msg.includes('Failed to fetch dynamically imported module') ||
     msg.includes('Importing a module script failed') ||
-    msg.includes('Loading chunk')
+    msg.includes('Loading chunk') ||
+    msg.includes('valid JavaScript MIME type') ||
+    msg.includes('MIME type')
   ) {
     return { remediated: true, reason: 'Fix 5: Added auto-reload recovery handler in global-error-handler' };
   }

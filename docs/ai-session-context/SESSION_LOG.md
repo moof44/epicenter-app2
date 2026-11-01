@@ -313,3 +313,26 @@ This file maintains a permanent, chronological log of all AI sessions regardless
   - Handled both Timestamp objects and raw strings gracefully without UI layout changes.
 - **Pending / Unfinished Work Handed Off**:
   - Ready for commit and deployment.
+
+
+---
+
+### [2026-11-01 14:11] - Session Summary: JavaScript MIME Type Error Auto-Recovery
+- **AI Model / Tool**: Gemini 3.8 Flash (Low)
+- **Goal / Prompt**: Fix 'text/html' is not a valid JavaScript MIME type error on /login (Angelito Miranda - iPhone WebKit).
+- **Key Actions Taken**:
+  - Traced root cause: Stale chunk request across new deployment returned index.html fallback with text/html MIME type; WebKit threw TypeError: 'text/html' is not a valid JavaScript MIME type.
+  - Updated GlobalErrorHandler to classify valid JavaScript MIME type and MIME type errors as WARNING instead of FATAL.
+  - Included MIME type errors in auto-recovery reload logic to refresh client to latest deployed version.
+  - Updated scripts/mark-errors-resolved.ts to flag MIME type records as resolved.
+  - Verified clean production build for gym-app.
+- **Files Modified / Created**:
+  - src/app/core/handlers/global-error-handler.ts
+  - scripts/mark-errors-resolved.ts
+  - docs/mime-type-chunk-error-fix-plan.md
+  - docs/ai-session-context/ACTIVE_CONTEXT.md
+  - docs/ai-session-context/SESSION_LOG.md
+- **Failures / Obstacles & Resolutions**:
+  - None.
+- **Pending / Unfinished Work Handed Off**:
+  - Ready for commit, push, and deployment.

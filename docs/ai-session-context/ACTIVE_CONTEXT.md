@@ -1,6 +1,6 @@
 # Active Context & Current State
 
-> **Last Updated**: 2026-11-01 02:05 PM  
+> **Last Updated**: 2026-11-01 02:11 PM  
 > **Status**: Healthy / Operational — Running Locally on Port 4200 (HTTP 200 OK)  
 > **Active Milestone**: Customer Care & Call Center Department Module (`/customer-care`) Active Local & Live
 
@@ -22,7 +22,11 @@
 
 ## 2. Recent Major Changes
 
-1. **User Profile DatePipe NG02100 Remediation**:
+1. **Stale Script MIME Type Auto-Recovery**:
+   - Handled 'text/html' is not a valid JavaScript MIME type in global-error-handler auto-recovery reload and downgraded severity to WARNING.
+   - Updated scripts/mark-errors-resolved.ts to reconcile these stale deployment occurrences.
+
+2. **User Profile DatePipe NG02100 Remediation**:
    - Fixed NG02100 error on /profile for employee documents and payslips.
    - Wrapped date fields in safeToDate helper in user-profile and dialogs.
 
