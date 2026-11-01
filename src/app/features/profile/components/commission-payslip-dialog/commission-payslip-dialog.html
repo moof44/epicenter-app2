@@ -26,7 +26,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-lbl">DATE PAID</span>
-          <strong>{{ payslip.paidDate | date:'mediumDate' }}</strong>
+          <strong>{{ formatDate(payslip.paidDate) | date:'mediumDate' }}</strong>
         </div>
       </div>
     </div>
@@ -105,7 +105,7 @@
       <div class="sig-box">
         <div class="sig-line"></div>
         <span class="sig-title">Received by: {{ payslip.staffName }}</span>
-        <small class="sig-date">Date: {{ payslip.paidDate | date:'mediumDate' }}</small>
+        <small class="sig-date">Date: {{ formatDate(payslip.paidDate) | date:'mediumDate' }}</small>
       </div>
     </div>
 

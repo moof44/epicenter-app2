@@ -32,7 +32,7 @@
         </div>
         <div class="meta-pill">
           <span class="meta-lbl">DATE PAID</span>
-          <strong>{{ payslip.paidDate | date:'mediumDate' }}</strong>
+          <strong>{{ formatDate(payslip.paidDate) | date:'mediumDate' }}</strong>
         </div>
       </div>
     </div>
@@ -45,7 +45,7 @@
       </div>
       <div class="detail-box">
         <span class="lbl">PAYROLL CYCLE</span>
-        <strong class="val">{{ payslip.billingPeriodStart | date:'MMM d' }} – {{ payslip.billingPeriodEnd | date:'MMM d, y' }}</strong>
+        <strong class="val">{{ formatDate(payslip.billingPeriodStart) | date:'MMM d' }} – {{ formatDate(payslip.billingPeriodEnd) | date:'MMM d, y' }}</strong>
         <small class="cycle-tag">Sunday to Saturday</small>
       </div>
       <div class="detail-box">
@@ -125,7 +125,7 @@
       <div class="sig-block">
         <div class="sig-line"></div>
         <span class="sig-title">Employee Signature & Conforme</span>
-        <small class="sig-date">Date Received: {{ payslip.paidDate | date:'mediumDate' }}</small>
+        <small class="sig-date">Date Received: {{ formatDate(payslip.paidDate) | date:'mediumDate' }}</small>
       </div>
       <div class="sig-block">
         <div class="sig-line management-sig"></div>

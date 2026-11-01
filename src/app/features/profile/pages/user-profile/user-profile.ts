@@ -24,6 +24,7 @@ import { CommissionPayslipDialog } from '../../components/commission-payslip-dia
 import { DocumentViewerDialogComponent } from '../../components/document-viewer-dialog/document-viewer-dialog';
 import { Subscription } from 'rxjs';
 import { fadeIn } from '../../../../core/animations/animations';
+import { safeToDate } from '../../../../core/utils/date.utils';
 
 @Component({
   selector: 'app-user-profile',
@@ -408,6 +409,11 @@ export class UserProfileComponent implements OnInit, OnDestroy {
       maxWidth: '95vw',
       maxHeight: '95vh'
     });
+  }
+
+  formatDate(val: any): Date | null {
+    if (!val) return null;
+    return safeToDate(val);
   }
 
   getRoleColor(role: string): string {

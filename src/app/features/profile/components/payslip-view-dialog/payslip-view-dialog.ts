@@ -4,6 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { UserPayslip } from '../../../../core/services/user.service';
+import { safeToDate } from '../../../../core/utils/date.utils';
 
 @Component({
   selector: 'app-payslip-view-dialog',
@@ -15,6 +16,11 @@ import { UserPayslip } from '../../../../core/services/user.service';
 export class PayslipViewDialogComponent {
   dialogRef = inject(MatDialogRef<PayslipViewDialogComponent>);
   payslip: UserPayslip = inject(MAT_DIALOG_DATA);
+
+  formatDate(val: any): Date | null {
+    if (!val) return null;
+    return safeToDate(val);
+  }
 
   printPayslip(): void {
     window.print();

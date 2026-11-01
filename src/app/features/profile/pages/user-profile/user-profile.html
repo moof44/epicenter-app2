@@ -101,7 +101,7 @@
                 <div class="info-data-card">
                   <span class="info-lbl">Date of Birth</span>
                   <span class="info-val" [class.info-empty]="!currentUser()?.birthDate">
-                    {{ (currentUser()?.birthDate | date:'mediumDate') || 'Not Set' }}
+                    {{ (formatDate(currentUser()?.birthDate) | date:'mediumDate') || 'Not Set' }}
                   </span>
                 </div>
 
@@ -205,7 +205,7 @@
                 <div class="info-data-card">
                   <span class="info-lbl">Date Hired</span>
                   <span class="info-val" [class.info-empty]="!currentUser()?.employmentDetails?.hireDate">
-                    {{ (currentUser()?.employmentDetails?.hireDate | date:'mediumDate') || 'Not Set' }}
+                    {{ (formatDate(currentUser()?.employmentDetails?.hireDate) | date:'mediumDate') || 'Not Set' }}
                   </span>
                 </div>
 
@@ -476,7 +476,7 @@
                   <span class="doc-cat-tag">{{ doc.category.replace('_', ' ') }}</span>
                 </div>
                 <div class="doc-meta-sub">
-                  <span>{{ doc.fileType }} · {{ doc.uploadedAt | date:'mediumDate' }}</span>
+                  <span>{{ doc.fileType }} · {{ formatDate(doc.uploadedAt) | date:'mediumDate' }}</span>
                 </div>
                 <div class="doc-actions-row">
                   <button type="button" class="btn-view-doc" (click)="viewDocument(doc)">
@@ -534,8 +534,8 @@
                 </div>
                 <div class="p-details">
                   <h4 class="p-title">{{ p.title }}</h4>
-                  <p class="p-period">Period: <strong>{{ p.billingPeriodStart | date:'mediumDate' }}</strong> – <strong>{{ p.billingPeriodEnd | date:'mediumDate' }}</strong> (Saturday Cutoff)</p>
-                  <small class="p-date">Paid on {{ p.paidDate | date:'mediumDate' }} via <span class="p-channel">{{ p.paymentSource.replace('_', ' ') }}</span></small>
+                  <p class="p-period">Period: <strong>{{ formatDate(p.billingPeriodStart) | date:'mediumDate' }}</strong> – <strong>{{ formatDate(p.billingPeriodEnd) | date:'mediumDate' }}</strong> (Saturday Cutoff)</p>
+                  <small class="p-date">Paid on {{ formatDate(p.paidDate) | date:'mediumDate' }} via <span class="p-channel">{{ p.paymentSource.replace('_', ' ') }}</span></small>
                 </div>
               </div>
 
@@ -597,7 +597,7 @@
                 <div class="p-details">
                   <h4 class="p-title">{{ cp.title }}</h4>
                   <p class="p-period">Voucher: <strong class="font-mono">#COMM-{{ cp.billId.substring(0, 8).toUpperCase() }}</strong> • <strong>{{ cp.itemCount }}</strong> Product Sale{{ cp.itemCount === 1 ? '' : 's' }}</p>
-                  <small class="p-date">Disbursed on {{ cp.paidDate | date:'mediumDate' }} via <span class="p-channel">{{ cp.paymentSource.replace('_', ' ') }}</span></small>
+                  <small class="p-date">Disbursed on {{ formatDate(cp.paidDate) | date:'mediumDate' }} via <span class="p-channel">{{ cp.paymentSource.replace('_', ' ') }}</span></small>
                 </div>
               </div>
 

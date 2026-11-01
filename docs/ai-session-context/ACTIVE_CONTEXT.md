@@ -1,19 +1,18 @@
 # Active Context & Current State
 
-> **Last Updated**: 2026-11-01 06:30 AM  
-> **Status**: Healthy / Operational — Committed, Pushed, and Deployed to Production  
-> **Active Milestone**: Customer Care / Call Center Department Module (`/customer-care`) Deployed
+> **Last Updated**: 2026-11-01 02:05 PM  
+> **Status**: Healthy / Operational — Running Locally on Port 4200 (HTTP 200 OK)  
+> **Active Milestone**: Customer Care & Call Center Department Module (`/customer-care`) Active Local & Live
 
 ---
 
 ## 1. Current Application Status
 
 - **Gym App (`gym-app`)**:
-  - Running Angular 21 with Tailwind and CSS design tokens.
+  - Running locally in watch mode on **`http://localhost:4200`** (Process background daemon).
+  - Also deployed live in production: **`https://epicenter-app.web.app`**.
+  - Local HTTP check: `200 OK`.
   - Core features: POS, Kiosk check-in, Attendance, Shifts, Cash management, Reports, and **Customer Care Call Center (`/customer-care`)**.
-  - Production Build: Clean.
-  - Git: Committed (`ace2fd9`) & Pushed to `origin/master`.
-  - Deployment: **Live on Firebase Hosting (`https://epicenter-app.web.app`)**.
 
 - **Members Portal (`projects/members-portal`)**:
   - Independent Angular project sharing backend and types.
@@ -23,26 +22,26 @@
 
 ## 2. Recent Major Changes
 
-1. **Customer Care & Call Center Department Module (`/customer-care`)**:
-   - **Data Layer (`src/app/core/models/customer-care.model.ts`)**: 10 campaign presets with Call Center Specialist Taglish SMS & Call templates, outcome statuses, priority levels (`1 = HIGH 🔥`, `2 = NORMAL ⚡`, `3 = LOW 💤`), and snapshot interfaces.
-   - **Role Management (`UserFormDialogComponent` & `UserListComponent`)**: Added `CUSTOMER_CARE` role to staff management forms and filters.
-   - **Navigation & Routing (`src/app/app.routes.ts` & `src/app/app.html`)**: Added `/customer-care` lazy-loaded child routes with `roleGuard` (Admin, Manager, Customer Care) and sidebar 1-click link.
-   - **Dexie In-Memory Filter Engine (`CustomerCareService`)**: 0-read Firestore filtering across 550+ members (membership expiration, training expiration, 30-day visit counts, goal keywords), plus atomic Firestore batch writes for campaigns and items.
-   - **Campaign Hub (`CampaignHubComponent`)**: Active/archived lists with KPI pulse cards and progress tracking.
-   - **Campaign Creator Wizard (`CampaignCreatorComponent`)**: 5-step wizard with preset loader, Taglish script editor, wildcard multi-filters (including Personal Training expiration for nutrition coaching), and member preview with Admin Priority toggles.
-   - **Calling Workspace (`CallingWorkspaceComponent`)**: Priority queue (`High -> Normal -> Low`), pinned Manager briefing banner, `.info-data-card` member context, 1-tap `tel:` and `sms:` triggers with auto-filled Taglish templates, and 1-tap outcome logger with staff story handover.
-   - **Campaign Reports (`CampaignReportComponent`)**: Conversion funnels, staff productivity leaderboard, and 1-click **Attempt #2 Follow-Up Campaign generator**.
-   - **AI Guide (`docs/AI_CALL_CENTER_GUIDE.md`)**: Complete guide for Gemini/Claude to query call stories, assess renewal bottlenecks, or generate follow-up campaigns.
+1. **User Profile DatePipe NG02100 Remediation**:
+   - Fixed NG02100 error on /profile for employee documents and payslips.
+   - Wrapped date fields in safeToDate helper in user-profile and dialogs.
 
-2. **Commit, Push & Deploy**:
-   - Resolved pre-commit lint issues (accessibility tags and unused imports).
-   - Committed changes to master: commit `ace2fd9`.
-   - Pushed cleanly to GitHub: `https://github.com/moof44/epicenter-app2`.
-   - Deployed live to Firebase Hosting: `https://epicenter-app.web.app`.
+
+1. **Customer Care & Call Center Department Module (`/customer-care`)**:
+   - 10 campaign presets with Taglish SMS & Call script templates, priority levels (`1 = HIGH 🔥`, `2 = NORMAL ⚡`, `3 = LOW 💤`), and snapshot interfaces.
+   - `CUSTOMER_CARE` role in User Management.
+   - 0-read Firestore filtering across 550+ members using Dexie IndexedDB cache.
+   - Calling Workspace with priority queue, Manager briefing banner, auto-interpolated Taglish SMS & Call triggers, and 1-tap outcome logger with staff stories.
+   - Campaign Reports with conversion funnels and 1-click Attempt #2 creator.
+   - AI Guide in `docs/AI_CALL_CENTER_GUIDE.md`.
+
+2. **Local Dev Server Started**:
+   - `npx ng serve --port 4200 --open` running as a background task.
+   - Verified HTTP `200 OK` on `http://localhost:4200`.
 
 ---
 
 ## 3. Immediate Next Steps / In Progress
 
-- Production verification of `/customer-care` on desktop and mobile.
+- User testing of `/customer-care` on local dev server (`http://localhost:4200/customer-care`).
 - Optional data cleanup: Merge 3 duplicate member profiles discovered in October (`Hannah Grace Laguda`, `Ezra Agustin`, `Adrian L. Mendoza`) and populate missing `membershipExpiration` (`2026-11-26`) on `Angeline Reyes` (`UMZTksizaMx3OeXJ6G8o`).
