@@ -626,8 +626,8 @@
           font-size: var(--font-size-xs);
           color: var(--color-text-body);
           margin: 0;
-          line-height: 1.45;
-          font-style: italic;
+          line-height: 1.6;
+          white-space: pre-wrap !important;
         }
       }
     }
