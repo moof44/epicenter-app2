@@ -346,3 +346,28 @@ This file maintains a permanent, chronological log of all AI sessions regardless
   - Performed deep census identifying active vs dormant vs abandoned lockers.
   - Traced exact dates, timestamps, member names, member IDs, durations, check-in staff, and check-out staff for every locker key.
 - **Result**: Comprehensive tracing report generated for user review.
+
+
+---
+
+### [2026-11-04 02:00] - Session Summary: Customer Care Script Formatting Beautified & Recommendations Archived
+- **AI Model / Tool**: Gemini 3.8 Flash (Low)
+- **Goal / Prompt**: Document customer care script recommendations for future reference, and fix/beautify the script display so newlines, spacing, and tabs render cleanly instead of one continuous wall of text.
+- **Key Actions Taken**:
+  - Archived the specialist principles and scripts into permanent file [`docs/CUSTOMER_CARE_SCRIPT_RECOMMENDATIONS.md`](customer-care-script-recommendations.md).
+  - Updated `.sb-text` in `calling-workspace.component.scss` with `white-space: pre-wrap;`, `word-break: break-word;`, and `line-height: 1.6`.
+  - Updated `.script-box` container with `max-height: 380px; overflow-y: auto;` and comfortable padding.
+  - Updated textareas in `campaign-creator.component.scss` and `calling-workspace.component.scss` with `white-space: pre-wrap; tab-size: 2; line-height: 1.6;`.
+  - Verified ESLint and production build (`npm run build`).
+  - Committed (`commit 66a0710`), pushed to GitHub, and deployed to Firebase Hosting (`https://epicenter-app.web.app`).
+  - Replaced `<p class="sb-text">` with `<div class="sb-text">` and added `white-space: pre-wrap !important;` to ensure all browser engines strictly render newline breaks (`\n`) and indentation as typed in the editor.
+  - Updated `docs/ai-session-context/ACTIVE_CONTEXT.md` and `docs/ai-session-context/SESSION_LOG.md`.
+- **Files Modified / Created**:
+  - `docs/CUSTOMER_CARE_SCRIPT_RECOMMENDATIONS.md`
+  - `src/app/features/customer-care/pages/calling-workspace/calling-workspace.component.scss`
+  - `src/app/features/customer-care/pages/calling-workspace/calling-workspace.component.html`
+  - `src/app/features/customer-care/pages/campaign-creator/campaign-creator.component.scss`
+  - `docs/ai-session-context/ACTIVE_CONTEXT.md`
+  - `docs/ai-session-context/SESSION_LOG.md`
+- **Pending / Unfinished Work Handed Off**:
+  - Live in production.
